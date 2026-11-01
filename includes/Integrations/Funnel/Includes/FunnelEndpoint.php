@@ -660,12 +660,21 @@ class FunnelEndpoint {
 			if ( $membership && 'one_time' !== $membership->get_subscription_period() ) {
 				$subscription_id = SubscriptionManager::create_subscription( $original_order, $product->get_id() );
 				if ( is_wp_error( $subscription_id ) ) {
-					$original_order->add_order_note( sprintf( /* translators: %s: text value. */
-					__( 'Automated subscription creation failed. Error: %s', 'ohmylms' ), $subscription_id->get_error_message() ) );
+					$original_order->add_order_note(
+						sprintf( /* translators: %s: text value. */
+							__( 'Automated subscription creation failed. Error: %s', 'ohmylms' ),
+							$subscription_id->get_error_message()
+						)
+					);
 				} elseif ( $subscription_id ) {
 					SubscriptionManager::mark_subscription_active( $subscription_id );
-					$original_order->add_order_note( sprintf( /* translators: %1$d: number; %2$s: text value. */
-					__( 'Subscription #%1$d created and activated for membership: %2$s.', 'ohmylms' ), $subscription_id, get_the_title( $product->get_id() ) ) );
+					$original_order->add_order_note(
+						sprintf( /* translators: %1$d: number; %2$s: text value. */
+							__( 'Subscription #%1$d created and activated for membership: %2$s.', 'ohmylms' ),
+							$subscription_id,
+							get_the_title( $product->get_id() )
+						)
+					);
 				}
 			}
 		}

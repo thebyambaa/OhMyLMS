@@ -205,7 +205,9 @@ use function OhMyLMS\Commerce\ecommerce;
 												<?php
 												$status_name = esc_html( $subscription->get_status() );
 												printf( /* translators: %s: text value. */
-												'%s', $status_name );
+													'%s',
+													$status_name
+												);
 												?>
 											</span>
 										<?php endif; ?>

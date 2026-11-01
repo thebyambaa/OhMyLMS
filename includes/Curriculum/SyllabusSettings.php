@@ -151,8 +151,14 @@ final class SyllabusSettings {
 							if ( empty( $skill['category_assigned'] ) && in_array( $group['name'], self::get( $syllabus_id )['categories'], true ) ) {
 								$category = $group['name']; }
 							if ( in_array( $category, $removed, true ) ) {
-								return Access::error( 'ohmylms_syllabus_category_used', sprintf( /* translators: %s: text value. */
-								__( 'The category “%s” is used by skills. Change their category before removing it.', 'ohmylms' ), $category ), 409 );
+								return Access::error(
+									'ohmylms_syllabus_category_used',
+									sprintf( /* translators: %s: text value. */
+										__( 'The category “%s” is used by skills. Change their category before removing it.', 'ohmylms' ),
+										$category
+									),
+									409
+								);
 							}
 						}
 					}

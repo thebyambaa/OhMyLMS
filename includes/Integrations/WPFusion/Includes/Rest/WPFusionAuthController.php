@@ -259,7 +259,9 @@ class WPFusionAuthController extends WP_REST_Controller {
 						'enabled'   => true,
 						'crm'       => $crmName,
 						'message'   => sprintf( /* translators: %s: text value. */
-						__( 'Connected to %s via WP Fusion', 'ohmylms' ), $crmName ),
+							__( 'Connected to %s via WP Fusion', 'ohmylms' ),
+							$crmName
+						),
 					),
 				),
 				200

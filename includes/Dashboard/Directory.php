@@ -98,8 +98,8 @@ final class Directory {
 		}
 		return self::rows(
 			"SELECT c.id, c.name, c.school_id, COALESCE( s.name, '' ) AS school_name FROM %i c LEFT JOIN %i s ON s.id = c.school_id
-			WHERE c.status = 'active' AND ( ( " . implode( ' ) OR ( ', $where ) . " ) )
-			ORDER BY c.school_id = 0, s.name, c.name, c.id",
+			WHERE c.status = 'active' AND ( ( " . implode( ' ) OR ( ', $where ) . ' ) )
+			ORDER BY c.school_id = 0, s.name, c.name, c.id',
 			$args
 		);
 	}
@@ -115,7 +115,7 @@ final class Directory {
 		if ( ! $user ) {
 			return array();
 		}
-		$args = array(
+		$args    = array(
 			Schema::table( 'classes' ),
 			Schema::table( 'class_memberships' ),
 			Schema::table( 'schools' ),
@@ -123,7 +123,7 @@ final class Directory {
 			Schema::table( 'school_memberships' ),
 			(int) $user_id,
 		);
-		$rows = self::rows(
+		$rows    = self::rows(
 			"SELECT c.id, c.name, c.school_id, COALESCE( s.name, '' ) AS school_name FROM %i c
 			INNER JOIN %i cm ON cm.class_id = c.id
 			LEFT JOIN %i s ON s.id = c.school_id

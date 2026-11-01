@@ -191,8 +191,16 @@ if ( $engagement_visible ) {
 		<?php if ( $next_level_name ) : ?>
 			<div class="ohmylms-progress-section">
 				<div class="ohmylms-progress-header">
-					<span class="ohmylms-progress-label"><?php echo esc_html( sprintf( /* translators: %s: text value. */
-					__( 'Progress to %s', 'ohmylms' ), $next_level_name ) ); ?></span>
+					<span class="ohmylms-progress-label">
+					<?php
+					echo esc_html(
+						sprintf( /* translators: %s: text value. */
+							__( 'Progress to %s', 'ohmylms' ),
+							$next_level_name
+						)
+					);
+					?>
+					</span>
 				</div>
 				<ul class="ohmylms-level-conditions">
 					<?php
@@ -203,8 +211,19 @@ if ( $engagement_visible ) {
 							'completed_courses' => __( 'Completed courses', 'ohmylms' ),
 						);
 						?>
-						<li><?php echo esc_html( sprintf( /* translators: %1$s: text value; %2$s: text value; %3$s: text value; %4$s: text value. */
-						__( '%1$s: %2$s · requirement %3$s %4$s', 'ohmylms' ), $labels[ $rule['type'] ] ?? '', $rule['current'], $rule['operator'], $rule['required'] ) ); ?></li>
+						<li>
+						<?php
+						echo esc_html(
+							sprintf( /* translators: %1$s: text value; %2$s: text value; %3$s: text value; %4$s: text value. */
+								__( '%1$s: %2$s · requirement %3$s %4$s', 'ohmylms' ),
+								$labels[ $rule['type'] ] ?? '',
+								$rule['current'],
+								$rule['operator'],
+								$rule['required']
+							)
+						);
+						?>
+						</li>
 					<?php } ?>
 				</ul>
 				<div class="ohmylms-progress-bar">

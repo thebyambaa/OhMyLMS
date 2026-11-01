@@ -303,7 +303,9 @@ class GatewayQPay extends PaymentGateway {
 							'sender_invoice_no'     => (string) $order_id,
 							'invoice_receiver_code' => 'terminal',
 							'invoice_description'   => sprintf( /* translators: %s: text value. */
-							__( 'Order #%s', 'ohmylms' ), $order_id ),
+								__( 'Order #%s', 'ohmylms' ),
+								$order_id
+							),
 							'amount'                => (float) $order->get_total(),
 							'callback_url'          => add_query_arg(
 								array(

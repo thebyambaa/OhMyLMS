@@ -550,8 +550,12 @@ class ScormExporter {
 		$course_post = get_post( $course_id );
 
 		if ( ! $course_post || OHMYLMS_COURSE_CPT !== $course_post->post_type ) {
-			throw new \Exception( sprintf( /* translators: %d: number. */
-			__( 'Invalid course ID: %d', 'ohmylms' ), $course_id ) );
+			throw new \Exception(
+				sprintf( /* translators: %d: number. */
+					__( 'Invalid course ID: %d', 'ohmylms' ),
+					$course_id
+				)
+			);
 		}
 
 		// Create course directory.

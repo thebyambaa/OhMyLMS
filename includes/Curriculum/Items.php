@@ -203,8 +203,13 @@ final class Items {
 			if ( ! $partial || array_key_exists( $key, $data ) ) {
 				$value = trim( sanitize_text_field( (string) ( $data[ $key ] ?? '' ) ) );
 				if ( mb_strlen( $value ) > 60 ) {
-					return Access::error( 'ohmylms_curriculum_invalid', sprintf( /* translators: %s: text value. */
-					__( '%s can have at most 60 characters.', 'ohmylms' ), $label ) ); }
+					return Access::error(
+						'ohmylms_curriculum_invalid',
+						sprintf( /* translators: %s: text value. */
+							__( '%s can have at most 60 characters.', 'ohmylms' ),
+							$label
+						)
+					); }
 				$fields[ $key ] = $value;
 			}
 		}
@@ -287,13 +292,24 @@ final class Items {
 		$parent_id = (int) $parent_id;
 		$parents   = self::parents();
 		if ( count( $parents ) >= self::MAX_ITEMS ) {
-			return Access::error( 'ohmylms_curriculum_limit', sprintf( /* translators: %d: number. */
-			__( 'A curriculum can have at most %d items.', 'ohmylms' ), self::MAX_ITEMS ), 409 ); }
+			return Access::error(
+				'ohmylms_curriculum_limit',
+				sprintf( /* translators: %d: number. */
+					__( 'A curriculum can have at most %d items.', 'ohmylms' ),
+					self::MAX_ITEMS
+				),
+				409
+			); }
 		if ( $parent_id && ! isset( $parents[ $parent_id ] ) ) {
 			return Access::error( 'ohmylms_curriculum_invalid', __( 'The parent item does not exist.', 'ohmylms' ) ); }
 		if ( $parent_id && Tree::depth( $parents, $parent_id ) + 1 > self::MAX_DEPTH ) {
-			return Access::error( 'ohmylms_curriculum_depth', sprintf( /* translators: %d: number. */
-			__( 'Curriculum items can be nested at most %d levels deep.', 'ohmylms' ), self::MAX_DEPTH ) ); }
+			return Access::error(
+				'ohmylms_curriculum_depth',
+				sprintf( /* translators: %d: number. */
+					__( 'Curriculum items can be nested at most %d levels deep.', 'ohmylms' ),
+					self::MAX_DEPTH
+				)
+			); }
 		$now = current_time( 'mysql', true );
 		$row = $fields + array(
 			'uuid'       => wp_generate_uuid4(),
@@ -383,8 +399,13 @@ final class Items {
 					return Access::error( 'ohmylms_curriculum_cycle', __( 'An item cannot be moved under itself or one of its own descendants.', 'ohmylms' ) ); }
 				$base = $parent_id ? Tree::depth( $parents, $parent_id ) : 0;
 				if ( $base + Tree::height( $parents, $id ) > self::MAX_DEPTH ) {
-					return Access::error( 'ohmylms_curriculum_depth', sprintf( /* translators: %d: number. */
-					__( 'Curriculum items can be nested at most %d levels deep.', 'ohmylms' ), self::MAX_DEPTH ) ); }
+					return Access::error(
+						'ohmylms_curriculum_depth',
+						sprintf( /* translators: %d: number. */
+							__( 'Curriculum items can be nested at most %d levels deep.', 'ohmylms' ),
+							self::MAX_DEPTH
+						)
+					); }
 				global $wpdb;
 				$old_parent = (int) $parents[ (int) $id ];
 				if ( $old_parent !== $parent_id ) {

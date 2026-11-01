@@ -448,8 +448,8 @@ final class GradebookController extends WP_REST_Controller {
 				}
 				$data['scope'] = $scope->to_array();
 				$data['can']   = array(
-					'grade'         => true,
-					'manage_course' => $manage,
+					'grade'          => true,
+					'manage_course'  => $manage,
 					'weight_classes' => $classes,
 				);
 				return $data;

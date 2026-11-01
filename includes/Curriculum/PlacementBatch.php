@@ -46,7 +46,7 @@ final class PlacementBatch {
 			$items = $found['items'];
 			$total = $found['total'];
 		} else {
-			$args = array(
+			$args  = array(
 				'taxonomy'   => Taxonomy::NAME,
 				'hide_empty' => false,
 				'search'     => sanitize_text_field( (string) ( $params['search'] ?? '' ) ),
@@ -135,7 +135,12 @@ final class PlacementBatch {
 			}
 			$placement = Comparison::placement( $item['domain'] ?? '', $item['grade_from'] ?? 0, $item['grade_to'] ?? 0, $skill['subject'] );
 			if ( is_wp_error( $placement ) ) {
-				$placement->add_data( array( 'status' => 400, 'skill_id' => $id ) );
+				$placement->add_data(
+					array(
+						'status'   => 400,
+						'skill_id' => $id,
+					)
+				);
 				return $placement;
 			}
 			$checked[ $id ] = array( $placement, (string) ( $item['expected_revision'] ?? '' ) );

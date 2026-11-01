@@ -77,19 +77,19 @@ final class SchoolRemoval {
 		$managed = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE meta_key=%s AND meta_value=%s', $wpdb->usermeta, '_ohmylms_managed_school', (string) $school_id ) );
 
 		return array(
-			'classes'             => count( $classes ),
-			'academic_years'      => self::count_in( 'academic_years', 'school_id', $school ),
-			'students'            => $by['student'] ?? 0,
-			'teachers'            => $by['teacher'] ?? 0,
-			'school_admins'       => $by['school_admin'] ?? 0,
-			'class_memberships'   => self::count_in( 'class_memberships', 'class_id', $classes, " AND status='active'" ),
-			'teacher_links'       => self::count_in( 'class_memberships', 'class_id', $classes, " AND status='active' AND role='teacher'" ),
-			'guardian_links'      => self::count_in( 'guardian_links', 'school_id', $school, " AND status='active'" ),
-			'invitations'         => self::count_in( 'school_invitations', 'school_id', $school, ' AND consumed_at IS NULL AND revoked_at IS NULL' ),
-			'assignments'         => self::count_in( 'learning_assignments', 'school_id', $school ),
-			'course_links'        => self::count_in( 'course_classes', 'class_id', $classes ),
-			'roster_enrolments'   => RosterEnrolments::count( $classes ),
-			'managed_accounts'    => $managed,
+			'classes'           => count( $classes ),
+			'academic_years'    => self::count_in( 'academic_years', 'school_id', $school ),
+			'students'          => $by['student'] ?? 0,
+			'teachers'          => $by['teacher'] ?? 0,
+			'school_admins'     => $by['school_admin'] ?? 0,
+			'class_memberships' => self::count_in( 'class_memberships', 'class_id', $classes, " AND status='active'" ),
+			'teacher_links'     => self::count_in( 'class_memberships', 'class_id', $classes, " AND status='active' AND role='teacher'" ),
+			'guardian_links'    => self::count_in( 'guardian_links', 'school_id', $school, " AND status='active'" ),
+			'invitations'       => self::count_in( 'school_invitations', 'school_id', $school, ' AND consumed_at IS NULL AND revoked_at IS NULL' ),
+			'assignments'       => self::count_in( 'learning_assignments', 'school_id', $school ),
+			'course_links'      => self::count_in( 'course_classes', 'class_id', $classes ),
+			'roster_enrolments' => RosterEnrolments::count( $classes ),
+			'managed_accounts'  => $managed,
 		);
 	}
 

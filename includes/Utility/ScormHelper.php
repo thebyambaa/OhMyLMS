@@ -48,7 +48,9 @@ class ScormHelper {
 			return array(
 				'valid'   => false,
 				'message' => sprintf( /* translators: %d: number. */
-				__( 'Course ID %d does not exist or is not a valid course.', 'ohmylms' ), $course_id ),
+					__( 'Course ID %d does not exist or is not a valid course.', 'ohmylms' ),
+					$course_id
+				),
 			);
 		}
 
@@ -57,7 +59,10 @@ class ScormHelper {
 			return array(
 				'valid'   => false,
 				'message' => sprintf( /* translators: %1$s: text value; %2$s: text value. */
-				__( 'Course "%1$s" has invalid status: %2$s', 'ohmylms' ), $course->post_title, $course->post_status ),
+					__( 'Course "%1$s" has invalid status: %2$s', 'ohmylms' ),
+					$course->post_title,
+					$course->post_status
+				),
 			);
 		}
 
@@ -74,7 +79,9 @@ class ScormHelper {
 			return array(
 				'valid'   => false,
 				'message' => sprintf( /* translators: %s: text value. */
-				__( 'Course "%s" has no chapters. Please add content before exporting.', 'ohmylms' ), $course->post_title ),
+					__( 'Course "%s" has no chapters. Please add content before exporting.', 'ohmylms' ),
+					$course->post_title
+				),
 			);
 		}
 
@@ -125,9 +132,13 @@ class ScormHelper {
 			'passed'   => $memory_ok,
 			'message'  => $memory_ok
 				? sprintf( /* translators: %s: text value. */
-				__( 'Sufficient: %s', 'ohmylms' ), $memory_limit )
+					__( 'Sufficient: %s', 'ohmylms' ),
+					$memory_limit
+				)
 				: sprintf( /* translators: %s: text value. */
-				__( 'Low: %s (recommended: 256M or higher)', 'ohmylms' ), $memory_limit ),
+					__( 'Low: %s (recommended: 256M or higher)', 'ohmylms' ),
+					$memory_limit
+				),
 			'critical' => false, // Can be increased at runtime.
 		);
 
@@ -140,9 +151,13 @@ class ScormHelper {
 			'passed'   => $time_ok,
 			'message'  => $time_ok
 				? sprintf( /* translators: %s: text value. */
-				__( 'Sufficient: %s seconds', 'ohmylms' ), 0 == $max_execution ? 'unlimited' : $max_execution )
+					__( 'Sufficient: %s seconds', 'ohmylms' ),
+					0 == $max_execution ? 'unlimited' : $max_execution
+				)
 				: sprintf( /* translators: %s: text value. */
-				__( 'Low: %s seconds (recommended: 300 or higher)', 'ohmylms' ), $max_execution ),
+					__( 'Low: %s seconds (recommended: 300 or higher)', 'ohmylms' ),
+					$max_execution
+				),
 			'critical' => false, // Can be increased at runtime.
 		);
 
@@ -177,7 +192,9 @@ class ScormHelper {
 				'name'     => __( 'Available Disk Space', 'ohmylms' ),
 				'passed'   => $space_ok,
 				'message'  => sprintf( /* translators: %s: text value. */
-				__( 'Available: %s', 'ohmylms' ), size_format( $free_space ) ) .
+					__( 'Available: %s', 'ohmylms' ),
+					size_format( $free_space )
+				) .
 					( $space_ok ? '' : ' ' . __( '(low - recommended: 100MB or higher)', 'ohmylms' ) ),
 				'critical' => false, // Warning only.
 			);

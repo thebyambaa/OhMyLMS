@@ -34,11 +34,11 @@ final class Account {
 	);
 
 	const PLAN_MODAL = array(
-		'data-wp-style--display'    => 'state.planDisplay',
-		'data-wp-bind--aria-hidden' => '!context.planOpen',
-		'data-wp-on--click'         => 'actions.planBackdrop',
+		'data-wp-style--display'       => 'state.planDisplay',
+		'data-wp-bind--aria-hidden'    => '!context.planOpen',
+		'data-wp-on--click'            => 'actions.planBackdrop',
 		'data-wp-on-document--keydown' => 'actions.planKey',
-		'data-wp-watch'             => 'callbacks.planFocus',
+		'data-wp-watch'                => 'callbacks.planFocus',
 	);
 
 	const CANCEL_LINK = array(

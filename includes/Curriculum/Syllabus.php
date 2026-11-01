@@ -445,22 +445,37 @@ final class Syllabus {
 			if ( '' === $name ) {
 				return Access::error( 'ohmylms_syllabus_invalid', __( 'A skill group needs a name or a code.', 'ohmylms' ) ); }
 			if ( mb_strlen( $name ) > SyllabusRows::NAME_LIMIT ) {
-				return Access::error( 'ohmylms_syllabus_invalid', sprintf( /* translators: %d: number. */
-				__( 'A skill group name can have at most %d characters.', 'ohmylms' ), SyllabusRows::NAME_LIMIT ) ); }
+				return Access::error(
+					'ohmylms_syllabus_invalid',
+					sprintf( /* translators: %d: number. */
+						__( 'A skill group name can have at most %d characters.', 'ohmylms' ),
+						SyllabusRows::NAME_LIMIT
+					)
+				); }
 			$fields['name'] = sanitize_text_field( $name );
 		}
 		if ( ! $partial || array_key_exists( 'code', $data ) ) {
 			$code = SyllabusRows::line( $data['code'] ?? '' );
 			if ( mb_strlen( $code ) > SyllabusRows::GROUP_CODE_LIMIT ) {
-				return Access::error( 'ohmylms_syllabus_invalid', sprintf( /* translators: %d: number. */
-				__( 'A skill group code can have at most %d characters.', 'ohmylms' ), SyllabusRows::GROUP_CODE_LIMIT ) ); }
+				return Access::error(
+					'ohmylms_syllabus_invalid',
+					sprintf( /* translators: %d: number. */
+						__( 'A skill group code can have at most %d characters.', 'ohmylms' ),
+						SyllabusRows::GROUP_CODE_LIMIT
+					)
+				); }
 			$fields['code'] = sanitize_text_field( $code );
 		}
 		if ( ! $partial || array_key_exists( 'description', $data ) ) {
 			$description = SyllabusRows::notes( $data['description'] ?? '' );
 			if ( mb_strlen( $description ) > SyllabusRows::DESCRIPTION_LIMIT ) {
-				return Access::error( 'ohmylms_syllabus_invalid', sprintf( /* translators: %d: number. */
-				__( 'Notes can have at most %d characters.', 'ohmylms' ), SyllabusRows::DESCRIPTION_LIMIT ) ); }
+				return Access::error(
+					'ohmylms_syllabus_invalid',
+					sprintf( /* translators: %d: number. */
+						__( 'Notes can have at most %d characters.', 'ohmylms' ),
+						SyllabusRows::DESCRIPTION_LIMIT
+					)
+				); }
 			$fields['description'] = sanitize_textarea_field( $description );
 		}
 		return $fields;
@@ -516,8 +531,14 @@ final class Syllabus {
 		return Items::exclusive(
 			static function () use ( $syllabus_id, $item_id, $fields, $position ) {
 				if ( self::group_count( Items::with_descendants( $syllabus_id ) ) >= self::MAX_GROUPS ) {
-					return Access::error( 'ohmylms_syllabus_limit', sprintf( /* translators: %d: number. */
-					__( 'A syllabus can have at most %d skill groups.', 'ohmylms' ), self::MAX_GROUPS ), 409 ); }
+					return Access::error(
+						'ohmylms_syllabus_limit',
+						sprintf( /* translators: %d: number. */
+							__( 'A syllabus can have at most %d skill groups.', 'ohmylms' ),
+							self::MAX_GROUPS
+						),
+						409
+					); }
 				return self::insert_group( $item_id, $fields, $position );
 			}
 		);
@@ -603,8 +624,15 @@ final class Syllabus {
 			return self::missing_group(); }
 		$skills = count( self::term_ids_in( $group_id ) );
 		if ( $skills && ! $confirm ) {
-			return Access::error( 'ohmylms_syllabus_needs_confirmation', sprintf( /* translators: %d: number. */
-			_n( 'This group holds %d skill. Deleting the group keeps the skill in the skill library but removes it from the syllabus outline.', 'This group holds %d skills. Deleting the group keeps the skills in the skill library but removes them from the syllabus outline.', $skills, 'ohmylms' ), $skills ), 409, array( 'skills' => $skills ) );
+			return Access::error(
+				'ohmylms_syllabus_needs_confirmation',
+				sprintf( /* translators: %d: number. */
+					_n( 'This group holds %d skill. Deleting the group keeps the skill in the skill library but removes it from the syllabus outline.', 'This group holds %d skills. Deleting the group keeps the skills in the skill library but removes them from the syllabus outline.', $skills, 'ohmylms' ),
+					$skills
+				),
+				409,
+				array( 'skills' => $skills )
+			);
 		}
 		return Items::exclusive(
 			static function () use ( $wpdb, $group, $skills ) {
@@ -657,8 +685,12 @@ final class Syllabus {
 					wp_slash( mb_substr( $name, 0, 199 ) ),
 					Taxonomy::NAME,
 					array(
-						'description' => wp_slash( sprintf( /* translators: %s: text value. */
-						__( 'Skills of the syllabus “%s”.', 'ohmylms' ), $name ) ),
+						'description' => wp_slash(
+							sprintf( /* translators: %s: text value. */
+								__( 'Skills of the syllabus “%s”.', 'ohmylms' ),
+								$name
+							)
+						),
 						'parent'      => 0,
 						'slug'        => self::slug(),
 					)
@@ -701,22 +733,37 @@ final class Syllabus {
 			if ( '' === $name ) {
 				return Access::error( 'ohmylms_syllabus_invalid', __( 'A skill needs a name.', 'ohmylms' ) ); }
 			if ( mb_strlen( $name ) > SyllabusRows::NAME_LIMIT ) {
-				return Access::error( 'ohmylms_syllabus_invalid', sprintf( /* translators: %d: number. */
-				__( 'A skill name can have at most %d characters.', 'ohmylms' ), SyllabusRows::NAME_LIMIT ) ); }
+				return Access::error(
+					'ohmylms_syllabus_invalid',
+					sprintf( /* translators: %d: number. */
+						__( 'A skill name can have at most %d characters.', 'ohmylms' ),
+						SyllabusRows::NAME_LIMIT
+					)
+				); }
 			$fields['name'] = $name;
 		}
 		if ( ! $partial || array_key_exists( 'code', $data ) ) {
 			$code = SyllabusRows::line( $data['code'] ?? '' );
 			if ( mb_strlen( $code ) > SyllabusRows::SKILL_CODE_LIMIT ) {
-				return Access::error( 'ohmylms_syllabus_invalid', sprintf( /* translators: %d: number. */
-				__( 'A skill code can have at most %d characters.', 'ohmylms' ), SyllabusRows::SKILL_CODE_LIMIT ) ); }
+				return Access::error(
+					'ohmylms_syllabus_invalid',
+					sprintf( /* translators: %d: number. */
+						__( 'A skill code can have at most %d characters.', 'ohmylms' ),
+						SyllabusRows::SKILL_CODE_LIMIT
+					)
+				); }
 			$fields['code'] = $code;
 		}
 		if ( ! $partial || array_key_exists( 'description', $data ) ) {
 			$description = SyllabusRows::notes( $data['description'] ?? '' );
 			if ( mb_strlen( $description ) > SyllabusRows::DESCRIPTION_LIMIT ) {
-				return Access::error( 'ohmylms_syllabus_invalid', sprintf( /* translators: %d: number. */
-				__( 'Notes can have at most %d characters.', 'ohmylms' ), SyllabusRows::DESCRIPTION_LIMIT ) ); }
+				return Access::error(
+					'ohmylms_syllabus_invalid',
+					sprintf( /* translators: %d: number. */
+						__( 'Notes can have at most %d characters.', 'ohmylms' ),
+						SyllabusRows::DESCRIPTION_LIMIT
+					)
+				); }
 			$fields['description'] = $description;
 		}
 		if ( array_key_exists( 'translations', $data ) ) {
@@ -822,11 +869,23 @@ final class Syllabus {
 				if ( is_wp_error( $category_check ) ) {
 					return $category_check; }
 				if ( self::skill_count( $syllabus_id ) >= self::MAX_SKILLS ) {
-					return Access::error( 'ohmylms_syllabus_limit', sprintf( /* translators: %d: number. */
-					__( 'A syllabus can have at most %d skills.', 'ohmylms' ), self::MAX_SKILLS ), 409 ); }
+					return Access::error(
+						'ohmylms_syllabus_limit',
+						sprintf( /* translators: %d: number. */
+							__( 'A syllabus can have at most %d skills.', 'ohmylms' ),
+							self::MAX_SKILLS
+						),
+						409
+					); }
 				if ( self::code_taken( $syllabus_id, $fields['code'] ) ) {
-					return Access::error( 'ohmylms_syllabus_code_taken', sprintf( /* translators: %s: text value. */
-					__( 'Another skill in this syllabus already uses the code “%s”.', 'ohmylms' ), $fields['code'] ), 409 ); }
+					return Access::error(
+						'ohmylms_syllabus_code_taken',
+						sprintf( /* translators: %s: text value. */
+							__( 'Another skill in this syllabus already uses the code “%s”.', 'ohmylms' ),
+							$fields['code']
+						),
+						409
+					); }
 				$root = self::root_skill( $syllabus_id );
 				if ( is_wp_error( $root ) ) {
 					return $root; }
@@ -875,8 +934,14 @@ final class Syllabus {
 				if ( in_array( $term_id, self::skill_ids( Items::with_descendants( $syllabus_id ) ), true ) ) {
 					return Access::error( 'ohmylms_syllabus_skill_placed', __( 'That skill is already in a skill group of this syllabus.', 'ohmylms' ), 409 ); }
 				if ( self::skill_count( $syllabus_id ) >= self::MAX_SKILLS ) {
-					return Access::error( 'ohmylms_syllabus_limit', sprintf( /* translators: %d: number. */
-					__( 'A syllabus can have at most %d skills.', 'ohmylms' ), self::MAX_SKILLS ), 409 ); }
+					return Access::error(
+						'ohmylms_syllabus_limit',
+						sprintf( /* translators: %d: number. */
+							__( 'A syllabus can have at most %d skills.', 'ohmylms' ),
+							self::MAX_SKILLS
+						),
+						409
+					); }
 				self::place_skill( (int) $group['id'], $term_id );
 				return true;
 			}
@@ -914,8 +979,14 @@ final class Syllabus {
 	 */
 	private static function write_skill( $syllabus_id, $term_id, array $fields ) {
 		if ( isset( $fields['code'] ) && self::code_taken( $syllabus_id, $fields['code'], $term_id ) ) {
-			return Access::error( 'ohmylms_syllabus_code_taken', sprintf( /* translators: %s: text value. */
-			__( 'Another skill in this syllabus already uses the code “%s”.', 'ohmylms' ), $fields['code'] ), 409 );
+			return Access::error(
+				'ohmylms_syllabus_code_taken',
+				sprintf( /* translators: %s: text value. */
+					__( 'Another skill in this syllabus already uses the code “%s”.', 'ohmylms' ),
+					$fields['code']
+				),
+				409
+			);
 		}
 		$args = array();
 		if ( isset( $fields['name'] ) ) {
@@ -1178,8 +1249,15 @@ final class Syllabus {
 					}
 					$created = self::create_term( $root, $op['name'], $op['code'], $op['description'], $op['category'] ?? '' );
 					if ( is_wp_error( $created ) ) {
-						return Access::error( $created->get_error_code(), sprintf( /* translators: %1$s: text value; %2$s: text value. */
-						__( 'The skill “%1$s” could not be created: %2$s', 'ohmylms' ), $op['name'], $created->get_error_message() ), 500 ); }
+						return Access::error(
+							$created->get_error_code(),
+							sprintf( /* translators: %1$s: text value; %2$s: text value. */
+								__( 'The skill “%1$s” could not be created: %2$s', 'ohmylms' ),
+								$op['name'],
+								$created->get_error_message()
+							),
+							500
+						); }
 					$created_terms[] = $created['term_id'];
 					self::place_skill( $resolve( $op['group'] ), $created['term_id'] );
 					$map[ $op['ref'] ] = $created['term_id'];

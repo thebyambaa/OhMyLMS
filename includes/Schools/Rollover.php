@@ -279,7 +279,7 @@ final class Rollover {
 			if ( isset( $applied[ $key ] ) && hash_equals( (string) $applied[ $key ]['review'], (string) $review ) ) {
 				return array_merge( $applied[ $key ]['result'], array( 'already_applied' => true ) );
 			}
-			$result = Transaction::run(
+			$result          = Transaction::run(
 				static function () use ( $wpdb, $school_id, $from_id, $to_id, $grade_map, $copy_teachers, $review, $include_empty ) {
 					// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Lock both years in id order; class creation in them waits.
 					$wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i WHERE id IN (%d,%d) ORDER BY id FOR UPDATE', Schema::table( 'academic_years' ), $from_id, $to_id ) );

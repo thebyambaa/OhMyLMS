@@ -73,9 +73,9 @@ class DashboardScopesController extends WP_REST_Controller {
 	 * @return \WP_REST_Response
 	 */
 	public function get_items( $request ) {
-		$user_id = get_current_user_id();
-		$scopes  = ScopeResolver::available( $user_id );
-		$data    = array(
+		$user_id  = get_current_user_id();
+		$scopes   = ScopeResolver::available( $user_id );
+		$data     = array(
 			'scopes'     => array_map(
 				static function ( $scope ) {
 					return $scope->to_array();

@@ -371,11 +371,11 @@ final class Gradebook {
 	 * shows in the new gradebook. This route keeps its last-write-wins behaviour (it sends the version it
 	 * reads) and its optional note (a fixed reason when empty).
 	 *
-	 * @param int  $course  Course.
-	 * @param int  $content Item.
-	 * @param int  $user    Learner.
+	 * @param int   $course  Course.
+	 * @param int   $content Item.
+	 * @param int   $user    Learner.
 	 * @param mixed $r      Request.
-	 * @param bool $reset   Remove the manual grade.
+	 * @param bool  $reset   Remove the manual grade.
 	 * @return array
 	 * @throws \RuntimeException When the change is refused.
 	 */

@@ -63,7 +63,7 @@ class ShortCodeOfferButton {
 
 		// If not available from query vars, check URL parameters (for offer pages).
 		if ( empty( $current_step ) && isset( $_GET['step'] ) ) {
-			$current_step = sanitize_text_field( wp_unslash( $_GET['step'] ));
+			$current_step = sanitize_text_field( wp_unslash( $_GET['step'] ) );
 		}
 
 		// If still not available, fall back to session (for backward compatibility).

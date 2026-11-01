@@ -77,7 +77,7 @@ final class Repository {
 	 */
 	public static function placed_items( $course_id ) {
 		global $wpdb;
-		$rows = self::rows(
+		$rows  = self::rows(
 			"SELECT p.ID AS id, p.post_title AS title, p.post_type, c.chapter_id AS module_id, COALESCE( ch.post_title, '' ) AS module,
 				c.order_number AS chapter_order, r.order_number AS item_order
 			FROM %i r INNER JOIN %i c ON c.chapter_id = r.chapter_id INNER JOIN %i p ON p.ID = r.content_id LEFT JOIN %i ch ON ch.ID = c.chapter_id
@@ -157,7 +157,7 @@ final class Repository {
 		}
 		$weights = array();
 		foreach ( self::rows( 'SELECT class_id, weights, version, updated_at FROM %i WHERE course_id = %d ORDER BY class_id', array( Schema::table( 'gradebook_weights' ), (int) $course_id ) ) as $row ) {
-			$decoded                             = json_decode( (string) $row['weights'], true );
+			$decoded                           = json_decode( (string) $row['weights'], true );
 			$weights[ (int) $row['class_id'] ] = array(
 				'weights'    => is_array( $decoded ) ? array_map( 'floatval', $decoded ) : array(),
 				'version'    => (int) $row['version'],

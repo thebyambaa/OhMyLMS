@@ -184,7 +184,7 @@ final class Repository {
 			ORDER BY missed / answers DESC, learners DESC, aa.question_id ASC LIMIT %d",
 			$args
 		);
-		$ids = array();
+		$ids      = array();
 		foreach ( $found as $row ) {
 			$ids[] = (int) $row['question_id'];
 			$ids[] = (int) $row['quiz_id'];

@@ -780,7 +780,7 @@ class ScormImporter {
 				__( 'Content file not found for lesson: %s', 'ohmylms' ),
 				$item['title']
 			);
-			$lesson_type_info                  = array( 'type' => 'text' );
+			$lesson_type_info = array( 'type' => 'text' );
 		}
 
 		$lesson_id = wp_insert_post(

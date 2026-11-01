@@ -51,10 +51,10 @@ final class AiAnalysis {
 	const HINT_GLOSS   = '_ohmylms_ai_gloss';
 	const SOURCE_AI    = 'ai';
 	const ORDER_ACCEPT = array(
-		'new_skill' => 0,
-		'mapping'   => 1,
-		'placement' => 2,
-		'link'      => 3,
+		'new_skill'    => 0,
+		'mapping'      => 1,
+		'placement'    => 2,
+		'link'         => 3,
 		// Course skills create or reuse skills on their own; nothing waits for them.
 		'course_skill' => 0,
 	);

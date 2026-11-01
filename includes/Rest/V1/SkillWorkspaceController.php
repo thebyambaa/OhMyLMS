@@ -68,10 +68,10 @@ class SkillWorkspaceController extends RestController {
 		$base    = '/skill-workspace';
 		$content = $base . '/content/(?P<kind>[a-z][a-z0-9_-]{0,39})/(?P<id>\d+)';
 		$routes  = array(
-			$base . '/skills/(?P<id>\d+)/mappings'         => array(
+			$base . '/skills/(?P<id>\d+)/mappings' => array(
 				array( 'GET', 'mappings', array( 'id' => $id ) ),
 			),
-			$base . '/content'                             => array(
+			$base . '/content'                     => array(
 				array(
 					'GET',
 					'search_content',
@@ -82,7 +82,7 @@ class SkillWorkspaceController extends RestController {
 					),
 				),
 			),
-			$content                                       => array(
+			$content                               => array(
 				array(
 					'GET',
 					'read_content',
@@ -103,7 +103,7 @@ class SkillWorkspaceController extends RestController {
 					),
 				),
 			),
-			$base . '/placement'                           => array(
+			$base . '/placement'                   => array(
 				array(
 					'GET',
 					'placement',
@@ -160,7 +160,7 @@ class SkillWorkspaceController extends RestController {
 					),
 				),
 			),
-			$base . '/skills/(?P<id>\d+)/quizzes'          => array(
+			$base . '/skills/(?P<id>\d+)/quizzes'  => array(
 				array( 'GET', 'quizzes', array( 'id' => $id ) ),
 				array(
 					'POST',
@@ -201,7 +201,7 @@ class SkillWorkspaceController extends RestController {
 					),
 				),
 			),
-			$base . '/provenance'                          => array(
+			$base . '/provenance'                  => array(
 				array(
 					'GET',
 					'provenance',
@@ -221,10 +221,10 @@ class SkillWorkspaceController extends RestController {
 					),
 				),
 			),
-			$base . '/provenance/(?P<id>\d+)'              => array(
+			$base . '/provenance/(?P<id>\d+)'      => array(
 				array( 'GET', 'provenance_detail', array( 'id' => $id ) ),
 			),
-			$base . '/provenance/review'                   => array(
+			$base . '/provenance/review'           => array(
 				array(
 					'POST',
 					'review',

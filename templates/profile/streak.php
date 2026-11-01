@@ -30,10 +30,26 @@ if ( ! $continue ) {
 <section class="ohmylms-streak-card" aria-labelledby="ohmylms-streak-heading">
 	<h2 id="ohmylms-streak-heading"><?php esc_html_e( 'Your learning streak', 'ohmylms' ); ?></h2>
 	<dl class="ohmylms-streak-totals">
-		<div><dt><?php esc_html_e( 'Current streak', 'ohmylms' ); ?></dt><dd><?php echo esc_html( sprintf( /* translators: %d: number. */
-		_n( '%d day', '%d days', $streak['current_streak'], 'ohmylms' ), $streak['current_streak'] ) ); ?></dd></div>
-		<div><dt><?php esc_html_e( 'Longest streak', 'ohmylms' ); ?></dt><dd><?php echo esc_html( sprintf( /* translators: %d: number. */
-		_n( '%d day', '%d days', $streak['longest_streak'], 'ohmylms' ), $streak['longest_streak'] ) ); ?></dd></div>
+		<div><dt><?php esc_html_e( 'Current streak', 'ohmylms' ); ?></dt><dd>
+		<?php
+		echo esc_html(
+			sprintf( /* translators: %d: number. */
+				_n( '%d day', '%d days', $streak['current_streak'], 'ohmylms' ),
+				$streak['current_streak']
+			)
+		);
+		?>
+		</dd></div>
+		<div><dt><?php esc_html_e( 'Longest streak', 'ohmylms' ); ?></dt><dd>
+		<?php
+		echo esc_html(
+			sprintf( /* translators: %d: number. */
+				_n( '%d day', '%d days', $streak['longest_streak'], 'ohmylms' ),
+				$streak['longest_streak']
+			)
+		);
+		?>
+		</dd></div>
 		<div><dt><?php esc_html_e( 'Freezes available', 'ohmylms' ); ?></dt><dd><?php echo esc_html( $streak['freezes'] ); ?></dd></div>
 	</dl>
 	<p role="status"><?php echo esc_html( $streak['today_complete'] ? __( 'Today is complete. Keep learning at your own pace.', 'ohmylms' ) : __( 'Complete a lesson, submit a quiz with answers, or finish qualifying practice today.', 'ohmylms' ) ); ?></p>
@@ -70,8 +86,16 @@ if ( ! $continue ) {
 	</ol>
 	<a class="ohmylms-button" href="<?php echo esc_url( $continue ); ?>"><?php esc_html_e( 'Continue learning', 'ohmylms' ); ?></a>
 	<details>
-		<summary><?php echo esc_html( sprintf( /* translators: %s: text value. */
-		__( 'Streak timezone: %s', 'ohmylms' ), $streak['timezone'] ) ); ?></summary>
+		<summary>
+		<?php
+		echo esc_html(
+			sprintf( /* translators: %s: text value. */
+				__( 'Streak timezone: %s', 'ohmylms' ),
+				$streak['timezone']
+			)
+		);
+		?>
+		</summary>
 		<p><?php esc_html_e( 'Your timezone stays fixed during an active streak. You can change it after the streak ends and 24 hours after your last activity.', 'ohmylms' ); ?></p>
 		<form data-ohmylms-streak-timezone data-endpoint="<?php echo esc_url( rest_url( 'ohmylms/v1/engagement/streak' ) ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>" data-success="<?php esc_attr_e( 'Timezone saved. Refresh this page to update the calendar.', 'ohmylms' ); ?>" data-error="<?php esc_attr_e( 'Could not save timezone. Please retry.', 'ohmylms' ); ?>">
 			<label for="ohmylms-learning-timezone"><?php esc_html_e( 'Learning timezone', 'ohmylms' ); ?></label>

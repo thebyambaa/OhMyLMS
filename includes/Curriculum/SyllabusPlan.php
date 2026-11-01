@@ -443,13 +443,17 @@ final class SyllabusPlan {
 				$this->warnings[] = array(
 					'line'    => $row['line'],
 					'message' => sprintf( /* translators: %s: text value. */
-					__( '“%s” appears more than once in the file; the repeated row was ignored.', 'ohmylms' ), $name ),
+						__( '“%s” appears more than once in the file; the repeated row was ignored.', 'ohmylms' ),
+						$name
+					),
 				);
 			} else {
 				$this->errors[] = array(
 					'line'    => $row['line'],
 					'message' => sprintf( /* translators: %s: text value. */
-					__( 'Skill code “%s” is used under more than one skill group.', 'ohmylms' ), $code ),
+						__( 'Skill code “%s” is used under more than one skill group.', 'ohmylms' ),
+						$code
+					),
 				);
 			}
 			return;
@@ -507,7 +511,9 @@ final class SyllabusPlan {
 				$this->warnings[]                    = array(
 					'line'    => $row['line'],
 					'message' => sprintf( /* translators: %s: text value. */
-					__( 'Skills with no skill group were placed in a group called “%s”.', 'ohmylms' ), $name ),
+						__( 'Skills with no skill group were placed in a group called “%s”.', 'ohmylms' ),
+						$name
+					),
 				);
 			}
 		}
@@ -526,14 +532,18 @@ final class SyllabusPlan {
 			$this->errors[] = array(
 				'line'    => 0,
 				'message' => sprintf( /* translators: %d: number. */
-				__( 'A syllabus can have at most %d skill groups.', 'ohmylms' ), $this->options['max_groups'] ),
+					__( 'A syllabus can have at most %d skill groups.', 'ohmylms' ),
+					$this->options['max_groups']
+				),
 			);
 		}
 		if ( $skills_total > $this->options['max_skills'] ) {
 			$this->errors[] = array(
 				'line'    => 0,
 				'message' => sprintf( /* translators: %d: number. */
-				__( 'A syllabus can have at most %d skills.', 'ohmylms' ), $this->options['max_skills'] ),
+					__( 'A syllabus can have at most %d skills.', 'ohmylms' ),
+					$this->options['max_skills']
+				),
 			);
 		}
 		$counted = static function ( array $updates, array $ops ) {

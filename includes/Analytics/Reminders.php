@@ -218,7 +218,7 @@ class Reminders {
 				continue;
 			}
 
-			$name                   = wp_strip_all_tags( $user->display_name );
+			$name                 = wp_strip_all_tags( $user->display_name );
 			list( $subject, $ok ) = RecipientLocale::run(
 				$user,
 				static function () use ( $template, $name, $course, $url, $sender_id, $user ) {

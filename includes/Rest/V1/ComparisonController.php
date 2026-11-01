@@ -567,7 +567,7 @@ class ComparisonController extends RestController {
 			'maximum' => 100,
 		);
 		$routes  = array(
-			'/syllabus-comparison/ai/runs'                 => array(
+			'/syllabus-comparison/ai/runs'               => array(
 				array(
 					'GET',
 					'ai_runs',
@@ -598,7 +598,7 @@ class ComparisonController extends RestController {
 					),
 				),
 			),
-			'/syllabus-comparison/ai/runs/(?P<id>\d+)'     => array( array( 'GET', 'ai_run', array( 'id' => $id ) ) ),
+			'/syllabus-comparison/ai/runs/(?P<id>\d+)'   => array( array( 'GET', 'ai_run', array( 'id' => $id ) ) ),
 			'/syllabus-comparison/ai/runs/(?P<id>\d+)/step' => array( array( 'POST', 'ai_step', array( 'id' => $id ) ) ),
 			'/syllabus-comparison/ai/runs/(?P<id>\d+)/cancel' => array( array( 'POST', 'ai_cancel', array( 'id' => $id ) ) ),
 			'/syllabus-comparison/ai/runs/(?P<id>\d+)/accept-confident' => array(
@@ -616,7 +616,7 @@ class ComparisonController extends RestController {
 					),
 				),
 			),
-			'/syllabus-comparison/ai/suggestions'          => array(
+			'/syllabus-comparison/ai/suggestions'        => array(
 				array(
 					'GET',
 					'ai_suggestions',
@@ -654,7 +654,7 @@ class ComparisonController extends RestController {
 					),
 				),
 			),
-			'/syllabus-comparison/ai/suggestions/review'   => array(
+			'/syllabus-comparison/ai/suggestions/review' => array(
 				array(
 					'POST',
 					'ai_review',

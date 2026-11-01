@@ -532,13 +532,13 @@ final class SamplePreview {
 		};
 		$checks  = array(
 			'People who are not sample accounts belong to the school' => $count( 'school_memberships', "school_id=%d AND user_id NOT IN ($in)", array( $sid ) ),
-			'Other classes were added to the school'      => $count( 'classes', "school_id=%d AND id NOT IN ($own)", array( $sid ) ),
+			'Other classes were added to the school'    => $count( 'classes', "school_id=%d AND id NOT IN ($own)", array( $sid ) ),
 			'Other academic years were added to the school' => $count( 'academic_years', 'school_id=%d AND id<>%d', array( $sid, $ledger['year_id'] ) ),
-			'Someone outside the sample joined a class'   => $count( 'class_memberships', "class_id IN ($own) AND user_id NOT IN ($in)" ),
-			'Invitations were sent for the school'        => $count( 'school_invitations', 'school_id=%d', array( $sid ) ),
-			'Assignments were created for the school'     => $count( 'learning_assignments', 'school_id=%d', array( $sid ) ),
-			'Courses were linked to a sample class'       => $count( 'course_classes', "class_id IN ($own)" ),
-			'Guardian links outside the sample exist'     => $count( 'guardian_links', "school_id=%d AND (guardian_user_id NOT IN ($in) OR student_user_id NOT IN ($in))", array( $sid ) ),
+			'Someone outside the sample joined a class' => $count( 'class_memberships', "class_id IN ($own) AND user_id NOT IN ($in)" ),
+			'Invitations were sent for the school'      => $count( 'school_invitations', 'school_id=%d', array( $sid ) ),
+			'Assignments were created for the school'   => $count( 'learning_assignments', 'school_id=%d', array( $sid ) ),
+			'Courses were linked to a sample class'     => $count( 'course_classes', "class_id IN ($own)" ),
+			'Guardian links outside the sample exist'   => $count( 'guardian_links', "school_id=%d AND (guardian_user_id NOT IN ($in) OR student_user_id NOT IN ($in))", array( $sid ) ),
 		);
 		foreach ( $checks as $label => $found ) {
 			if ( $found ) {

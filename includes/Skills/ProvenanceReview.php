@@ -67,8 +67,8 @@ final class ProvenanceReview {
 		if ( count( $meta ) > 1 ) {
 			$args['meta_query'] = $meta; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Bounded, paged admin queue.
 		}
-		$total = wp_count_terms( $args );
-		$terms = get_terms(
+		$total  = wp_count_terms( $args );
+		$terms  = get_terms(
 			$args + array(
 				'number' => self::PER_PAGE,
 				'offset' => ( $page - 1 ) * self::PER_PAGE,

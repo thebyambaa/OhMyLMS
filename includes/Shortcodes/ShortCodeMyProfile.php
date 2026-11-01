@@ -189,7 +189,7 @@ class ShortCodeMyProfile {
 	 */
 	public static function invoice_details( $current_page ) {
 		$current_page = empty( $current_page ) ? 1 : absint( $current_page );
-		$order_id     = ! empty( $_GET['id'] ) ? sanitize_text_field( wp_unslash( $_GET['id'] )) : '';
+		$order_id     = ! empty( $_GET['id'] ) ? sanitize_text_field( wp_unslash( $_GET['id'] ) ) : '';
 		if ( ! $order_id ) {
 			return;
 		}

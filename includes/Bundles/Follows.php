@@ -52,8 +52,14 @@ final class Follows {
 			return Bundles::missing(); }
 		if ( ! self::is_following( $user_id, $bundle_id ) ) {
 			if ( (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . self::table() . ' WHERE user_id=%d', (int) $user_id ) ) >= self::MAX_PER_USER ) {
-				return Access::error( 'ohmylms_bundle_follow_limit', sprintf( /* translators: %d: number. */
-				__( 'You can follow at most %d bundles. Remove one first.', 'ohmylms' ), self::MAX_PER_USER ), 409 );
+				return Access::error(
+					'ohmylms_bundle_follow_limit',
+					sprintf( /* translators: %d: number. */
+						__( 'You can follow at most %d bundles. Remove one first.', 'ohmylms' ),
+						self::MAX_PER_USER
+					),
+					409
+				);
 			}
 			$inserted = $wpdb->query( $wpdb->prepare( 'INSERT IGNORE INTO ' . self::table() . ' (bundle_id, user_id, followed_at) VALUES (%d, %d, %s)', (int) $bundle_id, (int) $user_id, current_time( 'mysql', true ) ) );
 			if ( false === $inserted ) {

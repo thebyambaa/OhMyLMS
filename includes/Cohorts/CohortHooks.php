@@ -172,7 +172,7 @@ final class CohortHooks {
 	 */
 	public static function governing_cohort( $user_id, $course_id ) {
 		static $cache = array();
-		$key = (int) $user_id . ':' . (int) $course_id;
+		$key          = (int) $user_id . ':' . (int) $course_id;
 		if ( ! array_key_exists( $key, $cache ) || did_action( 'ohmylms_cohort_member_added' ) || did_action( 'ohmylms_cohort_updated' ) ) {
 			$cache[ $key ] = self::find_governing_cohort( $user_id, $course_id );
 		}

@@ -754,8 +754,8 @@ class StudentStore extends DataStore {
 	 * @throws \Exception When the operation cannot be completed.*/
 	public function complete_lesson( $student, $lesson_id, $course_id ) {
 		global $wpdb;
-		$content_type  = ohmylms_get_content_type_id_by_content_id( $lesson_id );
-		$lesson        = ohmylms_get_content_object( $content_type, $lesson_id );
+		$content_type = ohmylms_get_content_type_id_by_content_id( $lesson_id );
+		$lesson       = ohmylms_get_content_object( $content_type, $lesson_id );
 		if ( ! $lesson ) {
 			return false;
 		}

@@ -71,16 +71,16 @@ final class Chrome {
 	);
 
 	const SCROLL_TOP = array(
-		'data-wp-interactive'             => 'ohmylms/ui',
-		'data-wp-context'                 => '{"scrolled":false,"threshold":600}',
-		'data-wp-class--visible'          => 'context.scrolled',
-		'data-wp-init'                    => 'callbacks.trackScroll',
+		'data-wp-interactive'       => 'ohmylms/ui',
+		'data-wp-context'           => '{"scrolled":false,"threshold":600}',
+		'data-wp-class--visible'    => 'context.scrolled',
+		'data-wp-init'              => 'callbacks.trackScroll',
 		'data-wp-on-window--scroll' => 'callbacks.trackScroll',
 	);
 
 	const AUTH_FORM = array(
 		'data-wp-interactive'  => 'ohmylms/forms',
-		'data-wp-init---fold'   => 'callbacks.foldFilled',
+		'data-wp-init---fold'  => 'callbacks.foldFilled',
 		'data-wp-on--focusin'  => 'actions.fieldFocus',
 		'data-wp-on--focusout' => 'actions.fieldBlur',
 		'data-wp-on--input'    => 'actions.fieldInput',

@@ -473,7 +473,7 @@ class OfferButtonElement extends Element {
 			if ( empty( $current_step ) ) {
 				$current_step = get_query_var( 'step' );
 				if ( empty( $current_step ) && isset( $_GET['step'] ) ) {
-					$current_step = sanitize_text_field( wp_unslash( $_GET['step'] ));
+					$current_step = sanitize_text_field( wp_unslash( $_GET['step'] ) );
 				}
 			}
 

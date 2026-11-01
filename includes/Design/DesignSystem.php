@@ -61,10 +61,10 @@ final class DesignSystem {
 
 	/** WordPress buttons and inputs use a 2px radius ($radius-s). */
 	const WORDPRESS_RADIUS = 2;
-	const PILL           = 999;
-	const MAX_RADIUS     = 24;
-	const DENSITIES      = array( 'compact', 'comfortable', 'spacious' );
-	const SPACE_STEPS    = array( 1, 2, 3, 4, 6, 8, 12, 16 );
+	const PILL             = 999;
+	const MAX_RADIUS       = 24;
+	const DENSITIES        = array( 'compact', 'comfortable', 'spacious' );
+	const SPACE_STEPS      = array( 1, 2, 3, 4, 6, 8, 12, 16 );
 
 	/** Named roundness choices shown in the settings tab. */
 	const RADIUS_PRESETS = array(
@@ -264,7 +264,7 @@ final class DesignSystem {
 		$input     = is_array( $input ) ? $input : array();
 		$requested = isset( $input['preset'] ) && is_string( $input['preset'] ) ? $input['preset'] : self::DEFAULT_PRESET;
 		$base      = self::preset_values( $requested );
-		$colors = $base['colors'];
+		$colors    = $base['colors'];
 		if ( isset( $input['colors'] ) && is_array( $input['colors'] ) ) {
 			foreach ( self::COLOR_KEYS as $key ) {
 				$color = isset( $input['colors'][ $key ] ) ? self::hex( $input['colors'][ $key ] ) : '';
@@ -672,6 +672,7 @@ final class DesignSystem {
 	 * CSS custom properties for the settings, scoped to the plugin's admin screens.
 	 *
 	 * Under the WordPress preset the tokens follow the admin colour scheme and the WordPress and
+	 *
 	 * @wordpress/components color variables are left to WordPress.
 	 *
 	 * @param array|null  $settings Cleaned settings; the saved ones when null.
@@ -690,16 +691,16 @@ final class DesignSystem {
 		// The existing admin stylesheets and WordPress/Arco components read these names.
 		if ( $branded ) {
 			$vars += array(
-				'wp-admin-theme-color'                      => $primary,
-				'wp-admin-theme-color--rgb'                 => Tokens::rgb( $primary ),
-				'wp-admin-theme-color-darker-10'            => Tokens::mix( $primary, '#000000', 0.15 ),
-				'wp-admin-theme-color-darker-20'            => Tokens::mix( $primary, '#000000', 0.3 ),
-				'wp-components-color-accent'                => $primary,
-				'wp-components-color-accent-darker-10'      => Tokens::mix( $primary, '#000000', 0.15 ),
-				'wp-components-color-accent-darker-20'      => Tokens::mix( $primary, '#000000', 0.3 ),
-				'wp-components-color-accent-inverted'       => $on,
-				'wp-components-color-foreground'            => $c['heading'],
-				'wp-components-color-subdued'               => $c['muted'],
+				'wp-admin-theme-color'                 => $primary,
+				'wp-admin-theme-color--rgb'            => Tokens::rgb( $primary ),
+				'wp-admin-theme-color-darker-10'       => Tokens::mix( $primary, '#000000', 0.15 ),
+				'wp-admin-theme-color-darker-20'       => Tokens::mix( $primary, '#000000', 0.3 ),
+				'wp-components-color-accent'           => $primary,
+				'wp-components-color-accent-darker-10' => Tokens::mix( $primary, '#000000', 0.15 ),
+				'wp-components-color-accent-darker-20' => Tokens::mix( $primary, '#000000', 0.3 ),
+				'wp-components-color-accent-inverted'  => $on,
+				'wp-components-color-foreground'       => $c['heading'],
+				'wp-components-color-subdued'          => $c['muted'],
 				'wp-components-button-color-secondary-text' => $primary,
 			);
 		}
@@ -716,7 +717,7 @@ final class DesignSystem {
 			'ohmylms-admin-border'        => $c['border'],
 			'ohmylms-admin-radius'        => $radii['card'] . 'px',
 		);
-		$css = 'body.' . self::BODY_CLASS . '{';
+		$css   = 'body.' . self::BODY_CLASS . '{';
 		foreach ( $vars as $name => $value ) {
 			$css .= '--' . $name . ':' . $value . ';';
 		}

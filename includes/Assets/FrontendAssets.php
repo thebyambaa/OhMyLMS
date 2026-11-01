@@ -159,7 +159,6 @@ class FrontendAssets extends Assets {
 			wp_enqueue_style( 'ohmylms-frontend' );
 			wp_enqueue_style( 'ohmylms-general' );
 		}
-
 	}
 
 	/**

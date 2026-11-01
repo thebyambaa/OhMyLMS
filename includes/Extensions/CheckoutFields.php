@@ -85,8 +85,13 @@ final class CheckoutFields {
 				continue; }
 			$valid = rest_validate_value_from_schema( $value, $field['schema'], $id );
 			if ( ( '' === $value && ! empty( $field['required'] ) ) || is_wp_error( $valid ) ) {
-				$errors->add( 'ohmylms_extension_' . $id, sprintf( /* translators: %s: text value. */
-				__( 'Please check %s.', 'ohmylms' ), $field['label'] ) );
+				$errors->add(
+					'ohmylms_extension_' . $id,
+					sprintf( /* translators: %s: text value. */
+						__( 'Please check %s.', 'ohmylms' ),
+						$field['label']
+					)
+				);
 			}
 		}
 	}

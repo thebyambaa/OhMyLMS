@@ -88,8 +88,14 @@ final class Links {
 			return Access::error( 'ohmylms_link_invalid', __( 'That content does not exist.', 'ohmylms' ), 404 ); }
 		$count = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . self::table() . ' WHERE item_id=%d', (int) $item_id ) );
 		if ( $count >= self::MAX_PER_ITEM ) {
-			return Access::error( 'ohmylms_link_limit', sprintf( /* translators: %d: number. */
-			__( 'A curriculum item can link to at most %d pieces of content.', 'ohmylms' ), self::MAX_PER_ITEM ), 409 ); }
+			return Access::error(
+				'ohmylms_link_limit',
+				sprintf( /* translators: %d: number. */
+					__( 'A curriculum item can link to at most %d pieces of content.', 'ohmylms' ),
+					self::MAX_PER_ITEM
+				),
+				409
+			); }
 		$ok = $wpdb->query( $wpdb->prepare( 'INSERT IGNORE INTO ' . self::table() . ' (item_id, object_type, object_id, created_by, created_at) VALUES (%d, %s, %d, %d, %s)', (int) $item_id, $type, (int) $object_id, get_current_user_id(), current_time( 'mysql', true ) ) );
 		if ( false === $ok ) {
 			return Access::error( 'ohmylms_link_failed', __( 'The link could not be saved.', 'ohmylms' ), 500 ); }

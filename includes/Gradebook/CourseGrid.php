@@ -149,8 +149,8 @@ final class CourseGrid {
 				'overridden' => 0,
 			);
 			foreach ( $items as $item ) {
-				$override = $manual[ $user ][ $item['id'] ] ?? null;
-				$cell     = GradeMath::cell(
+				$override             = $manual[ $user ][ $item['id'] ] ?? null;
+				$cell                 = GradeMath::cell(
 					array(
 						'assigned' => Items::assigned( $item, $mine ),
 						'graded'   => $attempts[ $user ][ $item['id'] ]['graded'] ?? null,
@@ -364,22 +364,22 @@ final class CourseGrid {
 			) : null;
 		};
 		return array(
-			'id'            => $row['id'],
-			'name'          => $row['name'],
-			'status'        => $row['status'],
-			'source'        => $row['source'],
-			'sources'       => $row['sources'],
-			'via'           => $row['via'] ? $class( $row['via'] ) : null,
-			'rosters'       => array_values( array_filter( array_map( $class, $row['rosters'] ) ) ),
-			'total'         => array(
+			'id'      => $row['id'],
+			'name'    => $row['name'],
+			'status'  => $row['status'],
+			'source'  => $row['source'],
+			'sources' => $row['sources'],
+			'via'     => $row['via'] ? $class( $row['via'] ) : null,
+			'rosters' => array_values( array_filter( array_map( $class, $row['rosters'] ) ) ),
+			'total'   => array(
 				'percent'          => $row['total']['p'],
 				'letter'           => $row['total']['l'],
 				'computed_percent' => $row['total']['cp'],
 				'mode'             => $row['total']['mode'],
 				'weights_class'    => $row['total']['w'],
 			),
-			'counts'        => $row['counts'],
-			'cells'         => (object) $cells,
+			'counts'  => $row['counts'],
+			'cells'   => (object) $cells,
 		);
 	}
 
@@ -397,9 +397,9 @@ final class CourseGrid {
 		foreach ( $grid['classes'] as $class ) {
 			$classes[ (int) $class['id'] ] = $class;
 		}
-		$type    = (string) ( $args['type'] ?? '' );
-		$module  = (int) ( $args['module'] ?? 0 );
-		$columns = array_values(
+		$type     = (string) ( $args['type'] ?? '' );
+		$module   = (int) ( $args['module'] ?? 0 );
+		$columns  = array_values(
 			array_filter(
 				$grid['items'],
 				static function ( $item ) use ( $type, $module ) {
@@ -440,8 +440,8 @@ final class CourseGrid {
 				}
 			)
 		);
-		$orderby = in_array( $args['orderby'] ?? 'name', array( 'name', 'total', 'source' ), true ) ? (string) ( $args['orderby'] ?? 'name' ) : 'name';
-		$desc    = 'desc' === ( $args['order'] ?? 'asc' );
+		$orderby  = in_array( $args['orderby'] ?? 'name', array( 'name', 'total', 'source' ), true ) ? (string) ( $args['orderby'] ?? 'name' ) : 'name';
+		$desc     = 'desc' === ( $args['order'] ?? 'asc' );
 		usort(
 			$rows,
 			static function ( $a, $b ) use ( $orderby, $desc ) {

@@ -368,8 +368,8 @@ class GatewayAuthorizenet extends PaymentGateway {
 		}
 
 		// Get opaque data from POST.
-		$opaque_data_descriptor = isset( $_POST['authorize_net_opaque_data_descriptor'] ) ? sanitize_text_field( wp_unslash( $_POST['authorize_net_opaque_data_descriptor'] )) : '';
-		$opaque_data_value      = isset( $_POST['authorize_net_opaque_data_value'] ) ? sanitize_text_field( wp_unslash( $_POST['authorize_net_opaque_data_value'] )) : '';
+		$opaque_data_descriptor = isset( $_POST['authorize_net_opaque_data_descriptor'] ) ? sanitize_text_field( wp_unslash( $_POST['authorize_net_opaque_data_descriptor'] ) ) : '';
+		$opaque_data_value      = isset( $_POST['authorize_net_opaque_data_value'] ) ? sanitize_text_field( wp_unslash( $_POST['authorize_net_opaque_data_value'] ) ) : '';
 
 		// Validate that opaque data exists.
 		if ( empty( $opaque_data_descriptor ) || empty( $opaque_data_value ) ) {
@@ -642,7 +642,7 @@ class GatewayAuthorizenet extends PaymentGateway {
 			);
 		}
 
-		$nonce = isset( $_POST['security'] ) ? sanitize_text_field( wp_unslash( $_POST['security'] )) : '';
+		$nonce = isset( $_POST['security'] ) ? sanitize_text_field( wp_unslash( $_POST['security'] ) ) : '';
 		if ( ! wp_verify_nonce( $nonce, 'ohmylms_authorize_checkout_nonce' ) ) {
 			return array(
 				'result'  => 'failure',
@@ -650,8 +650,8 @@ class GatewayAuthorizenet extends PaymentGateway {
 			);
 		}
 
-		$opaque_data_descriptor = isset( $_POST['authorize_net_opaque_data_descriptor'] ) ? sanitize_text_field( wp_unslash( $_POST['authorize_net_opaque_data_descriptor'] )) : '';
-		$opaque_data_value      = isset( $_POST['authorize_net_opaque_data_value'] ) ? sanitize_text_field( wp_unslash( $_POST['authorize_net_opaque_data_value'] )) : '';
+		$opaque_data_descriptor = isset( $_POST['authorize_net_opaque_data_descriptor'] ) ? sanitize_text_field( wp_unslash( $_POST['authorize_net_opaque_data_descriptor'] ) ) : '';
+		$opaque_data_value      = isset( $_POST['authorize_net_opaque_data_value'] ) ? sanitize_text_field( wp_unslash( $_POST['authorize_net_opaque_data_value'] ) ) : '';
 
 		if ( empty( $opaque_data_descriptor ) || empty( $opaque_data_value ) ) {
 			return array(

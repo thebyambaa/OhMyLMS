@@ -741,8 +741,8 @@ final class Cohorts {
 		if ( 'archived' === $row['status'] ) {
 			return self::error( 'ohmylms_cohort_archived', __( 'An archived cohort takes no new members.', 'ohmylms' ), 409 );
 		}
-		$from = ! empty( $row['enrollment_start'] ) ? $row['enrollment_start'] : '1000-01-01 00:00:00';
-		$to   = ! empty( $row['enrollment_end'] ) ? $row['enrollment_end'] : ( ! empty( $row['end_date'] ) ? $row['end_date'] : '9999-12-31 23:59:59' );
+		$from         = ! empty( $row['enrollment_start'] ) ? $row['enrollment_start'] : '1000-01-01 00:00:00';
+		$to           = ! empty( $row['enrollment_end'] ) ? $row['enrollment_end'] : ( ! empty( $row['end_date'] ) ? $row['end_date'] : '9999-12-31 23:59:59' );
 		$scope_column = (int) $row['membership_id'] > 0 ? 'membership_id' : 'course_id';
 		$ref          = (int) $row[ $scope_column ];
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery

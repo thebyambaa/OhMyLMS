@@ -120,8 +120,16 @@ class EmailVerification {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title><?php echo esc_html( sprintf( /* translators: %s: text value. */
-__( 'Confirm your email for %s', 'ohmylms' ), $data['site_name'] ) ); ?></title>
+<title>
+		<?php
+		echo esc_html(
+			sprintf( /* translators: %s: text value. */
+				__( 'Confirm your email for %s', 'ohmylms' ),
+				$data['site_name']
+			)
+		);
+		?>
+		</title>
 </head>
 <body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background-color:<?php echo esc_attr( $bg_color ); ?>;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background-color:<?php echo esc_attr( $bg_color ); ?>;padding:40px 20px;">
@@ -149,12 +157,24 @@ __( 'Confirm your email for %s', 'ohmylms' ), $data['site_name'] ) ); ?></title>
 </div>
 
 <p style="margin:0 0 16px;font-size:16px;color:<?php echo esc_attr( $text_color ); ?>;line-height:1.6;">
-		<?php echo esc_html( sprintf( /* translators: %s: text value. */
-		__( 'Hi %s,', 'ohmylms' ), $data['user_name'] ) ); ?>
+		<?php
+		echo esc_html(
+			sprintf( /* translators: %s: text value. */
+				__( 'Hi %s,', 'ohmylms' ),
+				$data['user_name']
+			)
+		);
+		?>
 </p>
 <p style="margin:0 0 24px;font-size:16px;color:<?php echo esc_attr( $text_color ); ?>;line-height:1.6;">
-		<?php echo esc_html( sprintf( /* translators: %s: text value. */
-		__( 'Thanks for joining %s! Please verify your email address to activate your account and access your courses.', 'ohmylms' ), $data['site_name'] ) ); ?>
+		<?php
+		echo esc_html(
+			sprintf( /* translators: %s: text value. */
+				__( 'Thanks for joining %s! Please verify your email address to activate your account and access your courses.', 'ohmylms' ),
+				$data['site_name']
+			)
+		);
+		?>
 </p>
 
 <div style="text-align:center;margin:32px 0;">

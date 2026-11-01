@@ -92,7 +92,7 @@ final class Enrolments {
 			GROUP BY day",
 			$args
 		);
-		$days = array();
+		$days    = array();
 		foreach ( $rows as $row ) {
 			$days[ (string) $row['day'] ] = (int) $row['n'];
 		}
@@ -211,7 +211,7 @@ final class Enrolments {
 			GROUP BY p.content_id",
 			$args
 		);
-		$items = array();
+		$items   = array();
 		foreach ( $rows as $row ) {
 			$items[ (int) $row['content_id'] ] = (int) $row['n'];
 		}

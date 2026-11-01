@@ -18,7 +18,7 @@ defined( 'ABSPATH' ) || exit();
 	$title = '';
 	$total = 0;
 if ( isset( $_GET['membership_id'] ) ) {
-	$membership_id = sanitize_text_field( wp_unslash( $_GET['membership_id'] ));
+	$membership_id = sanitize_text_field( wp_unslash( $_GET['membership_id'] ) );
 	$title         = get_the_title( $membership_id );
 	$total         = MembershipHelper::get_plan_price( $membership_id );
 } else {

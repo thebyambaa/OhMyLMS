@@ -189,8 +189,12 @@ final class DraftWriter {
 		foreach ( array( 'name', 'description', 'slug' ) as $field ) {
 			if ( isset( $data[ $field ] ) ) {
 				if ( ! is_scalar( $data[ $field ] ) ) {
-					return self::invalid( sprintf( /* translators: %s: text value. */
-					__( '%s must be text.', 'ohmylms' ), $field ) ); }
+					return self::invalid(
+						sprintf( /* translators: %s: text value. */
+							__( '%s must be text.', 'ohmylms' ),
+							$field
+						)
+					); }
 				$value                    = (string) $data[ $field ];
 				$plan['fields'][ $field ] = 'slug' === $field ? sanitize_title( $value ) : ( $unfiltered ? $value : wp_kses_post( $value ) );
 			}
@@ -203,8 +207,14 @@ final class DraftWriter {
 				return self::invalid( __( 'Question settings must be an object.', 'ohmylms' ) ); }
 			$type = (string) ( $data['settings']['type'] ?? '' );
 			if ( '' !== $type && ! Registry::get( 'question', $type ) ) {
-				return new \WP_Error( 'ohmylms_question_type_missing', sprintf( /* translators: %s: text value. */
-				__( 'Question type "%s" is not available. Enable its extension before saving.', 'ohmylms' ), $type ), array( 'status' => 400 ) );
+				return new \WP_Error(
+					'ohmylms_question_type_missing',
+					sprintf( /* translators: %s: text value. */
+						__( 'Question type "%s" is not available. Enable its extension before saving.', 'ohmylms' ),
+						$type
+					),
+					array( 'status' => 400 )
+				);
 			}
 			$probe = new Question();
 			$probe->set_settings( $data['settings'] );
@@ -217,8 +227,12 @@ final class DraftWriter {
 		foreach ( array( 'thumbnail_id', 'video_id' ) as $field ) {
 			if ( isset( $data[ $field ] ) ) {
 				if ( '' !== $data[ $field ] && ! is_numeric( $data[ $field ] ) ) {
-					return self::invalid( sprintf( /* translators: %s: text value. */
-					__( '%s must be a media ID.', 'ohmylms' ), $field ) ); }
+					return self::invalid(
+						sprintf( /* translators: %s: text value. */
+							__( '%s must be a media ID.', 'ohmylms' ),
+							$field
+						)
+					); }
 				$plan['fields'][ $field ] = '' === $data[ $field ] ? '' : (int) $data[ $field ];
 			}
 		}

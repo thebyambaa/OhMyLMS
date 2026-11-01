@@ -115,7 +115,7 @@ class NewOrder {
 	private function send( $order, $data, $to ) {
 		$settings = Emails::get_template_settings( 'student_new_order', $this->default_settings() );
 		$subject  = isset( $settings['subject'] ) ? $settings['subject'] : '';
-		$subject = Emails::replace_merge_tags( $subject, $order );
+		$subject  = Emails::replace_merge_tags( $subject, $order );
 
 		$email_settings = Emails::get_email_settings();
 

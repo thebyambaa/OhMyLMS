@@ -177,7 +177,9 @@ class OhMyLMS_Gateway_Stripe_Intents extends PaymentGateway {
 		$fields[]        = array(
 			'title'             => __( 'Payment Methods', 'ohmylms' ),
 			'short_description' => sprintf( /* translators: %s: text value. */
-			__( 'Select which payment methods to enable for your store. Current currency: %s. Only methods supported by your currency are shown.', 'ohmylms' ), strtoupper( $currency ) ),
+				__( 'Select which payment methods to enable for your store. Current currency: %s. Only methods supported by your currency are shown.', 'ohmylms' ),
+				strtoupper( $currency )
+			),
 			'input_type'        => 'section_header',
 			'option_name'       => 'payment_methods_section',
 		);
@@ -277,7 +279,9 @@ class OhMyLMS_Gateway_Stripe_Intents extends PaymentGateway {
 		ob_start();
 		if ( 'yes' === $this->testmode ) {
 			$description .= ' ' . sprintf( /* translators: %s: text value. */
-			__( 'TEST MODE ENABLED. In test mode, you can use the card number 4242424242424242 with any CVC and a valid expiration date or check the <a href="%s" target="_blank">Testing Stripe documentation</a> for more card numbers.', 'ohmylms' ), 'https://stripe.com/docs/testing' );
+				__( 'TEST MODE ENABLED. In test mode, you can use the card number 4242424242424242 with any CVC and a valid expiration date or check the <a href="%s" target="_blank">Testing Stripe documentation</a> for more card numbers.', 'ohmylms' ),
+				'https://stripe.com/docs/testing'
+			);
 		}
 		if ( $description ) {
 			echo wpautop( wp_kses_post( $description ) );
@@ -402,8 +406,12 @@ class OhMyLMS_Gateway_Stripe_Intents extends PaymentGateway {
 				// Update the default payment method for the customer.
 				StripeApi::update_customer_default_payment_method( $customer, $payment_method_id );
 			} catch ( \Exception $e ) {
-				$order->add_order_note( sprintf( /* translators: %s: text value. */
-				__( 'Stripe PaymentMethod attachment failed: %s', 'ohmylms' ), $e->getMessage() ) );
+				$order->add_order_note(
+					sprintf( /* translators: %s: text value. */
+						__( 'Stripe PaymentMethod attachment failed: %s', 'ohmylms' ),
+						$e->getMessage()
+					)
+				);
 			}
 
 			// Now create the PaymentIntent.
@@ -435,23 +443,35 @@ class OhMyLMS_Gateway_Stripe_Intents extends PaymentGateway {
 				$error_message = isset( $intent->last_payment_error->message )
 					? $intent->last_payment_error->message
 					: __( 'Payment failed. Please try another payment method.', 'ohmylms' );
-				$order->add_order_note( sprintf( /* translators: %s: text value. */
-				__( 'Stripe payment failed: %s', 'ohmylms' ), $error_message ) );
+				$order->add_order_note(
+					sprintf( /* translators: %s: text value. */
+						__( 'Stripe payment failed: %s', 'ohmylms' ),
+						$error_message
+					)
+				);
 				return array(
 					'result'  => 'failure',
 					'message' => $error_message,
 				);
 			} else {
-				$order->add_order_note( sprintf( /* translators: %s: text value. */
-				__( 'Stripe PaymentIntent has an unexpected status: %s', 'ohmylms' ), $intent->status ?? 'Unknown' ) );
+				$order->add_order_note(
+					sprintf( /* translators: %s: text value. */
+						__( 'Stripe PaymentIntent has an unexpected status: %s', 'ohmylms' ),
+						$intent->status ?? 'Unknown'
+					)
+				);
 				return array(
 					'result'  => 'failure',
 					'message' => __( 'An unexpected error occurred with the payment gateway.', 'ohmylms' ),
 				);
 			}
 		} catch ( \Exception $e ) {
-			$order->add_order_note( sprintf( /* translators: %s: text value. */
-			__( 'Stripe API Error: %s', 'ohmylms' ), $e->getMessage() ) );
+			$order->add_order_note(
+				sprintf( /* translators: %s: text value. */
+					__( 'Stripe API Error: %s', 'ohmylms' ),
+					$e->getMessage()
+				)
+			);
 			return array(
 				'result'  => 'failure',
 				'message' => __( 'There was an error processing your payment. Please try again or contact support.', 'ohmylms' ),
@@ -539,8 +559,12 @@ class OhMyLMS_Gateway_Stripe_Intents extends PaymentGateway {
 								}
 							}
 						} catch ( \Exception $e ) {
-							$order->add_order_note( sprintf( /* translators: %s: text value. */
-							__( 'Error verifying payment status: %s', 'ohmylms' ), $e->getMessage() ) );
+							$order->add_order_note(
+								sprintf( /* translators: %s: text value. */
+									__( 'Error verifying payment status: %s', 'ohmylms' ),
+									$e->getMessage()
+								)
+							);
 						}
 					}
 				}
@@ -777,8 +801,12 @@ class OhMyLMS_Gateway_Stripe_Intents extends PaymentGateway {
 
 		} catch ( \Exception $e ) {
 			if ( isset( $order ) && method_exists( $order, 'add_order_note' ) ) {
-				$order->add_order_note( sprintf( /* translators: %s: text value. */
-				__( 'Refund failed: %s', 'ohmylms' ), $e->getMessage() ) );
+				$order->add_order_note(
+					sprintf( /* translators: %s: text value. */
+						__( 'Refund failed: %s', 'ohmylms' ),
+						$e->getMessage()
+					)
+				);
 			}
 			return array(
 				'result'  => 'failure',
@@ -1023,7 +1051,10 @@ class OhMyLMS_Gateway_Stripe_Intents extends PaymentGateway {
 				'off_session'         => 'one_off',
 				'confirmation_method' => 'automatic',
 				'description'         => sprintf( /* translators: %1$s: text value; %2$s: text value. */
-				__( 'Subscription Renewal - Order #%1$s, Subscription #%2$s', 'ohmylms' ), $original_order_id, $subscription_id ),
+					__( 'Subscription Renewal - Order #%1$s, Subscription #%2$s', 'ohmylms' ),
+					$original_order_id,
+					$subscription_id
+				),
 				'metadata'            => array(
 					'order_id'        => $renewal_order_id,
 					'subscription_id' => $subscription_id,
@@ -1054,7 +1085,9 @@ class OhMyLMS_Gateway_Stripe_Intents extends PaymentGateway {
 				return array(
 					'result'   => 'failure',
 					'message'  => sprintf( /* translators: %s: text value. */
-					__( 'Stripe payment intent status: %s', 'ohmylms' ), $payment_intent->status ),
+						__( 'Stripe payment intent status: %s', 'ohmylms' ),
+						$payment_intent->status
+					),
 					'order_id' => $renewal_order_id,
 				);
 			}
@@ -1122,7 +1155,9 @@ class OhMyLMS_Gateway_Stripe_Intents extends PaymentGateway {
 				'off_session'         => 'one_off',
 				'confirmation_method' => 'automatic',
 				'description'         => sprintf( /* translators: %s: text value. */
-				__( 'Upsell/Downsell - Order #%s', 'ohmylms' ), $original_order->get_id() ),
+					__( 'Upsell/Downsell - Order #%s', 'ohmylms' ),
+					$original_order->get_id()
+				),
 				'metadata'            => array(
 					'order_id'   => $original_order->get_id(),
 					'type'       => 'upsell_downsell',
@@ -1182,12 +1217,22 @@ class OhMyLMS_Gateway_Stripe_Intents extends PaymentGateway {
 				);
 			} else {
 				$status = $payment_intent->status ?? 'unknown';
-				return new \WP_Error( 'payment_incomplete', sprintf( /* translators: %s: text value. */
-				__( 'Payment intent status: %s', 'ohmylms' ), $status ) );
+				return new \WP_Error(
+					'payment_incomplete',
+					sprintf( /* translators: %s: text value. */
+						__( 'Payment intent status: %s', 'ohmylms' ),
+						$status
+					)
+				);
 			}
 		} catch ( \Exception $e ) {
-			return new \WP_Error( 'payment_exception', sprintf( /* translators: %s: text value. */
-			__( 'Stripe payment failed: %s', 'ohmylms' ), $e->getMessage() ) );
+			return new \WP_Error(
+				'payment_exception',
+				sprintf( /* translators: %s: text value. */
+					__( 'Stripe payment failed: %s', 'ohmylms' ),
+					$e->getMessage()
+				)
+			);
 		}
 	}
 

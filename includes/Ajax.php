@@ -133,7 +133,12 @@ class Ajax {
 
 		$membership_id = ohmylms_clean( wp_unslash( $_POST['membership_id'] ?? '' ) );
 		if ( \OhMyLMS\Membership\FreeSale::active( ohmylms_get_membership( absint( $membership_id ) ) ) ) {
-			wp_send_json( array( 'status' => 'success', 'redirect_url' => \OhMyLMS\Student\Hub::url( 'membership', 'plans' ) ) );
+			wp_send_json(
+				array(
+					'status'       => 'success',
+					'redirect_url' => \OhMyLMS\Student\Hub::url( 'membership', 'plans' ),
+				)
+			);
 		}
 		ecommerce()->membership()->request_membership( $membership_id );
 		die();
@@ -724,9 +729,9 @@ class Ajax {
 	 */
 	public static function lesson_completed() {
 		check_ajax_referer( 'lesson_completed_nonce', 'nonce' );
-		$lesson_id             = ohmylms_clean( wp_unslash( $_POST['lesson_id'] ?? '' ) );
-		$student_id            = get_current_user_id();
-		$student               = new Student( $student_id );
+		$lesson_id  = ohmylms_clean( wp_unslash( $_POST['lesson_id'] ?? '' ) );
+		$student_id = get_current_user_id();
+		$student    = new Student( $student_id );
 		// Enrolment, drip, prerequisites and the sequential lock, as the lesson page applies them.
 		$course_id = \OhMyLMS\Learning\LessonGate::check_completion( (int) $lesson_id, $student_id );
 		if ( is_wp_error( $course_id ) ) {

@@ -30,7 +30,8 @@ $level        = $course->get_level();
 					$total = $course->get_total_enrolled_users();
 					printf(
 						esc_html( /* translators: %d: number. */
-						_n( '%d Student', '%d Students', $total, 'ohmylms' ) ),
+							_n( '%d Student', '%d Students', $total, 'ohmylms' )
+						),
 						$total
 					);
 				?>
@@ -77,7 +78,8 @@ $level        = $course->get_level();
 						'(%s)',
 						sprintf(
 							esc_html( /* translators: %d: number. */
-							_n( '%d', '%d', $rating_count, 'ohmylms' ) ),
+								_n( '%d', '%d', $rating_count, 'ohmylms' )
+							),
 							$rating_count
 						)
 					);

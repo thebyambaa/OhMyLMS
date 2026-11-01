@@ -306,7 +306,7 @@ final class PaperModel {
 			}
 			return $list;
 		};
-		$items = $apply( $items );
+		$items     = $apply( $items );
 		return array(
 			'items'     => $items,
 			'total'     => $total,
@@ -655,8 +655,8 @@ final class PaperModel {
 				}
 				return $model;
 			case 'reorder':
-				$texts = self::texts( $rows, 'answer' );
-				$order = $is_public ? array_keys( $texts ) : PrintPaper::jumble( $texts, $seed, true );
+				$texts           = self::texts( $rows, 'answer' );
+				$order           = $is_public ? array_keys( $texts ) : PrintPaper::jumble( $texts, $seed, true );
 				$model['layout'] = 'reorder';
 				$model['items']  = array();
 				foreach ( $order as $index => $from ) {
@@ -686,10 +686,10 @@ final class PaperModel {
 				$slots   = array();
 				$numbers = array();
 				foreach ( array_values( (array) ( $settings['slots'] ?? array() ) ) as $index => $slot ) {
-					$slot     = (array) $slot;
-					$id       = self::text( $slot['id'] ?? '' );
-					$choices  = self::texts( (array) ( $slot['choices'] ?? array() ) );
-					$printed  = array();
+					$slot    = (array) $slot;
+					$id      = self::text( $slot['id'] ?? '' );
+					$choices = self::texts( (array) ( $slot['choices'] ?? array() ) );
+					$printed = array();
 					foreach ( PrintPaper::jumble( $choices, $seed . '|' . $id ) as $from ) {
 						$printed[] = $choices[ $from ];
 					}
@@ -702,7 +702,7 @@ final class PaperModel {
 					if ( $answers ) {
 						$entry['answers'] = self::texts( is_array( $slot['answers'] ?? null ) ? $slot['answers'] : ( ! empty( $slot['answer'] ) ? array( $slot['answer'] ) : array() ) );
 					}
-					$slots[]                = $entry;
+					$slots[]                 = $entry;
 					$numbers[ $entry['id'] ] = (string) $entry['number'];
 				}
 				$model['layout'] = 'dropdown';
@@ -824,7 +824,7 @@ final class PaperModel {
 						}
 					}
 				}
-				$clues = static function ( $direction ) use ( $settings ) {
+				$clues            = static function ( $direction ) use ( $settings ) {
 					$list = array_values(
 						array_filter(
 							(array) ( $settings['clues'] ?? array() ),
@@ -958,9 +958,9 @@ final class PaperModel {
 		switch ( $type ) {
 			case 'number-line':
 			case 'fill-level':
-				$jug    = 'fill-level' === $type;
-				$step   = max( 1e-6, self::num( $s['step'] ?? null, $jug ? 50 : 1 ) );
-				$figure = array(
+				$jug             = 'fill-level' === $type;
+				$step            = max( 1e-6, self::num( $s['step'] ?? null, $jug ? 50 : 1 ) );
+				$figure          = array(
 					'figure' => $type,
 					'min'    => self::num( $s['min'] ?? null, 0 ),
 					'max'    => self::num( $s['max'] ?? null, $jug ? 1000 : 10 ),

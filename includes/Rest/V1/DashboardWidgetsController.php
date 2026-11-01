@@ -143,8 +143,8 @@ class DashboardWidgetsController extends WP_REST_Controller {
 					);
 				}
 			);
-			$hit  = Cache::last_was_hit();
-			$data = $widget->present( (array) $entry['data'], $scope, $period, $user_id );
+			$hit   = Cache::last_was_hit();
+			$data  = $widget->present( (array) $entry['data'], $scope, $period, $user_id );
 		} catch ( RuntimeException $exception ) {
 			return new WP_Error( 'ohmylms_dashboard_query_failed', __( 'The dashboard could not be loaded.', 'ohmylms' ), array( 'status' => 500 ) );
 		}

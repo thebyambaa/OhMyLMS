@@ -178,7 +178,6 @@ class EngagementHook {
 	/**
 	 * After point added.
 	 *
-	 *
 	 * @param mixed $user_id User identifier.
 	 * @param mixed $points Points.
 	 */

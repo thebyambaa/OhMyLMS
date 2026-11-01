@@ -287,7 +287,7 @@ class AccountHubClassWorkController extends AccountHubController {
 		if ( is_wp_error( $class ) ) {
 			return $class;
 		}
-		$query  = new \WP_Query(
+		$query = new \WP_Query(
 			array(
 				'post_type'      => OHMYLMS_COURSE_CPT,
 				'post_status'    => 'publish',
@@ -299,7 +299,7 @@ class AccountHubClassWorkController extends AccountHubController {
 				'no_found_rows'  => false,
 			)
 		);
-		$data   = array();
+		$data  = array();
 		foreach ( $query->posts as $post ) {
 			$data[] = array(
 				'id'    => (int) $post->ID,

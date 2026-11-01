@@ -106,7 +106,9 @@ final class SyllabusRows {
 			$errors[] = array(
 				'line'    => 0,
 				'message' => sprintf( /* translators: %d: number. */
-				__( 'An import can have at most %d rows. Split the file and import it in parts.', 'ohmylms' ), self::MAX_ROWS ),
+					__( 'An import can have at most %d rows. Split the file and import it in parts.', 'ohmylms' ),
+					self::MAX_ROWS
+				),
 			);
 			return array(
 				'rows'     => array(),
@@ -150,34 +152,52 @@ final class SyllabusRows {
 				$problems[] = __( 'A skill category can have at most 60 characters.', 'ohmylms' ); }
 			if ( '' === $skill && '' !== $skill_code ) {
 				$problems[] = sprintf( /* translators: %s: text value. */
-				__( 'Skill code “%s” has no skill name.', 'ohmylms' ), $skill_code ); }
+					__( 'Skill code “%s” has no skill name.', 'ohmylms' ),
+					$skill_code
+				); }
 			if ( count( $path ) > self::MAX_DEPTH ) {
 				$problems[] = sprintf( /* translators: %d: number. */
-				__( 'A content path can have at most %d levels.', 'ohmylms' ), self::MAX_DEPTH ); }
+					__( 'A content path can have at most %d levels.', 'ohmylms' ),
+					self::MAX_DEPTH
+				); }
 			foreach ( $path as $name ) {
 				if ( self::length( $name ) > self::NAME_LIMIT ) {
 					$problems[] = sprintf( /* translators: %d: number. */
-					__( 'A content name can have at most %d characters.', 'ohmylms' ), self::NAME_LIMIT );
+						__( 'A content name can have at most %d characters.', 'ohmylms' ),
+						self::NAME_LIMIT
+					);
 					break; }
 			}
 			if ( self::length( $group ) > self::NAME_LIMIT ) {
 				$problems[] = sprintf( /* translators: %d: number. */
-				__( 'A skill group name can have at most %d characters.', 'ohmylms' ), self::NAME_LIMIT ); }
+					__( 'A skill group name can have at most %d characters.', 'ohmylms' ),
+					self::NAME_LIMIT
+				); }
 			if ( self::length( $skill ) > self::NAME_LIMIT ) {
 				$problems[] = sprintf( /* translators: %d: number. */
-				__( 'A skill name can have at most %d characters.', 'ohmylms' ), self::NAME_LIMIT ); }
+					__( 'A skill name can have at most %d characters.', 'ohmylms' ),
+					self::NAME_LIMIT
+				); }
 			if ( self::length( $content_code ) > self::CONTENT_CODE_LIMIT ) {
 				$problems[] = sprintf( /* translators: %d: number. */
-				__( 'A content code can have at most %d characters.', 'ohmylms' ), self::CONTENT_CODE_LIMIT ); }
+					__( 'A content code can have at most %d characters.', 'ohmylms' ),
+					self::CONTENT_CODE_LIMIT
+				); }
 			if ( self::length( $group_code ) > self::GROUP_CODE_LIMIT ) {
 				$problems[] = sprintf( /* translators: %d: number. */
-				__( 'A skill group code can have at most %d characters.', 'ohmylms' ), self::GROUP_CODE_LIMIT ); }
+					__( 'A skill group code can have at most %d characters.', 'ohmylms' ),
+					self::GROUP_CODE_LIMIT
+				); }
 			if ( self::length( $skill_code ) > self::SKILL_CODE_LIMIT ) {
 				$problems[] = sprintf( /* translators: %d: number. */
-				__( 'A skill code can have at most %d characters.', 'ohmylms' ), self::SKILL_CODE_LIMIT ); }
+					__( 'A skill code can have at most %d characters.', 'ohmylms' ),
+					self::SKILL_CODE_LIMIT
+				); }
 			if ( self::length( $description ) > self::DESCRIPTION_LIMIT ) {
 				$problems[] = sprintf( /* translators: %d: number. */
-				__( 'Notes can have at most %d characters.', 'ohmylms' ), self::DESCRIPTION_LIMIT ); }
+					__( 'Notes can have at most %d characters.', 'ohmylms' ),
+					self::DESCRIPTION_LIMIT
+				); }
 			if ( $problems ) {
 				foreach ( $problems as $message ) {
 					$errors[] = array(

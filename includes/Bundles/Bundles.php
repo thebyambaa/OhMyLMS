@@ -122,8 +122,14 @@ final class Bundles {
 		if ( is_wp_error( $fields ) ) {
 			return $fields; }
 		if ( (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . self::table() ) >= self::MAX_BUNDLES ) {
-			return Access::error( 'ohmylms_bundle_limit', sprintf( /* translators: %d: number. */
-			__( 'You can have at most %d course bundles.', 'ohmylms' ), self::MAX_BUNDLES ), 409 ); }
+			return Access::error(
+				'ohmylms_bundle_limit',
+				sprintf( /* translators: %d: number. */
+					__( 'You can have at most %d course bundles.', 'ohmylms' ),
+					self::MAX_BUNDLES
+				),
+				409
+			); }
 		$now      = current_time( 'mysql', true );
 		$position = 1 + (int) $wpdb->get_var( 'SELECT MAX(position) FROM ' . self::table() );
 		$row      = $fields + array(
@@ -217,8 +223,14 @@ final class Bundles {
 		if ( null !== $expected_updated_at && '' !== $expected_updated_at && (string) $expected_updated_at !== $bundle['updated_at'] ) {
 			return self::stale(); }
 		if ( count( $members ) > self::MAX_MEMBERS ) {
-			return Access::error( 'ohmylms_bundle_limit', sprintf( /* translators: %d: number. */
-			__( 'A bundle can have at most %d members.', 'ohmylms' ), self::MAX_MEMBERS ), 409 ); }
+			return Access::error(
+				'ohmylms_bundle_limit',
+				sprintf( /* translators: %d: number. */
+					__( 'A bundle can have at most %d members.', 'ohmylms' ),
+					self::MAX_MEMBERS
+				),
+				409
+			); }
 		$clean = array();
 		$seen  = array();
 		foreach ( $members as $member ) {
@@ -331,8 +343,14 @@ final class Bundles {
 		if ( $exists ) {
 			return true; }
 		if ( $count >= self::MAX_MEMBERS ) {
-			return Access::error( 'ohmylms_bundle_limit', sprintf( /* translators: %d: number. */
-			__( 'A bundle can have at most %d members.', 'ohmylms' ), self::MAX_MEMBERS ), 409 ); }
+			return Access::error(
+				'ohmylms_bundle_limit',
+				sprintf( /* translators: %d: number. */
+					__( 'A bundle can have at most %d members.', 'ohmylms' ),
+					self::MAX_MEMBERS
+				),
+				409
+			); }
 		$position = 1 + (int) $wpdb->get_var( $wpdb->prepare( 'SELECT MAX(position) FROM ' . self::members_table() . ' WHERE bundle_id=%d', (int) $bundle_id ) );
 		if ( $wpdb->query( $wpdb->prepare( 'INSERT IGNORE INTO ' . self::members_table() . " (bundle_id, item_type, item_id, position, created_at) VALUES (%d, 'course', %d, %d, %s)", (int) $bundle_id, (int) $course_id, $position, current_time( 'mysql', true ) ) ) === false ) {
 			return Access::error( 'ohmylms_bundle_failed', __( 'The course could not be added to the bundle.', 'ohmylms' ), 500 );
@@ -356,8 +374,14 @@ final class Bundles {
 		if ( ! $is_member ) {
 			return true; }
 		if ( 'published' === $bundle['status'] && count( self::members( $bundle_id ) ) <= 1 ) {
-			return Access::error( 'ohmylms_bundle_empty', sprintf( /* translators: %s: text value. */
-			__( '“%s” is published and this is its only member. Unpublish the bundle or add another member first.', 'ohmylms' ), $bundle['title'] ), 409 );
+			return Access::error(
+				'ohmylms_bundle_empty',
+				sprintf( /* translators: %s: text value. */
+					__( '“%s” is published and this is its only member. Unpublish the bundle or add another member first.', 'ohmylms' ),
+					$bundle['title']
+				),
+				409
+			);
 		}
 		$wpdb->delete(
 			self::members_table(),
@@ -394,8 +418,15 @@ final class Bundles {
 			return self::missing(); }
 		$followers = self::follower_count( $id );
 		if ( $followers && ! $force ) {
-			return Access::error( 'ohmylms_bundle_has_followers', sprintf( /* translators: %d: number. */
-			_n( '%d learner follows this bundle. Deleting it removes it from their dashboard.', '%d learners follow this bundle. Deleting it removes it from their dashboards.', $followers, 'ohmylms' ), $followers ), 409, array( 'followers' => $followers ) );
+			return Access::error(
+				'ohmylms_bundle_has_followers',
+				sprintf( /* translators: %d: number. */
+					_n( '%d learner follows this bundle. Deleting it removes it from their dashboard.', '%d learners follow this bundle. Deleting it removes it from their dashboards.', $followers, 'ohmylms' ),
+					$followers
+				),
+				409,
+				array( 'followers' => $followers )
+			);
 		}
 		try {
 			Transaction::run(

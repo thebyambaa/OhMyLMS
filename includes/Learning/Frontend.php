@@ -132,8 +132,16 @@ final class Frontend {
 					)[ $program['mode'] ]
 				);
 				?>
-				· <?php echo esc_html( sprintf( /* translators: %d: number. */
-				__( 'Program version %d', 'ohmylms' ), $program['version'] ) ); ?></p>
+				· 
+				<?php
+				echo esc_html(
+					sprintf( /* translators: %d: number. */
+						__( 'Program version %d', 'ohmylms' ),
+						$program['version']
+					)
+				);
+				?>
+				</p>
 			<?php endif; ?>
 			<?php
 			if ( $state['completed'] ) {
@@ -157,8 +165,17 @@ final class Frontend {
 				) as $key => $label ) {
 					$count = $state['dimensions'][ $key ];
 					?>
-					<div><dt><?php echo esc_html( $label ); ?></dt><dd><?php echo esc_html( sprintf( /* translators: %1$d: number; %2$d: number. */
-					__( '%1$d of %2$d required', 'ohmylms' ), $count['met'], $count['total'] ) ); ?></dd></div>
+					<div><dt><?php echo esc_html( $label ); ?></dt><dd>
+					<?php
+					echo esc_html(
+						sprintf( /* translators: %1$d: number; %2$d: number. */
+							__( '%1$d of %2$d required', 'ohmylms' ),
+							$count['met'],
+							$count['total']
+						)
+					);
+					?>
+					</dd></div>
 				<?php } ?>
 			</dl>
 			<?php endif; ?>
@@ -214,8 +231,16 @@ final class Frontend {
 				$next = LearningPath::next( $state );
 				if ( $next ) {
 					?>
-				<p><a class="ohmylms-button" href="<?php echo esc_url( $next['url'] ); ?>"><?php echo esc_html( sprintf( /* translators: %s: text value. */
-				__( 'Continue with %s', 'ohmylms' ), $next['name'] ) ); ?></a></p>
+				<p><a class="ohmylms-button" href="<?php echo esc_url( $next['url'] ); ?>">
+					<?php
+					echo esc_html(
+						sprintf( /* translators: %s: text value. */
+							__( 'Continue with %s', 'ohmylms' ),
+							$next['name']
+						)
+					);
+					?>
+				</a></p>
 					<?php
 				}
 				if ( 'skill-based' === $program['mode'] ) {
@@ -249,8 +274,17 @@ final class Frontend {
 						if ( 'quiz' === $item['type'] ) {
 							$assessment = $state['assessments'][ $item['content_id'] ];
 							?>
-							<small><?php echo esc_html( sprintf( /* translators: %1$s: text value; %2$s: text value. */
-							__( 'Score %1$s · Pass %2$s%%', 'ohmylms' ), null === $assessment['score'] ? __( 'Not graded', 'ohmylms' ) : $assessment['score'] . '%', $assessment['pass_percent'] ) ); ?></small><?php } ?>
+							<small>
+							<?php
+							echo esc_html(
+								sprintf( /* translators: %1$s: text value; %2$s: text value. */
+									__( 'Score %1$s · Pass %2$s%%', 'ohmylms' ),
+									null === $assessment['score'] ? __( 'Not graded', 'ohmylms' ) : $assessment['score'] . '%',
+									$assessment['pass_percent']
+								)
+							);
+							?>
+							</small><?php } ?>
 					</li>
 				<?php } ?>
 				</ol>

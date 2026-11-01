@@ -619,7 +619,7 @@ class AssignmentsController extends RestController {
 		$stats['courses']     = CourseStructure::first_courses( $ids );
 		foreach ( $ids as $id ) {
 			if ( empty( $stats['courses'][ $id ] ) ) {
-				$placed                   = Placements::courses_for( $id );
+				$placed                  = Placements::courses_for( $id );
 				$stats['courses'][ $id ] = $placed ? (int) $placed[0] : 0;
 			}
 		}
@@ -956,8 +956,8 @@ class AssignmentsController extends RestController {
 			if ( ! $course || OHMYLMS_COURSE_CPT !== $course->post_type ) {
 				continue;
 			}
-			$chapter  = get_post( $row['chapter_id'] );
-			$result[] = array(
+			$chapter                   = get_post( $row['chapter_id'] );
+			$result[]                  = array(
 				'course_id'     => (int) $course->ID,
 				'course_title'  => html_entity_decode( get_the_title( $course ), ENT_QUOTES, 'UTF-8' ),
 				'chapter_id'    => $chapter ? (int) $chapter->ID : null,
@@ -1040,16 +1040,16 @@ class AssignmentsController extends RestController {
 
 		$data = array_merge(
 			array(
-				'id'            => $id,
-				'title'         => html_entity_decode( (string) $post->post_title, ENT_QUOTES, 'UTF-8' ),
-				'slug'          => (string) $post->post_name,
-				'status'        => $status,
-				'permalink'     => (string) get_permalink( $post ),
-				'author_id'     => (int) $post->post_author,
-				'author_name'   => $author ? (string) $author->display_name : '',
-				'course'        => $this->course_or_null( $stats['courses'][ $id ] ?? 0 ),
-				'instructions'  => (string) $post->post_content,
-				'placements'    => array(),
+				'id'           => $id,
+				'title'        => html_entity_decode( (string) $post->post_title, ENT_QUOTES, 'UTF-8' ),
+				'slug'         => (string) $post->post_name,
+				'status'       => $status,
+				'permalink'    => (string) get_permalink( $post ),
+				'author_id'    => (int) $post->post_author,
+				'author_name'  => $author ? (string) $author->display_name : '',
+				'course'       => $this->course_or_null( $stats['courses'][ $id ] ?? 0 ),
+				'instructions' => (string) $post->post_content,
+				'placements'   => array(),
 			),
 			$this->read_settings( $id ),
 			array(

@@ -364,14 +364,19 @@ class Checkout {
 			// Update session for customer and totals.
 			$this->update_session( $posted_data );
 
-			$cart_data = ecommerce()->cart->get_cart_contents();
+			$cart_data      = ecommerce()->cart->get_cart_contents();
 			$membership_ids = array( absint( $posted_data['membership_id'] ?? 0 ) );
 			foreach ( $cart_data as $cart_entry ) {
 				$membership_ids[] = absint( $cart_entry['course_id'] ?? 0 );
 			}
 			foreach ( array_unique( array_filter( $membership_ids ) ) as $membership_id ) {
 				if ( 'ohmylms-membership' === get_post_type( $membership_id ) && \OhMyLMS\Membership\FreeSale::active( ohmylms_get_membership( $membership_id ) ) ) {
-					wp_send_json( array( 'status' => 'error', 'message' => __( 'Use Start free access on the Membership plans page. No payment is needed.', 'ohmylms' ) ) );
+					wp_send_json(
+						array(
+							'status'  => 'error',
+							'message' => __( 'Use Start free access on the Membership plans page. No payment is needed.', 'ohmylms' ),
+						)
+					);
 				}
 			}
 
@@ -507,12 +512,21 @@ class Checkout {
 							$gateway_meta_data = isset( $result['gateway_meta'] ) && is_array( $result['gateway_meta'] ) ? $result['gateway_meta'] : array();
 							$subscription_id   = SubscriptionManager::create_subscription( $order, $posted_data['membership_id'], $gateway_meta_data );
 							if ( is_wp_error( $subscription_id ) ) {
-								$order->add_order_note( sprintf( /* translators: %s: text value. */
-								__( 'Automated subscription creation failed. Error: %s', 'ohmylms' ), $subscription_id->get_error_message() ) );
+								$order->add_order_note(
+									sprintf( /* translators: %s: text value. */
+										__( 'Automated subscription creation failed. Error: %s', 'ohmylms' ),
+										$subscription_id->get_error_message()
+									)
+								);
 							} elseif ( $subscription_id ) {
 								SubscriptionManager::mark_subscription_active( $subscription_id );
-								$order->add_order_note( sprintf( /* translators: %1$d: number; %2$s: text value. */
-								__( 'Subscription #%1$d created and activated for membership: %2$s.', 'ohmylms' ), $subscription_id, get_the_title( $posted_data['membership_id'] ) ) );
+								$order->add_order_note(
+									sprintf( /* translators: %1$d: number; %2$s: text value. */
+										__( 'Subscription #%1$d created and activated for membership: %2$s.', 'ohmylms' ),
+										$subscription_id,
+										get_the_title( $posted_data['membership_id'] )
+									)
+								);
 							}
 						}
 					}

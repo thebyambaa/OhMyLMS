@@ -33,7 +33,9 @@ class OrderRefundStore extends OrderStore {
 	 */
 	protected function get_post_title() {
 		return sprintf( /* translators: %s: text value. */
-		__( 'Refund &ndash; %s', 'ohmylms' ), ( new \DateTime( 'now' ) )->format( _x( 'M d, Y @ h:i A', 'Order date', 'ohmylms' ) ) );
+			__( 'Refund &ndash; %s', 'ohmylms' ),
+			( new \DateTime( 'now' ) )->format( _x( 'M d, Y @ h:i A', 'Order date', 'ohmylms' ) )
+		);
 	}
 
 	/**

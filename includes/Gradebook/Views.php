@@ -23,14 +23,14 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Views {
 
-	const MAX_ROSTER_COURSES   = 12;
-	const MAX_ROSTER_COLUMNS   = 120;
-	const MAX_ROSTER_LEARNERS  = 500;
-	const MAX_TRANSCRIPT       = 20;
-	const MAX_SKILLS           = 20;
-	const MAX_MASTERY_LEARNERS = 1000;
-	const MAX_ROLLUP_CLASSES   = 60;
-	const MAX_ROLLUP_COURSES   = 12;
+	const MAX_ROSTER_COURSES    = 12;
+	const MAX_ROSTER_COLUMNS    = 120;
+	const MAX_ROSTER_LEARNERS   = 500;
+	const MAX_TRANSCRIPT        = 20;
+	const MAX_SKILLS            = 20;
+	const MAX_MASTERY_LEARNERS  = 1000;
+	const MAX_ROLLUP_CLASSES    = 60;
+	const MAX_ROLLUP_COURSES    = 12;
 	const MAX_INDIVIDUAL_COURSE = 10;
 
 	/**
@@ -131,8 +131,8 @@ final class Views {
 			$scope,
 			new Period( Period::DEFAULT_DAYS ),
 			static function () use ( $scope, $user_id ) {
-				$allowed = $scope->course_ids();
-				$courses = array_values(
+				$allowed    = $scope->course_ids();
+				$courses    = array_values(
 					array_filter(
 						Repository::learner_courses( $user_id ),
 						static function ( $course ) use ( $allowed ) {
@@ -345,7 +345,7 @@ final class Views {
 				'truncated' => false,
 			);
 		}
-		$schools = $scope->is_all() ? Directory::all_schools() : array(
+		$schools   = $scope->is_all() ? Directory::all_schools() : array(
 			array(
 				'id'   => $scope->id(),
 				'name' => $scope->label(),
