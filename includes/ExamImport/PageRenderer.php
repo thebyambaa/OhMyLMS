@@ -44,17 +44,89 @@ final class PageRenderer {
 	 */
 	private static function executable() {
 		$configured = defined( 'OHMYLMS_PDFTOPPM_BINARY' ) ? OHMYLMS_PDFTOPPM_BINARY : '';
-		$disabled   = array_map( 'trim', explode( ',', (string) ini_get( 'disable_functions' ) ) );
-		foreach ( array( 'proc_open', 'proc_get_status', 'proc_terminate', 'proc_close' ) as $function ) {
-			if ( ! function_exists( $function ) || in_array( $function, $disabled, true ) ) {
-				return self::error( 'unavailable' );
-			}
+		if ( ! self::processes_enabled() ) {
+			return self::error( 'unavailable' );
 		}
 		if ( ! is_string( $configured ) || ! preg_match( '~^(?:[a-zA-Z]:[\\\\/]|/)~', $configured ) ) {
 			return self::error( 'unavailable' );
 		}
 		$binary = realpath( $configured );
 		return $binary && is_file( $binary ) && is_executable( $binary ) ? $binary : self::error( 'unavailable' );
+	}
+
+	/**
+	 * Whether PHP may start, watch and stop a renderer process.
+	 *
+	 * @return bool
+	 */
+	private static function processes_enabled() {
+		$disabled = array_map( 'trim', explode( ',', (string) ini_get( 'disable_functions' ) ) );
+		foreach ( array( 'proc_open', 'proc_get_status', 'proc_terminate', 'proc_close' ) as $function ) {
+			if ( ! function_exists( $function ) || in_array( $function, $disabled, true ) ) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Renderer status for authors, never an error: what is missing when pages cannot be rendered.
+	 *
+	 * `reason` is `not_configured` (no OHMYLMS_PDFTOPPM_BINARY), `process_disabled` (proc_* functions
+	 * disabled), `binary_unusable` (not an absolute path to an executable file), `storage` (no private
+	 * import directory) or `failed` (the program did not answer as pdftoppm). `imagick` reports an
+	 * installed Imagick with PDF support, which this renderer does not use.
+	 *
+	 * @return array Status without paths or process output.
+	 */
+	public static function status() {
+		$status     = array(
+			'available'        => false,
+			'engine'           => '',
+			'version'          => '',
+			'reason'           => '',
+			'contract'         => self::VERSION,
+			'max_side'         => self::MAX_SIDE,
+			'timeout_seconds'  => self::TIMEOUT,
+			'coordinate_space' => 'rotated-cropbox-normalized-top-left',
+			'imagick'          => self::imagick_pdf(),
+		);
+		$configured = defined( 'OHMYLMS_PDFTOPPM_BINARY' ) ? OHMYLMS_PDFTOPPM_BINARY : '';
+		if ( ! is_string( $configured ) || '' === trim( $configured ) ) {
+			$status['reason'] = 'not_configured';
+		} elseif ( ! self::processes_enabled() ) {
+			$status['reason'] = 'process_disabled';
+		} elseif ( is_wp_error( self::executable() ) ) {
+			$status['reason'] = 'binary_unusable';
+		} elseif ( is_wp_error( Documents::root() ) ) {
+			$status['reason'] = 'storage';
+		} else {
+			$capability = self::capability();
+			if ( is_wp_error( $capability ) ) {
+				$status['reason'] = 'failed';
+			} else {
+				$status['available'] = true;
+				$status['engine']    = 'poppler';
+				$status['version']   = $capability['poppler_version'];
+			}
+		}
+		return $status;
+	}
+
+	/**
+	 * Whether Imagick is loaded and can read PDF (through Ghostscript).
+	 *
+	 * @return bool
+	 */
+	private static function imagick_pdf() {
+		if ( ! extension_loaded( 'imagick' ) || ! class_exists( '\Imagick' ) ) {
+			return false;
+		}
+		try {
+			return in_array( 'PDF', \Imagick::queryFormats( 'PDF' ), true );
+		} catch ( \Exception $exception ) {
+			return false;
+		}
 	}
 
 	/**
@@ -93,9 +165,9 @@ final class PageRenderer {
 		if ( is_wp_error( $bounds ) || ! is_int( $page ) || $page < 1 || $page > 500 ) {
 			return self::error( 'bounds' );
 		}
-		$source = Documents::path( $document['id'] ?? '' );
-		if ( is_wp_error( $source ) || empty( $document['sha256'] ) || filesize( $source ) > Documents::MAX_BYTES || ! hash_equals( $document['sha256'], (string) hash_file( 'sha256', $source ) ) ) {
-			return self::error( 'source' );
+		$source = self::source( $document );
+		if ( is_wp_error( $source ) ) {
+			return $source;
 		}
 		$deadline = microtime( true ) + self::TIMEOUT;
 		$args     = array( '-png', '-singlefile', '-cropbox', '-scale-to', (string) self::MAX_SIDE, '-f', (string) $page, '-l', (string) $page );
@@ -130,6 +202,63 @@ final class PageRenderer {
 			'bounds'       => $bounds,
 			'engine'       => self::VERSION,
 		) + self::physical_size( $result['output'], $width, $height );
+	}
+
+	/**
+	 * Render one whole page with the same arguments as a crop, so normalized bounds drawn on it are
+	 * the bounds {@see self::crop()} cuts.
+	 *
+	 * @param array $document Server-owned source metadata.
+	 * @param int   $page One-based PDF page.
+	 * @return array|\WP_Error PNG bytes, raster size and engine.
+	 */
+	public static function page( array $document, $page ) {
+		if ( ! is_int( $page ) || $page < 1 || $page > 500 ) {
+			return self::error( 'bounds' );
+		}
+		$source = self::source( $document );
+		if ( is_wp_error( $source ) ) {
+			return $source;
+		}
+		$args   = array( '-png', '-singlefile', '-cropbox', '-scale-to', (string) self::MAX_SIDE, '-f', (string) $page, '-l', (string) $page, $source );
+		$result = self::run( $args, microtime( true ) + self::TIMEOUT );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		$size = self::png_size( $result['output'] );
+		if ( ! $size ) {
+			return self::error( 'output' );
+		}
+		return array(
+			'bytes'  => $result['output'],
+			'width'  => $size[0],
+			'height' => $size[1],
+			'engine' => self::VERSION,
+		);
+	}
+
+	/**
+	 * Verify a private source against its recorded checksum.
+	 *
+	 * @param array $document Server-owned source metadata.
+	 * @return string|\WP_Error Local path, never returned to clients.
+	 */
+	private static function source( array $document ) {
+		$source = Documents::path( $document['id'] ?? '' );
+		if ( is_wp_error( $source ) || empty( $document['sha256'] ) || filesize( $source ) > Documents::MAX_BYTES || ! hash_equals( $document['sha256'], (string) hash_file( 'sha256', $source ) ) ) {
+			return self::error( 'source' );
+		}
+		return $source;
+	}
+
+	/**
+	 * Inspect a stored raster the same way as renderer output.
+	 *
+	 * @param string $bytes PNG bytes.
+	 * @return bool Bounded, well-formed PNG.
+	 */
+	public static function valid_png( $bytes ) {
+		return is_string( $bytes ) && false !== self::png_size( $bytes );
 	}
 
 	/**

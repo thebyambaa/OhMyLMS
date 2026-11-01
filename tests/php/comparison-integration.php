@@ -171,7 +171,9 @@ try {
     $roadmap_item = Items::get( $roadmap['syllabus']['id'] );
     ok( 0 === (int) $roadmap_item['parent_id'] && 0 === (int) $roadmap_item['position'], 'shared roadmap is saved first at the curriculum root' );
     ok( $roadmap['syllabus']['id'] === Items::child_ids( 0 )[0], 'shared roadmap precedes existing top-level curriculums' );
-    ok( 200 === call_api( 'PUT', 'configuration', array( 'subject' => 'General study plan', 'syllabus_ids' => $items ) )->get_status(), 'multiple syllabus plan configured' );
+    $configuration = array( 'subject' => 'General study plan', 'syllabus_ids' => $items, 'expected_revision' => call_api( 'GET', 'syllabuses' )->get_data()['revision'] );
+    ok( 200 === call_api( 'PUT', 'configuration', $configuration )->get_status(), 'multiple syllabus plan configured' );
+    ok( 409 === call_api( 'PUT', 'configuration', $configuration )->get_status(), 'stale configuration revision rejected' );
     ok( count( $items ) === count( get_option( Comparison::OPTION )['General study plan'] ), 'configuration is not limited to two sources' );
     $empty = SubjectProgress::progress( $admin, 'General study plan' ); ok( ! $empty['syllabuses'], 'draft syllabuses hidden from learner profiles' );
     wp_update_post( array( 'ID' => $roadmap['syllabus']['course_id'], 'post_status' => 'publish' ) );

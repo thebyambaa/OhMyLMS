@@ -17,6 +17,7 @@ import { readLesson, saveLesson, publishLesson } from './api';
 import type { Lesson } from './model';
 import LessonBlocks from './LessonBlocks';
 import InlineQuestions from './InlineQuestions';
+import { LearnerPreviewButton } from './LearnerPreviewButton';
 import LessonObjectives from './LessonObjectives';
 import VideoSettings from './VideoSettings';
 import {
@@ -212,6 +213,7 @@ export function LessonWorkspace( {
 					{ __( 'Review lesson publication', 'ohmylms' ) }
 				</Button>
 			) }
+			<LearnerPreviewButton lessonId={ draft.id } dirty={ dirty } />
 			<fieldset disabled={ ! editable || operation.busy }>
 				<legend>{ __( 'Lesson details', 'ohmylms' ) }</legend>
 				{ custom && extension ? (

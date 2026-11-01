@@ -31,9 +31,4 @@ interface Window {
 	YT?: any;
 	onYouTubeIframeAPIReady?: () => void;
 	Stripe?: any;
-	/**
-	 * Legacy jQuery, when a theme or add-on loads it. Only the event bridges listed in
-	 * tools/architecture-rules/frontend.mjs may touch it.
-	 */
-	jQuery?: any;
 }

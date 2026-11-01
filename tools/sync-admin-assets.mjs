@@ -10,17 +10,6 @@ fs.cpSync(
 	path.join( root, 'assets/css/frontend' ),
 	{ recursive: true }
 );
-for ( const name of [
-	'style.css',
-	'style.css.map',
-	'style-rtl.css',
-	'style-rtl.css.map',
-] ) {
-	fs.copyFileSync(
-		path.join( root, 'build/assets/css', name ),
-		path.join( root, 'assets/css', name )
-	);
-}
 const manifest = JSON.parse(
 	fs.readFileSync( path.join( root, 'assets/src/manifest.json' ), 'utf8' )
 );

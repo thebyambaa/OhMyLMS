@@ -142,7 +142,7 @@ $samples  = array(
 	),
 	'statement'         => array(
 		'name' => 'Statement: water boils at 100C',
-		'q'    => array( $option( 'Agree', true ), $option( 'Disagree' ) ),
+		'q'    => array( $option( '100', true ), $option( 'C', true ) ),
 	),
 	'fill-in-the-blank' => array( 'name' => 'The capital of France is {Paris}.' ),
 	'reorder'           => array(

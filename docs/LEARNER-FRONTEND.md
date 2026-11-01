@@ -9,7 +9,8 @@ The admin is the typed app. Learner UI is implemented with Interactivity script 
 Carousels, commerce, the exam paper, catalogue, account pages, auth forms, the lesson player and video
 each have their own store. L7 deleted `ohmylms.js`. The `ohmylms-frontend` handle stays with no source
 file and no jQuery, so Chrome, Elementor, Bricks, blocks, previews, the hub and the exam player can
-still enqueue it and receive `ohmylms_frontend_params`.
+still enqueue it and receive `ohmylms_frontend_params` (only `ajax_url` since 1.2.22, see
+[Removed in 1.2.22](#removed-in-1222)).
 
 ## How learner scripts are served
 
@@ -113,8 +114,8 @@ previews, and Elementor/Bricks widgets.
 
 | Behaviour | Selectors | Markup source | Server call | Status |
 | --- | --- | --- | --- | --- |
-| Load more courses | `button.ohmylms-course-loadmore-btn` (`data-total`, `data-posts-per-page`), appends to `.ohmylms-course-cards` | `loop/load-more.php` | `ohmylms_loadmore` → `Ajax::loadmore()` (nonce `load_more_nonce`), returns HTML | **Migrated (L3)** to `ohmylms/catalog` (`?paged=N`, router region); the action is kept for third parties |
-| Filter, search, sort, category | `.ohmylms-checkbox input[name="ohmylms-filter-checkbox"]` (`data-type`, `data-slug`), `.clear-filter`, `input[name="course-search"]` (every keyup, no debounce), `.course-sort`, `.ohmylms-category-filter` | `filters/filters.php`, `filter-header.php`, `course-search.php`, `course-sort.php`, `search-sort.php`, `category-type-button.php` | `ohmylms_search_filter` → `Ajax::search_filter()` (nonce `search_filter_nonce`), returns HTML; the category branch re-creates the carousel (carousel owner) | **Migrated (L3)**: GET parameters rendered by the server, swapped by the router; the action is kept for third parties |
+| Load more courses | `button.ohmylms-course-loadmore-btn` (`data-total`, `data-posts-per-page`), appends to `.ohmylms-course-cards` | `loop/load-more.php` | `ohmylms_loadmore` → `Ajax::loadmore()` (nonce `load_more_nonce`), returns HTML | **Migrated (L3)** to `ohmylms/catalog` (`?paged=N`, router region); the action was removed in 1.2.22 |
+| Filter, search, sort, category | `.ohmylms-checkbox input[name="ohmylms-filter-checkbox"]` (`data-type`, `data-slug`), `.clear-filter`, `input[name="course-search"]` (every keyup, no debounce), `.course-sort`, `.ohmylms-category-filter` | `filters/filters.php`, `filter-header.php`, `course-search.php`, `course-sort.php`, `search-sort.php`, `category-type-button.php` | `ohmylms_search_filter` → `Ajax::search_filter()` (nonce `search_filter_nonce`), returns HTML; the category branch re-creates the carousel (carousel owner) | **Migrated (L3)**: GET parameters rendered by the server, swapped by the router; the action was removed in 1.2.22 |
 | Filter checkbox keyboard, category button active state | `.ohmylms-filter-accordion .checkedbox` (Enter), `.ohmylms-category-type-button li` | `filters/filters.php`, `filters/category-type-button.php` | — | **Migrated (L3)** (`actions.keydown`, `state.categoryActive`) |
 | Filter drawer on mobile | `.filter-hamburger`, `.ohmylms-course-sidebar`, `.ohmylms-close-filter` | `filters/search-sort.php`, `filters/filter-header.php` | — | **Migrated (L3)** to the `ohmylms/ui` drawer |
 | Course card hover popup (grid style 3) | `.grid-style3 .ohmylms-course-cards-carousel .course-card`, `.ohmylms-course-card-popup[data-item-id]` | `course-popup-content.php`, `layouts/grid-style3.php` | — | **Migrated (L3)** (delegated `actions.cardOver`/`cardOut`, so cards from later navigations get it too) |
@@ -156,8 +157,9 @@ Localized data (`FrontendAssets::get_script_data( 'ohmylms-frontend' )`): `ajax_
 `load_more_nonce` and `search_filter_nonce` are no longer used by the plugin (L3) and stay only for third-party
 callers of the two catalogue admin-ajax actions. L6 removed `assignment_submission_nonce`, `save_remaining_time` and
 `quiz_exit_submission` (the quiz player has its own `expiryNonce`); the lesson and assignment nonces are in
-`wp_interactivity_state( 'ohmylms/lesson' | 'ohmylms/assignment' )`. `lesson_completed_nonce` and
-`video_progress_nonce` stay for third-party callers of those admin-ajax actions.
+`wp_interactivity_state( 'ohmylms/lesson' | 'ohmylms/assignment' )`. 1.2.22 removed every field except
+`ajax_url`, since nothing reads them (the catalogue nonces with their actions; `lesson_completed_nonce` and
+`video_progress_nonce` are in the `ohmylms/lesson` and `ohmylms/video` state; `nonce` was verified by no action).
 
 ### `lesson/video-player.js` (handle `ohmylms-video-player`, needs jQuery, content pages)
 
@@ -308,7 +310,6 @@ parameters, like `createChrome( api )`, so node tests can pass fakes.
 | `toSearchParams`, `toFormData`, `entriesToObject` | PHP-style `name[]` / `name[key]` encoding | `request()` uses them; L3 filters send arrays this way |
 | `debounce` | `debounce( callback, ms ) → fn` with `.cancel()`, `.flush()` | L3 search |
 | `prefersReducedMotion` | `() → boolean` | |
-| `jqueryTrigger` | `jqueryTrigger( name, args?, target = document.body ) → boolean` | Re-dispatch a documented jQuery event when jQuery is loaded |
 | `getConfig`, `setConfig` | `{ restRoot, restNonce, ajaxUrl, messages }` | Printed by `Chrome::sdk_data()` through WordPress's `script_module_data_ohmylms/interactivity` filter on every page with an OhMyLMS module; `messages` holds translated fallbacks (`error`, `network`, `timeout`, `confirm`, `cancel`, `dismiss`, …) |
 | `apiFetch`, `ajaxPost` | Unchanged contracts (commerce) | Now thin wrappers over `request()`; prefer `request()` in new code |
 | `emit`, `toastItem`, `plainText`, `normalizeResponse`, `trapIndex`, `takePendingToasts` | Helpers | `normalizeResponse` and `toastItem` are exported for tests; `takePendingToasts` is internal to `ohmylms/ui` |
@@ -387,11 +388,10 @@ scrolling); stays on the control for checkboxes, sort and typing, where the live
 overrides of `archive-course.php` from before L3 have no regions: the module then loads the filtered URL in full, and
 the decorated templates become their own `ohmylms/catalog` islands (no mobile drawer).
 
-AJAX actions kept, flagged for removal once nothing outside the plugin calls them: `ohmylms_loadmore`
-(`load_more_nonce`) and `ohmylms_search_filter` (`search_filter_nonce`), still localized in `ohmylms_frontend_params`.
-Both now build their query with `Catalog::query_args()` (from the legacy `search_term`, `category_slug[]`,
-`tag_slug[]`, `level_slug[]`, `price_slug[]`, `sort_by` fields), so they return the same courses as the URL; their
-POST fields and HTML answers are unchanged. Nothing in the plugin calls them any more.
+The AJAX actions `ohmylms_loadmore` (`load_more_nonce`) and `ohmylms_search_filter` (`search_filter_nonce`), kept
+after L3 for third-party callers, were removed in 1.2.22 with their nonces and `Catalog::legacy_filters()` (the
+mapping of their `search_term`, `category_slug[]`, `tag_slug[]`, `level_slug[]`, `price_slug[]`, `sort_by` fields).
+Nothing in the plugin called them; admin-ajax now answers 400 (unknown action) for both. Use the GET URL contract above.
 
 Removed from `ohmylms.js`: the page/filter variables, `OhMyLMS.load_more`, `OhMyLMS.filter` and their six `init`
 bindings, the `.checkedbox` Enter handler, the `.ohmylms-filter-accordion` accordion init (the `ohmylms/ui`
@@ -615,9 +615,9 @@ document.dispatchEvent( new CustomEvent( 'ohmylms:lesson-complete-request', {
 
 `lessonId` may be left out (the page's lesson); a request for another lesson is ignored. The store answers with
 `ohmylms:lesson-before-complete` (cancelable), `ohmylms:lesson-completed` (`lessonId`, `source`, `nextUrl`) or
-`ohmylms:lesson-complete-error` (`code`, `message`; `ohmylms_lesson_video_not_watched` shows the hint again). For
-code that still triggers the legacy tracker's jQuery `ohmylms:video:completed`, the store treats it (when jQuery is
-loaded) as a `completed: true` request.
+`ohmylms:lesson-complete-error` (`code`, `message`; `ohmylms_lesson_video_not_watched` shows the hint again). Until
+1.2.22 the store also treated the legacy tracker's jQuery `ohmylms:video:completed` as a `completed: true` request;
+that listener is removed, so such code must dispatch the request above.
 
 Endpoints. No learner REST route exists for completion, submission or starting the timer, so they stay on
 admin-ajax through `request( { action } )`: `ohmylms_lesson_completed`, `ohmylms_save_assignment_submission_file`
@@ -691,7 +691,7 @@ there; the checks used `?ohmylms-assignment=<slug>`.
 
 Tests: `tests/js/lesson.test.mjs` (same-origin next link, outcome, disabled state, completion once and navigation,
 last lesson, refusal and video hint, cancel, label keys, the complete-request event with and without `completed`,
-`navigate`, the legacy jQuery event; protection shortcuts, blur rules and the installed listeners),
+`navigate`, no jQuery listener; protection shortcuts, blur rules and the installed listeners),
 `tests/js/assignment.test.mjs` (countdown format, remaining time, bar width, deadline parsing, file limit, start with
 the server deadline and clock correction, no time limit, refused start, pick and remove, submit once, refusal,
 cancel, expiry with a file and without, the grace period, refused timeout submission, resume, drop-zone keys) and
@@ -755,6 +755,26 @@ beacon, completion once through the lesson event, the store and the shims) and
 rendered islands for each provider, decorated pre-L7 overrides, merged spans, the elapsed-time bound, the
 lesson threshold over the site setting, completion only through `ohmylms_lesson_completed`, and a forged
 full-video report refused).
+
+## Removed in 1.2.22
+
+The compatibility leftovers of L1–L7 were removed (breaking for themes and add-ons that used them; the migration
+table is in [EXTENSIONS](EXTENSIONS.md#learner-front-end-compatibility-removed-in-1222)):
+
+- The jQuery event bridge: `jqueryTrigger()` in `sdk.js`, `triggerLegacy()` in `commerce-logic.mjs`, the jQuery-wrapped
+  button and form in `cart.js` and `checkout.js`, and the `ohmylms:video:completed` listener in `lesson/store.js` and
+  its trigger in `video/session.js`. The DOM `ohmylms:*` events are the contract
+  ([removed jQuery events](INTERACTIVITY.md#removed-jquery-events-1222)). Rule m of `tools/check-architecture.mjs`
+  has no allow-listed files any more, and `globals.d.ts` no longer declares `window.jQuery`.
+- Gateway hooks `open( response, form )` and `resume( form )` receive the `<form>` element. QPay's
+  `packages/e-commerce/assets/js/qpay-checkout.js` was rewritten without jQuery (it no longer depends on the `jquery`
+  handle); `tests/browser/qpay.spec.cjs` drives it through the same hook contract without jQuery.
+- `Ajax::loadmore()`, `Ajax::search_filter()`, the empty private `Ajax::filter()`, `Catalog::legacy_filters()` and
+  the nonces `load_more_nonce` / `search_filter_nonce`.
+- Every `ohmylms_frontend_params` field except `ajax_url` (the React sign-up fields read it as their last fallback).
+  The script-less `ohmylms-frontend` handle stays: `Chrome::footer()` uses it to give learner pages the toast region,
+  `elementor-widgets.js` depends on it, and add-on scripts may list it as a dependency (WordPress skips a script whose
+  dependency is not registered).
 
 ## Typing and shared code
 

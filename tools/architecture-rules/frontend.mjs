@@ -9,7 +9,7 @@ import { parse } from '@babel/parser';
  *
  * l. No import cycles between their modules (static, dynamic and `require()`).
  * m. Learner modules import the SDK by its import-map name `ohmylms/interactivity`, never by path;
- *    sdk.js imports nothing; nothing there uses jQuery or `$` (event bridges are allow-listed).
+ *    sdk.js imports nothing; nothing there uses jQuery or `$`.
  * n. A folder of assets/src/features imports another folder only through that folder's public.mjs.
  *    Root modules (rest.mjs, requestFeedback.mjs) are shared by every folder.
  * o. A JSX module in assets/src/features binds `createElement`: webpack compiles its JSX with the

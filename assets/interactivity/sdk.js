@@ -1546,20 +1546,3 @@ export function debounce( callback, wait ) {
 		/** @type {unknown} */ ( debounced )
 	);
 }
-
-/**
- * Fire a jQuery event when jQuery is on the page, for add-ons that still listen with `.on()`.
- *
- * @param {string}           name     Event name.
- * @param {unknown[]}        [args]   Extra handler arguments.
- * @param {EventTarget|null} [target] Target (default `document.body`).
- * @return {boolean} Whether jQuery was there to trigger it.
- */
-export function jqueryTrigger( name, args = [], target = null ) {
-	const jQuery = typeof window !== 'undefined' ? window.jQuery : undefined;
-	if ( typeof jQuery !== 'function' || ! hasDocument() ) {
-		return false;
-	}
-	jQuery( target || document.body ).trigger( name, args );
-	return true;
-}

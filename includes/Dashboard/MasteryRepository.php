@@ -223,6 +223,72 @@ final class MasteryRepository {
 	}
 
 	/**
+	 * One learner's percentages on skills they have evidence on.
+	 *
+	 * @param int   $learner Learner.
+	 * @param int[] $skills  Skills.
+	 * @return array<int,float> Skill id => 0-100 percentage; skills without evidence are absent.
+	 */
+	public static function learner_percentages( $learner, array $skills ) {
+		if ( $learner <= 0 || ! $skills || ! AssessmentSchema::ready() ) {
+			return array();
+		}
+		$args   = array( self::table(), (int) $learner );
+		$skill  = Scope::in_condition( 'term_id', $skills, $args );
+		$rows   = self::query( "SELECT term_id, LEAST( 100, GREATEST( 0, mastery ) ) AS percent FROM %i WHERE student_id = %d AND evidence_count > 0 AND $skill", $args );
+		$result = array();
+		foreach ( $rows as $row ) {
+			$result[ (int) $row['term_id'] ] = (float) $row['percent'];
+		}
+		return $result;
+	}
+
+	/**
+	 * Per skill, how many of the learners have evidence, the sum of their percentages and how many reach
+	 * each named level (rounded percentages, as {@see Widgets\MasteryLevels::level()} compares them).
+	 *
+	 * @param int[] $learners   Learners.
+	 * @param int[] $skills     Skills.
+	 * @param array $thresholds mastered, proficient and familiar lower bounds.
+	 * @return array<int,array{assessed:int,sum:float,mastered:int,proficient:int,familiar:int}> Skill id =>
+	 *         figures; skills nobody has evidence on are absent. Attempted is assessed minus the three others.
+	 */
+	public static function level_figures( array $learners, array $skills, array $thresholds ) {
+		if ( ! $learners || ! $skills || ! AssessmentSchema::ready() ) {
+			return array();
+		}
+		$args    = array(
+			(int) $thresholds['mastered'],
+			(int) $thresholds['proficient'],
+			(int) $thresholds['mastered'],
+			(int) $thresholds['familiar'],
+			(int) $thresholds['proficient'],
+			self::table(),
+		);
+		$learner = Scope::in_condition( 'student_id', $learners, $args );
+		$skill   = Scope::in_condition( 'term_id', $skills, $args );
+		$rows    = self::query(
+			"SELECT term_id, COUNT(*) AS assessed, SUM( LEAST( 100, GREATEST( 0, mastery ) ) ) AS total,
+				SUM( ROUND( mastery ) >= %d ) AS mastered,
+				SUM( ROUND( mastery ) >= %d AND ROUND( mastery ) < %d ) AS proficient,
+				SUM( ROUND( mastery ) >= %d AND ROUND( mastery ) < %d ) AS familiar
+			FROM %i WHERE evidence_count > 0 AND $learner AND $skill GROUP BY term_id",
+			$args
+		);
+		$figures = array();
+		foreach ( $rows as $row ) {
+			$figures[ (int) $row['term_id'] ] = array(
+				'assessed'   => (int) $row['assessed'],
+				'sum'        => (float) $row['total'],
+				'mastered'   => (int) $row['mastered'],
+				'proficient' => (int) $row['proficient'],
+				'familiar'   => (int) $row['familiar'],
+			);
+		}
+		return $figures;
+	}
+
+	/**
 	 * Skills on which at least some of the learners are below a percentage, most such learners first.
 	 *
 	 * @param int[] $learners Learners.

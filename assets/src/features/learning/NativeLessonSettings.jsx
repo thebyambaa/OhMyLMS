@@ -24,6 +24,7 @@ import { __ } from '@wordpress/i18n';
 import { createBlock } from '@wordpress/blocks';
 import { searchBank } from '../question-bank/public.mjs';
 import { searchChapterContents } from './api.mjs';
+import { LearnerPreviewPanel } from './LearnerPreviewPanel';
 import { installNativeCanvasRecovery } from './nativeCanvas.mjs';
 import { isCourseReturn, isReturnUrl } from './returnLink.mjs';
 
@@ -911,6 +912,7 @@ function LessonSettings() {
 				) ) }
 			</PluginDocumentSettingPanel>
 			<InlineChecks />
+			<LearnerPreviewPanel lessonId={ Number( postId ) } />
 		</>
 	);
 }

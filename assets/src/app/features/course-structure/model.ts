@@ -144,26 +144,6 @@ export function parseOutline( raw: unknown ): Outline {
 }
 
 /**
- * Move stable rows without changing references in groups, outcomes or learner evidence.
- * @param rows
- * @param index
- * @param offset
- */
-export function move< T >( rows: T[], index: number, offset: number ): T[] {
-	const next = [ ...rows ];
-	const target = index + offset;
-	if (
-		index >= 0 &&
-		index < rows.length &&
-		target >= 0 &&
-		target < rows.length
-	) {
-		[ next[ index ], next[ target ] ] = [ next[ target ]!, next[ index ]! ];
-	}
-	return next;
-}
-
-/**
  * Transport only the editable outline; preserve every program field from the read snapshot.
  * @param outline
  */
@@ -178,43 +158,8 @@ export function savePayload( outline: Outline ) {
 	};
 }
 
-const TERMINAL = [ 'unit-test', 'course-challenge' ];
-
-/**
- * Move an activity to the end of another unit, before that unit's terminal assessments. Lesson groups
- * belong to one unit, so the group link is dropped; placement identity and skills are kept.
- * @param items
- * @param id
- * @param unit
- */
-export function moveToUnit(
-	items: Activity[],
-	id: string,
-	unit: number | string
-): Activity[] {
-	const current = items.find( ( item ) => item.id === id );
-	if ( ! current || current.chapter_id === unit ) {
-		return items;
-	}
-	const moved: Activity = { ...current, chapter_id: unit };
-	delete moved.group_id;
-	const others = items.filter( ( item ) => item.id !== id );
-	const terminal = others.findIndex(
-		( item ) =>
-			item.chapter_id === unit && TERMINAL.includes( item.style ?? '' )
-	);
-	let at = others.length;
-	if ( terminal >= 0 ) {
-		at = terminal;
-	} else {
-		others.forEach( ( item, index ) => {
-			if ( item.chapter_id === unit ) {
-				at = index + 1;
-			}
-		} );
-	}
-	return [ ...others.slice( 0, at ), moved, ...others.slice( at ) ];
-}
+/** Assessment styles that end their unit (or the course); moves keep them after other activities. */
+export const TERMINAL = [ 'unit-test', 'course-challenge' ];
 
 /**
  * Remove a unit that was never saved. Its activities and skill targets stay in the program, unplaced.
@@ -242,33 +187,4 @@ export function removeNewUnit( outline: Outline, unit: string ): Outline {
 			),
 		},
 	};
-}
-
-/**
- * Move only within a unit; terminal assessments keep their position.
- * @param items
- * @param id
- * @param offset
- */
-export function moveActivity( items: Activity[], id: string, offset: number ) {
-	const current = items.find( ( item ) => item.id === id );
-	if ( ! current ) {
-		return items;
-	}
-	const siblings = items.filter(
-		( item ) =>
-			item.chapter_id === current.chapter_id &&
-			! TERMINAL.includes( item.style ?? '' )
-	);
-	const index = siblings.findIndex( ( item ) => item.id === id );
-	const other = siblings[ index + offset ];
-	if ( index < 0 || ! other ) {
-		return items;
-	}
-	return items.map( ( item ) => {
-		if ( item.id === current.id ) {
-			return other;
-		}
-		return item.id === other.id ? current : item;
-	} );
 }

@@ -330,6 +330,7 @@ try {
 	foreach ( array( 'student_profile_cover_upload_nonce', 'cancel_membership_nonce', 'course_drop_nonce', 'lesson_access_nonce' ) as $gone ) {
 		ok( ! array_key_exists( $gone, $frontend ), "ohmylms_frontend_params no longer carries $gone" );
 	}
+	ok( array( 'ajax_url' ) === array_keys( $frontend ), 'ohmylms_frontend_params carries only ajax_url' );
 	ok( ! has_action( 'wp_ajax_ohmylms_drop_course' ) && ! has_action( 'wp_ajax_nopriv_ohmylms_lesson_access_nonce' ), 'the dead drop-course and lesson-access actions are gone' );
 
 	// The module's upload and delete requests: the state nonces are accepted, a wrong one is refused.

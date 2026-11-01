@@ -121,8 +121,8 @@ and prerequisite payloads, media library selection, and the extension lesson edi
 Browser verification exercises the installed WordPress visual editor, since DOM
 unit tests intentionally mock the canvas rather than reimplementing WordPress.
 
-A full learner rendering preview remains future work. The shared unsaved guard covers links and page
-unload, not browser hash-history navigation.
+The learner rendering preview is described under [Learner preview](#learner-preview). The shared unsaved
+guard covers links and page unload, not browser hash-history navigation.
 
 ## Video settings and the completion rule
 
@@ -180,3 +180,63 @@ statuses, the watched-percentage rule through the tracker and the completion han
 shared schedule, objective search, save, managed skills, conflicts and invalid input; it maps objectives of
 an existing teaching syllabus read-only). App tests cover the video settings payload, inline question
 insert/move/remove and the objectives editor.
+
+## Learner preview
+
+The legacy admin's lesson editor had a "Preview" button that opened the lesson's permalink (the
+`preview_url` of the old lesson REST response). That page showed the author's own view: admins and
+authors skip enrolment, prerequisites and the sequential lock, an enrolled author's "Mark as complete"
+recorded real progress, and a non-enrolled author saw no completion control at all. The quiz preview
+(`Assessment\PreviewPlayer`, `Quiz\Submission::is_preview()`) and `Assessment\QuestionPreview` cover
+quizzes and single questions only; WordPress's own Preview link in the native editor is the same
+author view.
+
+"Preview as learner" (`Learning\LessonPreview`) opens the saved lesson in the real learner template
+(`single-lesson.php`, the player shell, `ohmylms/lesson`, `ohmylms/video`) as a learner who has just
+enrolled and completed nothing, under a "Preview — nothing is recorded" banner. It is offered by the
+lesson editor of the admin app (beside Save), the "Preview as learner" row action of the lesson list,
+and the "Learner preview" panel of the native lesson editor. All three show the last saved version.
+
+| Route | Contract |
+| --- | --- |
+| `POST /ohmylms/v1/lessons/:id/learner-preview` | Requires `edit_post` on the lesson (401 for visitors, 403 otherwise, also for non-lessons). Returns `{id, url, bypass_url, expires, status}`; private/no-store |
+
+The links are `<lesson permalink>?ohmylms_lesson_preview=<id>&preview_bypass=0|1&preview_expires=<unix>&preview_nonce=<nonce>`.
+The nonce signs the lesson, the bypass flag and the expiry for the user's session, and the expiry is
+one hour (`ohmylms_lesson_preview_lifetime`, 1 minute to 1 day). `LessonPreview::start()`
+(`template_redirect`, priority 1) refuses — before anything renders — a visitor (401), anyone who cannot
+edit the lesson (403, so a learner never gets past a lock through a preview link, even one signed for
+them), an expired or over-long expiry (403), and a nonce of another user, session or flag combination
+(403). Preview pages are `nocache`, `noindex` and `Referrer-Policy: same-origin`.
+
+Inside a valid preview:
+
+- Gates are a new learner's. An unmet prerequisite and the sequential lock stop the page with the
+  learner's own title and message ("Access Denied", "Content Locked"), the banner and a bypass switch;
+  `CommonHook::restrict_access()` is skipped because the preview applies them. Drip is shown by the lesson
+  template's notice: `enrollment-from-x-days` counts from now, dates and cohorts as for any learner.
+  Lessons that need a watched video keep "Mark as complete" disabled with the watch hint. Cohort and
+  email-verification gates are not simulated.
+- "Bypass locks" (and "Show locks as learners see them") re-sign the link with the other flag. Bypass
+  lifts drip, prerequisites, the sequential lock and the video rule for the preview only.
+- The navigation shows "Mark as complete" unticked even to an author who is not enrolled or who completed
+  the lesson. The `ohmylms/lesson` state carries `preview: true` and no completion nonce; ticking the box
+  shows the completion and a "Preview — nothing is recorded." toast without any request, then follows the
+  next lesson's preview link. Video players get `track: false`, start from zero and receive no progress
+  nonce. The course outline of the player shell is the new learner's: enrolled, nothing complete, locked
+  rows unavailable, lesson rows linked to their own previews. Other links (the template's "Next Lesson",
+  quizzes) open the normal pages.
+- Nothing is enrolled or written: while a user's most recent view of a lesson is a preview (a transient
+  until the link expires), `LessonGate::check_completion()` refuses `ohmylms_lesson_completed` with
+  `ohmylms_lesson_preview` (409) and `Ajax::save_video_progress` refuses the same way, so no progress row,
+  completion, `ohmylms_lesson_completed`/`ohmylms_after_lesson_completed`, xAPI, webhook or automation
+  event can follow. Opening the lesson normally lifts the refusal.
+
+Verification: `OHMYLMS_LESSON_PREVIEW_TEST=1` runs `tests/php/lesson-preview-integration.php` (who may
+preview, link signature, expiry and tampering, the REST route, the new learner's navigation and module
+state, the refused completion and video writes with no hook fired and no row written, and over HTTP: the
+author's preview in the real template with the banner, a draft, the prerequisite, drip, video and
+sequential locks and their bypass, learners, another editor and visitors refused, an expired and an
+invalid nonce refused, the enrolled learner still locked, nothing recorded for the author, and an enrolled
+editor's completion refused during the preview and accepted after opening the lesson normally). App tests
+cover the button and link validation; `tests/js/lesson.test.mjs` covers the module's preview completion.

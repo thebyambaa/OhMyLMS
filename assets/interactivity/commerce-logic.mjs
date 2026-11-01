@@ -291,20 +291,3 @@ export function stripeIntentOutcome( intent, returnUrl ) {
 		code: status ? 'payment_failed' : 'no_intent',
 	};
 }
-
-/**
- * Fire a legacy jQuery body event when jQuery is on the page (gateway add-ons still listen).
- *
- * @param {Window}    win    Window.
- * @param {string}    name   Event name.
- * @param {unknown[]} [args] Extra handler arguments.
- * @return {boolean} Whether jQuery was there to trigger it.
- */
-export function triggerLegacy( win, name, args = [] ) {
-	const jQuery = win && win.jQuery;
-	if ( 'function' !== typeof jQuery || ! win.document ) {
-		return false;
-	}
-	jQuery( win.document.body ).trigger( name, args );
-	return true;
-}

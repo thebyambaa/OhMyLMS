@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import {
 	COMPLETE_ACTION,
 	COMPLETE_REQUEST_EVENT,
-	LEGACY_VIDEO_EVENT,
 	NAVIGATE_DELAY,
 	completeDisabled,
 	completionOutcome,
@@ -78,10 +77,12 @@ function fixture( options = {} ) {
 		withSyncEvent: ( callback ) => callback,
 		getState: () => ( {
 			nonces: { complete: 'n-complete' },
+			preview: Boolean( options.preview ),
 			messages: {
 				markComplete: 'Mark as Complete',
 				completed: 'Completed',
 				failed: 'failed',
+				preview: 'Preview — nothing is recorded.',
 			},
 		} ),
 		request: async ( request ) => {
@@ -220,6 +221,26 @@ test( 'a refusal unticks the box and shows the server message', async () => {
 	assert.equal( log.timers.length, 0 );
 } );
 
+test( 'a learner preview shows the completion without sending anything', async () => {
+	const { lesson, env, log, root } = fixture( {
+		preview: true,
+		context: { nextUrl: 'https://school.example/lesson/two/?ohmylms_lesson_preview=13' },
+	} );
+	lesson.actions.complete( { target: checkbox( root ) } );
+	await settle();
+	assert.equal( log.requests.length, 0, 'no completion request in a preview' );
+	assert.equal( env.context.completed, true );
+	assert.deepEqual( log.toasts, [ [ 'Preview — nothing is recorded.', 'success' ] ] );
+	assert.equal( log.events.at( -1 )[ 0 ], 'lesson-completed' );
+	assert.equal( log.events.at( -1 )[ 1 ].preview, true );
+	log.timers[ 0 ][ 0 ]();
+	assert.deepEqual( log.visits, [ 'https://school.example/lesson/two/?ohmylms_lesson_preview=13' ] );
+	const offsite = fixture( { preview: true, context: { nextUrl: 'https://evil.example/' } } );
+	offsite.lesson.actions.complete( { target: checkbox( offsite.root ) } );
+	await settle();
+	assert.equal( offsite.log.timers.length, 0, 'an off-site next link is not followed' );
+} );
+
 test( 'a cancelled ohmylms:lesson-before-complete sends nothing', async () => {
 	const { lesson, log, root } = fixture( { block: 'lesson-before-complete' } );
 	const input = checkbox( root );
@@ -293,13 +314,12 @@ test( 'navigate: true follows the next link like the checkbox', async () => {
 	assert.deepEqual( log.visits, [ 'https://school.example/lesson/two/' ] );
 } );
 
-test( 'the legacy video tracker jQuery event marks the lesson completed', () => {
-	const { lesson, env, jquery } = fixture( { jquery: true } );
+test( 'the lesson listens only to the DOM request, not the removed jQuery video event', () => {
+	const { lesson, doc, jquery } = fixture( { jquery: true } );
 	const cleanup = lesson.callbacks.listen();
-	jquery.handlers.get( LEGACY_VIDEO_EVENT ).callback( {}, { lessonId: 12, courseId: 3 } );
-	assert.equal( env.context.completed, true );
+	assert.equal( jquery.handlers.size, 0 );
+	assert.deepEqual( [ ...doc.listeners.keys() ], [ COMPLETE_REQUEST_EVENT ] );
 	cleanup();
-	assert.equal( jquery.handlers.has( LEGACY_VIDEO_EVENT ), false );
 } );
 
 test( 'protection: blocked shortcuts', () => {

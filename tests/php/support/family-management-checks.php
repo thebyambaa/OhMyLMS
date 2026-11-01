@@ -132,7 +132,8 @@ function ohmylms_family_management_checks( $guardian, $managed, $invited, $cours
 			)
 		);
 		$choice = Family::choices( $managed );
-		$check( 'Grade 6' === $choice['grade'] && array( (int) $bundle ) === $choice['followed'], 'Choices were not saved or an unavailable collection was accepted.' );
+		// Course Bundles are retired (docs/MEMBERSHIP-COURSES.md): no collection is offered, so none can be followed.
+		$check( 'Grade 6' === $choice['grade'] && array() === $choice['followed'], 'Choices were not saved or an unavailable collection was accepted.' );
 		$check( array() === Follows::enrolled_courses( $managed ), 'Following a collection enrolled the learner.' );
 		Family::set_choices( $managed, '', array() );
 		$check( '' === Family::choices( $managed )['grade'] && array() === Family::choices( $managed )['followed'], 'Clearing optional choices failed.' );

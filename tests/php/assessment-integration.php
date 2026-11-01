@@ -43,7 +43,7 @@ function linked($quiz_id, $question_id) {
 function course_with_quiz($admin, $quiz_settings = []) {
     global $wpdb, $fixture;
     as_user($admin);
-    $course = call('POST', 'courses', ['name' => 'Assessment course', 'status' => 'publish']);
+    $course = call('POST', 'courses', ['title' => 'Assessment course', 'status' => 'publish']);
     $course_id = remember_post($course->get_data()['id']);
     $quiz = call('POST', 'quiz', ['name' => 'Assessment quiz', 'status' => 'publish']);
     $quiz_id = remember_post($quiz->get_data()['id']);
@@ -60,11 +60,15 @@ function enroll($student, $course_id) {
     $cache = new ReflectionProperty(\OhMyLMS\DataStores\StudentStore::class, 'enrollment_cache');
     $cache->setAccessible(true); $cache->setValue(null, []);
 }
+/** The question-list revision every placement write of the quiz must send. */
+function quiz_revision($quiz_id) { return (string) (call('GET', 'quizzes/' . $quiz_id . '/questions')->get_data()['revision'] ?? ''); }
+/** A base_modified that is never stale, for requests that must be refused before the save. */
+function unexpired() { return gmdate('Y-m-d\TH:i:s\Z', time() + HOUR_IN_SECONDS); }
 function choice_question($quiz_id, $name = 'Choice', $score = 2) {
-    $response = call('POST', 'question', ['quiz_id' => $quiz_id, 'name' => $name, 'settings' => ['type' => 'single-choice', 'score' => ['enabled' => true, 'value' => $score]],
-        'questions' => [['answer' => 'Right', 'is_correct' => 1, 'order_number' => 1], ['answer' => 'Wrong', 'is_correct' => 0, 'order_number' => 2]]]);
+    $response = call('POST', 'quizzes/' . $quiz_id . '/questions/new', ['revision' => quiz_revision($quiz_id), 'question' => ['name' => $name, 'settings' => ['type' => 'single-choice', 'score' => ['enabled' => true, 'value' => $score]],
+        'options' => [['answer' => 'Right', 'is_correct' => true, 'order_number' => 1], ['answer' => 'Wrong', 'is_correct' => false, 'order_number' => 2]]]]);
     ok(status_of($response) === 201, 'Question create failed: ' . wp_json_encode($response->get_data()));
-    return remember_post($response->get_data()['id']);
+    return remember_post($response->get_data()['created_id']);
 }
 
 $admin = get_user_by('login', $config['username'])->ID;
@@ -88,11 +92,11 @@ try {
         as_user($author_b);
         $quiz_b = remember_post(call('POST', 'quiz', ['name' => 'Quiz B', 'status' => 'draft'])->get_data()['id']);
         $question_b = choice_question($quiz_b, 'Question B');
-        ok(status_of(call('GET', 'question/' . $question_a)) === 403, 'Another author could read a question');
-        ok(status_of(call('PUT', 'question/' . $question_a, ['name' => 'Hijacked'])) === 403, 'Another author could update a question');
-        ok(status_of(call('DELETE', 'question/' . $question_a)) === 403, 'Another author could delete a question');
+        ok(status_of(call('GET', 'questions/' . $question_a)) === 403, 'Another author could read a question');
+        ok(status_of(call('PATCH', 'questions/' . $question_a, ['name' => 'Hijacked', 'base_modified' => unexpired()])) === 403, 'Another author could update a question');
+        ok(status_of(call('DELETE', 'questions/' . $question_a)) === 403, 'Another author could delete a question');
         ok(status_of(call('GET', 'quiz/' . $quiz_a)) === 403, 'Another author could open a quiz');
-        ok(status_of(call('GET', 'quiz/' . $quiz_a . '/report')) === 403, 'Another author could read quiz reports');
+        ok(status_of(call('GET', 'quizzes/' . $quiz_a . '/attempts')) === 403, 'Another author could read quiz reports');
         ok(get_the_title($question_a) === 'Question A', 'Denied update still changed the question');
 
         // Nested writes through the author's own quiz cannot reach someone else's question.
@@ -103,18 +107,18 @@ try {
         ok(!linked($quiz_b, $question_a), 'Rejected nested save linked a foreign question');
 
         // Foreign option IDs are rejected and the owning question is untouched.
-        $response = call('PUT', 'question/' . $question_b, ['questions' => [['id' => $options_a[0]['id'], 'answer' => 'Stolen', 'is_correct' => 1]]]);
+        $response = call('PATCH', 'questions/' . $question_b, ['base_modified' => unexpired(), 'options' => [['id' => (int) $options_a[0]['id'], 'answer' => 'Stolen', 'is_correct' => true], ['answer' => 'Other']]]);
         ok(status_of($response) === 403 && $response->get_data()['code'] === 'ohmylms_option_foreign', 'Foreign option ID accepted: ' . wp_json_encode($response->get_data()));
         ok(option_rows($question_a) == $options_a, 'Foreign option update changed the original question');
         as_user($author_a);
         $own_quiz_q2 = choice_question($quiz_a, 'Second A');
-        $response = call('PUT', 'question/' . $own_quiz_q2, ['questions' => [['id' => $options_a[1]['id'], 'answer' => 'Moved', 'is_correct' => 1]]]);
+        $response = call('PATCH', 'questions/' . $own_quiz_q2, ['base_modified' => unexpired(), 'options' => [['id' => (int) $options_a[1]['id'], 'answer' => 'Moved', 'is_correct' => true], ['answer' => 'Other']]]);
         ok(status_of($response) === 403, 'Option ID from another question of the same author accepted');
         ok(option_rows($question_a) == $options_a, 'Cross-question option update moved an option');
 
         as_user($subscriber);
-        ok(status_of(call('GET', 'question/' . $question_a)) === 403, 'Subscriber read a question');
-        ok(status_of(call('POST', 'question', ['name' => 'x'])) === 403, 'Subscriber created a question');
+        ok(status_of(call('GET', 'questions/' . $question_a)) === 403, 'Subscriber read a question');
+        ok(status_of(call('POST', 'questions', ['name' => 'x', 'settings' => ['type' => 'true-false'], 'options' => [['answer' => 'True', 'is_correct' => true], ['answer' => 'False']]])) === 403, 'Subscriber created a question');
         as_user(0);
         ok(status_of(call('GET', 'quiz/' . $quiz_a)) === 401, 'Guest opened a quiz');
 
@@ -146,37 +150,37 @@ try {
         ok(count(option_rows($data['saved_ids'][1])) === 2, 'Options of new nested question missing');
 
         $stale = '2000-01-01 00:00:00';
-        $response = call('PUT', 'question/' . $question_a, ['name' => 'Stale', 'base_modified' => $stale]);
+        $response = call('PATCH', 'questions/' . $question_a, ['name' => 'Stale', 'base_modified' => '2000-01-01T00:00:00Z']);
         ok(status_of($response) === 409, 'Stale question save accepted');
         $response = call('PUT', 'quiz/' . $quiz_a, ['name' => 'Stale quiz', 'base_modified' => $stale]);
         ok(status_of($response) === 409, 'Stale quiz save accepted');
-        $fresh = get_post_field('post_modified_gmt', $question_a);
-        ok(status_of(call('PUT', 'question/' . $question_a, ['name' => 'Fresh', 'base_modified' => $fresh])) === 200, 'Current base_modified was rejected');
+        $fresh = call('GET', 'questions/' . $question_a)->get_data()['modified'];
+        ok(status_of(call('PATCH', 'questions/' . $question_a, ['name' => 'Fresh', 'base_modified' => $fresh])) === 200, 'Current base_modified was rejected');
 
         // ---- P1: remove from quiz / archive / delete-unused ----
         global $wpdb;
         $wpdb->insert($wpdb->prefix . 'ohmylms_quiz_questions_relationship', ['quiz_id' => $quiz_b, 'question_id' => $own_quiz_q2, 'order_number' => 9]);
         as_user($admin);
-        $response = call('DELETE', 'question/' . $own_quiz_q2);
+        $response = call('DELETE', 'questions/' . $own_quiz_q2);
         ok(status_of($response) === 409, 'Deleting a question used by two quizzes was allowed');
-        $response = call('DELETE', 'quiz/' . $quiz_b . '/questions/' . $own_quiz_q2);
-        ok(status_of($response) === 200 && $response->get_data()['action'] === 'removed', 'Remove from quiz failed');
+        $response = call('DELETE', 'quizzes/' . $quiz_b . '/questions/' . $own_quiz_q2, [], ['revision' => quiz_revision($quiz_b)]);
+        ok(status_of($response) === 200 && !in_array($own_quiz_q2, array_column($response->get_data()['questions'], 'question_id'), true), 'Remove from quiz failed: ' . wp_json_encode($response->get_data()));
         ok(!linked($quiz_b, $own_quiz_q2) && linked($quiz_a, $own_quiz_q2) && get_post_type($own_quiz_q2) === 'ohmylms-question', 'Remove from quiz affected other quizzes or the question');
         $wpdb->insert($wpdb->prefix . 'ohmylms_quiz_attempts_answers', ['student_id' => $subscriber, 'quiz_id' => $quiz_a, 'question_id' => $own_quiz_q2, 'quiz_attempt_id' => 0, 'given_answer' => 'a:0:{}']);
         $history_row = (int) $wpdb->insert_id;
-        $response = call('DELETE', 'question/' . $own_quiz_q2);
-        ok(status_of($response) === 200 && $response->get_data()['action'] === 'archived', 'Question with learner history was not archived: ' . wp_json_encode($response->get_data()));
+        $response = call('DELETE', 'questions/' . $own_quiz_q2);
+        ok(status_of($response) === 200 && $response->get_data()['archived'] === true && $response->get_data()['deleted'] === false, 'Question with learner history was not archived: ' . wp_json_encode($response->get_data()));
         ok(get_post_status($own_quiz_q2) === 'ohmylms_archived' && count(option_rows($own_quiz_q2)) === 2, 'Archived question lost its content');
         $wpdb->delete($wpdb->prefix . 'ohmylms_quiz_attempts_answers', ['id' => $history_row]);
         $unused = choice_question($quiz_a, 'Unused');
-        ok(call('DELETE', 'quiz/' . $quiz_a . '/questions/' . $unused)->get_data()['action'] === 'removed', 'Unlink unused failed');
-        $response = call('DELETE', 'question/' . $unused);
-        ok($response->get_data()['action'] === 'deleted' && !get_post($unused) && !option_rows($unused), 'Unused question was not fully deleted');
+        ok(status_of(call('DELETE', 'quizzes/' . $quiz_a . '/questions/' . $unused, [], ['revision' => quiz_revision($quiz_a)])) === 200 && !linked($quiz_a, $unused), 'Unlink unused failed');
+        $response = call('DELETE', 'questions/' . $unused);
+        ok($response->get_data()['deleted'] === true && !get_post($unused) && !option_rows($unused), 'Unused question was not fully deleted');
 
         // Reports are scoped to their own quiz.
         $wpdb->insert($wpdb->prefix . 'ohmylms_quiz_attempts', ['quiz_id' => $quiz_b, 'student_id' => $subscriber, 'course_id' => 0, 'total' => 0, 'status' => 'completed', 'start_date' => current_time('mysql')]);
         $foreign_attempt = (int) $wpdb->insert_id; $fixture['attempts'][] = $foreign_attempt;
-        ok(status_of(call('GET', 'quiz/' . $quiz_a . '/report/' . $foreign_attempt)) === 404, 'Attempt from another quiz was reported');
+        ok(status_of(call('GET', 'quizzes/' . $quiz_a . '/attempts/' . $foreign_attempt)) === 404, 'Attempt from another quiz was reported');
         echo "authoring: passed\n";
     }
 

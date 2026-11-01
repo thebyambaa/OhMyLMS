@@ -413,9 +413,8 @@ directly instead of through `question-editor/public.mjs` (rule n).
 - `sdk.js` imports nothing: it is the import-map entry, and node tests and the Playwright fixture load it
   as a single file.
 - No module refers to `jQuery` or `$` (identifiers, `window[ 'jQuery' ]`, or an import of `jquery`).
-  Add-on events go through `emit()`. Five files bridge to legacy jQuery listeners and are allow-listed:
-  `sdk.js` (`jqueryTrigger()`), `commerce-logic.mjs` (`triggerLegacy()`), `cart.js` and `checkout.js`
-  (gateway hooks that receive jQuery objects) and `lesson/store.js` (the legacy video tracker event).
+  Add-on events go through `emit()`. There are no exceptions: the five jQuery event bridges that were
+  allow-listed (`sdk.js`, `commerce-logic.mjs`, `cart.js`, `checkout.js`, `lesson/store.js`) were removed in 1.2.22.
 
 ```text
 assets/interactivity/tabs.js:3 imports the SDK as './sdk.js'; import 'ohmylms/interactivity' (the import-map name), so the page loads one SDK instance
@@ -539,8 +538,8 @@ and an entry that no longer matches fails as stale.
 
 `featureImports` names folders of `assets/src/features`; `files` are paths inside the `to` folder that
 the `from` folder may import without going through `public.mjs`. A listed file that the `from` folder no
-longer imports is reported as stale on its own. There are no `cycles` entries; `jquery` lists the five
-bridges of rule m and `featureImports` the three direct imports of rule n (an import cycle, a side-effect
+longer imports is reported as stale on its own. There are no `cycles` or `jquery` entries;
+`featureImports` lists the three direct imports of rule n (an import cycle, a side-effect
 import and a JSX component kept out of a Node-loaded entry).
 
 ### Budgets: `tools/asset-budgets.json`

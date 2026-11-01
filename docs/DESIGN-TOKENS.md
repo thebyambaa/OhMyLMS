@@ -117,10 +117,10 @@ the shared tab classes with `aria-current` rather than pretending to be local AR
 Authored frontend SCSS compiles to nine page modules through `tools/build-frontend-styles.mjs`.
 `FrontendStyles` registers shared components and the groups required by each request;
 `ohmylms_frontend_style_groups` lets integrations request additional groups explicitly.
-The generated `style.css` and `style-rtl.css` URLs remain compatibility outputs and are not loaded
-alongside those modules. They are produced from the same SCSS; they are not a second colour source.
+The generated compatibility bundle `style.css` / `style-rtl.css` was removed in 1.2.22
+([STYLESHEET-OWNERSHIP](STYLESHEET-OWNERSHIP.md#compatibility-bundle-removed-1222)).
 Edit `assets/src/frontend/scss` and regenerate with `tools/build-frontend-styles.mjs`. Do not hand-edit
-`assets/css/style.css`, `assets/css/style-rtl.css`, or `assets/css/frontend/**`.
+`assets/css/frontend/**`.
 
 ## Learner SCSS colours
 
@@ -140,8 +140,7 @@ values that cannot follow one token: star-rating artwork, select chevrons painte
 text, a notice glyph that shares its box with a surface disc, and two-paint lesson-type icons. This
 SCSS has no chart series and no exam-print colours (`assets/css/paper.css` is separate). The video
 player partial is outside the rule: its fixed media palette is documented on that file and owned with
-the player. Generated `assets/css/style.css`, `assets/css/style-rtl.css` and `assets/css/frontend/**`
-stay ignored. `assets/css/oml-ui.css` stays on the stricter rule, with no hex fallbacks.
+the player. The generated `assets/css/frontend/**` stays ignored. `assets/css/oml-ui.css` stays on the stricter rule, with no hex fallbacks.
 
 The ordered admin feature modules are built from
 `assets/src/design-system/admin`; edit authored sources rather than hashed outputs. Video controls retain a documented fixed media palette over arbitrary footage. Status text

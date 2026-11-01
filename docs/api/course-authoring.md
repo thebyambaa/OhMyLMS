@@ -91,7 +91,44 @@ existing editable resource or by creating a named draft through the quiz or assi
 Creation happens immediately; the placement is saved only with the outline draft.
 Activities of every type can be reordered within a unit and moved to another unit; a move
 keeps the placement identity and skills, drops the lesson-group link (groups belong to one
-unit) and inserts the activity before the target unit's terminal assessment.
+unit) and keeps terminal assessments (`unit-test`, `course-challenge` styles) after the other
+activities of the unit, as `AssessmentPlacement::validate` requires.
+
+### Reordering units and activities
+
+Units and activities are reordered by dragging the ⠿ grip in a unit heading or activity row,
+or with the move buttons (`Move unit up/down`, `Move <activity> up/down`) and the
+`Unit for <activity>` select. All of them go through one pure model
+(`features/course-structure/reorder.ts`: `dropOn`, `placeActivity`, `moveTo`), so pointer and
+keyboard moves follow the same rules: a unit dropped on another unit lands before or after it
+(upper or lower half); an activity dropped on another activity lands before or after it, possibly
+in another unit; an activity dropped on a unit heading, or moved with the select, goes to the
+end of that unit before its terminal assessment. "Place in" for unplaced activities uses the
+same path.
+
+- **Pointer, pen and touch** share one path (`useDragMove`): pointer events with pointer
+  capture on the grip, the row under the pointer found with `document.elementFromPoint`, and
+  `touch-action: none` on the grip so touch drags do not scroll. Native HTML5 drag events are
+  not used because mobile browsers do not fire them for touch. Escape, a cancelled pointer, or
+  releasing away from every row ends a drag without a move. The dragged row fades and the
+  target shows an insertion line in `--wp-admin-theme-color`. The page does not scroll
+  automatically during a drag.
+- **Keyboard and screen readers** use the move buttons and select. The grip is pointer-only
+  (`aria-hidden`). Every move is announced in a polite live region ("Moved Check to position 2
+  in Geometry.", "Moved unit Algebra to position 2."). Focus stays on the moved row's control
+  that triggered the move, or on the moved row itself (`tabindex="-1"`) when that control is
+  now disabled or the move was a drag. While the save runs, the row holds focus, because the
+  disabled fieldset would otherwise drop it.
+- **Saving.** When the outline has no other unsaved changes, a move is applied at once
+  (optimistic) and saved through the existing `PUT courses/:id/structure` with the read
+  revision (body and `X-OhMyLMS-Structure-Revision`). No new server semantics are added. On
+  success the response becomes the saved outline and its new revision ("Outline order saved.").
+  On failure the move is rolled back to the last saved outline, and the error notice says
+  "The move was not saved and has been undone." with the server's reason. A stale revision (409
+  other than a busy lock or refusal) also offers **Reload saved outline** in that notice; the
+  client never retries. New drags are ignored while a save is running. When other edits are
+  pending, a move joins the unsaved draft and is saved with **Save outline draft**, so a move
+  never saves half-finished edits.
 
 The structure client uses `structure_revision` when present, falling back to `revision`.
 It sends that token in the body and `X-OhMyLMS-Structure-Revision` header. A 409 never
@@ -121,6 +158,12 @@ of the outline, as stated beside the controls.
 - App tests cover transport validation, identity/data preservation, unit/lesson ordering,
   failed saves, explicit detachment, cancellation, duplicate submission prevention and
   capability-gated navigation. Existing membership guard tests exercise the shared guard.
+  `reorder.test.ts` covers the reorder model, including an exhaustive check of every
+  source × target × side for preserved IDs, untouched identities and terminal-last units.
+  `OutlineReorder.test.tsx` drives pointer drags (activity within and between units, units,
+  cancellation, busy state) and the keyboard path (announcements, focus), immediate save
+  with the read revision, rollback on refusal and on a stale revision, and moves joining a
+  dirty draft.
 - Live browser checks and final counts are recorded in the roadmap's current batch section.
 
 The follow-up [syllabus authoring batch](syllabus-authoring.md) now provides skill groups,
@@ -130,8 +173,8 @@ The follow-up [course settings batch](course-settings.md) adds metadata, pricing
 learning mode/mastery controls, readiness preview and confirmed publication. Routine
 outline saves remain draft-only.
 
-Remaining: full syllabus workspace parity, deleting curriculum branches, drag-and-drop
-ordering (buttons and selects are used), lesson groups in the outline UI, and assessment
+Remaining: full syllabus workspace parity, deleting curriculum branches, auto-scroll while
+dragging a long outline, lesson groups in the outline UI, and assessment
 authoring inside the course editor. Course placement currently
 uses the existing replace-list contract; it has no new optimistic concurrency token. The shared
 navigation guard covers link clicks and page unload; it does not block browser hash-history

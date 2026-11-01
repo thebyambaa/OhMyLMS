@@ -8,7 +8,6 @@ import {
 	announce,
 	debounce,
 	emit,
-	jqueryTrigger,
 	prefersReducedMotion,
 	request,
 	toast,
@@ -41,7 +40,6 @@ const definitions = createVideo( {
 	toast,
 	announce,
 	debounce,
-	jqueryTrigger,
 	prefersReducedMotion,
 } );
 

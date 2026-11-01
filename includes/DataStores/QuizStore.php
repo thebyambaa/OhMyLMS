@@ -82,7 +82,7 @@ class QuizStore extends DataStore {
 			do_action( 'ohmylms_after_creating_new_quiz', $quiz );
 
 			if ( ! get_option( 'ohmylms_first_content_created', false ) ) {
-				do_action( 'ohmylms_after_creating_first_content', $id, $lesson );
+				do_action( 'ohmylms_after_creating_first_content', $quiz_id, $quiz );
 			}
 		}
 	}

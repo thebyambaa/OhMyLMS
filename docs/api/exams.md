@@ -6,8 +6,10 @@ legacy `/exams`, `/exams/compose`, `/exams/{id}/settings|questions|publish|relea
 routes, which the old Content Hub Exams tab and the quiz editor's exam panel still call and which keep
 their routes and response shapes.
 
-Server code: `includes/Rest/V1/ExamsController.php` and `includes/Rest/V1/ExamImportsController.php`
-(routes, arguments, permissions, responses); `includes/Exams/Editor.php` (settings, composition,
+Server code: `includes/Rest/V1/ExamsController.php`, `includes/Rest/V1/ExamImportsController.php` and
+`includes/Rest/V1/ExamImportSourceController.php` (routes, arguments, permissions, responses);
+`includes/ExamImport/SourcePages.php` (source PDFs and cached page images for the viewer, over
+`ExamImport\PageRenderer`); `includes/Exams/Editor.php` (settings, composition,
 revision token), `includes/Exams/Results.php` (results policy, release, undo, views, log) and
 `includes/Exams/ResultsEmail.php` (release notification); `includes/ExamImport/Review.php` (row
 edit/accept/reject, apply) and `includes/ExamImport/Proposals.php` (JSXGraph proposals). Creation, commit,
@@ -74,10 +76,14 @@ past the end answers 400 `ohmylms_exam_invalid_page` / `ohmylms_exam_import_inva
 | POST | `/exam-imports/jobs/{id}/apply` | Commit accepted rows once, then create the exam or quiz once: `revision`, `title`, `duration_minutes`, header fields, `instructions` | 200 job detail |
 | GET / POST | `/exam-imports/jobs/{id}/figures` | List crops / queue a crop (`page` 1-500, `bounds` four numbers 0-1) | 200 / 201 |
 | GET | `/exam-imports/jobs/{id}/figures/{asset}` | The crop PNG for the owner (`nosniff`, `same-origin`) | 200 image |
+| GET | `/exam-imports/renderer` | Renderer probe: which PDF renderer this server has, or what is missing (import capabilities, no job) | 200 status |
+| GET | `/exam-imports/jobs/{id}/source` | What the side-by-side viewer can show: page count, renderer, authenticated page and PDF addresses | 200 |
+| GET | `/exam-imports/jobs/{id}/pages/{page}` | One page of the paper as PNG (`page` 1-500), rendered once and cached privately (`nosniff`, `same-origin`) | 200 image |
+| GET | `/exam-imports/jobs/{id}/document` | The paper (`part=paper`, default) or the mark scheme (`part=mark_scheme`) as PDF (`nosniff`, `X-Frame-Options: SAMEORIGIN`) | 200 PDF |
 | GET | `/exam-imports/skills` | Skill catalogue search for tagging: `search` (1-200), `page` | 200 `{id, name, code, path}` |
 
-`{index}` is the zero-based position of a row in the paper. Figure URLs carry a `wp_rest` nonce so an
-`<img>` can load them with cookie authentication.
+`{index}` is the zero-based position of a row in the paper. Figure, page and document URLs carry a
+`wp_rest` nonce so an `<img>` or `<iframe>` can load them with cookie authentication.
 
 ## Exams
 
@@ -215,6 +221,58 @@ provider responses are returned.
 Every row and apply request carries `revision`; a different stored revision answers 409
 `ohmylms_exam_import_conflict` with `data.revision`. Writes run under the job lock.
 
+## Source viewer, renderer probe and drag crop
+
+The review screen shows the source paper beside the questions (`SourcePanel`, `CropSelector` in
+`assets/src/app/features/exams`). This replaces what the legacy Content Hub review dialog did: an
+`<iframe>` of `?ohmylms_import_source=<job>#page=N` next to the form, and in its figure controls a
+"Render full page for crop reference" button that queued a whole-page crop (`bounds` `[0,0,1,1]`) and
+let the author drag a rectangle on it. The legacy `exam-import-renderer` route had no screen.
+
+**Renderer probe.** `GET /exam-imports/renderer` (and `renderer` in the source descriptor) answers
+`available`, `engine` (`poppler`), `version`, `reason`, `crops` (a renderer and Action Scheduler, so
+crops can be queued), `contract` (`poppler-crop-1`), `max_side` (2400), `timeout_seconds` (20),
+`coordinate_space` (`rotated-cropbox-normalized-top-left`) and `imagick`. It never answers an error and
+never returns paths or process output. `reason` says what is missing: `not_configured` (no
+`OHMYLMS_PDFTOPPM_BINARY`), `process_disabled` (`proc_open` and friends disabled), `binary_unusable` (not
+an absolute path to an executable), `storage` (`OHMYLMS_IMPORT_PRIVATE_DIR` missing, not writable or
+served) or `failed` (the program did not answer as pdftoppm). Poppler is the only renderer: `imagick`
+only reports that Imagick can read PDF, and the screen says it is not used. Without a renderer the panel
+explains what to configure and opens the PDF in the browser's own viewer (pdf.js in Firefox, PDFium in
+Chrome); crops cannot be made, as before. The legacy `GET /exam-import-renderer` keeps its shape (503
+when unavailable).
+
+**Source descriptor.** `GET /exam-imports/jobs/{id}/source`: `page_count` (from the inventory, 0 before
+extraction), `renderer`, `page_url` (with a `{page}` placeholder), `document` and `mark_scheme` (empty
+without one). It is offered for PDF jobs once the upload was checked (not `queued` or `failed`).
+
+**Page images.** `GET /exam-imports/jobs/{id}/pages/{page}` renders the page with the same arguments as
+a crop (`-cropbox -scale-to 2400`), so bounds drawn on it are the bounds a crop cuts. The PNG is cached
+as `page-{document}-{page}-{contract}.png` in the private import directory (written through a temporary
+file, never partial; re-rendered when unreadable; keyed on the source checksum and renderer contract)
+and removed with the job. Concurrent requests for one page wait on the `oml_import_page_*` lock
+(`Utility\Lock`, 25 s) instead of starting a second renderer. Pages after `page_count` answer 404; a
+source that changed since upload answers 409. The source PDF is checked against its size and SHA-256 on
+every document request. Nothing is a media attachment or a public URL; only the job owner may read them
+(same 404/401/403 order as the other job routes).
+
+**Viewer.** The panel follows the focused question (focusing any field of a row, or **Show source page
+N**) and opens on its page; **Adjust the crop on the page** on a saved figure opens the figure's page
+with its crop selected. The other figures of the question are outlined on their pages. Previous/next
+page, zoom (100-200 %) and a switch to the PDF viewer are available; the mark scheme opens in a new tab.
+
+**Drag crop.** On the page image, drag (mouse, pen or touch; the page does not scroll while drawing) to
+draw a rectangle, or drag inside it to move it. The rectangle is a focusable button: arrow keys move it
+by 1 % of the page, Shift + arrows resize it from the right and bottom edges, Alt makes the step 0.1 %.
+Left, top, right and bottom percentage fields edit the same rectangle; invalid values (outside 0-100,
+left not before right, top not before bottom) disable saving. Bounds are rounded to six decimals, as
+`PageRenderer::bounds()` stores them. **Use this area for figure f1** or **Add as a new figure of
+Question N** queue the crop through the existing `POST /exam-imports/jobs/{id}/figures`; the returned
+asset goes into that row's draft (`asset_id`, `page`, `bounds`, `approved: false`; a new figure gets the
+next free `fN` ID), the screen polls the crop list until it is rendered, and **Save changes** stores it
+through the row edit, which checks that the crop belongs to the job. A replaced crop starts again on the
+original figure (see proposals above) and needs approval again.
+
 ## Error codes
 
 | HTTP | Code | When |
@@ -229,6 +287,9 @@ Every row and apply request carries `revision`; a different stored revision answ
 | 409 | `ohmylms_exam_conflict`, `ohmylms_exam_import_conflict` | Stale `revision` (`data.revision`). |
 | 409 | `ohmylms_exam_published`, `_questions_locked`, `_question_unapproved`; `exam_incomplete`, `exam_overlap`, `exam_approval` | Edit after publication; imported questions; unapproved shared question; publication gate. |
 | 409 | `ohmylms_exam_import_not_reviewable`, `_figures_required`, `_figures_unreviewed`, `_unreviewed`, `_not_ready`, `_figure_unavailable`; `exam_source_in_use`, `exam_state`, `exam_busy` | Review state and figure gates; job used by an exam; extraction state; lock busy. |
+| 400 / 409 | `exam_crop_bounds`; `exam_crop_source`, `exam_crop_limit` | Crop bounds not left < right and top < bottom; crop before the upload was checked; 100 crops per job. |
+| 404 / 409 | `ohmylms_exam_import_no_source`, `_page_not_found`; `_source_unchecked`, `_source_unavailable` | No PDF (or no mark scheme); page after the last; upload not checked yet; source missing or changed since upload. |
+| 503 | `ohmylms_exam_import_renderer_unavailable`, `_render_failed`, `_storage` | Page image without a renderer, a failed render, private storage failure. |
 | 413 | `ohmylms_exam_too_large`, `ohmylms_exam_import_too_large` | Body too large. |
 | 422 | `ohmylms_exam_invalid_field` (`data.field`), `_invalid_timing`, `_invalid_sections`; `ohmylms_exam_import_invalid_row` | Blank title, duration, sections, duplicate question; `AssessmentSettings` timing; row content. |
 | 500 / 503 | `ohmylms_exam_storage`, `exam_storage`, `exam_commit`, `ohmylms_exam_import_storage`; `exam_scheduler`, `exam_provider`, `ohmylms_question_bank_unavailable` | Storage failure (rolled back); scheduler, AI provider or bank tables unavailable. |
@@ -241,7 +302,11 @@ Every row and apply request carries `revision`; a different stored revision answ
   `Library::publish()` takes the lock.
 - Apply is two steps (commit, then exam/quiz creation), each in its own transaction; a failure after the
   commit is resumed by repeating apply.
-- Not in this API (legacy routes stay): the renderer probe and the side-by-side source PDF.
+- Source viewer: cached page images are kept until the job is deleted (up to 500 pages of at most 10 MiB
+  each); an import counted as 0 pages accepts any page up to 500 and a page past the end answers 503
+  `_render_failed`. The first view of a page waits for pdftoppm (bounded to 20 s). The panel shows the
+  stored page and figures of a row, not unsaved edits of them. Imagick and pdf.js are not server
+  renderers.
 - Results release: the release email is sent and editable through its stored option but is not listed
   on the Emails screen (that needs the emails contract and catalogue); the school gradebooks
   (`Schools\Gradebook`, `Student\SchoolGradebook`) read attempt totals without the release check; a
@@ -251,9 +316,6 @@ Every row and apply request carries `revision`; a different stored revision answ
   `serialize_precision` (17) still verify.
 - Bank picker totals include questions marked `available: false` (shared and unapproved, or not allowed
   in quizzes) instead of filtering them, so page totals stay exact.
-- The crop picker requests crops by percentage bounds; the legacy drag-selection on the rendered page is
-  not rebuilt.
-
 ## Tests
 
 `tests/php/exams-rest-integration.php` (137 checks) runs against the Local site inside one rolled-back
@@ -296,9 +358,29 @@ requiring re-approval; commit without proposal metadata; the sealed attestation,
 `serialize_precision`; tampered specs failing the gate; and the delivered markup (`data-figure-spec`,
 `data-figure-display="accompany"`, protected original, no script).
 
-Front end: `npx vitest run --configLoader runner features/exams` (45 tests: contract parsers including
-results and proposals, validation, composition helpers, multipart upload, list/editor/review screens,
-conflicts, polling, the results panel and the figure proposal panel).
+`tests/php/exam-import-source-integration.php` (111 checks, `OHMYLMS_EXAM_SOURCE_TEST=1`; needs the
+configured Poppler, otherwise it reports itself as not run) renders synthetic landscape, rotated and
+CropBox pages and checks: route registration (the legacy probe too); the probe for guests, subscribers,
+contributors and authors, its fields, no paths and no caching; the source descriptor (nonce addresses, no
+document handles or hashes, no mark scheme, rows jobs); the PDF document and mark scheme (headers,
+streamed bytes equal the source, unknown part, unchecked and changed sources); page images (401/403 for
+guests, other authors, contributors and non-owner administrators before anything renders, raster sizes
+per orientation, headers, streamed PNG, one private cache file per page, cache reuse, a damaged cache
+re-rendered, pages out of range, rows and unchecked jobs, a changed source); crops drawn on a page
+(guest/other author/contributor denial, out-of-range, short, inverted and empty bounds, unknown fields,
+unchecked source, idempotent retry, the real render matching the drawn bounds, the authenticated crop
+URL); saving the crop on a row, a foreign job's crop refused, a stale save refused; cached pages
+removed with the job.
+
+Front end: `npx vitest run --configLoader runner features/exams` (72 tests: contract parsers including
+results, proposals and the source descriptor, validation, composition helpers, multipart upload,
+list/editor/review screens, conflicts, polling, the results panel, the figure proposal panel, crop
+geometry (drag normalisation, move/resize clamping, keyboard steps, percentage fields, rounding), renderer
+guidance for every reason, and the source panel: page sync and paging, regions per page, mouse and touch
+drawing, moving inside the crop, keyboard move/resize, typed and invalid percentages, read-only mode,
+the PDF fallback and a failed page image; on the review screen, a crop drawn for a question added as a
+new figure, polled until ready and saved, a figure's crop replaced from the page, and guidance before
+extraction).
 
 Live rehearsal (31 October 2026, `800.local`, headless Chrome, tagged temporary administrator and learner,
 removed afterwards): an unsafe authored config was refused in the review screen, a valid one previewed

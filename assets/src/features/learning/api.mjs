@@ -49,6 +49,21 @@ export const searchChapterContents = ( chapterId, term, fetch = request ) =>
 	} );
 
 /**
+ * Signed, short-lived "Preview as learner" links of a saved lesson (OhMyLMS\Rest\V1\LessonPreviewController).
+ *
+ * @param {number} lessonId Lesson ID.
+ * @param {Fetch}  [fetch]  Request implementation.
+ * @return {Promise<{id: number, url: string, bypass_url: string, expires: number, status: string}>} Links.
+ */
+export const createLearnerPreview = ( lessonId, fetch = request ) =>
+	/** @type {Promise<{id: number, url: string, bypass_url: string, expires: number, status: string}>} */ (
+		fetch( {
+			path: `/ohmylms/v1/lessons/${ lessonId }/learner-preview`,
+			method: 'POST',
+		} )
+	);
+
+/**
  * Render an unsaved question as the learner sees it.
  *
  * @param {Object}      data    Question, document settings and seed.

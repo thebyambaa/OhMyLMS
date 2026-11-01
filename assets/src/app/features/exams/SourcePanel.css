@@ -1,0 +1,149 @@
+/*
+ * Import review with the source paper beside it (ImportReviewPage, SourcePanel, CropSelector).
+ * Spacing, borders and colours come from the --oml-* tokens.
+ */
+
+.ohmylms-source-panel {
+	background: var(--oml-surface);
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-control);
+	min-width: 0;
+	padding: var(--oml-space-3);
+}
+
+/* Side by side when there is room for both columns; the panel wraps below the questions otherwise. */
+.ohmylms-import-review.has-source {
+	align-items: flex-start;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-4);
+}
+
+.ohmylms-import-review.has-source > section {
+	flex: 1 1 28rem;
+	min-width: 0;
+}
+
+.ohmylms-import-review.has-source > .ohmylms-source-panel {
+	flex: 1 1 24rem;
+	max-height: calc(100vh - 64px);
+	overflow: auto;
+	position: sticky;
+	top: 48px;
+}
+
+.ohmylms-import-review article {
+	border-inline-start: 4px solid transparent;
+	padding-inline-start: var(--oml-space-3);
+}
+
+.ohmylms-import-review article.is-source-focus {
+	border-inline-start-color: var(--wp-admin-theme-color);
+}
+
+.ohmylms-source-panel h3 {
+	margin-top: 0;
+}
+
+.ohmylms-source-renderer {
+	color: var(--oml-muted);
+}
+
+.ohmylms-source-toolbar,
+.ohmylms-source-links,
+.ohmylms-source-crop-fields {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-2);
+	margin: 0 0 var(--oml-space-3);
+}
+
+.ohmylms-source-crop-fields .components-base-control {
+	flex: 1 1 5rem;
+}
+
+.ohmylms-source-crop {
+	border: 0;
+	margin: 0;
+	padding: 0;
+}
+
+.ohmylms-source-pdf {
+	border: 1px solid var(--oml-border);
+	height: 70vh;
+	width: 100%;
+}
+
+.ohmylms-crop-selector {
+	background: var(--oml-subtle);
+	border: 1px solid var(--oml-border);
+	margin: 0 0 var(--oml-space-3);
+	max-height: 70vh;
+	overflow: auto;
+	position: relative;
+}
+
+.ohmylms-crop-page {
+	position: relative;
+	user-select: none;
+}
+
+.ohmylms-crop-page.is-editable {
+	cursor: crosshair;
+	touch-action: none;
+}
+
+.ohmylms-crop-page img {
+	display: block;
+	height: auto;
+	width: 100%;
+}
+
+.ohmylms-crop-region,
+.ohmylms-crop-selection {
+	box-sizing: border-box;
+	position: absolute;
+}
+
+.ohmylms-crop-region {
+	border: 2px dashed var(--oml-muted);
+	pointer-events: none;
+}
+
+.ohmylms-crop-region-label {
+	background: var(--oml-surface);
+	font-size: 11px;
+	left: 0;
+	padding: 0 var(--oml-space-1);
+	position: absolute;
+	top: 0;
+}
+
+.ohmylms-crop-selection {
+	appearance: none;
+	background: none;
+	border: 2px solid var(--wp-admin-theme-color);
+	box-shadow: inset 0 0 0 1px var(--oml-surface);
+	border-radius: 0;
+	color: inherit;
+	margin: 0;
+	padding: 0;
+}
+
+.ohmylms-crop-selection:focus {
+	outline: none;
+}
+
+.ohmylms-crop-selection:focus-visible {
+	outline: 2px solid var(--oml-focus);
+	outline-offset: 2px;
+}
+
+.ohmylms-crop-selection:disabled {
+	cursor: default;
+}
+
+.ohmylms-crop-page.is-editable .ohmylms-crop-selection {
+	cursor: move;
+}

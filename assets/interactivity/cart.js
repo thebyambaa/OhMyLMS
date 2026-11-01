@@ -5,7 +5,7 @@ import {
 	withSyncEvent,
 } from '@wordpress/interactivity';
 import { apiFetch, emit } from 'ohmylms/interactivity';
-import { cartRequest, cartOutcome, triggerLegacy } from './commerce-logic.mjs';
+import { cartRequest, cartOutcome } from './commerce-logic.mjs';
 
 /**
  * Buy, enroll, buy-with-points and membership buttons. PHP decorates every button it renders and
@@ -28,13 +28,6 @@ const { state } = store( 'ohmylms/cart', {
  */
 
 /** @typedef {{courseId: number, membershipId: number, purchaseBy: string}} CartDetail */
-
-/**
- * @param {HTMLElement} button Cart button.
- * @return {unknown} The button, wrapped in jQuery when it is on the page.
- */
-const legacyButton = ( button ) =>
-	'function' === typeof window.jQuery ? window.jQuery( button ) : button;
 
 /**
  * @param {HTMLElement} button Cart button.
@@ -88,10 +81,6 @@ function start( event, button, context ) {
 	if ( ! emit( button, 'cart-before-add', detail, true ) ) {
 		return;
 	}
-	triggerLegacy( window, 'course_adding_to_cart', [
-		legacyButton( button ),
-		body,
-	] );
 	add( button, context, body, detail );
 }
 
@@ -123,10 +112,6 @@ async function add( button, context, body, detail ) {
 	}
 	context.loading = false;
 	context.added = true;
-	triggerLegacy( window, 'course_added_to_cart', [
-		response,
-		legacyButton( button ),
-	] );
 	const outcome = cartOutcome( response );
 	if ( 'redirect' === outcome.type ) {
 		emit( button, 'cart-added', { ...detail, redirectUrl: outcome.url } );

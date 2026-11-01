@@ -98,7 +98,7 @@ class ElementorManager {
 	/**
 	 * Add the `ohmylms-page` body class on any page built with Elementor.
 	 *
-	 * All CSS rules in style.css are scoped to `.ohmylms-page`. Without this
+	 * All learner CSS rules are scoped to `.ohmylms-page`. Without this
 	 * class on the <body>, every scoped rule is inactive and the widget renders
 	 * completely unstyled. The Gutenberg block works because it adds this class
 	 * via a different mechanism; we replicate that here for Elementor.
@@ -228,7 +228,7 @@ class ElementorManager {
 	 */
 	private function register_and_enqueue_ohmylms_assets() {
 		// Register if not already registered (FrontendAssets may have done it first).
-		// Script-less since L7 (ohmylms.js was deleted). Still carries ohmylms_frontend_params.
+		// Script-less since L7 (ohmylms.js was deleted). Carries ohmylms_frontend_params.ajax_url.
 		if ( ! wp_script_is( 'ohmylms-frontend', 'registered' ) ) {
 			wp_register_script( 'ohmylms-frontend', false, array(), OHMYLMS_VERSION, true );
 		}
@@ -246,10 +246,7 @@ class ElementorManager {
 				'ohmylms-frontend',
 				'ohmylms_frontend_params',
 				array(
-					'ajax_url'           => admin_url( 'admin-ajax.php' ),
-					'current_student_id' => get_current_user_id(),
-					'nonce'              => wp_create_nonce( 'ohmylms' ),
-					'is_creator_page'    => true,
+					'ajax_url' => admin_url( 'admin-ajax.php' ),
 				)
 			);
 		}

@@ -142,13 +142,14 @@ try {
     mcp_check( ! $chapters['result']['isError'], 'Chapter read failed.' );
     $missing = mcp_call( 'get_course', array( 'id' => 2147483647 ), $token )->get_data();
     mcp_check( $missing['result']['isError'], 'REST error not mapped to MCP tool error.' );
-    foreach ( array( 'lesson' => 'lessons', 'quiz' => 'quiz', 'question' => 'question' ) as $kind => $route ) {
+    foreach ( array( 'lesson' => 'lessons', 'quiz' => 'quiz', 'question' => 'questions' ) as $kind => $route ) {
         wp_set_current_user( $owner->ID );
         $create = new WP_REST_Request( 'POST', '/ohmylms/v1/' . $route );
         $create->set_header( 'content-type', 'application/json' );
-        $create->set_body( wp_json_encode( array( 'name' => 'MCP isolated ' . $kind, 'status' => 'draft' ) ) );
+        $body = 'question' === $kind ? array( 'name' => 'MCP isolated question', 'settings' => array( 'type' => 'short-text' ) ) : array( 'name' => 'MCP isolated ' . $kind, 'status' => 'draft' );
+        $create->set_body( wp_json_encode( $body ) );
         $created = rest_do_request( $create );
-        mcp_check( $created->get_status() === 201, $kind . ' fixture creation failed.' );
+        mcp_check( $created->get_status() === 201, $kind . ' fixture creation failed: ' . wp_json_encode( $created->get_data() ) );
         $other_fixtures[] = (int) $created->get_data()['id'];
         $read = mcp_call( 'get_' . $kind, array( 'id' => end( $other_fixtures ) ), $token )->get_data();
         mcp_check( ! $read['result']['isError'], $kind . ' read failed.' );

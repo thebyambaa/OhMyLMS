@@ -1,7 +1,18 @@
 const {test, expect} = require('@playwright/test');
 const path = require('node:path');
 const root = path.resolve(__dirname, '../..');
-const jquery = path.resolve(root, '../../../wp-includes/js/jquery/jquery.js');
+// The `ohmylms-checkout` registry shim, then the gateway contract of assets/interactivity/checkout.js
+// (resume( form ) before posting, open( response, form ) for a pending answer), without jQuery.
+const registry = 'window.PaymentGatewayHandlers=window.PaymentGatewayHandlers||{};window.registerPaymentGatewayHandler=window.registerPaymentGatewayHandler||function(id,handler){window.PaymentGatewayHandlers[id]=handler;};';
+const checkout = `document.getElementById('ohmylms-checkout-form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const handler = window.PaymentGatewayHandlers[form.querySelector('[name="payment_method"]:checked').value];
+  if (handler?.resume?.(form)) return;
+  const response = await (await fetch(window.ohmylms_checkout_params.ajax_url, {method: 'POST', body: new URLSearchParams(new FormData(form))})).json();
+  if ('pending' === response.payment_status) handler?.open?.(response, form);
+  else if (response.redirect) window.location.assign(response.redirect);
+});`;
 const i18n = {title:'Pay with QPay',waiting:'Waiting for payment confirmation',paused:'Checking paused; order pending',close:'Close',resume:'Resume QPay payment',check:'Resume checking',banks:'Or open your bank app:',error:'Please resume checking',paid:'Payment confirmed'};
 const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aB3sAAAAASUVORK5CYII=';
 
@@ -23,11 +34,12 @@ async function setup(page) {
     await route.fulfill({contentType:'text/html',body:`<!doctype html><html><body><div class="ohmylms-notices-wrapper"></div><form class="checkout ohmylms-checkout-form" id="ohmylms-checkout-form"><label><input type="radio" name="payment_method" value="qpay" checked>QPay</label><input name="action" value="ohmylms_checkout" type="hidden"><input name="email" value="student@example.invalid"><input name="account_password" type="password" value="must-not-be-stored"><button class="ohmylms-place-order-button" type="submit">Place order<span class="ohmylms-loader"></span></button></form></body></html>`});
   });
   await page.goto('http://qpay.test/checkout');
-  await page.addScriptTag({path:jquery});
-  await page.evaluate(i18n => { window.wp={i18n:{__:s=>s}}; window.ohmylms_checkout_params={ajax_url:'http://qpay.test/admin-ajax.php'}; window.ohmylms_qpay_params={ajax_url:'http://qpay.test/admin-ajax.php',nonce:'nonce',i18n}; }, i18n);
+  await page.evaluate(i18n => { window.ohmylms_checkout_params={ajax_url:'http://qpay.test/admin-ajax.php'}; window.ohmylms_qpay_params={ajax_url:'http://qpay.test/admin-ajax.php',nonce:'nonce',i18n}; }, i18n);
   await page.addStyleTag({path:path.join(root,'packages/e-commerce/assets/css/qpay-checkout.css')});
-  await page.addScriptTag({path:path.join(root,'assets/dist/frontend/checkout.js')});
+  await page.addScriptTag({content:registry});
+  await page.addScriptTag({content:checkout});
   await page.addScriptTag({path:path.join(root,'packages/e-commerce/assets/js/qpay-checkout.js')});
+  expect(await page.evaluate(() => typeof window.jQuery)).toBe('undefined');
   return {calls,setPaid:()=>{paid=true;}};
 }
 

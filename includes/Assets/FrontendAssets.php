@@ -52,9 +52,10 @@ class FrontendAssets extends Assets {
 	 */
 	public function get_scripts() {
 		$scripts = array(
-			// Script-less since L7: `ohmylms.js` was deleted. Chrome::footer(), Elementor, Bricks, blocks,
-			// previews, the hub and the exam player still enqueue this handle, and it still carries
-			// `ohmylms_frontend_params`. It loads no script and no jQuery.
+			// Script-less since L7: `ohmylms.js` was deleted. Elementor, Bricks, blocks, previews, the hub
+			// and the exam player enqueue this handle to mark a learner page for Chrome::footer(), and
+			// scripts such as elementor-widgets.js depend on it. It loads no script and no jQuery and
+			// carries only `ohmylms_frontend_params.ajax_url`.
 			'ohmylms-frontend' => array(
 				'src'       => false,
 				'deps'      => array(),
@@ -111,23 +112,10 @@ class FrontendAssets extends Assets {
 	public function get_script_data( $handle ) {
 		switch ( $handle ) {
 			case 'ohmylms-frontend':
+				// Page nonces and settings live in each store's wp_interactivity_state() (lesson, video, account, ...).
 				$localized_data = array(
-					'ajax_url'                    => admin_url( 'admin-ajax.php' ),
-					'current_student_id'          => get_current_user_id(),
-					'nonce'                       => wp_create_nonce( 'ohmylms' ),
-					'load_more_nonce'             => wp_create_nonce( 'load_more_nonce' ),
-					'search_filter_nonce'         => wp_create_nonce( 'search_filter_nonce' ),
-					'video_completion_threshold'  => max( 1, min( 100, (int) get_option( 'ohmylms_video_completion_threshold', 90 ) ) ),
-					'is_creator_page'             => ohmylms_is_content_page(),
-					'content_protection'          => get_option( 'ohmylms_content_protection', 'no' ),
-					'email_verification_required' => \OhMyLMS\Services\EmailVerificationService::is_required(),
+					'ajax_url' => admin_url( 'admin-ajax.php' ),
 				);
-
-				if ( ohmylms_is_content_page() ) {
-					// The lesson and assignment nonces are in wp_interactivity_state( 'ohmylms/lesson' | 'ohmylms/assignment' ); ohmylms/video has its own (Extensions\Video). These stay for third-party callers of the admin-ajax actions.
-					$localized_data['lesson_completed_nonce'] = wp_create_nonce( 'lesson_completed_nonce' );
-					$localized_data['video_progress_nonce']   = wp_create_nonce( 'video_progress_nonce' );
-				}
 				break;
 			default:
 				$localized_data = false;

@@ -320,6 +320,7 @@ final class Jobs {
 		}
 		$job = get_post_meta( $id, self::META, true );
 		if ( is_array( $job ) && isset( $job['document']['id'] ) ) {
+			SourcePages::forget( $job );
 			Documents::remove( $job['document']['id'] );
 		}
 		if ( ! empty( $job['mark_scheme']['id'] ) ) {

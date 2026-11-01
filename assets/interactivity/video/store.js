@@ -123,7 +123,6 @@ export function errorMessage( messages, error ) {
  * @param {(message: string, options?: Object) => unknown}                                                       api.toast                SDK `toast()`.
  * @param {(message: string, politeness?: 'polite'|'assertive') => void}                                         api.announce             SDK `announce()`.
  * @param {import('./session.js').DebounceFn}                                                                    api.debounce             SDK `debounce()`.
- * @param {(name: string, args?: Array<unknown>, target?: EventTarget) => boolean}                               api.jqueryTrigger        SDK `jqueryTrigger()`.
  * @param {() => boolean}                                                                                        api.prefersReducedMotion SDK `prefersReducedMotion()`.
  * @param {import('./adapter.js').ProviderWindow}                                                                [api.win]                Window.
  * @param {Document}                                                                                             [api.doc]                Document.
@@ -145,7 +144,6 @@ export function createVideo( {
 	toast,
 	announce,
 	debounce,
-	jqueryTrigger,
 	prefersReducedMotion,
 	win = globalThis.window,
 	doc = globalThis.document,
@@ -509,7 +507,6 @@ export function createVideo( {
 				config: getState(),
 				request,
 				emit,
-				jqueryTrigger,
 				toast,
 				announce,
 				debounce,

@@ -517,6 +517,14 @@ New Gutenberg blocks for Student Dashboard, My Courses, and Student Profile page
 - Fixed: Mark as complete is checked on the server (enrolment, drip, prerequisites, sequential lock), assignment deadlines are enforced on every submit path, and membership cancellation only works for the subscription's owner.
 - Fixed: The PayPal gateway loads and its webhook route is registered; its return handler only marks a PayPal order paid after PayPal confirms the amount.
 - Fixed: Links to lessons, quizzes and assignments in unpublished courses, the login `redirect_to` (no off-site redirects), and the Mongolian PHP strings (`Domain Path: /languages`).
+- Fixed: A syllabus course could be published while a skill it requires had too few approved questions, so no learner could complete it. Required skills of syllabus courses now pass the same question check as other courses, and the readiness panel lists them.
+
+🗑 Removed (breaking for themes and add-ons that used them; see docs/EXTENSIONS.md)
+
+- Removed: The jQuery learner events `course_adding_to_cart`, `course_added_to_cart`, `payment_method_selected` and `ohmylms:video:completed`, and the SDK's `jqueryTrigger()`. Listen to the DOM events `ohmylms:cart-before-add`, `ohmylms:cart-added`, `ohmylms:cart-error`, `ohmylms:checkout-gateway-changed`, `ohmylms:video-completed` and `ohmylms:lesson-completed` instead.
+- Removed: Payment gateway `open()` and `resume()` hooks receive the checkout form element, not a jQuery object; the QPay script no longer needs jQuery.
+- Removed: The unused admin-ajax actions `ohmylms_loadmore` and `ohmylms_search_filter`, and every `ohmylms_frontend_params` field except `ajax_url` (including `load_more_nonce` and `search_filter_nonce`). The catalogue uses its GET URLs.
+- Removed: The compatibility stylesheets `assets/css/style.css` and `style-rtl.css` (483 KB, never enqueued by the plugin); old URLs now answer 404. Use the `ohmylms-frontend` style handle.
 
 = 1.2.21 =
 🚀 New Features

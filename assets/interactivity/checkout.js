@@ -13,7 +13,6 @@ import {
 	noticeModifiers,
 	requiredFields,
 	stateField,
-	triggerLegacy,
 } from './commerce-logic.mjs';
 
 /*
@@ -37,7 +36,8 @@ if ( 'function' !== typeof window.registerPaymentGatewayHandler ) {
 /**
  * Register a gateway handler: optional `select(form)`, `prepare(form)` (resolve extra POST fields,
  * throw to abort with a message), `handle(response, form)` (resolve a replacement response, or
- * `false` when handled), and the legacy `open(response, $form)` / `resume($form)` hooks.
+ * `false` when handled), `open(response, form)` (a pending payment) and `resume(form)` (return true to
+ * take over a new submission). Every hook receives the checkout `<form>` element.
  *
  * @param {string}         id      Gateway id.
  * @param {GatewayHandler} handler Handler.
@@ -55,8 +55,8 @@ export function registerGateway( id, handler ) {
  * @property {(form: HTMLFormElement|null) => void}              [select]  The gateway was chosen.
  * @property {(form: HTMLFormElement) => Promise<Object>|Object} [prepare] Extra POST fields.
  * @property {(response: ?, form: HTMLFormElement) => ?}         [handle]  Replacement response, or false.
- * @property {(response: Object, $form: Object) => void}         [open]    Legacy hook.
- * @property {($form: Object) => boolean}                        [resume]  Legacy hook.
+ * @property {(response: Object, form: HTMLFormElement) => void} [open]    The order is pending payment.
+ * @property {(form: HTMLFormElement) => boolean}                [resume]  True when the gateway takes over the submission.
  */
 
 /**
@@ -69,12 +69,6 @@ const gatewayHandler = ( id ) =>
 			window.PaymentGatewayHandlers
 		)[ id ]
 	);
-/**
- * @param {HTMLFormElement} form Checkout form.
- * @return {Object} The form, wrapped in jQuery when it is on the page.
- */
-const legacyForm = ( form ) =>
-	'function' === typeof window.jQuery ? window.jQuery( form ) : form;
 const checkoutForm = () =>
 	/** @type {HTMLFormElement|null} */ (
 		document.querySelector(
@@ -284,7 +278,6 @@ function selectGateway( id ) {
 		return;
 	}
 	const form = checkoutForm();
-	triggerLegacy( window, 'payment_method_selected' );
 	if ( form ) {
 		emit( form, 'checkout-gateway-changed', { gateway: id, previous } );
 	}
@@ -411,7 +404,7 @@ async function placeOrder( form ) {
 		return;
 	}
 	const handler = gatewayHandler( gateway );
-	if ( handler?.resume?.( legacyForm( form ) ) ) {
+	if ( handler?.resume?.( form ) ) {
 		return;
 	}
 	state.busy = true;
@@ -448,7 +441,7 @@ function finish( form, response, handler, gateway ) {
 	const outcome = checkoutOutcome( response );
 	if ( 'pending' === outcome.type ) {
 		state.busy = false;
-		handler?.open?.( response, legacyForm( form ) );
+		handler?.open?.( response, form );
 		emit( form, 'checkout-pending', { gateway } );
 		return;
 	}

@@ -9,7 +9,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ApiError } from '../../lib/api';
 import * as api from './api';
-import { job, triangle } from './fixtures';
+import { job, source, triangle } from './fixtures';
 import ImportReviewPage from './ImportReviewPage';
 import type { ImportJobDetail } from './types';
 
@@ -34,6 +34,7 @@ vi.mock( './api', () => ( {
 	searchSkills: vi.fn(),
 	proposeFigure: vi.fn(),
 	decideProposal: vi.fn(),
+	getSource: vi.fn(),
 } ) );
 
 function renderPage( entry = '/exams/imports/7' ) {
@@ -77,6 +78,7 @@ beforeEach( () => {
 	vi.resetAllMocks();
 	vi.mocked( api.getJob ).mockResolvedValue( job );
 	vi.mocked( api.listFigures ).mockResolvedValue( [] );
+	vi.mocked( api.getSource ).mockResolvedValue( source );
 } );
 
 describe( 'ImportReviewPage', () => {
@@ -173,6 +175,221 @@ describe( 'ImportReviewPage', () => {
 				name: 'Regenerate with the exam converter',
 			} )
 		).toBeInTheDocument();
+	} );
+	it( 'shows the source page beside the review and adds a crop drawn on it to the row', async () => {
+		const asset = '1b6f0c1e-2a3b-4c5d-8e9f-0a1b2c3d4e5f';
+		const queued = {
+			id: asset,
+			state: 'queued' as const,
+			attempts: 0,
+			error: '',
+			page: 2,
+			bounds: [ 0.1, 0.1, 0.9, 0.5 ],
+			width: 0,
+			height: 0,
+			url: '',
+		};
+		vi.mocked( api.listFigures )
+			.mockResolvedValueOnce( [] )
+			.mockResolvedValue( [
+				{
+					...queued,
+					state: 'ready',
+					attempts: 1,
+					width: 1920,
+					height: 480,
+					url: 'https://example.test/crop.png',
+				},
+			] );
+		vi.mocked( api.createFigure ).mockResolvedValue( queued );
+		vi.mocked( api.updateRow ).mockResolvedValue( job );
+		const user = userEvent.setup();
+		renderPage();
+		expect(
+			await screen.findByRole( 'heading', {
+				name: 'Source: Question 1, page 1',
+			} )
+		).toBeInTheDocument();
+		expect( api.getSource ).toHaveBeenCalledWith(
+			7,
+			expect.any( AbortSignal )
+		);
+		const second = screen.getByRole( 'article', { name: /Question 2/ } );
+		await user.click(
+			within( second ).getByRole( 'button', {
+				name: 'Show source page 2',
+			} )
+		);
+		expect(
+			screen.getByRole( 'img', { name: 'Page 2 of the source paper' } )
+		).toHaveAttribute( 'src', expect.stringContaining( '/pages/2?' ) );
+		expect( second ).toHaveClass( 'is-source-focus' );
+		await user.click(
+			screen.getByRole( 'button', {
+				name: 'Add as a new figure of Question 2',
+			} )
+		);
+		expect(
+			await screen.findByText( /Crop requested as a new figure/, notice )
+		).toBeInTheDocument();
+		expect( api.createFigure ).toHaveBeenCalledWith(
+			7,
+			2,
+			[ 0.1, 0.1, 0.9, 0.5 ],
+			expect.any( AbortSignal )
+		);
+		// The queued crop is polled until it is ready.
+		await waitFor( () =>
+			expect(
+				second.querySelector(
+					'img[src="https://example.test/crop.png"]'
+				)
+			).not.toBeNull()
+		);
+		await user.click(
+			within( second ).getByRole( 'button', { name: 'Save changes' } )
+		);
+		await waitFor( () =>
+			expect( api.updateRow ).toHaveBeenCalledWith(
+				7,
+				1,
+				{
+					figures: [
+						{
+							id: 'f1',
+							page: 2,
+							bounds: [ 0.1, 0.1, 0.9, 0.5 ],
+							asset_id: asset,
+							part_ids: [],
+							alt: '',
+							not_to_scale: false,
+							selected: 'original',
+							approved: false,
+						},
+					],
+				},
+				3,
+				expect.any( AbortSignal )
+			)
+		);
+	} );
+	it( "replaces a figure's crop from the page", async () => {
+		const before = '9f0a7c52-6c3e-4a4e-9a55-1f4e2b2c8d11';
+		const after = '2c7d1e0f-3b4a-4d5e-9f60-718293a4b5c6';
+		const placed = {
+			id: 'f1',
+			page: 1,
+			bounds: [ 0.2, 0.2, 0.6, 0.4 ],
+			part_ids: [],
+			asset_id: before,
+			alt: 'Triangle ABC',
+			not_to_scale: false,
+			selected: 'original' as const,
+			approved: true,
+		};
+		vi.mocked( api.getJob ).mockResolvedValue( {
+			...job,
+			rows: [
+				{ ...job.rows[ 0 ]!, figures: [ placed ] },
+				job.rows[ 1 ]!,
+			],
+		} );
+		vi.mocked( api.createFigure ).mockResolvedValue( {
+			id: after,
+			state: 'ready',
+			attempts: 1,
+			error: '',
+			page: 1,
+			bounds: [ 0.21, 0.2, 0.61, 0.4 ],
+			width: 960,
+			height: 480,
+			url: 'https://example.test/new.png',
+		} );
+		vi.mocked( api.updateRow ).mockResolvedValue( job );
+		const user = userEvent.setup();
+		renderPage();
+		const first = await screen.findByRole( 'article', {
+			name: /Question 1/,
+		} );
+		await user.click(
+			within( first ).getByRole( 'button', {
+				name: 'Adjust the crop on the page',
+			} )
+		);
+		expect(
+			screen.getByRole( 'heading', {
+				name: 'Source: Question 1, figure f1, page 1',
+			} )
+		).toBeInTheDocument();
+		const crop = screen.getByRole( 'button', { name: /^Crop area/ } );
+		expect( crop ).toHaveAccessibleName(
+			'Crop area: left 20%, top 20%, right 60%, bottom 40%'
+		);
+		crop.focus();
+		await user.keyboard( '{ArrowRight}' );
+		await user.click(
+			screen.getByRole( 'button', {
+				name: 'Use this area for figure f1',
+			} )
+		);
+		expect(
+			await screen.findByText( /Crop requested for figure f1/, notice )
+		).toBeInTheDocument();
+		expect( api.createFigure ).toHaveBeenCalledWith(
+			7,
+			1,
+			[ 0.21, 0.2, 0.61, 0.4 ],
+			expect.any( AbortSignal )
+		);
+		await user.click(
+			within( first ).getByRole( 'button', { name: 'Save changes' } )
+		);
+		await waitFor( () =>
+			expect( api.updateRow ).toHaveBeenCalledWith(
+				7,
+				0,
+				{
+					figures: [
+						{
+							...placed,
+							asset_id: after,
+							bounds: [ 0.21, 0.2, 0.61, 0.4 ],
+							approved: false,
+						},
+					],
+				},
+				3,
+				expect.any( AbortSignal )
+			)
+		);
+	} );
+	it( 'shows the source page and renderer guidance before extraction', async () => {
+		vi.mocked( api.getJob ).mockResolvedValue( {
+			...job,
+			state: 'ready_for_extraction',
+			rows: [],
+			row_count: 0,
+		} );
+		vi.mocked( api.getSource ).mockResolvedValue( {
+			...source,
+			page_count: 0,
+			renderer: {
+				...source.renderer,
+				available: false,
+				engine: '',
+				version: '',
+				reason: 'process_disabled',
+				crops: false,
+			},
+		} );
+		renderPage();
+		expect(
+			await screen.findByText( /proc_open is disabled/, notice )
+		).toBeInTheDocument();
+		expect( screen.getByTitle( 'Source paper (PDF)' ) ).toHaveAttribute(
+			'src',
+			`${ source.document }#page=1`
+		);
 	} );
 	it( 'shows rows with parts and private marking notes for the owner', async () => {
 		renderPage();

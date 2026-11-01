@@ -1,28 +1,7 @@
 {
 	"description": "Existing exceptions to the front-end rules of tools/architecture-rules/frontend.mjs (docs/ENFORCEMENT.md, sections l to o). Measured on 31 October 2026; remove entries as they are fixed. Do not add entries without a reason.",
 	"cycles": [],
-	"jquery": [
-		{
-			"file": "assets/interactivity/sdk.js",
-			"reason": "jqueryTrigger() is the one bridge that re-fires learner events as jQuery events for add-ons that still listen with .on(); it only runs when a theme or add-on loaded jQuery."
-		},
-		{
-			"file": "assets/interactivity/commerce-logic.mjs",
-			"reason": "triggerLegacy() fires the legacy body events (added_to_cart, payment_method_selected, …) that gateway add-ons listen for; no-op without jQuery."
-		},
-		{
-			"file": "assets/interactivity/cart.js",
-			"reason": "Gateway and cart add-ons receive the clicked button as a jQuery object in the legacy cart events; plain element without jQuery."
-		},
-		{
-			"file": "assets/interactivity/checkout.js",
-			"reason": "Classic payment gateway handlers' open( response, $form ) and resume( $form ) hooks receive a jQuery-wrapped form."
-		},
-		{
-			"file": "assets/interactivity/lesson/store.js",
-			"reason": "Listens for the legacy video tracker's jQuery event (ohmylms:video:completed) that add-on players still trigger."
-		}
-	],
+	"jquery": [],
 	"featureImports": [
 		{
 			"from": "learning",

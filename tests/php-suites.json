@@ -28,36 +28,6 @@
 			]
 		},
 		{
-			"reason": "Fail at HEAD on the disposable sites from tools/install-test-sites.sh: the suites predate API changes. POST courses takes title instead of name since the courses API rebuild (course-ux, curriculum, extensions); creating a question returns rest_no_route (assessment, learning, placement-test) or fails (mcp: question fixture creation failed); OhMyLMS\\Schools\\Controller is gone (learner-profile); SettingsController::is_valid_option_key() and get_page_title() are gone (player-templates, wordpress-api); statement question options are rejected with 'Every expected answer needs text and must be marked correct' (question-rows).",
-			"expect": "fail",
-			"files": [
-				"tests/php/assessment-integration.php",
-				"tests/php/course-ux-integration.php",
-				"tests/php/curriculum-integration.php",
-				"tests/php/extensions-integration.php",
-				"tests/php/learner-profile-integration.php",
-				"tests/php/learning-integration.php",
-				"tests/php/mcp-integration.php",
-				"tests/php/placement-test-integration.php",
-				"tests/php/player-templates-integration.php",
-				"tests/php/question-rows-integration.php",
-				"tests/php/wordpress-api-integration.php"
-			]
-		},
-		{
-			"reason": "Fail at HEAD on the disposable sites from tools/install-test-sites.sh, not yet diagnosed (a bug, or content the Local baseline has). First failing check: 'multiple syllabus plan configured' (comparison), 'Choices were not saved or an unavailable collection was accepted' (family-reports), 'Next-level progress uses lesson count' (gamification-streak), 'Filtering by a curriculum item must include everything beneath it' (placement), 'Existing skill summary and review recommendations reused' (student-dashboard), 'Block failed' (students), 'a required skill without approved questions keeps the course from being published' (syllabus).",
-			"expect": "fail",
-			"files": [
-				"tests/php/comparison-integration.php",
-				"tests/php/family-reports-integration.php",
-				"tests/php/gamification-streak-integration.php",
-				"tests/php/placement-integration.php",
-				"tests/php/student-dashboard-integration.php",
-				"tests/php/students-integration.php",
-				"tests/php/syllabus-integration.php"
-			]
-		},
-		{
 			"reason": "Pass on the Local site but need what a clean install lacks: a published course (course-carousel), source assets built into build/sdk with OHMYLMS_SOURCE_ASSETS on (extension-host-assets), enrolment sources from the Local roster (gradebook-rest), a teaching syllabus with objectives (lesson-settings), the ohmylms-graded-reader plugin, which is not in this repository (questions-rest), and shared skills placed on the site (skill-workspace-rest). Skipped only in CI.",
 			"skipIn": "ci",
 			"files": [

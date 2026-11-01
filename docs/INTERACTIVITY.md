@@ -209,10 +209,26 @@ Payment gateways register with `window.registerPaymentGatewayHandler( id, handle
 `registerGateway` exported by `ohmylms/checkout`). Classic scripts depend on the script-less
 `ohmylms-checkout` handle, which defines the registry before the module runs. Hooks, all optional:
 `select( form )`, `prepare( form )` (resolve extra POST fields, throw to abort with a message),
-`handle( response, form )` (resolve a replacement answer or `false` when handled), and the legacy
-`resume( $form )` / `open( response, $form )`, which receive a jQuery object when jQuery is loaded.
-The legacy jQuery body events `course_adding_to_cart`, `course_added_to_cart` and
-`payment_method_selected` are still triggered when jQuery is on the page.
+`handle( response, form )` (resolve a replacement answer or `false` when handled), `resume( form )`
+(return `true` to take over a new submission, for example to reopen a pending payment) and
+`open( response, form )` (the answer is `payment_status: 'pending'`). Every hook receives the plain
+`<form>` element; since 1.2.22 none receives a jQuery object, and QPay's own script uses no jQuery.
+
+### Removed jQuery events (1.2.22)
+
+The learner modules no longer re-dispatch jQuery events, and `jqueryTrigger()` is gone from the SDK.
+Listen to the DOM events instead (they bubble; `event.detail` carries `apiVersion` and the fields below):
+
+| Removed jQuery event (`$( document.body ).on()`) | Listen instead | Detail |
+| --- | --- | --- |
+| `course_adding_to_cart` ( `$button, body` ) | `ohmylms:cart-before-add` on the button (cancelable) | `courseId`, `membershipId`, `purchaseBy` |
+| `course_added_to_cart` ( `response, $button` ) | `ohmylms:cart-added` (redirect) or `ohmylms:cart-error` on the button | the same, plus `redirectUrl` or `message` |
+| `payment_method_selected` | `ohmylms:checkout-gateway-changed` on the checkout form, or the gateway's `select( form )` hook | `gateway`, `previous` |
+| `ohmylms:video:completed` on `document` ( `{ lessonId, courseId }` ) | `ohmylms:video-completed` on the player (watched enough), `ohmylms:lesson-completed` (the lesson was completed) | `lessonId`, `courseId`, `percent` / `lessonId`, `source`, `nextUrl` |
+
+A player that still triggers the jQuery `ohmylms:video:completed` itself is no longer heard by the lesson
+store; dispatch `ohmylms:lesson-complete-request` on `document` instead (see [Lesson and assignment player](#lesson-and-assignment-player)).
+Gateway handlers written for `$form` wrap it themselves if they still need jQuery: `const $form = jQuery( form );`.
 
 ## Shared helpers and page chrome
 
@@ -220,8 +236,7 @@ The legacy jQuery body events `course_adding_to_cart`, `course_added_to_cart` an
 Besides the question API above it exports `request()` (REST or admin-ajax, never rejects, errors normalised to
 `{ code, message, status }`, `AbortSignal` and `timeout` support, one automatic REST nonce renewal), `toast()` /
 `dismissToast()`, `confirmDialog()` (native `<dialog>`), `trapFocus()`, `focusable()`, `announce()`,
-`serializeForm()`, `toSearchParams()`, `debounce()`, `prefersReducedMotion()`, `jqueryTrigger()` and
-`getConfig()`. `apiFetch()` and `ajaxPost()` keep their contracts and are built on `request()`. Signatures and
+`serializeForm()`, `toSearchParams()`, `debounce()`, `prefersReducedMotion()` and `getConfig()`. `apiFetch()` and `ajaxPost()` keep their contracts and are built on `request()`. Signatures and
 rules for the learner batches are in [LEARNER-FRONTEND](LEARNER-FRONTEND.md#shared-helper-api-l2).
 
 The SDK reads `{ restRoot, restNonce, ajaxUrl, messages }` from WordPress's script module data
@@ -238,8 +253,8 @@ document.dispatchEvent( new CustomEvent( 'ohmylms:toast', {
 `OhMyLMS\Extensions\Chrome` adds the `ohmylms/ui` and `ohmylms/forms` directives through `ohmylms_template_html`
 (priority 15) by class name, so theme overrides of `global/toast.php`, `global/main-header.php`,
 `global/scrollto-top.php`, `global/form-login.php`, `global/form-signup.php` and `profile/profile-layout.php`
-copied before this change keep their behaviour. Only the first rendered toast region is output; pages that load
-the legacy `ohmylms-frontend` script without one get a region in `wp_footer`. PHP that renders a store calling
+copied before this change keep their behaviour. Only the first rendered toast region is output; pages that enqueue
+the script-less `ohmylms-frontend` handle without one get a region in `wp_footer`. PHP that renders a store calling
 `toast()` on other pages calls `Chrome::enqueue_ui()`.
 
 ## Login, sign-up and reviews
@@ -292,8 +307,9 @@ store builds the same URL and `@wordpress/interactivity-router` (imported on the
 `Catalog::template()` (`ohmylms_template_html`, priority 25) converts theme overrides of the filter and load-more
 templates copied before L3: legacy field names become the URL contract, controls get their state, links and buttons
 their actions. An `archive-course.php` override without the regions still filters, by loading the URL in full.
-`Ajax::loadmore()` and `Ajax::search_filter()` remain for third-party callers and use the same query builder,
-`Catalog::query_args()`. Listen to `ohmylms:catalog-before-navigate` (cancelable) to veto or track a change.
+The admin-ajax fragment actions `ohmylms_loadmore` and `ohmylms_search_filter` (and their nonces in
+`ohmylms_frontend_params`) were removed in 1.2.22: request the catalogue URL with the GET parameters above and read
+the `ohmylms/catalog-results` region instead. Listen to `ohmylms:catalog-before-navigate` (cancelable) to veto or track a change.
 
 ## Lesson and assignment player
 
@@ -330,8 +346,9 @@ Watched spans are saved with `ohmylms_save_video_progress` (debounced, and with 
 `fetch` on `pagehide`). The server merges them and applies the watched-percentage rule; the module then
 dispatches `ohmylms:lesson-complete-request` rather than completing the lesson itself. Filter
 `ohmylms_video_context` to add values under an add-on key. `window.OhMyLMSVideoPlayer` and
-`window.initOhMyLMSVideoPlayers` are shims for one release. The jQuery event `ohmylms:video:completed` is
-still triggered when jQuery is on the page. Details are in
+`window.initOhMyLMSVideoPlayers` are shims for one release. The jQuery event `ohmylms:video:completed` was
+removed in 1.2.22; listen to `ohmylms:video-completed` or `ohmylms:lesson-completed`
+([removed jQuery events](#removed-jquery-events-1222)). Details are in
 [LEARNER-FRONTEND](LEARNER-FRONTEND.md#l7-video-done).
 
 ## Language switcher

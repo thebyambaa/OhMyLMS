@@ -196,7 +196,7 @@ it( 'adds an existing assignment and a newly created draft quiz to units', async
 		{ type: 'assignment', content_id: 41, chapter_id: 9 },
 	] );
 } );
-it( 'moves a lesson to another unit and reorders activities within a unit', async () => {
+it( 'saves each move of a saved outline at once: reorder within a unit, then move to another unit', async () => {
 	const user = userEvent.setup();
 	const second = {
 		id: 'activity-2',
@@ -206,6 +206,10 @@ it( 'moves a lesson to another unit and reorders activities within a unit', asyn
 		required: true,
 		name: 'Check',
 	};
+	vi.mocked( api.saveOutline ).mockImplementation( async ( next ) => ( {
+		...next,
+		revision: `${ next.revision }+`,
+	} ) );
 	open( {
 		...outline,
 		program: {
@@ -214,20 +218,26 @@ it( 'moves a lesson to another unit and reorders activities within a unit', asyn
 		},
 	} );
 	await user.click( screen.getByRole( 'button', { name: 'Move Check up' } ) );
+	await screen.findAllByText( 'Outline order saved.' );
 	await user.selectOptions(
 		screen.getByLabelText( 'Unit for First lesson' ),
 		'9'
 	);
-	const payload = await saveAndReadPayload( user );
-	expect( payload.program.items.map( ( item ) => item.id ) ).toEqual( [
+	await waitFor( () => expect( api.saveOutline ).toHaveBeenCalledTimes( 2 ) );
+	const [ first, last ] = vi
+		.mocked( api.saveOutline )
+		.mock.calls.map( ( call ) => call[ 1 ] as Outline );
+	expect( first!.revision ).toBe( 'read-token' );
+	expect( last!.revision ).toBe( 'read-token+' );
+	expect( last!.program.items.map( ( item ) => item.id ) ).toEqual( [
 		'activity-2',
 		'activity-1',
 	] );
-	expect( payload.program.items[ 1 ] ).toMatchObject( {
+	expect( last!.program.items[ 1 ] ).toMatchObject( {
 		chapter_id: 9,
 		content_id: 20,
 	} );
-	expect( payload.program.items[ 1 ] ).not.toHaveProperty( 'group_id' );
+	expect( last!.program.items[ 1 ] ).not.toHaveProperty( 'group_id' );
 } );
 it( 'cancels pending writes on unmount and prevents duplicate saves', async () => {
 	const user = userEvent.setup();

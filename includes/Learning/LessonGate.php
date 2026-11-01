@@ -56,6 +56,9 @@ final class LessonGate {
 		if ( $user_id < 1 ) {
 			return new WP_Error( 'ohmylms_lesson_not_logged_in', __( 'Log in to complete this lesson.', 'ohmylms' ), array( 'status' => 401 ) );
 		}
+		if ( LessonPreview::previewing( $user_id, $id ) ) {
+			return new WP_Error( 'ohmylms_lesson_preview', __( 'Preview — nothing is recorded.', 'ohmylms' ), array( 'status' => 409 ) );
+		}
 		if ( ! $post || 'publish' !== $post->post_status || ! in_array( $post->post_type, array_merge( self::TYPES, array_keys( Delivery::PREREQUISITE_TYPES ) ), true ) ) {
 			return new WP_Error( 'ohmylms_lesson_not_found', __( 'Lesson not found.', 'ohmylms' ), array( 'status' => 404 ) );
 		}

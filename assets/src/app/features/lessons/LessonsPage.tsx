@@ -1,6 +1,6 @@
 import { Button, Modal, Notice, TextControl } from '@wordpress/components';
 import { useCallback, useEffect, useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { Link, useNavigate } from 'react-router-dom';
 import { useListState } from '../../components/listQuery';
 import { useRequest } from '../../hooks/useRequest';
@@ -12,6 +12,10 @@ import {
 import { newId } from '../../lib/uuid';
 import { ListTable } from '../../../ui/ListTable';
 import { createLesson, listLessons } from './api';
+import {
+	LearnerPreviewNotices,
+	useLearnerPreview,
+} from './LearnerPreviewButton';
 
 type LessonRow = Awaited<
 	ReturnType< typeof listLessons >
@@ -39,6 +43,7 @@ export default function LessonsPage() {
 	);
 	const request = useRequest( load );
 	const operation = useOperation();
+	const preview = useLearnerPreview();
 	return (
 		<section>
 			<PageTitleActions>
@@ -64,6 +69,10 @@ export default function LessonsPage() {
 					</Button>
 				</Notice>
 			) }
+			<LearnerPreviewNotices
+				error={ preview.error }
+				blocked={ preview.blocked }
+			/>
 			{ ( request.loading || request.data ) && (
 				<ListTable< LessonRow >
 					caption={ __( 'Lessons', 'ohmylms' ) }
@@ -124,6 +133,17 @@ export default function LessonsPage() {
 									{ __( 'Edit', 'ohmylms' ) }
 								</Link>
 							),
+						},
+						{
+							key: 'view',
+							label: __( 'Preview as learner', 'ohmylms' ),
+							ariaLabel: sprintf(
+								/* translators: %s: lesson title. */
+								__( 'Preview “%s” as a learner', 'ohmylms' ),
+								lesson.title
+							),
+							disabled: preview.busy,
+							onClick: () => preview.open( lesson.id ),
 						},
 					] }
 				/>

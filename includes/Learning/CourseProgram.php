@@ -533,7 +533,7 @@ final class CourseProgram {
 		$syllabus          = 0 < $course_id && \OhMyLMS\Curriculum\SyllabusCourse::owner( $course_id ) > 0;
 		$errors            = array_merge( self::completion_readiness( $program, $syllabus ), self::review_readiness( $program ) );
 		$rules             = Mastery::rules();
-		$required_outcomes = $syllabus ? array() : array_filter(
+		$required_outcomes = array_filter(
 			$program['outcomes'],
 			static function ( $outcome ) {
 				return ! empty( $outcome['required'] );
@@ -616,7 +616,14 @@ final class CourseProgram {
 			}
 		}
 		$practice_skills = array();
-		foreach ( $syllabus ? array() : $program['outcomes'] as $outcome ) {
+		// A syllabus course can hold every skill of its syllabus; only the ones it requires are checked.
+		$outcomes = $syllabus ? array_filter(
+			$program['outcomes'],
+			static function ( $outcome ) {
+				return ! empty( $outcome['required'] );
+			}
+		) : $program['outcomes'];
+		foreach ( $outcomes as $outcome ) {
 			$pool              = self::pool( $program, $outcome['term_id'] );
 			$families          = array_unique(
 				array_map(

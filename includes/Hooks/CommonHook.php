@@ -146,6 +146,10 @@ class CommonHook extends HookHandler {
 	 * Restrict post access for not enrolled users
 	 */
 	public function restrict_access() {
+		// A signed learner preview already passed OhMyLMS\Learning\LessonPreview::start(), which applies these gates as a new learner.
+		if ( \OhMyLMS\Learning\LessonPreview::active() ) {
+			return;
+		}
 		if ( is_single() ) {
 			global $post;
 

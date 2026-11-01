@@ -13,6 +13,13 @@ import {
 	type MapSkill,
 	type SkillMap,
 } from './skill-map';
+import {
+	domainSummary,
+	isTarget,
+	readOverlay,
+	skillLevel,
+} from './skill-map-overlay';
+import { OverlayControl, skillBadge, skillSentence } from './SkillMapOverlay';
 
 function issueText( issue: MapIssue, names: Map< number, string > ) {
 	const skill = names.get( issue.skill ) ?? `#${ issue.skill }`;
@@ -46,11 +53,12 @@ function issueText( issue: MapIssue, names: Map< number, string > ) {
 	);
 }
 
-const MAP_QUERY = { subject: '', syllabus: '0' };
+const MAP_QUERY = { subject: '', syllabus: '0', overlay: '' };
 
 /**
- * Read-only coherence map of a subject's shared skills, optionally with a syllabus's coverage. The
- * shown subject and syllabus are in the address (`&subject=…&syllabus=…`).
+ * Read-only coherence map of a subject's shared skills, optionally with a syllabus's coverage and a
+ * learner, class or school's mastery. The shown subject, syllabus and overlay are in the address
+ * (`&subject=…&syllabus=…&overlay=learner:12`).
  */
 export default function SkillMapPage() {
 	const loadSubjects = useCallback(
@@ -103,6 +111,41 @@ export default function SkillMapPage() {
 		);
 		return () => controller.abort();
 	}, [ shown ] );
+	const target = isTarget( query.values.overlay ) ? query.values.overlay : '';
+	const [ overlayOn, setOverlayOn ] = useState( Boolean( target ) );
+	useEffect( () => {
+		if ( target ) {
+			setOverlayOn( true );
+		}
+	}, [ target ] );
+	const overlaySubject = map?.subject ?? '';
+	const overlayKey =
+		overlayOn && target && overlaySubject
+			? `${ overlaySubject }|${ target }`
+			: '';
+	const overlayRequest = useRequest(
+		( signal ) =>
+			overlayKey
+				? readOverlay( overlaySubject, target, signal )
+				: Promise.resolve( null ),
+		{ key: overlayKey }
+	);
+	const overlay =
+		overlayKey && overlayRequest.data?.target.key === target
+			? overlayRequest.data
+			: null;
+	const areas = map && overlay ? domainSummary( map, overlay ) : null;
+	const areaText = ( domain: string ) => {
+		const area = areas?.get( domain );
+		return area
+			? sprintf(
+					/* translators: 1: skills at Proficient or above, 2: skills in the domain. */
+					__( '%1$d of %2$d Proficient or above', 'ohmylms' ),
+					area.secure,
+					area.total
+				)
+			: '';
+	};
 	const options = subjects.data ?? [];
 	const current = options.find( ( row ) => row.subject === subject );
 	const names = new Map( map?.skills.map( ( row ) => [ row.id, row.name ] ) );
@@ -120,7 +163,7 @@ export default function SkillMapPage() {
 		<section>
 			<p>
 				{ __(
-					'See how a subject’s shared skills fit together across domains and levels, and which of them a syllabus teaches. The map is read-only; place skills and edit links in the curriculum workspace.',
+					'See how a subject’s shared skills fit together across domains and levels, which of them a syllabus teaches and how far a learner, class or school has mastered them. The map is read-only; place skills and edit links in the curriculum workspace.',
 					'ohmylms'
 				) }
 			</p>
@@ -236,6 +279,23 @@ export default function SkillMapPage() {
 							) }
 						</p>
 					) }
+					<OverlayControl
+						enabled={ overlayOn }
+						onToggle={ ( on ) => {
+							setOverlayOn( on );
+							if ( ! on && target ) {
+								query.set( { overlay: '' } );
+							}
+						} }
+						target={ target }
+						onChoose={ ( key ) => query.set( { overlay: key } ) }
+						overlay={ overlay }
+						loading={
+							Boolean( overlayKey ) && overlayRequest.loading
+						}
+						error={ overlayKey ? overlayRequest.error : '' }
+						onRetry={ overlayRequest.retry }
+					/>
 					{ map.domains.length && map.grades.length ? (
 						<WidefatTable
 							caption={ __(
@@ -258,28 +318,77 @@ export default function SkillMapPage() {
 							<tbody>
 								{ map.domains.map( ( domain ) => (
 									<tr key={ domain.id }>
-										<th scope="row">{ domain.label }</th>
+										<th scope="row">
+											{ domain.label }
+											{ areaText( domain.id ) && (
+												<span className="ohmylms-skill-overlay__domain">
+													{ areaText( domain.id ) }
+												</span>
+											) }
+										</th>
 										{ map.grades.map( ( grade ) => (
 											<td key={ grade.value }>
 												{ (
 													grid.get(
 														`${ domain.id }:${ grade.value }`
 													) ?? []
-												).map( ( skill ) => (
-													<Button
-														key={ skill.id }
-														variant="link"
-														aria-pressed={
-															selected?.id ===
-															skill.id
-														}
-														onClick={ () =>
-															setSelected( skill )
-														}
-													>
-														{ label( skill ) }
-													</Button>
-												) ) }
+												).map( ( skill ) => {
+													const figures = overlay
+														? skillLevel(
+																overlay,
+																skill.id
+															)
+														: null;
+													return (
+														<Button
+															key={ skill.id }
+															variant={
+																figures
+																	? undefined
+																	: 'link'
+															}
+															className={
+																figures
+																	? `ohmylms-skill-overlay__chip is-${ figures.level }`
+																	: undefined
+															}
+															aria-pressed={
+																selected?.id ===
+																skill.id
+															}
+															onClick={ () =>
+																setSelected(
+																	skill
+																)
+															}
+														>
+															{ overlay &&
+															figures ? (
+																<>
+																	<span
+																		className={ `ohmylms-skill-overlay__swatch is-${ figures.level }` }
+																		aria-hidden="true"
+																	/>
+																	<span className="ohmylms-skill-overlay__chip-text">
+																		<span>
+																			{ label(
+																				skill
+																			) }
+																		</span>
+																		<span className="ohmylms-skill-overlay__badge">
+																			{ skillBadge(
+																				overlay,
+																				figures
+																			) }
+																		</span>
+																	</span>
+																</>
+															) : (
+																label( skill )
+															) }
+														</Button>
+													);
+												} ) }
 											</td>
 										) ) }
 									</tr>
@@ -311,6 +420,14 @@ export default function SkillMapPage() {
 									selected.grade_to
 								) }
 							</p>
+							{ overlay && (
+								<p>
+									{ skillSentence(
+										overlay,
+										skillLevel( overlay, selected.id )
+									) }
+								</p>
+							) }
 							<p>
 								{ __( 'Builds on:', 'ohmylms' ) }{ ' ' }
 								{ selected.prerequisites

@@ -466,7 +466,7 @@ class GatewayQPay extends PaymentGateway {
 			return; }
 		$base = 'packages/e-commerce/assets/';
 		wp_enqueue_style( 'ohmylms-qpay-checkout', plugins_url( $base . 'css/qpay-checkout.css', OHMYLMS_FILE ), array(), filemtime( OHMYLMS_DIR . '/' . $base . 'css/qpay-checkout.css' ) );
-		wp_enqueue_script( 'ohmylms-qpay-checkout', plugins_url( $base . 'js/qpay-checkout.js', OHMYLMS_FILE ), array( 'jquery', 'ohmylms-checkout' ), filemtime( OHMYLMS_DIR . '/' . $base . 'js/qpay-checkout.js' ), true );
+		wp_enqueue_script( 'ohmylms-qpay-checkout', plugins_url( $base . 'js/qpay-checkout.js', OHMYLMS_FILE ), array( 'ohmylms-checkout' ), filemtime( OHMYLMS_DIR . '/' . $base . 'js/qpay-checkout.js' ), true );
 		wp_localize_script(
 			'ohmylms-qpay-checkout',
 			'ohmylms_qpay_params',

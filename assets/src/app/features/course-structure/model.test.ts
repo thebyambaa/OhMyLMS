@@ -1,12 +1,6 @@
 import { outline } from './fixtures';
-import {
-	move,
-	moveActivity,
-	moveToUnit,
-	parseOutline,
-	removeNewUnit,
-	savePayload,
-} from './model';
+import { parseOutline, removeNewUnit, savePayload } from './model';
+import { moveTo, placeActivity } from './reorder';
 
 it( 'round-trips a draft without dropping modes, evidence, groups or skills', () => {
 	const parsed = parseOutline( {
@@ -53,7 +47,7 @@ it.each( [
 	expect( () => parseOutline( value ) ).toThrow();
 } );
 it( 'moves units without mutating the original or reassigning activity identities', () => {
-	const units = move( outline.units, 0, 1 );
+	const units = moveTo( outline.units, 0, 1 );
 	expect( units.map( ( unit ) => unit.id ) ).toEqual( [ 9, 8 ] );
 	expect( outline.units.map( ( unit ) => unit.id ) ).toEqual( [ 8, 9 ] );
 	expect( savePayload( { ...outline, units } ).program ).toBe(
@@ -74,13 +68,15 @@ it( 'moves lessons within their unit without moving terminal assessments', () =>
 	const second = { ...first, id: 'second', content_id: 21 };
 	const test = { ...first, id: 'test', type: 'quiz', style: 'unit-test' };
 	const foreign = { ...first, id: 'foreign', chapter_id: 9 };
-	const items = [ first, test, foreign, second ];
-	expect( moveActivity( items, first.id, 1 ) ).toEqual( [
+	const items = [ first, second, test, foreign ];
+	expect( placeActivity( items, first.id, 8, 1 ) ).toEqual( [
 		second,
+		first,
 		test,
 		foreign,
-		first,
 	] );
+	expect( placeActivity( items, second.id, 8, 9 ) ).toBe( items );
+	expect( placeActivity( items, test.id, 8, 0 ) ).toBe( items );
 	expect( items[ 0 ] ).toBe( first );
 } );
 
@@ -94,7 +90,12 @@ it( 'moves an activity to another unit before its terminal assessment and drops 
 		style: 'unit-test',
 		chapter_id: 9,
 	};
-	const moved = moveToUnit( [ first, other, test ], first.id, 9 );
+	const moved = placeActivity(
+		[ first, other, test ],
+		first.id,
+		9,
+		Infinity
+	);
 	expect( moved.map( ( item ) => item.id ) ).toEqual( [
 		'other',
 		'activity-1',
@@ -107,9 +108,11 @@ it( 'moves an activity to another unit before its terminal assessment and drops 
 		skill_ids: [ 7 ],
 	} );
 	expect( moved[ 1 ] ).not.toHaveProperty( 'group_id' );
-	expect( moveToUnit( [ first ], first.id, 8 )[ 0 ] ).toBe( first );
+	expect( placeActivity( [ first ], first.id, 8, Infinity )[ 0 ] ).toBe(
+		first
+	);
 	expect(
-		moveToUnit( [ first, other ], first.id, 'new-unit' ).map(
+		placeActivity( [ first, other ], first.id, 'new-unit', Infinity ).map(
 			( item ) => item.id
 		)
 	).toEqual( [ 'other', 'activity-1' ] );

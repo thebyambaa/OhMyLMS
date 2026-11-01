@@ -7,7 +7,7 @@
  * @package OhMyLMS
  */
 
-use OhMyLMS\Schools\Controller;
+use OhMyLMS\Schools\Signup;
 use OhMyLMS\Student\LearnerProfile;
 use OhMyLMS\Student\ParentActions;
 use OhMyLMS\Student\SettingsSave;
@@ -213,9 +213,9 @@ try {
 		$lp_users[] = $lp_role_user->ID;
 	}
 
-	// The REST/portal registration ignores the profile fields as before.
+	// The shared sign-up service (formerly the REST/portal registration) ignores the profile fields as before.
 	delete_transient( $lp_limit );
-	$lp_rest = Controller::signup(
+	$lp_rest = Signup::create(
 		array(
 			'role'     => 'student',
 			'email'    => "lp-rest-$lp_suffix@example.invalid",
@@ -225,6 +225,7 @@ try {
 	);
 	ohmylms_lp_check( ! empty( $lp_rest['success'] ), 'REST sign-up behaviour changed.' );
 	$lp_users[] = get_user_by( 'email', "lp-rest-$lp_suffix@example.invalid" )->ID;
+	ohmylms_lp_check( array( '', '', '' ) === array_values( LearnerProfile::get( end( $lp_users ) ) ), 'Sign-up service stored profile details.' );
 
 	// The new learner opens Settings for the first time with nothing filled in: a normal profile.
 	wp_set_current_user( $lp_user->ID );

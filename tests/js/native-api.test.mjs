@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { queryString } from '../../assets/src/features/rest.mjs';
 import {
+	createLearnerPreview,
 	previewQuestion,
 	publishExam,
 	saveExamInstructions,
@@ -28,6 +29,12 @@ test( 'native editor requests keep their routes and payloads', async () => {
 	await publishExam( 7, true, fetch );
 	await searchChapterContents( 3, 'a&b', fetch );
 	await previewQuestion( { question: { type: 'x' }, seed: 5 }, signal, fetch );
+	await createLearnerPreview( 12, fetch );
+	assert.deepEqual( calls.at( -1 ), {
+		path: '/ohmylms/v1/lessons/12/learner-preview',
+		method: 'POST',
+	} );
+	calls.pop();
 	assert.deepEqual( calls, [
 		{
 			path: '/ohmylms/v1/exams/7/settings',

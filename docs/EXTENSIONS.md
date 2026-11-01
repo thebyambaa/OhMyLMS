@@ -106,6 +106,25 @@ The `ohmylms/paper` Interactivity module adds the question navigator, flags for 
 
 Prices, coupons, payment verification and enrollment remain server-side. Integration panels need permission-checked endpoints; never expose provider secrets. Examples demonstrate every category without core edits. Disabling a module hides UI but retains saved metadata. A quiz with an unavailable question extension fails safely.
 
+## Learner front-end compatibility removed in 1.2.22
+
+These leftovers of the jQuery learner scripts were removed. Themes and add-ons that used them must switch:
+
+| Removed | Use instead |
+| --- | --- |
+| jQuery event `course_adding_to_cart` | DOM event `ohmylms:cart-before-add` on the cart button (cancelable; `detail.courseId`, `membershipId`, `purchaseBy`) |
+| jQuery event `course_added_to_cart` | `ohmylms:cart-added` (`detail.redirectUrl`) or `ohmylms:cart-error` (`detail.message`) on the button |
+| jQuery event `payment_method_selected` | `ohmylms:checkout-gateway-changed` on the checkout form (`detail.gateway`, `previous`), or a gateway's `select( form )` hook |
+| jQuery event `ohmylms:video:completed` (triggered and listened to on `document`) | `ohmylms:video-completed` on the player, `ohmylms:lesson-completed`; to complete a lesson, dispatch `ohmylms:lesson-complete-request` on `document` |
+| `$form` (jQuery object) passed to gateway `open( response, $form )` / `resume( $form )` | the `<form>` element; wrap it yourself if you still need jQuery |
+| SDK export `jqueryTrigger()` | `emit()` / `new CustomEvent( 'ohmylms:…' )` |
+| admin-ajax `ohmylms_loadmore`, `ohmylms_search_filter` | GET the catalogue URL (`course_search`, `course_level[]`, …, `paged`) and read the `ohmylms/catalog-results` region |
+| `ohmylms_frontend_params` fields other than `ajax_url` (`nonce`, `current_student_id`, `load_more_nonce`, `search_filter_nonce`, `video_completion_threshold`, `is_creator_page`, `content_protection`, `email_verification_required`, `lesson_completed_nonce`, `video_progress_nonce`) | the store state of the page: `wp_interactivity_state( 'ohmylms/lesson' ).nonces.complete`, `'ohmylms/video'` `nonces.progress` / `nonces.complete` and `threshold` in each player's context |
+| `assets/css/style.css`, `assets/css/style-rtl.css` (and `.map`) | the `ohmylms-frontend` style handle, or the page modules `assets/css/frontend/<group>.css` through `ohmylms_frontend_style_groups` |
+
+Event details are in [INTERACTIVITY](INTERACTIVITY.md#removed-jquery-events-1222). The script-less `ohmylms-frontend`
+handle stays (scripts may depend on it); it now carries only `ohmylms_frontend_params.ajax_url`.
+
 ## Emails
 
 Compose an add-on's emails in the recipient's language, not the language of the request that sends them: wrap everything that produces text (settings defaults, subject, template, `__()`, dates) and the `wp_mail()` call in `OhMyLMS\I18n\RecipientLocale::run( $recipient, static function ( $locale ) { … } )`, where `$recipient` is a user ID, `WP_User` or address. For several recipients use `RecipientLocale::each( $recipients, static function ( $to, $locale ) { … } )`, which calls back once per language. Your text domain is reloaded for the switch if it is already loaded or loads just in time. See "Interface languages" in [DEVELOPMENT](DEVELOPMENT.md#interface-languages).

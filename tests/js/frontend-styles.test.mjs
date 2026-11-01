@@ -51,6 +51,26 @@ test( 'frontend page modules have portable maps, deterministic versions and no c
 			);
 		}
 		assert.deepEqual( buildFrontendStyles( root, destination ), modules );
+		for ( const retired of [ 'style.css', 'style-rtl.css' ] ) {
+			assert.equal(
+				fs.existsSync( path.join( destination, 'assets/css', retired ) ),
+				false,
+				`${ retired } is retired and no longer generated`
+			);
+		}
+		const manifest = JSON.parse(
+			fs.readFileSync(
+				path.join( root, 'assets/src/manifest.json' ),
+				'utf8'
+			)
+		);
+		for ( const retired of [
+			'assets/css/style.css',
+			'assets/css/style-rtl.css',
+		] ) {
+			assert.ok( manifest.retiredAssets.includes( retired ) );
+			assert.equal( fs.existsSync( path.join( root, retired ) ), false );
+		}
 	} finally {
 		fs.rmSync( destination, { recursive: true, force: true } );
 	}
