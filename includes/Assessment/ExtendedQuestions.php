@@ -101,7 +101,7 @@ final class ExtendedQuestions {
 			'hangman'          => array( 'max_misses' ),
 		);
 		if ( 'hot-text' === $type ) {
-			$settings = self::hot_text( $settings );
+			$settings        = self::hot_text( $settings );
 			$keys[ $type ][] = 'passage';
 		}
 		$view = array_intersect_key( $settings, array_flip( $keys[ $type ] ?? array() ) );
@@ -423,7 +423,7 @@ final class ExtendedQuestions {
 			$expected = array_map( 'strval', (array) ( $settings['correct'] ?? array() ) );
 			$hits     = count( array_intersect( $given, $expected ) );
 			$wrong    = count( $given ) - $hits;
-			$correct  = $hits === count( $expected ) && 0 === $wrong;
+			$correct  = count( $expected ) === $hits && 0 === $wrong;
 			// Partial credit by default: (correct picks - wrong picks) / correct options, floored at 0.
 			$fraction = 'all' === ( $settings['scoring'] ?? 'partial' ) || ! $expected ? ( $correct ? 1.0 : 0.0 ) : max( 0.0, ( $hits - $wrong ) / count( $expected ) );
 			return array(

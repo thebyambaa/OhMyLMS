@@ -310,17 +310,17 @@ final class ReviewLines {
 		$texts = array();
 		$marks = array();
 		foreach ( (array) ( $settings['tokens'] ?? array() ) as $token ) {
-			$marks[] = '[[' . ( $token['id'] ?? '' ) . ']]';
+			$marks[]                                  = '[[' . ( $token['id'] ?? '' ) . ']]';
 			$texts[ (string) ( $token['id'] ?? '' ) ] = (string) ( $token['text'] ?? '' );
 		}
 		$key    = array_map( 'strval', (array) ( $settings['correct'] ?? array() ) );
 		$chosen = array_map( 'strval', $chosen );
 		return (string) preg_replace_callback(
 			'/\[\[([A-Za-z0-9_-]+)\]\]/',
-			static function ( $match ) use ( $texts, $key, $chosen ) {
-				$id = $match[1];
+			static function ( $found ) use ( $texts, $key, $chosen ) {
+				$id = $found[1];
 				if ( ! isset( $texts[ $id ] ) ) {
-					return $match[0];
+					return $found[0];
 				}
 				$picked = in_array( $id, $chosen, true );
 				$right  = in_array( $id, $key, true );

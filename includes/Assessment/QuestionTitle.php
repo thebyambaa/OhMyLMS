@@ -46,7 +46,7 @@ final class QuestionTitle {
 				$value
 			);
 		}
-		$value = preg_replace_callback(
+		$value   = preg_replace_callback(
 			'/\x01(\d+)\x02/',
 			static function ( $m ) use ( $vars ) {
 				return $vars[ (int) $m[1] ] ?? '';
