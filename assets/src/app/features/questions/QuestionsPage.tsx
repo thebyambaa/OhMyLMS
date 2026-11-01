@@ -4,7 +4,7 @@ import {
 	Modal,
 	Notice,
 	SelectControl,
-	TextControl,
+	TextareaControl,
 } from '@wordpress/components';
 import { useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
@@ -642,8 +642,9 @@ export default function QuestionsPage() {
 								'ohmylms'
 							) }
 						</p>
-						<TextControl
-							label={ __( 'Name', 'ohmylms' ) }
+						<TextareaControl
+							label={ __( 'Question', 'ohmylms' ) }
+							rows={ 3 }
 							value={ name }
 							maxLength={ MAX_NAME }
 							required
@@ -656,7 +657,7 @@ export default function QuestionsPage() {
 							}
 							onChange={ setName }
 							help={ __(
-								'The question text learners see. You can change it later.',
+								'The question learners see. Its first words become the title in question lists. You can change it in the editor.',
 								'ohmylms'
 							) }
 						/>

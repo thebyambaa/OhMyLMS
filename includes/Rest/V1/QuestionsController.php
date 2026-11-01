@@ -1144,10 +1144,13 @@ class QuestionsController extends RestController {
 	private function prepare_payload( WP_REST_Request $request, $post ) {
 		$payload = array();
 
-		if ( $request->has_param( 'name' ) ) {
-			$name = trim( (string) $request['name'] );
+		if ( $request->has_param( 'name' ) && '' !== trim( (string) $request['name'] ) ) {
+			$payload['name'] = trim( (string) $request['name'] );
+		} elseif ( ! $post || $request->has_param( 'name' ) ) {
+			// Questions have one statement; the title is derived from it when not sent.
+			$name = \OhMyLMS\Assessment\QuestionTitle::from_statement( (string) ( $request['description'] ?? ( $post ? $post->post_content : '' ) ) );
 			if ( '' === $name ) {
-				return $this->invalid( 'ohmylms_question_invalid_name', __( 'Enter a question name.', 'ohmylms' ), 'name' );
+				return $this->invalid( 'ohmylms_question_invalid_name', __( 'Enter the question.', 'ohmylms' ), 'description' );
 			}
 			$payload['name'] = $name;
 		}
@@ -1889,11 +1892,9 @@ class QuestionsController extends RestController {
 		);
 		$args = array(
 			'name'               => array(
-				'description' => __( 'Question text, 1 to 500 characters.', 'ohmylms' ),
+				'description' => __( 'List title, up to 500 characters; derived from the description when omitted or empty.', 'ohmylms' ),
 				'type'        => 'string',
-				'minLength'   => 1,
 				'maxLength'   => 500,
-				'required'    => $creating,
 			),
 			'description'        => array(
 				'description' => __( 'Question body (post-safe HTML).', 'ohmylms' ),

@@ -1,6 +1,6 @@
 import { createPlayerState } from './state.js';
 import { validate } from './validation.js';
-import { loadMath, mathEnabled } from '../../src/features/math/loader.mjs';
+import { loadMath, mathEnabled } from '../math-api.js';
 /** @typedef {import('./state.js').QuizContext} QuizContext */
 
 /**
@@ -484,7 +484,8 @@ export function createQuizPlayer( {
 				if (
 					mathEnabled() &&
 					( root.querySelector( '.ohmylms-expression-input' ) ||
-						root.textContent.includes( '[[ohmylms-math:' ) )
+						root.textContent.includes( '[[ohmylms-math:' ) ||
+						/\\[([]|\$\S/.test( root.textContent ) )
 				) {
 					loadMath()
 						.then( ( runtime ) => runtime.renderContent( root ) )

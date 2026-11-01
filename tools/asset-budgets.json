@@ -11,8 +11,8 @@
 			"gzip": 2600
 		},
 		"admin-app.css": {
-			"raw": 3000,
-			"gzip": 1200
+			"raw": 13400,
+			"gzip": 3200
 		},
 		"admin-app.js": {
 			"raw": 94400,
@@ -87,7 +87,7 @@
 			"gzip": 5700
 		},
 		"chunks/admin-app-course-structure.js": {
-			"raw": 28900,
+			"raw": 32300,
 			"gzip": 8600
 		},
 		"chunks/admin-app-courses.js": {
@@ -275,8 +275,8 @@
 			"gzip": 300
 		},
 		"chunks/admin-app-questions.js": {
-			"raw": 59700,
-			"gzip": 16200
+			"raw": 71100,
+			"gzip": 19300
 		},
 		"chunks/admin-app-quiz-reports.js": {
 			"raw": 9200,

@@ -199,6 +199,8 @@ export function parseCourse( value: unknown ): Course {
 		slug: text( item.slug ),
 		status: oneOf( item.status, STATUSES ),
 		permalink: text( item.permalink ),
+		preview_url:
+			undefined === item.preview_url ? '' : text( item.preview_url ),
 		author_id: count( item.author_id ),
 		author_name: text( item.author_name ),
 		level: oneOf( item.level, LEVELS ),

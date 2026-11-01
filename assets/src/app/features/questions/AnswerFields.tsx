@@ -215,7 +215,7 @@ export function BlankAnswers( {
 				<legend>{ __( 'Blanks', 'ohmylms' ) }</legend>
 				<p id="oml-question-blanks-help">
 					{ __(
-						'Write each correct answer inside {curly brackets} in the Name field, for example: The capital of France is {Paris}. Learners see a blank for each one.',
+						'Write each correct answer inside {curly brackets} in the question, for example: The capital of France is {Paris}. Learners see a blank for each one.',
 						'ohmylms'
 					) }
 				</p>

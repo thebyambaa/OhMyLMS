@@ -73,7 +73,7 @@ function loadQuestion( value: QuestionDetail ) {
 }
 
 async function loaded() {
-	return screen.findByRole( 'textbox', { name: 'Name' } );
+	return screen.findByRole( 'textbox', { name: 'Question' } );
 }
 
 function saveButton() {
@@ -85,6 +85,7 @@ const numberQuestion: QuestionDetail = {
 	type: 'example-number',
 	settings: {
 		type: 'example-number',
+		question_code: 'Q-TEST',
 		score: { enabled: true, value: 2 },
 		expected: '7',
 	},
@@ -130,7 +131,7 @@ describe( 'QuestionEditorPage', () => {
 		expect( screen.getByRole( 'status' ) ).toHaveTextContent(
 			'Loading question'
 		);
-		expect( await loaded() ).toHaveValue( 'Solve 2x = 6' );
+		expect( await loaded() ).toHaveValue( '<p>Solve 2x = 6</p>' );
 		expect( api.getQuestion ).toHaveBeenCalledWith(
 			812,
 			expect.any( AbortSignal )
@@ -142,9 +143,6 @@ describe( 'QuestionEditorPage', () => {
 			} )
 		).toBeInTheDocument();
 		expect( screen.getByText( /Type: Single Choice/ ) ).toBeInTheDocument();
-		expect( screen.getByLabelText( 'Question text' ) ).toHaveValue(
-			'<p>Find x.</p>'
-		);
 		expect( screen.getByLabelText( 'Points' ) ).toHaveValue( 2 );
 		expect(
 			screen.getByRole( 'combobox', { name: 'Difficulty' } )
@@ -297,20 +295,25 @@ describe( 'QuestionEditorPage', () => {
 		).toBeInTheDocument();
 		expect( api.updateQuestion ).toHaveBeenCalledWith(
 			812,
-			{ base_modified: '2026-10-30T13:05:12Z', name: 'Solve 2x = 8' },
+			{
+				base_modified: '2026-10-30T13:05:12Z',
+				name: 'Solve 2x = 8',
+				description: 'Solve 2x = 8',
+			},
 			expect.any( AbortSignal )
 		);
 		expect( name ).toHaveValue( 'Solve 2x = 8' );
 		loadQuestion( {
 			...question,
 			name: 'Changed elsewhere',
+			description: '<p>Changed elsewhere</p>',
 			modified: '2026-10-30T13:07:40Z',
 		} );
 		await user.click( screen.getByRole( 'button', { name: 'Reload' } ) );
 		await waitFor( () =>
 			expect(
-				screen.getByRole( 'textbox', { name: 'Name' } )
-			).toHaveValue( 'Changed elsewhere' )
+				screen.getByRole( 'textbox', { name: 'Question' } )
+			).toHaveValue( '<p>Changed elsewhere</p>' )
 		);
 		expect( api.getQuestion ).toHaveBeenCalledTimes( 2 );
 	} );
@@ -426,6 +429,7 @@ describe( 'QuestionEditorPage', () => {
 		await user.type( field, '42' );
 		expect( seen.at( -1 ) ).toEqual( {
 			type: 'example-number',
+			question_code: 'Q-TEST',
 			score: { enabled: true, value: 2 },
 			expected: '42',
 		} );
@@ -437,6 +441,7 @@ describe( 'QuestionEditorPage', () => {
 				base_modified: '2026-10-30T13:05:12Z',
 				settings: {
 					type: 'example-number',
+					question_code: 'Q-TEST',
 					score: { enabled: true, value: 2 },
 					expected: '42',
 				},
@@ -470,7 +475,7 @@ describe( 'QuestionEditorPage', () => {
 		loadQuestion( {
 			...question,
 			type: 'graded-reader',
-			settings: { type: 'graded-reader' },
+			settings: { type: 'graded-reader', question_code: 'Q-TEST' },
 			options: [],
 		} );
 		renderEditor();
@@ -495,6 +500,7 @@ describe( 'QuestionEditorPage', () => {
 			type: 'statement',
 			settings: {
 				type: 'statement',
+				question_code: 'Q-TEST',
 				score: { enabled: true, value: 1 },
 			},
 			options: [ { ...question.options[ 0 ]!, answer: '4' } ],
@@ -542,9 +548,11 @@ describe( 'QuestionEditorPage', () => {
 		const blanks: QuestionDetail = {
 			...question,
 			name: 'The {cat} sat on the {mat}.',
+			description: 'The {cat} sat on the {mat}.',
 			type: 'fill-in-the-blank',
 			settings: {
 				type: 'fill-in-the-blank',
+				question_code: 'Q-TEST',
 				score: { enabled: true, value: 1 },
 				blank_mode: 'drag',
 			},
@@ -561,7 +569,7 @@ describe( 'QuestionEditorPage', () => {
 		);
 		const user = userEvent.setup();
 		renderEditor();
-		const name = await loaded();
+		await loaded();
 		expect(
 			screen.getByText( '2 blanks found: cat, mat' )
 		).toBeInTheDocument();
@@ -597,6 +605,7 @@ describe( 'QuestionEditorPage', () => {
 				base_modified: '2026-10-30T13:05:12Z',
 				settings: {
 					type: 'fill-in-the-blank',
+					question_code: 'Q-TEST',
 					score: { enabled: true, value: 1 },
 					blank_mode: 'type',
 					case_sensitive: false,
@@ -606,15 +615,16 @@ describe( 'QuestionEditorPage', () => {
 			expect.any( AbortSignal )
 		);
 
-		await user.clear( name );
-		await user.type( name, 'No blanks now' );
+		const statement = await loaded();
+		await user.clear( statement );
+		await user.type( statement, 'No blanks now' );
 		expect(
 			screen.getByRole( 'group', { name: 'Accepted answers' } )
 		).toBeInTheDocument();
 		await user.click( saveButton() );
 		expect(
 			await screen.findByText(
-				'Write each answer in {curly brackets} in the name, or add an accepted answer.'
+				'Put each answer in {curly brackets}, or add an accepted answer.'
 			)
 		).toBeInTheDocument();
 		expect( api.updateQuestion ).toHaveBeenCalledTimes( 1 );
@@ -624,7 +634,11 @@ describe( 'QuestionEditorPage', () => {
 		loadQuestion( {
 			...question,
 			type: 'long-text',
-			settings: { type: 'long-text', score: { enabled: true, value: 3 } },
+			settings: {
+				type: 'long-text',
+				question_code: 'Q-TEST',
+				score: { enabled: true, value: 3 },
+			},
 			options: [],
 		} );
 		renderEditor();
@@ -671,6 +685,7 @@ describe( 'QuestionEditorPage', () => {
 				base_modified: '2026-10-30T13:05:12Z',
 				settings: {
 					type: 'single-choice',
+					question_code: 'Q-TEST',
 					score: { enabled: true, value: 2 },
 					required: true,
 					randomize: true,
@@ -773,6 +788,7 @@ describe( 'QuestionEditorPage', () => {
 				name: 'Solve 2x = 6?',
 				settings: {
 					type: 'single-choice',
+					question_code: 'Q-TEST',
 					score: { enabled: true, value: 2 },
 				},
 				questions: [
@@ -817,7 +833,11 @@ describe( 'QuestionEditorPage', () => {
 		loadQuestion( {
 			...question,
 			type: 'slide',
-			settings: { type: 'slide', score: { enabled: true, value: 0 } },
+			settings: {
+				type: 'slide',
+				question_code: 'Q-TEST',
+				score: { enabled: true, value: 0 },
+			},
 			options: [],
 		} );
 		const { unmount } = renderEditor( undefined, registry );
@@ -833,7 +853,11 @@ describe( 'QuestionEditorPage', () => {
 		loadQuestion( {
 			...question,
 			type: 'passage',
-			settings: { type: 'passage', score: { enabled: true, value: 3 } },
+			settings: {
+				type: 'passage',
+				question_code: 'Q-TEST',
+				score: { enabled: true, value: 3 },
+			},
 			options: [],
 		} );
 		renderEditor( undefined, registry );
@@ -848,7 +872,7 @@ describe( 'QuestionEditorPage', () => {
 		loadQuestion( {
 			...question,
 			type: 'matching',
-			settings: { type: 'matching' },
+			settings: { type: 'matching', question_code: 'Q-TEST' },
 			options: question.options.map( ( item, index ) => ( {
 				...item,
 				matching_data: { label: `M${ index + 1 }` },
@@ -893,6 +917,7 @@ describe( 'QuestionEditorPage', () => {
 			type: 'numerical',
 			settings: {
 				type: 'numerical',
+				question_code: 'Q-TEST',
 				score: { enabled: true, value: 2 },
 				answer: 3,
 			},
@@ -945,6 +970,7 @@ describe( 'QuestionEditorPage', () => {
 				base_modified: '2026-10-30T13:05:12Z',
 				settings: {
 					type: 'numerical',
+					question_code: 'Q-TEST',
 					score: { enabled: true, value: 2 },
 					answer: 6,
 				},
@@ -1104,8 +1130,8 @@ describe( 'QuestionEditorPage', () => {
 				expect.any( AbortSignal )
 			);
 			expect(
-				screen.getByRole( 'textbox', { name: 'Name' } )
-			).toHaveValue( 'Solve 2x = 6 (copy)' );
+				screen.getByRole( 'textbox', { name: 'Question' } )
+			).toHaveValue( '<p>Solve 2x = 6</p>' );
 			expect( api.getQuestion ).not.toHaveBeenCalledWith(
 				900,
 				expect.anything()
@@ -1261,6 +1287,7 @@ describe( 'QuestionEditorPage', () => {
 				type: 'set-clock',
 				settings: {
 					type: 'set-clock',
+					question_code: 'Q-TEST',
 					score: { enabled: true, value: 2 },
 					hour: 7,
 					minute: 45,
@@ -1295,7 +1322,11 @@ describe( 'QuestionEditorPage', () => {
 			expect( api.createQuestion ).toHaveBeenCalledWith(
 				{
 					name: 'Draft question',
-					settings: created.settings,
+					description: 'Draft question',
+					settings: {
+						...created.settings,
+						question_code: expect.stringMatching( /^Q-/ ),
+					},
 					bank: { difficulty: 'standard' },
 				},
 				expect.any( AbortSignal )
@@ -1329,8 +1360,10 @@ describe( 'QuestionEditorPage', () => {
 			expect( api.createQuestion ).toHaveBeenCalledWith(
 				{
 					name: 'Pick one',
+					description: 'Pick one',
 					settings: {
 						type: 'single-choice',
+						question_code: expect.stringMatching( /^Q-/ ),
 						score: { enabled: true, value: 1 },
 					},
 					bank: { difficulty: 'standard' },

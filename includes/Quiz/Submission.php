@@ -555,7 +555,9 @@ final class Submission {
 				'awarded'          => $pending ? null : $earned,
 				'correct'          => $pending ? null : ( $correct ? 1 : 0 ),
 				'marks'            => $marks,
-				'parts'            => $grade['parts'],
+				// Only structured/passage parts are weighted fractions; word puzzles report per-entry
+				// arrays for feedback, which must not be recorded as part evidence.
+				'parts'            => in_array( $snapshot->get_type(), array( 'structured', 'passage' ), true ) ? $grade['parts'] : null,
 				'version_settings' => null !== $grade['parts'] ? $snapshot->get_settings() : null,
 			);
 		}

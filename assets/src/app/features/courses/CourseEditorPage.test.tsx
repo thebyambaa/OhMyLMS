@@ -156,7 +156,26 @@ describe( 'CourseEditorPage tabs', () => {
 		expect(
 			await screen.findByText( 'Outline of course 7' )
 		).toBeInTheDocument();
-		expect( api.getCourse ).not.toHaveBeenCalled();
+		// Only a light read for the View course / Preview link; no course form or options load.
+		expect( api.getCourse ).toHaveBeenCalledTimes( 1 );
+		expect( api.getOptions ).not.toHaveBeenCalled();
+		expect(
+			await screen.findByRole( 'link', { name: /View course/ } )
+		).toHaveAttribute( 'href', detail.permalink );
+	} );
+	it( 'offers Preview instead of View course for an unpublished course', async () => {
+		vi.mocked( api.getCourse ).mockResolvedValue( {
+			...detail,
+			status: 'draft',
+			preview_url: 'https://example.test/?p=7&preview=true',
+		} );
+		renderEditor( '/courses/7/outline' );
+		expect(
+			await screen.findByRole( 'link', { name: /Preview/ } )
+		).toHaveAttribute( 'href', 'https://example.test/?p=7&preview=true' );
+		expect(
+			screen.queryByRole( 'link', { name: /View course/ } )
+		).not.toBeInTheDocument();
 	} );
 	it( 'renders the publication tab for administrators', async () => {
 		renderEditor( '/courses/7/publish' );

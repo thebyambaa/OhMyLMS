@@ -171,6 +171,10 @@ function mountInput( input ) {
 	return cleanup;
 }
 
+/** Learner regions where conventional LaTeX delimiters such as \( \) and $ $ are typeset. */
+const DELIMITED_REGIONS =
+	'[data-ohmylms-latex],.ohmylms-structured-question,.ohmylms-exam-player,.ohmylms-default-quiz-preview,.ohmylms-quiz,.ohmylms-quiz-result,.ohmylms-quiz-preview-result,.ohmylms-lesson-content,.ohmylms-lesson-content-body,.ohmylms-learning-lesson';
+
 /**
  * Render equation text without interpreting author HTML or changing stored source.
  * @param {Element} root Content region.
@@ -188,11 +192,7 @@ function renderContent( root ) {
 			) &&
 			contentEquations(
 				node.textContent,
-				Boolean(
-					parent.closest(
-						'[data-ohmylms-latex],.ohmylms-structured-question,.ohmylms-exam-player,.ohmylms-default-quiz-preview'
-					)
-				)
+				Boolean( parent.closest( DELIMITED_REGIONS ) )
 			).length
 		) {
 			nodes.push( node );
@@ -205,7 +205,7 @@ function renderContent( root ) {
 			node.textContent,
 			Boolean(
 				/** @type {Element} */ ( node.parentElement ).closest(
-					'[data-ohmylms-latex],.ohmylms-structured-question,.ohmylms-exam-player,.ohmylms-default-quiz-preview'
+					DELIMITED_REGIONS
 				)
 			)
 		) ) {

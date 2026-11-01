@@ -1405,6 +1405,8 @@ class CourseController extends RestController {
 			'slug'              => (string) $post->post_name,
 			'status'            => $status,
 			'permalink'         => (string) get_permalink( $post ),
+			// Drafts have no public address yet; editors open the signed preview link instead.
+			'preview_url'       => 'publish' === $status || 'trash' === $status ? '' : (string) get_preview_post_link( $post ),
 			'author_id'         => (int) $post->post_author,
 			'author_name'       => $this->can( 'list_others' ) ? (string) get_the_author_meta( 'display_name', $post->post_author ) : '',
 			'description'       => (string) $post->post_content,
@@ -1544,6 +1546,7 @@ class CourseController extends RestController {
 					'context'     => $both,
 				),
 				'permalink'         => $text( __( 'Public address of the course.', 'ohmylms' ), $both, array( 'readonly' => true ) ),
+				'preview_url'       => $text( __( 'Preview link for a course that is not published, empty otherwise.', 'ohmylms' ), $both, array( 'readonly' => true ) ),
 				'author_id'         => array(
 					'description' => __( 'Author user ID.', 'ohmylms' ),
 					'type'        => 'integer',
