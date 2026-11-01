@@ -198,7 +198,10 @@ export function OutlineWorkspace( {
 		setDraft( next );
 		void write(
 			( signal ) => saveOutline( next, savePayload( next ), signal ),
-			__( 'Outline order saved.', 'ohmylms' ),
+			__(
+				'Outline order saved to the draft. Learner publication is unchanged.',
+				'ohmylms'
+			),
 			( problem ) => {
 				setDraft( draft );
 				say( '' );

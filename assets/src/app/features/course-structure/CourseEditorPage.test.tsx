@@ -218,7 +218,9 @@ it( 'saves each move of a saved outline at once: reorder within a unit, then mov
 		},
 	} );
 	await user.click( screen.getByRole( 'button', { name: 'Move Check up' } ) );
-	await screen.findAllByText( 'Outline order saved.' );
+	await screen.findAllByText(
+		'Outline order saved to the draft. Learner publication is unchanged.'
+	);
 	await user.selectOptions(
 		screen.getByLabelText( 'Unit for First lesson' ),
 		'9'

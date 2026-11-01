@@ -100,7 +100,9 @@ describe( 'dragging', () => {
 			screen.getByText( 'Moved First lesson to position 2 in Geometry.' )
 		).toBeInTheDocument();
 		expect( document.activeElement ).toBe( row( 'activity-1' ) );
-		await screen.findAllByText( 'Outline order saved.' );
+		await screen.findAllByText(
+			'Outline order saved to the draft. Learner publication is unchanged.'
+		);
 		expect( api.saveOutline ).toHaveBeenCalledOnce();
 		const payload = saved();
 		expect( payload.revision ).toBe( 'read-token' );
@@ -116,7 +118,9 @@ describe( 'dragging', () => {
 		open();
 		dragTo( 'activity-3', 'activity-1', false );
 		expect( names( 'Algebra' ) ).toEqual( [ 'Review', 'First', 'Check' ] );
-		await screen.findAllByText( 'Outline order saved.' );
+		await screen.findAllByText(
+			'Outline order saved to the draft. Learner publication is unchanged.'
+		);
 	} );
 	it( 'moves a unit and keeps every placement', async () => {
 		open();
@@ -124,7 +128,9 @@ describe( 'dragging', () => {
 		expect(
 			screen.getByText( 'Moved unit Algebra to position 2.' )
 		).toBeInTheDocument();
-		await screen.findAllByText( 'Outline order saved.' );
+		await screen.findAllByText(
+			'Outline order saved to the draft. Learner publication is unchanged.'
+		);
 		expect( saved().units.map( ( unit ) => unit.id ) ).toEqual( [ 9, 8 ] );
 		expect( saved().program ).toEqual( draft.program );
 		expect( document.activeElement ).toBe( row( 'unit:8' ) );
@@ -257,7 +263,9 @@ describe( 'keyboard moves', () => {
 		expect(
 			screen.getByText( 'Moved Review to position 2 in Algebra.' )
 		).toBeInTheDocument();
-		await screen.findAllByText( 'Outline order saved.' );
+		await screen.findAllByText(
+			'Outline order saved to the draft. Learner publication is unchanged.'
+		);
 		expect( names( 'Algebra' ) ).toEqual( [ 'First', 'Review', 'Check' ] );
 		expect( document.activeElement ).toBe(
 			screen.getByRole( 'button', { name: 'Move Review up' } )
@@ -269,7 +277,9 @@ describe( 'keyboard moves', () => {
 		await user.click(
 			screen.getByRole( 'button', { name: 'Move Check up' } )
 		);
-		await screen.findAllByText( 'Outline order saved.' );
+		await screen.findAllByText(
+			'Outline order saved to the draft. Learner publication is unchanged.'
+		);
 		expect( document.activeElement ).toBe( row( 'activity-2' ) );
 	} );
 	it( 'moves to another unit with the select and keeps focus on it', async () => {
@@ -282,7 +292,9 @@ describe( 'keyboard moves', () => {
 		expect(
 			screen.getByText( 'Moved Check to position 2 in Geometry.' )
 		).toBeInTheDocument();
-		await screen.findAllByText( 'Outline order saved.' );
+		await screen.findAllByText(
+			'Outline order saved to the draft. Learner publication is unchanged.'
+		);
 		expect( names( 'Geometry' ) ).toEqual( [ 'Essay', 'Check' ] );
 		expect( document.activeElement ).toBe(
 			screen.getByLabelText( 'Unit for Check' )
@@ -299,7 +311,9 @@ describe( 'keyboard moves', () => {
 		expect(
 			screen.getByText( 'Moved unit Geometry to position 1.' )
 		).toBeInTheDocument();
-		await screen.findAllByText( 'Outline order saved.' );
+		await screen.findAllByText(
+			'Outline order saved to the draft. Learner publication is unchanged.'
+		);
 		expect( saved().units.map( ( unit ) => unit.id ) ).toEqual( [ 9, 8 ] );
 		expect( document.activeElement ).toBe( row( 'unit:9' ) );
 		await user.click(
