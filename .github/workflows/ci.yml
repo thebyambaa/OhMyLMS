@@ -231,7 +231,10 @@ jobs:
           coverage: none
           tools: wp-cli
           extensions: mysqli, mbstring, sodium, zip, intl, gd
-          ini-values: display_errors=stderr, error_reporting=E_ALL, memory_limit=1G
+          # setup-php turns on the OPcache JIT (256 MB buffer); PHP 8.2's JIT segfaulted inside its own code in
+          # the `wp server` process (kernel log: "php8.2 segfault ... in dev/zero"), killing lesson-player and
+          # every later HTTP suite. The JIT is off so the suites test the plugin, not the JIT.
+          ini-values: display_errors=stderr, error_reporting=E_ALL, memory_limit=1G, opcache.jit=disable, opcache.jit_buffer_size=0
 
       - run: echo "127.0.0.1 ohmylms.test" | sudo tee -a /etc/hosts
 
