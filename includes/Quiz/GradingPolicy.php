@@ -76,21 +76,7 @@ final class GradingPolicy {
 		$own    = $wpdb->get_col(
 			$wpdb->prepare( 'SELECT ID FROM %i WHERE post_type = %s AND post_author = %d AND post_status <> \'auto-draft\' LIMIT 5000', $wpdb->posts, OHMYLMS_QUIZ_CPT, $user_id )
 		);
-		$course = $wpdb->get_col(
-			$wpdb->prepare(
-				'SELECT DISTINCT content.content_id FROM %i content
-				INNER JOIN %i chapter ON chapter.chapter_id = content.chapter_id
-				INNER JOIN %i course ON course.ID = chapter.course_id AND course.post_author = %d
-				INNER JOIN %i quiz ON quiz.ID = content.content_id AND quiz.post_type = %s AND quiz.post_status <> \'auto-draft\'
-				LIMIT 5000',
-				$wpdb->prefix . 'ohmylms_content_relationship',
-				$wpdb->prefix . 'ohmylms_chapter_relationship',
-				$wpdb->posts,
-				$user_id,
-				$wpdb->posts,
-				OHMYLMS_QUIZ_CPT
-			)
-		);
+		$course = \OhMyLMS\Learning\CourseStructure::content_ids_for_author( $user_id, OHMYLMS_QUIZ_CPT );
 
 		return array_values( array_unique( array_map( 'intval', array_merge( $own, $course ) ) ) );
 	}
@@ -102,15 +88,6 @@ final class GradingPolicy {
 	 * @return int
 	 */
 	public static function course_id( $quiz_id ) {
-		global $wpdb;
-
-		return (int) $wpdb->get_var(
-			$wpdb->prepare(
-				'SELECT chapter.course_id FROM %i content INNER JOIN %i chapter ON chapter.chapter_id = content.chapter_id WHERE content.content_id = %d LIMIT 1',
-				$wpdb->prefix . 'ohmylms_content_relationship',
-				$wpdb->prefix . 'ohmylms_chapter_relationship',
-				absint( $quiz_id )
-			)
-		);
+		return \OhMyLMS\Learning\CourseStructure::legacy_first_course( $quiz_id );
 	}
 }

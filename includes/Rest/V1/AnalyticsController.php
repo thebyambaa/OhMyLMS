@@ -34,7 +34,7 @@ class AnalyticsController extends RestController {
 	/**
 	 * Capability required by every dashboard and analytics route.
 	 */
-	const CAPABILITY = 'manage_options';
+	const CAPABILITY = RestSupport::CAPABILITY;
 
 	/**
 	 * Endpoint namespace.

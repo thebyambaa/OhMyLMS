@@ -9,7 +9,7 @@ import {
 } from '@wordpress/element';
 import { Button } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { QuestionMediaUpload } from '../question-editor/QuestionMediaUpload';
+import { QuestionMediaUpload } from '../question-editor/public-media.mjs';
 import { EquationAction } from './MathInput';
 import { loadMath, mathEnabled } from './loader.mjs';
 import { RichMathToolbar } from './RichMathToolbar';

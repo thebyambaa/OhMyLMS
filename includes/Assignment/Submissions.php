@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Read-only views of `ohmylms_assignment_attempts` and the assignments' point totals for reports
  * (see docs/api/students.md) and the assignment submissions API (docs/api/assignments.md). Writes stay
- * with the assignment data store and the grading routes.
+ * with the assignment data store and the shared Grading operation.
  */
 final class Submissions {
 

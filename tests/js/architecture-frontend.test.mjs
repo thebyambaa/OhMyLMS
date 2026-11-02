@@ -38,6 +38,21 @@ function tree( files ) {
 
 const graphOf = ( files ) => new FrontendGraph( tree( files ) );
 
+test( 'question-editor exposes separate public UI/media entries without permitting internal files', () => {
+	const graph = graphOf( {
+		[ `${ FEATURES }/learning/Panel.jsx` ]:
+			"import '../question-editor/public-ui.mjs'; import '../question-editor/public-media.mjs'; import '../question-editor/Internal.jsx';",
+		[ `${ FEATURES }/question-editor/public-ui.mjs` ]:
+			"export { Preview } from './Internal.jsx';",
+		[ `${ FEATURES }/question-editor/public-media.mjs` ]: '',
+		[ `${ FEATURES }/question-editor/Internal.jsx` ]:
+			'export const Preview = 1;',
+	} );
+	const { failures } = checkFeatureFolderImports( graph );
+	assert.equal( failures.length, 1 );
+	assert.match( failures[ 0 ], /Internal.jsx/ );
+} );
+
 test( 'analyzeModule reads static, re-export, dynamic and require imports from the AST', () => {
 	const facts = analyzeModule( `
 		// import './commented.js';

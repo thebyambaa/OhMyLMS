@@ -29,6 +29,28 @@ defined( 'ABSPATH' ) || exit;
 final class Enrollments {
 
 	/**
+	 * Transition a user's existing rows when the optional legacy table is installed.
+	 *
+	 * @param int    $user_id User ID.
+	 * @param string $from    Previous status.
+	 * @param string $to      New status.
+	 * @return int|false Updated rows, zero for an absent table, or false on write failure.
+	 */
+	public static function transition_user_status( $user_id, $from, $to ) {
+		global $wpdb;
+		$table = $wpdb->prefix . 'ohmylms_user_enrollment';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Existence probe for an optional legacy table.
+		if ( $table !== $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) ) ) {
+			return 0;
+		}
+		$where = array(
+			'user_id' => (int) $user_id,
+			'status'  => $from,
+		);
+		return self::update( array( 'status' => $to ), $where, null, array( '%s' ), array( '%d', '%s' ) );
+	}
+
+	/**
 	 * Legacy enrolments table.
 	 *
 	 * @return string

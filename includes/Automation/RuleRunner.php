@@ -297,7 +297,7 @@ final class RuleRunner {
 
 	/**
 	 * Assignment graded (fired once per graded submission by the shared grading pipeline,
-	 * `Rest\V1\AssignmentController::update_attempt_report()`). The rule runs for the learner only when
+	 * `Assignment\Grading::review()`). The rule runs for the learner only when
 	 * they own a submission of the assignment (the graded row when it is named).
 	 *
 	 * @param int    $assignment_id Assignment.

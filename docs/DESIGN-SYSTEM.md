@@ -2,6 +2,53 @@
 
 One look for every OhMyLMS admin screen: the React app (Dashboard, Content Hub, course and quiz editors, Account Hub, Settings), the PHP pages (Skill assessments, Import questions, Schools, xAPI) and the plugin's post screens. Learner pages read the same saved palette through `--oml-*` (`docs/DESIGN-TOKENS.md`); this document is the admin contract and the stored preset values.
 
+## Current status — 2 November 2026
+
+**The shared foundation is implemented and broadly adopted. Complete screen-by-screen consistency and
+accessibility have not been established by this review.** See [Design language](DESIGN-LANGUAGE.md) for
+the migration inventory and [Design tokens](DESIGN-TOKENS.md) for the token contract.
+
+| Area | Status |
+| --- | --- |
+| Tokens | Implemented: colors, spacing, typography, radii, shadows, motion and layers |
+| Shared components | Implemented in React and PHP: Button, Card, Badge, Progress, Input, Select, Alert, Tabs, Modal, Table and EmptyState |
+| Site customization | Implemented: WordPress, Khan Academy, Classic and custom presets; density, roundness and font settings |
+| Theme support | Learner light/dark/system token output implemented; admin dark mode is not available |
+| Adoption | Broad migration documented across admin, learner and assessment screens; compatibility styling and intentional palette exceptions remain |
+| Enforcement | Architecture rules, token lint rules, component tests and browser screenshot suites exist; their scope is narrower than a complete visual/accessibility audit |
+
+### Evidence from this review
+
+- `node tools/check-architecture.mjs`: passed locally on 2 November 2026, including the current admin
+  color/spacing rules and asset budgets. This does not check every screen's rendered appearance.
+- `node --test tests/js/ui-components.test.mjs tests/js/ui-button.test.mjs`: 9 checks, 7 passed,
+  0 failed, 2 skipped. PHP/React class-name parity checks skipped because PHP was not on PATH; set
+  `OHMYLMS_PHP` to a suitable PHP executable to run them.
+- The code and documentation were inspected. Browser screenshot suites, the PHP design-system suite
+  and a full accessibility audit were **not rerun** for this status review. Existing screenshots and
+  historical verification notes are coverage references, not fresh passing results.
+
+### Remaining work and acceptance
+
+1. **Verify adoption by screen.** Audit the admin, native editors, learner pages and assessment chrome
+   against the shared component gallery. Record screen, viewport, preset/theme and remaining one-off
+   styles; migrate accidental duplication while preserving public selectors and extension behavior.
+2. **Review exceptions.** Classify the spacing/radius literals and palette exceptions below as intentional
+   or migration work. Keep media, artwork, assessment and print palettes where they serve a documented
+   purpose. Introduce semantic tokens only where a repeated UI role needs them; extend lint coverage
+   for each migrated source and remove obsolete exceptions.
+3. **Complete verification.** Rerun the PHP design-system suite, React/PHP parity checks, component gallery
+   and affected browser specs. Check keyboard operation, focus, labels, contrast, RTL, narrow layouts,
+   long Mongolian/English text and learner light/dark/system behavior. Record commit and results;
+   update screenshot baselines only for intentional changes.
+4. **Decide admin dark-mode scope separately.** Learner dark tokens do not establish support for
+   wp-admin or WordPress component portals. If admin dark mode is requested, plan its scope and tests
+   before enabling it; it is not required to preserve the current WordPress-admin design contract.
+
+Completion means the supported screen inventory is reviewed, remaining exceptions have reasons and
+owners, and required component, PHP and browser checks pass with accessibility findings recorded and
+resolved or explicitly tracked. A passing architecture check alone does not establish completion.
+
 ## Where it lives
 
 | Piece | File |

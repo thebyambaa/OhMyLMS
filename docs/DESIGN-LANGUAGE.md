@@ -4,6 +4,13 @@ How every OhMyLMS screen should look and be built, so a learner moves from a cou
 dashboard and it feels like one product. The values are the `--oml-*` tokens (`docs/DESIGN-TOKENS.md`);
 this page says how to use them.
 
+**Status reviewed 2 November 2026:** the shared foundation is implemented and broadly adopted; remaining
+work is adoption review, exception cleanup and screen-level visual/accessibility verification. Learner
+light/dark/system is supported by the token layer; admin dark mode is not available. The current evidence,
+test skips and acceptance criteria are in [Design system status](DESIGN-SYSTEM.md#current-status--2-november-2026).
+The migration table below retains earlier implementation and verification notes; those browser checks
+were not rerun during this status review.
+
 ## Principles
 
 1. **Tokens, never literals.** Colors, spacing, radius, type size, shadow and motion come from `--oml-*`.

@@ -7,8 +7,8 @@ the `ohmylms_assignment_attempts` table for learner submissions. The admin UI is
 `assets/src/app/features/assignments`.
 
 The legacy `ohmylms/v1/assignment` routes were removed on 31 October 2026 (see
-[Removed legacy routes](#removed-legacy-routes)). `AssignmentController.php` remains only as the grading
-pipeline (`update_attempt_report()`, no routes) that this API and `Schools\Service::grade()` call.
+[Removed legacy routes](#removed-legacy-routes)). `AssignmentController.php` remains only as a response/link compatibility adapter (no routes). This API
+and `Schools\Service::grade()` now call `Assignment\Grading::review()` directly.
 
 ## Audit before
 
@@ -167,8 +167,8 @@ to the submission with `ohmylms_comment=added` or the error code. Instructors co
    `feedback` goes through `wp_kses_post`; if it is omitted, the stored feedback is kept.
 2. The assignment must be in a course with a valid chapter link (409 `ohmylms_assignment_not_in_course` /
    `ohmylms_assignment_placement_invalid`), because the legacy pipeline needs both.
-3. The request goes through `AssignmentController::update_attempt_report()`, the same pipeline the legacy
-   grading screen and `Schools\Service::grade()` use. The result is `passed` when `score >= pass_score`,
+3. The validated input goes through `Assignment\Grading::review()`, the same domain pipeline the
+   compatibility grading adapter and `Schools\Service::grade()` use. The result is `passed` when `score >= pass_score`,
    and a pass completes the learner's progress. It fires `ohmylms_after_assignment_review( $assignment_id,
    $course_id, $student_id, $status, $attempt_id )` once (the "assignment graded" email, the `assignment_reviewed`
    automation event, WP Fusion, completion awards), `ohmylms_pro_after_assignment_review`
@@ -263,9 +263,9 @@ does this with its revision checks, unit picker and detach confirmation.
   learner REST route for submitting yet; the store posts to the admin-ajax handler. Comments are plain text without
   attachments or editing.
 - Cohort releases use the course's first cohort, as before; per-cohort dates are not modelled.
-- The grading pipeline still lives in `AssignmentController::update_attempt_report()` (a class without routes)
-  and takes a constructed `WP_REST_Request`; extracting it into a service is in
-  [BACKEND-BOUNDARIES](../BACKEND-BOUNDARIES.md).
+- The grading pipeline lives in `Assignment\Grading::review()` and accepts assignment/learner IDs and
+  validated attempt rows. Callers retain authorization and scope checks. The old controller method
+  remains a thin REST response adapter for compatibility; see [BACKEND-BOUNDARIES](../BACKEND-BOUNDARIES.md).
 
 ## Removed legacy routes
 

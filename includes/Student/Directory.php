@@ -153,29 +153,13 @@ final class Directory {
 	 * @return true|WP_Error 500 when rows could not be updated.
 	 */
 	public static function set_blocked( $user_id, $block ) {
-		global $wpdb;
 
 		$user_id = (int) $user_id;
 		$from    = $block ? 'enrolled' : 'banned';
 		$to      = $block ? 'banned' : 'enrolled';
 
-		$tables = array( $wpdb->prefix . 'ohmylms_user_enrollment', $wpdb->prefix . 'ohmylms_user_membership' );
-		foreach ( $tables as $table ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Existence probe for an optional table.
-			if ( $table !== $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) ) ) {
-				continue;
-			}
-			$where = array(
-				'user_id' => $user_id,
-				'status'  => $from,
-			);
-			if ( $tables[0] === $table ) {
-				$result = Enrollments::update( array( 'status' => $to ), $where, null, array( '%s' ), array( '%d', '%s' ) );
-			} else {
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- No API for membership rows.
-				$result = $wpdb->update( $table, array( 'status' => $to ), $where, array( '%s' ), array( '%d', '%s' ) );
-			}
-			if ( false === $result ) {
+		foreach ( array( Enrollments::class, \OhMyLMS\Membership\Members::class ) as $owner ) {
+			if ( false === $owner::transition_user_status( $user_id, $from, $to ) ) {
 				return new WP_Error( 'ohmylms_student_update_failed', __( 'The student could not be updated.', 'ohmylms' ), array( 'status' => 500 ) );
 			}
 		}

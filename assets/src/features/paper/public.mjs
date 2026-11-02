@@ -11,3 +11,4 @@ export {
 } from './PaperCanvas.jsx';
 export { PaperInserter } from './PaperInserter.jsx';
 export { PaperQuestion } from './PaperQuestion.jsx';
+export { registerPaperBlocks } from './paperBlocks.jsx';

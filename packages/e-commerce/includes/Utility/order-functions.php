@@ -304,9 +304,24 @@ function ohmylms_ecommerce_get_order_notes( $args ) {
 	// Does not support 'count' or 'fields'.
 	unset( $args['count'], $args['fields'] );
 
-	remove_filter( 'comments_clauses', array( 'OhMyLMS\Commerce\Comments', 'exclude_order_comments' ), 10, 1 );
-	$notes = get_comments( $args );
-	add_filter( 'comments_clauses', array( 'OhMyLMS\Commerce\Comments', 'exclude_order_comments' ), 10, 1 );
+	// These global comment-list filters hide the shared order_note type, even in an explicit note query.
+	// Suspend only the known exclusions and restore their original priorities, including on failure.
+	$removed = array();
+	foreach ( array( 'OhMyLMS\Commerce\Comments', 'WC_Comments' ) as $class ) {
+		$callback = array( $class, 'exclude_order_comments' );
+		$priority = has_filter( 'comments_clauses', $callback );
+		if ( false !== $priority ) {
+			$removed[] = array( $callback, $priority );
+			remove_filter( 'comments_clauses', $callback, $priority );
+		}
+	}
+	try {
+		$notes = get_comments( $args );
+	} finally {
+		foreach ( $removed as $filter ) {
+			add_filter( 'comments_clauses', $filter[0], $filter[1], 1 );
+		}
+	}
 
 	return array_filter( array_map( 'ohmylms_ecommerce_get_order_note', $notes ) );
 }

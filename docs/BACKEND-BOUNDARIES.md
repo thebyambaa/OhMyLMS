@@ -21,6 +21,75 @@ refactors, and the ordered plan for the rest. Audit date: 31 October 2026.
 - Moves keep REST contracts, error codes, permissions, transactions and stale-write checks identical, and
   are verified by the domain's REST integration suite with the same number of checks.
 
+## Ownership and dependency update — 2 November 2026
+
+The modularization pass gives the remaining shared operations explicit owners. The older audit tables
+below are historical; this section supersedes their references to grading living in a controller,
+`GradingPolicy` reading course relationships directly and the directory writing membership rows.
+
+| Boundary | Public operation / owner | Consumers and storage contract |
+| --- | --- | --- |
+| Assignment grading | `Assignment\Grading::review()` | Typed assignment REST and school grading call validated domain inputs directly; completion and notification hooks live here. `Rest/V1/AssignmentController` remains a response/link compatibility adapter and registers no routes. Callers retain permission and attempt-scope checks. |
+| Course relationships | `Learning\CourseStructure::legacy_first_course()`, `content_ids_for_author()`, existing `first_courses()` | Quiz grading uses these services. The legacy single-course lookup intentionally retains unordered `LIMIT 1`; report mappings retain lowest-course-ID behavior. This extraction does not change authorization by silently selecting a different course. |
+| Enrollment status | `Student\Enrollments::transition_user_status()` | Owns optional-table probing, legacy writes and existing projection synchronization. The directory coordinates block/unblock through it. |
+| Membership status and cleanup | `Membership\Members::transition_user_status()`, `delete()`, `first_order()`, `cancel_user()` | Owns membership SQL for directory and lifecycle workflows; existing membership stores and order flows remain owners of their established writes. |
+| Cross-domain cleanup | `Student\Lifecycle` | Calls enrollment and membership owners for course/order/plan/user cleanup. Preserves parent-order resolution, first-order plan behavior and the separate before/after user-deletion stages. |
+| Learner access | `Learning\AccessPolicy` | Owns the extracted single-content, session and sequential access rules. Public `CommonHook` methods remain adapters, retaining original hook names, priorities and accepted arguments. |
+| Student verification and activity | `Student\Verification`, `Student\Activity` | Own verification notices, verification callbacks and login activity. Verification still calls the established `Services\EmailVerificationService`; the private compatibility notice callback remains available in the hook adapter. |
+| Checkout access | `Commerce\CheckoutAccess` | Owns checkout login gates and post-login cart navigation; callback priorities remain in the original registrar. |
+| Admin presentation | `Admin\HookPresentation` | Owns admin-bar links, footer/plugin-row content, body classes and admin comment visibility. |
+| Archive queries | `Course\ArchiveQuery` | Owns course archive pagination behavior, separate from template rendering. |
+| Integration and compatibility registries | `Integrations\MailMint\HookSupport`, `Extensions\LegacyRegistry` | Own the existing integration callbacks and legacy store/module declarations. Extraction does not register additional callbacks or initiate new external communications. |
+| Page templates | `ThemeSupport\PageTemplates` | Owns template selection and block/Elementor/Bricks layout discovery. The common hook keeps its public callbacks; private recursive helpers live with the template owner. |
+| Page routing | `ThemeSupport\PageRouting::redirect()` | Owns the established redirect decisions. `ohmylms_template_redirect()` remains the registered compatibility callback; other template helpers continue to render views. |
+| Earnings ledger | `Analytics\Earnings::record_order()` | Owns the compatibility earnings write; `CommonHook::update_earning()` delegates without SQL. Analytics authorization capability is owned by `Analytics\RestSupport`; the controller constant remains an alias. |
+| Country subdivisions | `Utility\CountryStates::states()` | Owns the translated catalogue, separate from navigation helpers. `ohmylms_get_states()` retains the global API and normalized code/title shape. |
+| Commerce note reads | `ohmylms_ecommerce_get_order_notes()` | Explicit order-note queries temporarily suspend the LMS and WooCommerce global list exclusions, then restore their original priorities in `finally`. Other filters and persistent plugin settings remain intact. Regression tests cover success, query exceptions, priority zero and absent callbacks. |
+
+Dependency direction is **transport/hook adapter → domain operation → storage owner**. Bootstrap files,
+REST registration adapters, gateway registration and post-type registration may wire controllers. Their
+composition responsibilities are distinct from domain operations. The existing `ohmylms.php`,
+`OhMyLMS::init()` and `Packages` remain composition roots; central wiring alone is not a boundary defect.
+
+The block/unblock operation retains its existing sequential write behavior: on a second-owner failure,
+the first write may already have succeeded, while the blocked flag and success hook are not changed.
+Atomicity changes require a separate transaction/projection design; this extraction does not claim a
+transaction where there was none.
+
+`CommonHook` now contains registration and delegating methods only. Its registration body was compared
+with the starting revision and preserved; moved callback bodies retain their behavior and public
+signatures. Private compatibility helpers delegate too, so existing reflection-based verification tests
+remain usable while the feature owner handles the operation.
+
+### Reporting and compatibility contracts retained
+
+- The domain audit below documents feature read models and service interfaces for quizzes, students,
+  assignments, courses, analytics, Content Hub, account management, memberships and commerce. Domain-local
+  repositories may use SQL; REST controllers and the common hook may not.
+- School submission listings and scope checks retain their tenant-scoped read joins between school
+  assignments/recipients, active memberships and assignment attempts. They are reporting/authorization
+  read models, not an alternate assignment grading writer. Scope is rechecked for individual results.
+- Analytics and gradebook repositories intentionally aggregate multiple domains. Their reporting joins
+  are read-model contracts; underlying domain writes continue through owning services.
+- Existing `Data`, `DataStores`, factory and global helper APIs remain compatibility interfaces. Their
+  names and registration are preserved rather than replacing all callers during this pass.
+- `cl-functions.php` was audited as a subdivision catalogue plus navigation helper; the catalogue now
+  has its own class. `Utility/template-functions.php` remains the public rendering facade, with redirect
+  decisions extracted. Splitting the remaining view helpers solely by file size is not required.
+
+### Enforcement and evidence
+
+`tools/architecture-rules/domain-dependencies.mjs` rejects statically resolved controller construction
+and static references in domain operations, including aliases and grouped imports. It also prevents the
+extracted relationship/membership storage access from returning to `GradingPolicy`/`Directory`, and
+prevents `$wpdb` from returning to `CommonHook`. These are focused, fixture-tested checks, not a proof
+about dynamic class names or every dynamically assembled SQL query; those still require review.
+
+The targeted WordPress suites passed after extraction: assignments (185 checks), course structure (61),
+students REST (135) and school integration. Added standalone regressions exercise grading hook counts,
+completion/regrading, compatibility responses, optional tables, status scope and write failures.
+Final integrated verification is recorded in [the roadmap](MODULARIZATION-ROADMAP.md).
+
 ## Summary
 
 Counted on `includes/Rest/V1` (`$wpdb->get_*|query|insert|update|delete|replace` calls):

@@ -27,6 +27,10 @@ export const SDK_FILE = `${ LEARNER_ROOT }/sdk.js`;
 export const FRONTEND_ALLOWLIST =
 	'tools/architecture-rules/frontend-allowlist.json';
 export const FEATURE_ENTRY = 'public.mjs';
+/** Separate public UI surfaces avoid loading JSX from pure model consumers. */
+export const FEATURE_ENTRIES = {
+	'question-editor': [ 'public-ui.mjs', 'public-media.mjs' ],
+};
 
 const SOURCE = /\.(?:[cm]?js|jsx)$/;
 const RESOLVE_EXTENSIONS = [ '.js', '.jsx', '.mjs', '.cjs', '.json' ];
@@ -453,7 +457,11 @@ export function checkFeatureFolderImports( graph, allowlist = [] ) {
 			const target = edge.target.slice(
 				FEATURES_ROOT.length + to.length + 2
 			);
-			if ( target === FEATURE_ENTRY ) continue;
+			if (
+				target === FEATURE_ENTRY ||
+				FEATURE_ENTRIES[ to ]?.includes( target )
+			)
+				continue;
 			let violation = violations.find(
 				( entry ) =>
 					entry.from === from &&

@@ -3,6 +3,10 @@
 Shared components read one vocabulary: the `--oml-*` variables. Admin and learner pages use the same
 saved Design system palette, spacing, roundness and font. Settings > Design system is the palette editor.
 
+For implementation status, remaining adoption work and the verification recorded on 2 November 2026,
+see [Design system status](DESIGN-SYSTEM.md#current-status--2-november-2026). Token availability does not
+establish that every screen uses every token; admin dark mode remains outside the supported theme scope.
+
 | Context | Values come from | Emitted by | Selector |
 | --- | --- | --- | --- |
 | Plugin admin screens | The user's WordPress admin colour scheme under the default WordPress preset (`DesignSystem::admin_colors()`); otherwise Settings > Design system (`ohmylms_design_system`) | `DesignSystem::css()` | `body.oml-ds` |

@@ -1,6 +1,6 @@
 <?php // phpcs:ignore WordPress.Files.FileName -- Composer PSR-4 class/file mapping; see docs/CODING-STANDARDS.md.
 /**
- * Read-only views of a membership plan's members.
+ * Membership member lists, status transitions and lifecycle storage.
  *
  * @package OhMyLMS
  */
@@ -11,9 +11,69 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Member lists and counts of `ohmylms_user_membership` behind `ohmylms/v1/memberships` (see
- * docs/api/memberships.md). Writes stay with `DataStores\MembershipStore` and the order flow.
+ * docs/api/memberships.md), plus status and cleanup operations for cross-domain workflows.
+ * Creation and the existing order flow stay with `DataStores\MembershipStore`.
  */
 final class Members {
+
+	/**
+	 * Delete member rows matching an owning workflow's conditions.
+	 *
+	 * @param array $where Equality conditions.
+	 * @return int|false Deleted rows or failure.
+	 */
+	public static function delete( array $where ) {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Membership owner deletes its own rows.
+		return $wpdb->delete( self::table(), $where, array_fill( 0, count( $where ), '%d' ) );
+	}
+
+	/**
+	 * First order for a plan, preserving the legacy lifecycle lookup.
+	 *
+	 * @param int $membership_id Plan ID.
+	 * @return int Order ID or zero.
+	 */
+	public static function first_order( $membership_id ) {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh lifecycle relationship read.
+		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT order_id FROM %i WHERE membership_id = %d', self::table(), $membership_id ) );
+	}
+
+	/**
+	 * Cancel every membership for a deleted user.
+	 *
+	 * @param int $user_id User ID.
+	 * @return int|false Updated rows or failure.
+	 */
+	public static function cancel_user( $user_id ) {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Membership owner updates its own rows.
+		return $wpdb->update( self::table(), array( 'status' => 'cancelled' ), array( 'user_id' => (int) $user_id ) );
+	}
+
+	/**
+	 * Transition a user's existing rows when the optional legacy table is installed.
+	 *
+	 * @param int    $user_id User ID.
+	 * @param string $from    Previous status.
+	 * @param string $to      New status.
+	 * @return int|false Updated rows, zero for an absent table, or false on write failure.
+	 */
+	public static function transition_user_status( $user_id, $from, $to ) {
+		global $wpdb;
+		$table = $wpdb->prefix . 'ohmylms_user_membership';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Existence probe for an optional legacy table.
+		if ( $table !== $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) ) ) {
+			return 0;
+		}
+		$where = array(
+			'user_id' => (int) $user_id,
+			'status'  => $from,
+		);
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Membership owner updates its own rows.
+		return $wpdb->update( $table, array( 'status' => $to ), $where, array( '%s' ), array( '%d', '%s' ) );
+	}
 
 	/**
 	 * Membership table.

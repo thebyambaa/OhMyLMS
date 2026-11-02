@@ -557,8 +557,23 @@ and an entry that no longer matches fails as stale.
 `featureImports` names folders of `assets/src/features`; `files` are paths inside the `to` folder that
 the `from` folder may import without going through `public.mjs`. A listed file that the `from` folder no
 longer imports is reported as stale on its own. There are no `cycles` or `jquery` entries;
-`featureImports` lists the three direct imports of rule n (an import cycle, a side-effect
-import and a JSX component kept out of a Node-loaded entry).
+`featureImports` is now empty. The question editor has two explicitly registered public UI surfaces,
+`public-ui.mjs` and `public-media.mjs`, alongside its pure model `public.mjs`. This keeps Node model
+consumers free of JSX while preserving cycle checks; it does not permit arbitrary component imports.
+
+### Domain dependency and extracted ownership rules
+
+`tools/architecture-rules/domain-dependencies.mjs`, called by `check:architecture`, rejects statically
+resolved domain calls to REST controllers (construction and static references, including imported
+aliases, grouped imports and controller subclasses outside a `Rest` folder). Composition roots and
+registration adapters may wire controllers; the explicit registration list lives beside the rule.
+Dynamic class names still need review. Fixture tests are in
+`tests/js/architecture-domain-dependencies.test.mjs`.
+
+The same rule protects the extracted ownership boundaries: course relationship storage stays out of
+`Quiz/GradingPolicy.php`, membership storage stays out of `Student/Directory.php`, and the common hook
+does not use `$wpdb`. These checks complement controller persistence checks and the reviewed ownership
+contracts in [BACKEND-BOUNDARIES](BACKEND-BOUNDARIES.md); they do not claim to parse every dynamic query.
 
 ### Budgets: `tools/asset-budgets.json`
 

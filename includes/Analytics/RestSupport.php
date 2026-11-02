@@ -7,7 +7,6 @@
 
 namespace OhMyLMS\Analytics;
 
-use OhMyLMS\Rest\V1\AnalyticsController;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -24,13 +23,16 @@ final class RestSupport {
 	 */
 	const NAMESPACE_ = 'ohmylms/v1';
 
+	/** Capability shared by analytics entry points. */
+	const CAPABILITY = 'manage_options';
+
 	/**
 	 * Check the one capability shared by every dashboard and analytics route.
 	 *
 	 * @return true|WP_Error
 	 */
 	public static function authorize() {
-		if ( ! current_user_can( AnalyticsController::CAPABILITY ) ) {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
 			return new WP_Error( 'ohmylms_analytics_cannot_view', __( 'Sorry, you are not allowed to view analytics.', 'ohmylms' ), array( 'status' => rest_authorization_required_code() ) );
 		}
 		return true;

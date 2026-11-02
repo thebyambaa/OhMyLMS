@@ -981,28 +981,18 @@ final class Service {
 		$total                = (int) get_post_meta( $attempt['assignment_id'], '_total_points', true );
 		$score                = $data['score'] ?? null;
 		self::need( is_numeric( $score ) && (float) (int) $score === (float) $score && 0 <= $score && $score <= $total, 'Score must be a whole number between zero and the total points.' );
-		// Reuse the existing grading/completion pipeline with only the verified attempt ID.
-		$request = new \WP_REST_Request( 'POST' );
-		$request->set_url_params(
+		$result = \OhMyLMS\Assignment\Grading::review(
+			(int) $attempt['assignment_id'],
+			(int) $attempt['user_id'],
 			array(
-				'id'      => (int) $attempt['assignment_id'],
-				'user_id' => (int) $attempt['user_id'],
-			)
-		);
-		$request->set_header( 'Content-Type', 'application/json' );
-		$request->set_body(
-			wp_json_encode(
 				array(
-					array(
-						'id'     => (int) $attempt_id,
-						'score'  => (int) $score,
-						'status' => 'reviewed',
-						'note'   => self::text( $data['note'] ?? '', 2000 ),
-					),
-				)
+					'id'     => (int) $attempt_id,
+					'score'  => (int) $score,
+					'status' => 'reviewed',
+					'note'   => self::text( $data['note'] ?? '', 2000 ),
+				),
 			)
 		);
-		$result = ( new \OhMyLMS\Rest\V1\AssignmentController() )->update_attempt_report( $request );
 		if ( is_wp_error( $result ) ) {
 			throw new \RuntimeException( 'Unable to grade this submission.', 400 ); }
 		self::content_completed( $attempt['assignment_id'], $attempt['course_id'], $attempt['user_id'] );

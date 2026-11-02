@@ -44,7 +44,7 @@ import {
 import {
 	MultipleChoiceFields,
 	registerMultipleChoiceBlock,
-} from '../question-editor/MultipleChoiceBlock';
+} from '../question-editor/public-ui.mjs';
 import { PaperQuestion, usePaperQuestion } from '../paper/public.mjs';
 import { QuestionBlockPreview } from './QuestionBlockPreview';
 

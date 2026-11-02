@@ -52,6 +52,32 @@ final class CourseStructure {
 	}
 
 	/**
+	 * Legacy first matching course, preserving the grading policy's unordered LIMIT 1 lookup.
+	 *
+	 * @param int $content_id Content post ID.
+	 * @return int Course ID, or zero when unplaced.
+	 */
+	public static function legacy_first_course( $content_id ) {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Preserve the established grading lookup without caching.
+		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT chapter.course_id FROM %i content INNER JOIN %i chapter ON chapter.chapter_id = content.chapter_id WHERE content.content_id = %d LIMIT 1', $wpdb->prefix . 'ohmylms_content_relationship', $wpdb->prefix . 'ohmylms_chapter_relationship', absint( $content_id ) ) );
+	}
+
+	/**
+	 * Content of a type placed in courses authored by a user, excluding auto-drafts.
+	 *
+	 * @param int    $user_id   Course author ID.
+	 * @param string $post_type Content post type.
+	 * @return int[] At most 5000 content IDs.
+	 */
+	public static function content_ids_for_author( $user_id, $post_type ) {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh course relationship scope used by grading reports.
+		$ids = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT content.content_id FROM %i content INNER JOIN %i chapter ON chapter.chapter_id = content.chapter_id INNER JOIN %i course ON course.ID = chapter.course_id AND course.post_author = %d INNER JOIN %i item ON item.ID = content.content_id AND item.post_type = %s AND item.post_status <> 'auto-draft' LIMIT 5000", $wpdb->prefix . 'ohmylms_content_relationship', $wpdb->prefix . 'ohmylms_chapter_relationship', $wpdb->posts, absint( $user_id ), $wpdb->posts, $post_type ) );
+		return array_map( 'intval', (array) $ids );
+	}
+
+	/**
 	 * First course of each content item: the lowest course ID among the chapters that contain it.
 	 *
 	 * @param int[] $content_ids Content post IDs.

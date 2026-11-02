@@ -3,7 +3,7 @@ import { useSelect } from '@wordpress/data';
 import { registerPlugin } from '@wordpress/plugins';
 import { PluginDocumentSettingPanel } from '@wordpress/editor';
 import { loadBankQuestion } from '../question-bank/public.mjs';
-import { QuestionLivePreview } from '../question-editor/QuestionLivePreview';
+import { QuestionLivePreview } from '../question-editor/public-ui.mjs';
 import { Button, Notice } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 

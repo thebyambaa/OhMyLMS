@@ -572,7 +572,13 @@ const withSpanClass = createHigherOrderComponent(
  * Register the paper blocks and the span option. Only exam screens call this: the print links
  * are localized only there, and the server registers the blocks for the exam inserter.
  */
+let registered = false;
+
 export function registerPaperBlocks() {
+	if ( registered ) {
+		return;
+	}
+	registered = true;
 	addFilter(
 		'blocks.registerBlockType',
 		'ohmylms/paper-span',
@@ -594,8 +600,4 @@ export function registerPaperBlocks() {
 			save: container ? () => <InnerBlocks.Content /> : () => null,
 		} );
 	}
-}
-
-if ( typeof window !== 'undefined' && window.ohmylmsNativeLesson?.printUrls ) {
-	registerPaperBlocks();
 }

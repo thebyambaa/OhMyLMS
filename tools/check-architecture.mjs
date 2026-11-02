@@ -9,6 +9,10 @@ import { checkRestControllers } from './architecture-rules/rest-controllers.mjs'
 import { checkControllerPersistence } from './architecture-rules/controller-persistence.mjs';
 import { checkAdvisoryLocks } from './architecture-rules/advisory-locks.mjs';
 import { frontendSections } from './architecture-rules/frontend.mjs';
+import {
+	checkDomainDependencies,
+	checkStorageOwnership,
+} from './architecture-rules/domain-dependencies.mjs';
 
 /** Roadmap step 10: architecture rules for the typed admin app (assets/src/app) and its
  * published bundles (assets/dist/admin). See docs/ENFORCEMENT.md.
@@ -1368,6 +1372,14 @@ export function runArchitectureChecks( root, options = {} ) {
 			...checkAdvisoryLocks( root ),
 		},
 		...frontendSections( root, options.frontendAllowlist ),
+		{
+			name: 'domain operations do not depend on REST controllers',
+			...checkDomainDependencies( root ),
+		},
+		{
+			name: 'extracted storage ownership boundaries stay behind their services',
+			...checkStorageOwnership( root ),
+		},
 		{
 			name: 'admin bundles use WordPress React and @wordpress/* externals',
 			...checkDuplicateRuntimes( root ),

@@ -162,6 +162,7 @@ export function analyzePhp( text ) {
 	const insideClass = ( offset ) =>
 		classes.some( ( entry ) => offset > entry.start && offset < entry.end );
 	const uses = new Map();
+	const importedClasses = [];
 	for ( const match of code.matchAll(
 		/(?<![\w$\\])use\s+(?!function\b|const\b)([^;]+);/g
 	) ) {
@@ -180,6 +181,10 @@ export function analyzePhp( text ) {
 			if ( ! parts ) continue;
 			const alias = parts[ 2 ] ?? parts[ 1 ].split( '\\' ).at( -1 );
 			uses.set( alias.toLowerCase(), parts[ 1 ] );
+			importedClasses.push( {
+				name: parts[ 1 ],
+				line: lineAt( match.index ),
+			} );
 		}
 	}
 	const resolve = ( name, namespace ) => {
@@ -206,7 +211,19 @@ export function analyzePhp( text ) {
 			.sort( ( a, b ) => b.start - a.start )[ 0 ];
 		return { line: lineAt( match.index ), owner: owner ?? null };
 	} );
-	return { classes, calls };
+	const references = [
+		...code.matchAll(
+			/(?:\bnew\s+|(?<![\w$\\]))(\\?[A-Za-z_][\w\\]*)(?=\s*::|\s*\()/g
+		),
+	].map( ( match ) => ( {
+		name: resolve( match[ 1 ], namespaceAt( match.index ) ),
+		line: lineAt( match.index ),
+	} ) );
+	return {
+		classes,
+		calls,
+		references: [ ...references, ...importedClasses ],
+	};
 }
 
 /** True for WP_REST_Controller and core subclasses such as WP_REST_Posts_Controller. */

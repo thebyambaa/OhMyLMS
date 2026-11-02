@@ -19,7 +19,7 @@ import {
 	saveQuestionAttributes,
 	SkillMapEditor,
 } from '../question-bank/public.mjs';
-import { QuestionLivePreview } from '../question-editor/QuestionLivePreview';
+import { QuestionLivePreview } from '../question-editor/public-ui.mjs';
 import { NativeSaveGuard, markNativeQuizDirty } from './NativeSaveGuard';
 
 /** @typedef {Awaited<ReturnType<typeof loadBankQuestion>>} BankQuestion */

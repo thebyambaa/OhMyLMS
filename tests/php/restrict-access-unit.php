@@ -53,6 +53,8 @@ namespace {
     function esc_attr($text) { return htmlspecialchars((string) $text, ENT_QUOTES, 'UTF-8'); }
     function shortcode_atts($pairs, $atts, $shortcode = '') { return array_merge($pairs, (array) $atts); }
 
+    require __DIR__ . '/../../includes/Learning/AccessPolicy.php';
+    require __DIR__ . '/../../includes/Student/Verification.php';
     require __DIR__ . '/../../includes/Hooks/CommonHook.php';
 
     function visit($user, $type, $post_author = AUTHOR, $preview = '') {

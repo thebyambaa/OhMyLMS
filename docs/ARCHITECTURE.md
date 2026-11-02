@@ -167,10 +167,14 @@ by `npm run typecheck:js` ([ENFORCEMENT.md](ENFORCEMENT.md#type-checking-the-nat
   (`learning`, `paper`, `question-editor`, `question-bank`, `content-hub`, `assessment`, `curriculum`,
   `math`, `navigation`, `students`) use each other only through the other folder's `public.mjs`, which
   re-exports what other folders use (`check:architecture` rule n). Root modules such as `rest.mjs` are
-  shared. `question-editor/public.mjs` exposes only the question type models, which Node tests load. Its
-  `MultipleChoiceBlock`, `QuestionLivePreview` and `QuestionMediaUpload` components are imported
-  directly, as is the side-effect import of `paper/paperBlocks.jsx`; the reasons are in
-  `tools/architecture-rules/frontend-allowlist.json`. webpack binds imports through a `public.mjs` to
+  shared. `question-editor/public.mjs` exposes only the question type models, which Node tests load.
+  Its documented `public-ui.mjs` exports block fields, registration and live preview;
+  `public-media.mjs` exposes the independent media control, avoiding a cycle through math/editor UI.
+  These exact additional public entries are registered in the architecture rule; internal component
+  paths remain forbidden and `frontend-allowlist.json` has no feature-import exceptions.
+  `paper/public.mjs` exposes idempotent `registerPaperBlocks()`. The learning feature's
+  `paperRegistration.mjs` calls it on exam screens before question blocks register, preserving the span
+  filter order without reaching into another feature's implementation. webpack binds re-exports to
   the defining module, so the entry files do not change what a bundle contains. REST calls go through the
   shared `rest.mjs` ([STATE-API-MODULARIZATION.md](STATE-API-MODULARIZATION.md)).
 - `assets/interactivity` holds the learner script modules, loaded through the WordPress import map.

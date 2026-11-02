@@ -2,11 +2,8 @@
  * Public entry of features/question-editor: the question type models other folders of
  * assets/src/features import (docs/ENFORCEMENT.md, rule n).
  *
- * Only .mjs modules: question-bank/model.mjs, paper/paperTypes.mjs and learning/choiceAutosave.mjs
- * import this file and run in Node tests, and MultipleChoiceBlock and QuestionLivePreview import
- * question-bank and math, which import these models. The three components other folders use
- * (MultipleChoiceBlock, QuestionLivePreview, QuestionMediaUpload) are imported directly and listed
- * in tools/architecture-rules/frontend-allowlist.json.
+ * Pure model API: Node consumers must not load React/JSX. Editor UI is exported by
+ * public-ui.mjs; the independent media control is exported by public-media.mjs.
  */
 export { dropdownAnswers } from './dropdownModel.mjs';
 export {

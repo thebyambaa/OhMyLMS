@@ -32,8 +32,8 @@ defined( 'ABSPATH' ) || exit;
  * `delete_post` on the assignment for everything else. Reviewing and grading submissions needs
  * `edit_post` on the assignment, as the legacy report and grading routes did. Learner submissions are
  * rows of `ohmylms_assignment_attempts`, written by the learner front end
- * ({@see \OhMyLMS\Data\Assignment::submit_file_submission()}); grading goes through the legacy pipeline
- * ({@see AssignmentController::update_attempt_report()}) so learners get the same hooks and emails.
+ * ({@see \OhMyLMS\Data\Assignment::submit_file_submission()}); grading goes through the shared domain pipeline
+ * ({@see \OhMyLMS\Assignment\Grading::review()}) so learners get the same hooks and emails.
  *
  * @since 1.0.0
  */
@@ -1206,27 +1206,18 @@ class AssignmentsController extends RestController {
 		}
 		$feedback = $request->has_param( 'feedback' ) ? wp_kses_post( (string) $request['feedback'] ) : (string) $row->note;
 
-		$legacy = new WP_REST_Request( 'POST' );
-		$legacy->set_url_params(
+		$result = \OhMyLMS\Assignment\Grading::review(
+			(int) $post->ID,
+			(int) $row->user_id,
 			array(
-				'id'      => (int) $post->ID,
-				'user_id' => (int) $row->user_id,
-			)
-		);
-		$legacy->set_header( 'Content-Type', 'application/json' );
-		$legacy->set_body(
-			wp_json_encode(
 				array(
-					array(
-						'id'     => (int) $row->id,
-						'score'  => $score,
-						'status' => 'reviewed',
-						'note'   => $feedback,
-					),
-				)
+					'id'     => (int) $row->id,
+					'score'  => $score,
+					'status' => 'reviewed',
+					'note'   => $feedback,
+				),
 			)
 		);
-		$result = ( new AssignmentController() )->update_attempt_report( $legacy );
 		$graded = $this->submission_row( $post->ID, (int) $row->id );
 		if ( is_wp_error( $result ) || ! $graded || 'submitted' === $graded->status || (int) $graded->score !== $score ) {
 			return new WP_Error( 'ohmylms_assignment_grade_failed', __( 'The grade could not be saved.', 'ohmylms' ), array( 'status' => 500 ) );

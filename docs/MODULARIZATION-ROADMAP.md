@@ -5,9 +5,17 @@ was deleted on 31 October 2026 ([CUTOVER](CUTOVER.md)). The LMS counts as fully 
 owns its UI, state, API access, styles and tests, with explicit imports and documented interfaces, on the
 admin **and** the learner side. See [architecture](ARCHITECTURE.md) and [extensions](EXTENSIONS.md).
 
-Statuses below were checked against the code on 2 November 2026. Counts are files unless stated otherwise.
+Current assessment: **the remaining backend/native-editor refactors are implemented; final verification
+was stopped at the user's request on 2 November 2026 and is not signed off**. The architecture checker
+passed locally on 2 November 2026. Passing its current rules does not prove that every domain owns all
+access to its storage or that business services never depend on controllers.
 
-## Work done for full modularization (in order; all complete on 2 November 2026)
+The completed milestones below retain their historical evidence; their counts and CI results are not a
+new full-system verification. The remaining-work plan records the gaps confirmed in the current code.
+Counts are files unless stated otherwise. The implementation record below distinguishes completed code
+changes from final verification; historical passing results are not a substitute for the current run.
+
+## Completed cutover milestones
 
 1. **Retire or harden the legacy REST routes that outlived their screens.** Done on 31 October 2026 for
    `ohmylms/v1/question`, `/question-bank` (except the typed import), `/quiz/{id}/content|questions|pools`,
@@ -82,7 +90,7 @@ Statuses below were checked against the code on 2 November 2026. Counts are file
    composed in each recipient's language with saved templates storing only changed fields
    ([DEVELOPMENT](DEVELOPMENT.md#interface-languages)). Remaining: native review of 10,991 AI-drafted
    Mongolian strings (fuzzy) and the flagged terms in [DEVELOPMENT](DEVELOPMENT.md#translations).
-## Steps
+## Completed milestone steps
 
 | # | Work | Status | Evidence / remaining |
 | --- | --- | --- | --- |
@@ -96,6 +104,241 @@ Statuses below were checked against the code on 2 November 2026. Counts are file
 | 8 | Backend boundaries | **Done** | Every route in a `WP_REST_Controller` subclass; no `$wpdb` in any of the 141 REST controller files (`Rest/V1` alone had 253 lines in 28 controllers on 31 October); persistence in feature services; `controller-persistence` ratchet with no budgets; one advisory-lock helper (`Utility\Lock`, rule p) ([BACKEND-BOUNDARIES](BACKEND-BOUNDARIES.md)) |
 | 9 | Asset and dependency isolation | **Done** | Admin: one entry plus hashed lazy chunks with per-screen budgets; React and WordPress packages are externals (`checkDuplicateRuntimes`). Math (836 KB) and JSXGraph (995 KB) load only where used. Learner: script modules only; video provider APIs load lazily per provider; no jQuery on learner pages (`learner-no-jquery` browser spec) |
 | 10 | Enforcement and release checks | **Done** | Six CI jobs ([ENFORCEMENT](ENFORCEMENT.md#ci-jobs)): `check:ci` (typecheck, `typecheck:js`, app tests, architecture rules a–o incl. REST controllers, controller persistence, shared helpers, legacy routes, front-end rules, raw colours and spacing, budgets) and `npm test`; `lint:js`; PHP lint and unit suites; phpcs errors in every file and on changed lines; Stylelint; PHP integration with disposable sites; Playwright |
+
+## Remaining modularization plan
+
+Target: a modular WordPress plugin with explicit feature interfaces and storage ownership. Features may
+depend on shared infrastructure and other features' documented services. Independent deployment of every
+feature is not required. Keep existing REST contracts, hooks, permissions and grading behavior throughout
+this work; propose any intentional behavior change separately.
+
+| Phase | Priority | Scope | Depends on | Status |
+| --- | --- | --- | --- | --- |
+| M1 | First | Record domain owners and add backend dependency enforcement | None | Implemented; targeted checks passed |
+| M2 | High | Remove the Schools service dependency on a REST controller | M1 | Implemented; targeted checks passed |
+| M3 | High | Route cross-domain storage access through owning services | M1; coordinate shared service changes with M2 | Implemented; targeted checks passed |
+| M4 | Medium | Split broad hook handlers and shared helpers by responsibility | M2 and M3 | Implemented; targeted checks passed |
+| M5 | Medium | Remove native-editor feature import exceptions | M1; can run alongside M2/M3 | Implemented; targeted checks passed |
+| M6 | Final | Review composition, verify boundaries and close the milestone | M2–M5 | Stopped at user request; browser verification and final sign-off remain |
+
+### M1 — Ownership map and enforceable dependency direction
+
+- Update [BACKEND-BOUNDARIES](BACKEND-BOUNDARIES.md) with each domain's public services, storage it owns,
+  consumers and allowed dependencies. Cover `includes/`, plugin-owned `packages/`, native editors and
+  Interactivity modules; distinguish known findings from areas not yet audited.
+- Inventory domain-to-controller calls and direct access to another domain's tables, options and meta.
+  Start with `Schools/Service.php`, `Quiz/GradingPolicy.php` and `Student/Directory.php`.
+- Extend `tools/check-architecture.mjs` with a focused rule against domain services depending on REST
+  controllers, including construction, static calls and imported aliases. Exclude legitimate transport
+  bootstraps explicitly. Fixture-test permitted and forbidden dependencies.
+- If incremental adoption needs exceptions, list exact callers, reasons and the phase that removes each;
+  reject new violations. Do not disable rules or add a blanket baseline.
+
+Acceptance: ownership and dependency inventory is reviewable, the new rule catches the known Schools
+dependency, and existing architecture checks still pass with any temporary exception explicitly recorded.
+
+### M2 — Extract assignment grading from the transport layer
+
+Confirmed finding: `includes/Schools/Service.php` constructs
+`Rest/V1/AssignmentController` and calls `update_attempt_report()`.
+
+- Trace this school grading path and all other callers before selecting the service API.
+- Put the shared grading operation in the Assignment domain, reusing an existing service if suitable.
+  REST controllers map requests and responses; school workflows call domain inputs and domain results.
+- Make authorization explicit for each entry point. Preserve school/class scope checks, grade history,
+  hooks, error mapping and any locking or stale-write behavior found during the trace.
+- Remove the domain-to-controller call and its M1 exception.
+
+Acceptance: both the school and REST grading paths use the same domain operation; allowed and denied
+roles, cross-school denial, invalid submissions and repeat updates have relevant regression coverage.
+No domain service needs a `WP_REST_Request` merely to call another domain.
+
+### M3 — Enforce ownership of course relationships and membership status
+
+- `Quiz/GradingPolicy.php`: move course relationship lookups behind the Learning domain's
+  `CourseStructure` interface. Resolve and document the existing `LIMIT 1` versus lowest-course-ID
+  behavior before extraction. Preserve current behavior unless a separate decision changes it.
+- `Student/Directory.php::set_blocked()`: move membership row updates behind the Membership domain and
+  enrolment updates behind their owning service. Keep the coordinated block/unblock operation in an
+  explicit application service; preserve atomicity, failure handling, status values and hooks.
+- Follow the M1 inventory through remaining consumers, in one domain-sized change at a time. Record
+  intentional reporting joins as narrow read-model contracts instead of hiding ownership exceptions.
+- Add focused ownership checks where storage identifiers can be checked reliably; cover indirect access
+  and dynamic SQL through code review and integration tests rather than claiming a text scan proves it.
+
+Acceptance: the named consumers no longer directly access another domain's storage; shared content in
+multiple courses, missing relationships, block/unblock, partial failure and repeated operations retain
+their documented behavior. The ownership inventory has no unexplained cross-domain storage access.
+
+### M4 — Separate hook adapters, domain rules and presentation helpers
+
+- Split `includes/Hooks/CommonHook.php` by responsibility: access policy, enrollment/membership lifecycle,
+  and template/page-builder integration. WordPress hook callbacks delegate to the owning domain.
+- Audit `includes/cl-functions.php` and `includes/Utility/template-functions.php` by responsibility before
+  moving anything. Keep presentation helpers separate from business rules; file size alone is not a
+  reason to split a file.
+- Preserve public functions and callback signatures through thin compatibility wrappers where required.
+  Preserve hook priorities, accepted arguments and registration conditions, with one registration owner.
+- Extract one responsibility per change; update the ownership map and callers together.
+
+Acceptance: domain logic has a clear owner, shared hook adapters only coordinate it, and existing access,
+cleanup and template behavior passes targeted integration/browser checks without duplicate callbacks.
+
+### M5 — Remove the three native-editor import exception groups
+
+Work from `tools/architecture-rules/frontend-allowlist.json`:
+
+- Learning → question editor: separate pure question models from React preview/editor exports so the
+  public interfaces can expose UI without creating a question-bank/editor cycle.
+- Learning → paper: expose an explicit, idempotent block-registration entry and preserve its execution
+  order and production bundling. Verify that tree shaking does not drop required registration.
+- Math → question editor: expose media upload UI through a UI-compatible public entry while pure model
+  imports remain usable by Node tests without loading JSX.
+- Retain explicit model and UI entry points where necessary; do not make a single barrel export load all
+  feature code. Remove each exception only after its replacement passes boundary and behavior checks.
+
+Acceptance: `featureImports` is empty, no import cycles are introduced, pure Node tests still run, native
+editor previews/media/paper registration work, and lazy-loading and asset budgets remain within limits.
+
+### M6 — Composition review and final acceptance
+
+- Review `ohmylms.php`, `includes/OhMyLMS.php`, `includes/Packages.php` and extension registration as the
+  composition layer. Keep service wiring there; move any discovered business policy to its owner.
+  A central bootstrap or singleton is not by itself a modularization defect.
+- Reconcile this roadmap, [ARCHITECTURE](ARCHITECTURE.md), [BACKEND-BOUNDARIES](BACKEND-BOUNDARIES.md) and
+  [ENFORCEMENT](ENFORCEMENT.md) with the final code. Record any retained compatibility exceptions precisely.
+- Run `npm run check`, `npm run check:ci`, `npm run test:php`, `npm run test:php:integration`,
+  `npm run test:browser` and `npm run test:reproducible` on the integrated result in the documented test
+  environment. Record commit, commands, results and any unavailable environment or remaining failures.
+
+Acceptance: M1–M5 are complete, no domain-to-controller dependencies remain, storage ownership is reviewed,
+native-editor import exceptions are removed, and required checks pass. Save → reopen and allowed/denied
+permission checks cover the affected real WordPress workflows. Do not mark complete from static checks alone.
+
+## Implementation record — 2 November 2026
+
+- M1: domain/controller dependency checks and focused storage ownership checks are wired into the
+  architecture gate with fixture tests. The ownership map, composition roles and retained reporting
+  contracts are recorded in [BACKEND-BOUNDARIES](BACKEND-BOUNDARIES.md).
+- M2: `Assignment\Grading::review()` owns grading, completion and review hooks. Typed assignment and
+  school callers pass domain inputs directly; the old controller method preserves response/link
+  compatibility. Existing permission and scope checks remain at their entry points.
+- M3: quiz grading reads course relationships through `Learning\CourseStructure`; directory status
+  changes go through enrollment and membership owners. Legacy course-selection and sequential
+  partial-write behavior remain explicit contracts, not incidental changes in this refactor.
+- M4: `Learning\AccessPolicy`, `ThemeSupport\PageTemplates`, `ThemeSupport\PageRouting`,
+  `Student\Lifecycle`, `Analytics\Earnings` and `Utility\CountryStates` now own extracted operations.
+  The remaining verification, checkout, admin presentation, archive, activity, integration and registry
+  callbacks also have feature owners; `CommonHook` contains registration and delegates only.
+  The public hook/function adapters remain; hook registration was compared against the starting commit
+  and is unchanged. UTF-8 country catalogue contents were verified unchanged during extraction.
+- M5: all three native-editor feature-import exception groups are removed. The question editor has
+  separate model/UI/media public interfaces. Paper registration is explicit and idempotent; its local
+  bootstrap installs span filters before question blocks. Tests cover both ordering and repeated calls.
+- Published assets were rebuilt from source rather than edited directly. Eight unrelated admin
+  CSS/contract files have existing formatter drift; they are left unchanged. Standards/formatter
+  limitations are tracked separately from the modularization changes.
+
+### Stopped checkpoint and verification evidence
+
+Work stopped at the user's request on 2 November 2026. Owned Playwright/test-server processes were
+stopped; implementation is uncommitted on `codex/complete-modularization`. Do not treat M6 as complete.
+
+| Check | Recorded result |
+| --- | --- |
+| `npm run check:ci` | Passed: both TypeScript checks, 2,027 app tests in 211 files, architecture checks and 18 checker tests |
+| Latest full JavaScript suite | 636 passed, 1 skipped (requires a separate read-only WordPress fixture); subsequent targeted domain/REST checker run passed 13 tests |
+| PHP unit suites after complete hook extraction | 63 passed, 0 failed; 3 manifest exclusions (one sibling-plugin suite and two helpers run through JavaScript parity tests) |
+| Changed PHP syntax and standards | All 30 changed source files passed syntax and error-level WordPress standards checks |
+| Production/reproducible build | Passed; 1,109 generated artifacts byte-identical across two builds; shipped assets synchronized from build output |
+| Full Local PHP integration scan | 131 passed, 7 failed, 17 not run; the commerce failure was subsequently fixed and its 211 checks passed on rerun |
+| Final callback integration rerun | Account frontend (147), authentication/reviews (148), checkout extras (52), course carousel (80), legacy routes/navigation (866): all five suites passed |
+| Aggregate formatting/standards | Not green: eight existing formatter-drift files were left unchanged; full PHP scan reported 0 errors and 2,223 warnings. Existing CSS lint also reports `editors.css` nesting whitespace. No rules were disabled |
+| Browser verification | Incomplete. Bundled Chromium could not launch (`spawn UNKNOWN`); installed Chrome launched successfully. The run was stopped during admin smoke tests, before the native authoring/lesson cases ran |
+
+The inspected browser failure is a stale test expectation: `admin-app-smoke.spec.cjs` expects the URL
+hash to remain `#/dashboard`, but the implemented admin correctly redirects to query-string pages.
+The same suite's legacy order-edit assertions still expect `page=ohmylms-app` and a hash. Update the
+**test expectations** against `tests/fixtures/admin-navigation.json` and the documented routing
+contract; preserve the current query-string product behavior and the existing script/request/error
+assertions. The test has not yet been updated.
+
+Other broad-scan findings:
+
+- `integrations-rest-integration.php` fails its enabled-status filter on Local. This reproduced with
+  the original, pre-refactor class snapshot and passed against the isolated source test site.
+- Exam figure/source/API suites require private import storage and/or a working Poppler renderer that
+  are absent in the Local configuration. Do not weaken their assertions or pretend they ran.
+- `recipient-locale-integration.php` requires the Mongolian WordPress core language pack, which is absent.
+- `exam-results-release-integration.php` reached a failed fixture-rollback assertion. Its own identifiable
+  temporary fixture was backed up and removed (7 test users, 9 test posts, 1 test term, related custom
+  rows); the backup is `.git/modularization-fixture-backup.json`. Do not rerun this suite on Local until
+  its transaction isolation/teardown is understood; no successful final result is claimed for it.
+- Additional sites, sibling plugins and renderer prerequisites account for the manifest/environment
+  exclusions printed by the runner. Keep these visible in the final report.
+
+### Cursor handoff — finish M6
+
+1. Open **this nested repository**, not its parent plugins repository:
+   `C:/Users/Byambaa/Local Sites/math/app/public/wp-content/plugins/ohmylms`.
+   Verify the Git root, branch `codex/complete-modularization` and origin
+   `https://github.com/thebyambaa/OhMyLMS.git`. Read `AGENTS.md`, this roadmap,
+   `docs/BACKEND-BOUNDARIES.md` and `docs/ENFORCEMENT.md`. Preserve all existing uncommitted work,
+   including the earlier design-system documentation changes. Do not reset, clean or stash-pop.
+2. Review the completed refactor before adding code. M1–M5 are implemented: grading service, storage
+   ownership, feature-owned hook operations, pure/UI/media editor interfaces and explicit paper block
+   registration. `CommonHook` now contains registration and delegates only; its registration body was
+   verified unchanged. Check for real boundary regressions; avoid restarting the extraction or making
+   unrelated design-system changes.
+3. Correct the stale admin smoke routing assertions using the established navigation fixture/contract.
+   Verify canonical page/tab/section/id/view values and legacy redirects, retaining all checks for
+   script errors, failed plugin requests, error notices and meaningful screen content. Account explicitly
+   for feature-flagged screens rather than silently accepting the wrong destination.
+4. Restart the disposable browser test server and run the three pending browser specs serially:
+   `admin-app-smoke.spec.cjs`, `native-authoring.spec.cjs`, `lesson-block-editor.spec.cjs`.
+   The site's source directory is `C:/Users/Byambaa/ohmylms-test/site`; its external credentials file is
+   `C:/Users/Byambaa/ohmylms-test/test-credentials.json`; URL is `http://127.0.0.1:8099`.
+   Use installed Chrome via `OHMYLMS_CHROMIUM_PATH=C:/Program Files/Google/Chrome/Application/chrome.exe`
+   if bundled Chromium still cannot start. Do not print credentials or change the user's active plugins.
+5. Existing local helpers in `.git/` include `modularization-runtime.ini`, `modularization-router.php`,
+   baseline snapshots and test logs. These are local diagnostics, not release files. The test server
+   is currently stopped. The PHP executable is
+   `C:/Users/Byambaa/AppData/Roaming/Local/lightning-services/php-8.2.30+1/bin/win64/php.exe`;
+   the runtime INI loads its extensions and uses MySQL port 10006. The isolated source site currently
+   selects `build/sdk` through its `.source-assets` marker. Keep its generated files stable during tests.
+6. Fix any regression demonstrated by the browser or relevant PHP checks. For remaining broad-scan
+   failures, use disposable test configuration and baseline comparisons; keep production configuration
+   and unrelated data intact. Preserve fixture cleanup. Do not hide failures with skips, disabled rules,
+   widened allowlists or blindly regenerated screenshot baselines. Missing prerequisites and inherited
+   failures must stay explicitly recorded if they cannot be resolved within the authorized scope.
+7. After further changes, rerun the affected standards, unit/integration and architecture checks.
+   Rebuild/synchronize assets and rerun reproducibility if authored JavaScript/CSS changes. Avoid repeating
+   the full 20-minute integration scan without a reason; its initial evidence is already recorded above.
+   Validate a real save → reopen and allowed/denied access path for changed workflows.
+8. Update this roadmap with the exact final results and remaining limitations. Mark M6 complete only
+   when its acceptance criteria are met; otherwise identify the concrete unresolved gate. Leave the
+   work reviewable and do not commit or push unless the user asks.
+
+Useful local logs: `.git/modularization-ci.log`, `.git/modularization-js-tests-final.log`,
+`.git/modularization-php-tests-final.log`, `.git/modularization-all-integration.log`,
+`.git/modularization-commerce-fixed.log`, `.git/modularization-integration-baseline.log`,
+`.git/modularization-integrations-isolated.log`, `.git/modularization-final-callback-integration.log`,
+`.git/modularization-reproducible.log`, `.git/modularization-architecture-final.log`,
+`.git/modularization-changed-php-standards.log`, `.git/modularization-browser.log` and
+`.git/modularization-browser-bundled.log`. Test screenshots/traces are under `test-results/`.
+
+## Working across Codex, Cursor and Grok Bot
+
+- Use a separate branch and worktree for each implementation task, starting from the same agreed base.
+  Suggested branches: `codex/backend-boundaries`, `cursor/native-editor-boundaries` and
+  `grok/modularization-verification`. This is a proposed assignment, not work already dispatched.
+- Complete M1 first. Then backend work (M2/M3), frontend work (M5) and independent review can proceed
+  concurrently. M4 follows the backend changes; M6 integrates the finished work.
+- Assign one owner at a time to shared files: this roadmap, architecture check entry points, bootstrap,
+  package manifests, lockfiles and generated assets. Coordinate changes to the same public service API.
+- Each handoff records its base commit, files changed, contract decisions and checks. Merge one reviewed
+  change at a time and recheck affected boundaries after integration. Do not edit generated bundles directly.
+- Computer-use sessions share a mouse and keyboard: let only one tool control the desktop at a time.
 
 ## Feature parity
 
