@@ -22,7 +22,9 @@ test( 'native Gutenberg edits lessons and saves LMS settings together', async ( 
 			( url ) => ! url.pathname.endsWith( 'wp-login.php' )
 		);
 	}
-	await page.goto( '/wp-admin/admin.php?page=ohmylms-app#/content-hub/lessons' );
+	await page.goto(
+		'/wp-admin/admin.php?page=ohmylms-content&tab=lessons'
+	);
 	await page.waitForFunction( () => window.wp?.apiFetch );
 	const lesson = await page.evaluate( () =>
 		wp.apiFetch( {
@@ -107,7 +109,7 @@ test( 'native Gutenberg edits lessons and saves LMS settings together', async ( 
 				.first()
 		).toHaveAttribute(
 			'href',
-			/#\/content-hub\/curriculum\/syllabus\/24\?node=s%3A1$/
+			/admin\.php\?page=ohmylms-content&tab=curriculum&id=24&view=syllabus&node=s%3A1$/
 		);
 		await page
 			.getByRole( 'button', { name: 'Block Inserter', exact: true } )
