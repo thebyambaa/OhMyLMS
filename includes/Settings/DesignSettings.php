@@ -13,12 +13,14 @@ use WP_Error;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The two design groups of the legacy Design tab, over their existing options:
+ * The design groups of the legacy Design tab, over their existing options:
  *
  * - `course-archive`: archive layout, columns, filters, search/sort toggles and carousel rows, read by
  *   `templates/archive-course.php`, `templates/loop/*`, `templates/filters/*`, the carousel/popup
  *   templates and the Bricks/Elementor course list defaults.
  * - `quiz-design`: the twenty quiz palette colours of {@see Tokens::QUIZ_COLORS}.
+ * - `fonts`: the learner font and the admin font ({@see Tokens::FONT_OPTIONS}), read by
+ *   `Tokens::frontend_css()` and `DesignSystem::css()`.
  *
  * Every submitted field is validated before the first write, nothing else is written, and a failed
  * write restores the previous options. Error codes and shapes match {@see SettingsService}.
@@ -30,7 +32,7 @@ final class DesignSettings {
 	/**
 	 * Group ids.
 	 */
-	const GROUPS = array( 'course-archive', 'quiz-design' );
+	const GROUPS = array( 'course-archive', 'quiz-design', 'fonts' );
 
 	/**
 	 * Archive filters the filter templates render.
@@ -66,6 +68,21 @@ final class DesignSettings {
 						'type'      => 'string',
 						'pattern'   => '^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$',
 						'maxLength' => 7,
+					),
+				);
+			}
+			return $fields;
+		}
+		if ( 'fonts' === $group ) {
+			$fields = array();
+			foreach ( array_combine( array( 'font_family', 'admin_font_family' ), Tokens::FONT_OPTIONS ) as $name => $option ) {
+				$fields[ $name ] = array(
+					'option'  => $option,
+					'store'   => 'enum',
+					'default' => Tokens::DEFAULTS[ $option ],
+					'schema'  => array(
+						'type' => 'string',
+						'enum' => Tokens::font_choices( $option ),
 					),
 				);
 			}
@@ -396,7 +413,7 @@ final class DesignSettings {
 		/**
 		 * Fires once after a design settings request changed at least one field.
 		 *
-		 * @param string   $group   `course-archive` or `quiz-design`.
+		 * @param string   $group   `course-archive`, `quiz-design` or `fonts`.
 		 * @param string[] $changed Names of the changed fields.
 		 */
 		do_action( 'ohmylms_design_settings_updated', $group, $changed );

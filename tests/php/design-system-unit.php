@@ -143,16 +143,47 @@ check( false === strpos( $learner, '--oml-primary:#aa2200;' ), 'legacy learner o
 check( DS::get()['colors'] === \OhMyLMS\Design\Tokens::frontend_colors(), 'both contexts share all colors' );
 $shared_custom = DS::sanitize( array( 'preset' => 'classic', 'button_radius' => 12, 'density' => 'compact' ) );
 DS::save( $shared_custom );
-$shared_vars = DS::variables( $shared_custom['colors'], 12, 'compact' );
+$shared_vars = DS::variables( $shared_custom['colors'], 12, 'compact', \OhMyLMS\Design\Tokens::font( 'ohmylms_font_family' ) );
 foreach ( $shared_vars as $name => $value ) {
 	check( false !== strpos( \OhMyLMS\Design\Tokens::frontend_oml_vars(), '--' . $name . ':' . $value . ';' ), 'learner uses saved shared token ' . $name );
 }
 DS::save( DS::preset_values( 'khan' ) );
 $admin_names = array_keys( DS::variables( DS::preset_values( 'classic' )['colors'], 4, 'comfortable' ) );
 foreach ( $admin_names as $name ) {
-	check( false !== strpos( $learner, '--' . $name . ':' ), "learner css defines --$name" );
+	// The default learner font is the theme's, which declares no font variable (checked below).
+	if ( 'oml-font-family' !== $name ) {
+		check( false !== strpos( $learner, '--' . $name . ':' ), "learner css defines --$name" );
+	}
 }
 unset( $options['ohmylms_primary_color_scheme'] );
+
+// Fonts: the learner font (or the theme's) and the admin font are separate, allow-listed choices.
+use OhMyLMS\Design\Tokens;
+check( array_merge( array( 'inherit', 'system' ), Tokens::FONTS ) === Tokens::font_choices( 'ohmylms_font_family' ), 'learner fonts: theme, system and the web fonts' );
+check( array_merge( array( 'system' ), Tokens::FONTS ) === Tokens::font_choices( 'ohmylms_admin_font_family' ), 'admin fonts have no theme font' );
+check( 'inherit' === Tokens::font( 'ohmylms_font_family' ) && 'system' === Tokens::font( 'ohmylms_admin_font_family' ), 'defaults: theme font for learners, system font for admin' );
+$theme = Tokens::frontend_css();
+check( false === strpos( $theme, '--oml-font-family:' ), 'theme font declares no --oml-font-family, so learner text inherits the theme font' );
+check( 1 === substr_count( $theme, '--ohmylms-font-family:' ) && false !== strpos( $theme, '--ohmylms-font-family:var(--oml-font-family);' ), 'the legacy font alias follows --oml-font-family' );
+check( false === strpos( $theme, '{font-family:' ), 'theme font adds no font rule of its own' );
+check( false !== strpos( DS::css( $khan_values ), '--oml-font-family:' . Tokens::SYSTEM_STACK . ';' ), 'the admin keeps the system stack while the learner font is the theme font' );
+$options['ohmylms_font_family']       = 'Montserrat';
+$options['ohmylms_admin_font_family'] = 'Inter';
+$chosen                               = Tokens::frontend_css();
+$admin_font_css                       = DS::css( $khan_values );
+check( false !== strpos( $chosen, '--oml-font-family:"Montserrat", ' . Tokens::SYSTEM_STACK . ';' ) && false !== strpos( $chosen, '.ohmylms-quiz{font-family:var(--oml-font-family)}' ), 'a learner font is declared and applied to learner wrappers' );
+check( false !== strpos( $admin_font_css, '--oml-font-family:"Inter", ' . Tokens::SYSTEM_STACK . ';' ) && false === strpos( $admin_font_css, 'Montserrat' ), 'the admin font is its own choice' );
+check( false === strpos( $chosen, 'Inter' ), 'the admin font never reaches learner pages' );
+check( false !== strpos( DS::css( array( 'preset' => 'wordpress' ), 'modern' ), '--oml-font-family:"Inter", ' ), 'the admin font applies under the WordPress preset too' );
+$options['ohmylms_font_family'] = 'system';
+check( false !== strpos( Tokens::frontend_css(), '--oml-font-family:' . Tokens::SYSTEM_STACK . ';' ), 'system font is the system stack on learner pages' );
+$options['ohmylms_font_family']       = '"};body{display:none}';
+$options['ohmylms_admin_font_family'] = 'inherit';
+check( 'inherit' === Tokens::font( 'ohmylms_font_family' ) && false === strpos( Tokens::frontend_css(), 'display:none' ), 'a hostile learner font falls back to the theme font' );
+check( 'system' === Tokens::font( 'ohmylms_admin_font_family' ), 'the admin cannot inherit a theme font' );
+check( Tokens::SYSTEM_STACK === DS::variables( $khan_values['colors'], 4, 'comfortable', 'x;}body{' )['oml-font-family'], 'variables() accepts only allow-listed fonts' );
+check( 'https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap' === Tokens::font_url( 'Open Sans' ) && '' === Tokens::font_url( 'system' ) && '' === Tokens::font_url( 'inherit' ), 'only web fonts have a stylesheet URL' );
+unset( $options['ohmylms_font_family'], $options['ohmylms_admin_font_family'] );
 
 // Dark theme: same token names as light, brand and status colors lightened to read on the dark card.
 $light_names = array_keys( DS::variables( DS::preset_values( 'classic' )['colors'], 4, 'comfortable' ) );

@@ -13,7 +13,7 @@ use WP_REST_Request;
 use WP_REST_Server;
 
 /**
- * `ohmylms/v1/settings/course-archive` and `/settings/quiz-design`: the design settings groups, with
+ * `ohmylms/v1/settings/course-archive`, `/settings/quiz-design` and `/settings/fonts`: the design settings groups, with
  * the same permission, response and error contract as the registry groups of SettingsController.
  * See docs/api/settings.md ("Design groups").
  *

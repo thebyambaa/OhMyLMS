@@ -15,6 +15,17 @@ body.oml-ds-branded {
 	font-family: var(--oml-font-family);
 }
 
+/*
+ * The admin font (Settings > Fonts) applies under every preset; its default, the system stack, is
+ * WordPress's own. Under the WordPress preset the admin menu keeps WordPress's font. WordPress components name their
+ * font, so their controls are listed (modals and popovers render outside #wpbody); code fields and
+ * icon fonts keep theirs.
+ */
+body.oml-ds :is(#wpbody, .components-modal__frame, .components-popover__content),
+body.oml-ds :is(#wpbody, .components-modal__frame, .components-popover__content) :is(button, input, select, textarea, [class*="components-"]):not(.code, .dashicons, [class*="dashicons-"]) {
+	font-family: var(--oml-font-family);
+}
+
 body.oml-ds-branded #wpcontent {
 	background: var(--oml-background);
 }

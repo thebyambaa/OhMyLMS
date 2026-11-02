@@ -103,6 +103,30 @@ export function getQuizColorFields(): { name: string; label: string }[] {
 
 export type QuizColors = Record< string, string >;
 
+/** Google Fonts the server allows (`Tokens::FONTS`), all with Cyrillic coverage. */
+export const WEB_FONTS = [
+	'Inter',
+	'Roboto',
+	'Open Sans',
+	'Noto Sans',
+	'Montserrat',
+	'Nunito',
+	'PT Sans',
+	'Fira Sans',
+	'Rubik',
+] as const;
+/** `inherit` keeps the theme's font; the admin has no theme, so it starts at `system`. */
+export const LEARNER_FONTS = [ 'inherit', 'system', ...WEB_FONTS ] as const;
+export const ADMIN_FONTS = [ 'system', ...WEB_FONTS ] as const;
+export type LearnerFont = ( typeof LEARNER_FONTS )[ number ];
+export type AdminFont = ( typeof ADMIN_FONTS )[ number ];
+
+/** Values of `/settings/fonts`. */
+export interface FontValues {
+	font_family: LearnerFont;
+	admin_font_family: AdminFont;
+}
+
 function oneOf< T extends string >( value: unknown, allowed: readonly T[] ): T {
 	const found = allowed.find( ( option ) => option === value );
 	if ( undefined === found ) {
@@ -173,6 +197,20 @@ export function parseQuizColors( raw: unknown ): {
 				asString( values[ name ] ),
 			] )
 		),
+	};
+}
+
+export function parseFonts( raw: unknown ): {
+	values: FontValues;
+	changed: string[];
+} {
+	const { values, changed } = groupValues( raw, 'fonts' );
+	return {
+		changed,
+		values: {
+			font_family: oneOf( values.font_family, LEARNER_FONTS ),
+			admin_font_family: oneOf( values.admin_font_family, ADMIN_FONTS ),
+		},
 	};
 }
 
@@ -255,6 +293,26 @@ export function validateQuizColors( draft: QuizColors ): FieldErrors {
 	return errors;
 }
 
+export function validateFonts( draft: FontValues ): FieldErrors {
+	const errors: FieldErrors = {};
+	if (
+		! ( LEARNER_FONTS as readonly string[] ).includes( draft.font_family )
+	) {
+		errors.font_family = __( 'Choose a font from the list.', 'ohmylms' );
+	}
+	if (
+		! ( ADMIN_FONTS as readonly string[] ).includes(
+			draft.admin_font_family
+		)
+	) {
+		errors.admin_font_family = __(
+			'Choose a font from the list.',
+			'ohmylms'
+		);
+	}
+	return errors;
+}
+
 export async function getArchive( signal?: AbortSignal ) {
 	return parseArchive(
 		await get< unknown >( '/ohmylms/v1/settings/course-archive', {
@@ -292,6 +350,32 @@ export async function saveQuizColors(
 			{ signal }
 		)
 	);
+}
+
+export async function getFonts( signal?: AbortSignal ) {
+	return parseFonts(
+		await get< unknown >( '/ohmylms/v1/settings/fonts', { signal } )
+	);
+}
+export async function saveFonts(
+	stored: FontValues,
+	draft: FontValues,
+	signal?: AbortSignal
+) {
+	return parseFonts(
+		await patch< unknown >(
+			'/ohmylms/v1/settings/fonts',
+			changedValues( stored, draft ),
+			{ signal }
+		)
+	);
+}
+
+export function fontLabel( font: LearnerFont ): string {
+	if ( 'inherit' === font ) {
+		return __( 'Theme font', 'ohmylms' );
+	}
+	return 'system' === font ? __( 'System font', 'ohmylms' ) : font;
 }
 
 export function criteriaLabel( criteria: RowCriteria ): string {

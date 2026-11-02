@@ -13,7 +13,8 @@ defined( 'ABSPATH' ) || exit;
  *
  * Learner pages get --ohmylms-* variables (colors, derived shades, font). The admin app gets the
  * same brand variables plus the WordPress components and Arco tokens it is built on, so native
- * screens and SDK pages follow the chosen colors and font. Stylesheets read the variables;
+ * screens and SDK pages follow the chosen colors and font. Settings > Fonts holds two fonts: the
+ * learner font (or the theme's) and the admin font. Stylesheets read the variables;
  * nothing else should hard-code brand colors or fonts.
  */
 final class Tokens {
@@ -44,6 +45,9 @@ final class Tokens {
 	const FONTS        = array( 'Inter', 'Roboto', 'Open Sans', 'Noto Sans', 'Montserrat', 'Nunito', 'PT Sans', 'Fira Sans', 'Rubik' );
 	const SYSTEM_STACK = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif';
 
+	/** The learner font and the admin font options. */
+	const FONT_OPTIONS = array( 'ohmylms_font_family', 'ohmylms_admin_font_family' );
+
 	/** Defaults, also used by the settings screen. */
 	const DEFAULTS = array(
 		'ohmylms_primary_color_scheme'       => '#6e42d3',
@@ -57,7 +61,7 @@ final class Tokens {
 		'ohmylms_admin_font_family'          => 'system',
 	);
 
-	/** Register palette sanitizers and design assets. */
+	/** Register palette and font sanitizers and design assets. */
 	public static function init() {
 		foreach ( self::QUIZ_COLORS as $option => $default ) {
 			add_filter(
@@ -67,7 +71,17 @@ final class Tokens {
 				}
 			);
 		}
-		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_frontend_font' ), 5 );
+		foreach ( self::FONT_OPTIONS as $option ) {
+			add_filter(
+				'sanitize_option_' . $option,
+				static function ( $value ) use ( $option ) {
+					return is_string( $value ) && in_array( $value, self::font_choices( $option ), true ) ? $value : self::DEFAULTS[ $option ];
+				}
+			);
+		}
+		// After every head enqueue, and again before late (footer) styles print for shortcodes and blocks.
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_frontend_font' ), 100 );
+		add_action( 'wp_footer', array( __CLASS__, 'enqueue_frontend_font' ), 19 );
 	}
 
 	/**
@@ -111,14 +125,24 @@ final class Tokens {
 		return $css . '}';
 	}
 
-	/** A saved font choice: one of FONTS, 'system' or (learner site only) 'inherit'.
+	/**
+	 * The choices a font option accepts: 'system', one of FONTS and, for the learner font only, 'inherit'
+	 * (the theme's font).
+	 *
+	 * @param string $option One of FONT_OPTIONS.
+	 * @return string[]
+	 */
+	public static function font_choices( $option ) {
+		return array_merge( 'ohmylms_font_family' === $option ? array( 'inherit' ) : array(), array( 'system' ), self::FONTS );
+	}
+
+	/** A saved font choice from font_choices(), or the default.
 	 *
 	 * @param mixed $option Option.
 	 */
 	public static function font( $option ) {
-		$value   = get_option( $option, '' );
-		$allowed = array_merge( self::FONTS, array( 'system' ), 'ohmylms_font_family' === $option ? array( 'inherit' ) : array() );
-		return is_string( $value ) && in_array( $value, $allowed, true ) ? $value : self::DEFAULTS[ $option ];
+		$value = get_option( $option, '' );
+		return is_string( $value ) && in_array( $value, self::font_choices( $option ), true ) ? $value : self::DEFAULTS[ $option ];
 	}
 
 	/**
@@ -186,7 +210,7 @@ final class Tokens {
 	 */
 	public static function frontend_oml_vars() {
 		$preset = DesignSystem::get();
-		return self::declarations( DesignSystem::variables( self::frontend_colors(), $preset['button_radius'], $preset['density'] ) );
+		return self::declarations( DesignSystem::variables( self::frontend_colors(), $preset['button_radius'], $preset['density'], self::font( 'ohmylms_font_family' ) ) );
 	}
 
 	/**
@@ -241,21 +265,31 @@ final class Tokens {
 		$font = self::font( 'ohmylms_font_family' );
 		$css  = ':root{'
 			. self::legacy_aliases()
+			// "Theme font" declares no --oml-font-family, so this alias is undefined too: var(--oml-font-family)
+			// then inherits the theme's font and var(--ohmylms-font-family, fallback) keeps that fallback.
 			. '--ohmylms-font-family:var(--oml-font-family);'
 			. self::frontend_oml_vars()
-			// Left undefined for "Theme font" so var(--ohmylms-font-family, fallback) keeps each page's own font.
-			. ( 'inherit' !== $font ? '--ohmylms-font-family:' . self::stack( $font ) . ';' : '' )
 			. '}';
-		$css .= '.ohmylms-page,.ohmylms-schools,.ohmylms-practice,.ohmylms-inline-check,.ohmylms-skill-progress,.ohmylms-quiz{font-family:var(--oml-font-family)}';
+		if ( 'inherit' !== $font ) {
+			$css .= '.ohmylms-page,.ohmylms-schools,.ohmylms-practice,.ohmylms-inline-check,.ohmylms-skill-progress,.ohmylms-quiz{font-family:var(--oml-font-family)}';
+		}
 		return $css . self::frontend_dark_css() . self::quiz_css();
 	}
 
 	/**
-	 * Enqueue frontend font for Tokens.
+	 * Load the chosen learner web font on requests that queue an OhMyLMS stylesheet, the pages whose
+	 * markup reads the font; other pages of the site make no font request.
 	 */
 	public static function enqueue_frontend_font() {
 		$url = self::font_url( self::font( 'ohmylms_font_family' ) );
-		if ( $url ) {
-			wp_enqueue_style( 'ohmylms-font', $url, array(), null ); }
+		if ( '' === $url ) {
+			return;
+		}
+		foreach ( wp_styles()->queue as $handle ) {
+			if ( 0 === strpos( $handle, 'ohmylms-' ) && 'ohmylms-font' !== $handle ) {
+				wp_enqueue_style( 'ohmylms-font', $url, array(), null ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- A version query would change the Google Fonts URL.
+				return;
+			}
+		}
 	}
 }

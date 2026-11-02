@@ -8,13 +8,43 @@ saved Design system palette, spacing, roundness and font. Settings > Design syst
 | Plugin admin screens | The user's WordPress admin colour scheme under the default WordPress preset (`DesignSystem::admin_colors()`); otherwise Settings > Design system (`ohmylms_design_system`) | `DesignSystem::css()` | `body.oml-ds` |
 | Learner pages | The saved `ohmylms_design_system` palette | `Tokens::frontend_css()` | `:root` |
 
-Both call `DesignSystem::variables( $colors, $button_radius, $density )`, so derived shades (`-hover`,
+Both call `DesignSystem::variables( $colors, $button_radius, $density, $font )`, so derived shades (`-hover`,
 `-active`, `-soft`, `-rgb`, `on-*`), radii, button heights and the 4px spacing scale are computed
 identically. The default preset is WordPress: admin screens take `--oml-*` from the admin colour scheme
 (theme colour on WordPress's neutrals, 2px radius) and leave `--wp-admin-theme-color` to WordPress; learner
 pages keep the Khan Academy palette that preset stores. A saved Khan Academy, Classic or custom preset
-applies to both sides, including density and radius. `ohmylms_font_family` supplies the shared font; the historical `inherit`
-value now means the default system stack so the two contexts do not choose different fonts.
+applies to both sides, including density and radius. The font is the one value each side chooses
+separately (see [Fonts](#fonts)).
+
+## Fonts
+
+Settings > Fonts (`#/settings?tab=fonts`, REST `/ohmylms/v1/settings/fonts`, see
+[the settings API](api/settings.md#fonts)) holds two options. Both are allow-listed by
+`Tokens::font_choices()`, on save (REST schema `enum` and a `sanitize_option_*` filter) and on read
+(`Tokens::font()` falls back to the default), so `--oml-font-family` only ever holds a known stack.
+
+| Option | Choices | Default | Emitted by | Applies to |
+| --- | --- | --- | --- | --- |
+| `ohmylms_font_family` (learner font) | `inherit` (Theme font), `system`, a web font | `inherit` | `Tokens::frontend_css()` at `:root` | Learner pages |
+| `ohmylms_admin_font_family` (admin font) | `system`, a web font | `system` | `DesignSystem::css()` at `body.oml-ds` | Plugin admin screens only |
+
+- Web fonts are `Tokens::FONTS` (Inter, Roboto, Open Sans, Noto Sans, Montserrat, Nunito, PT Sans,
+  Fira Sans, Rubik), all with Cyrillic coverage; `system` is `Tokens::SYSTEM_STACK`, the stack WordPress
+  admin uses. A web font is `"<name>", <system stack>`.
+- **Theme font** declares no `--oml-font-family` (and so leaves the `--ohmylms-font-family` alias
+  undefined) and adds no font rule. `font-family: var(--oml-font-family)` is then invalid at computed
+  time and inherits the theme's font, including on buttons and inputs; `var(--ohmylms-font-family, <fallback>)`
+  uses its fallback, so a stylesheet that wants the theme's font writes `var(--oml-font-family, inherit)`.
+  Any other learner choice declares the variable and sets it on `.ohmylms-page`, `.ohmylms-schools`,
+  `.ohmylms-practice`, `.ohmylms-inline-check`, `.ohmylms-skill-progress` and `.ohmylms-quiz`.
+- The admin font is applied by `admin-design-system.css` under every preset to `#wpbody`, WordPress
+  component controls and modals/popovers on `body.oml-ds` screens (code fields and icon fonts excluded);
+  branded presets also set it on `body`. Other wp-admin screens never see it.
+- Loading: the Google Fonts stylesheet the plugin has always used (`Tokens::font_url()`), and only where
+  the font is used. The learner font (`ohmylms-font`) is enqueued only on requests that queue an
+  `ohmylms-*` stylesheet (checked after `wp_enqueue_scripts` and again before late footer styles, for
+  shortcodes and blocks); the admin font (`ohmylms-admin-font`) only on plugin admin screens.
+  `system` and Theme font load nothing.
 
 Compatibility: legacy color option names remain accepted by `Tokens::color()` as aliases of the
 shared palette. The older `--ohmylms-*` names also remain aliases, reapplied in dark scopes. Their

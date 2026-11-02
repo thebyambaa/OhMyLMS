@@ -10,6 +10,7 @@ import { BrandingForm } from './BrandingForm';
 import { CourseArchiveForm } from './CourseArchiveForm';
 import { CurrencyForm } from './CurrencyForm';
 import { DesignSystemForm } from './DesignSystemForm';
+import { FontsForm } from './FontsForm';
 import { GeneralForm } from './GeneralForm';
 import { GradeScaleForm } from './GradeScaleForm';
 import { useSettingsGroup } from './hooks';
@@ -43,6 +44,7 @@ const LABELS: Record< TabId, string > = {
 	tax: __( 'Tax', 'ohmylms' ),
 	'payment-gateways': __( 'Payment gateways', 'ohmylms' ),
 	'design-system': __( 'Design system', 'ohmylms' ),
+	fonts: __( 'Fonts', 'ohmylms' ),
 	'hub-icons': __( 'Hub icons', 'ohmylms' ),
 	xapi: __( 'xAPI', 'ohmylms' ),
 	'ai-tutor': __( 'AI tutor', 'ohmylms' ),
@@ -121,6 +123,7 @@ export default function SettingsPage() {
 		tax: tax.dirty,
 		'payment-gateways': Boolean( extraDirty[ 'payment-gateways' ] ),
 		'design-system': Boolean( extraDirty[ 'design-system' ] ),
+		fonts: Boolean( extraDirty.fonts ),
 		'hub-icons': Boolean( extraDirty[ 'hub-icons' ] ),
 		xapi: Boolean( extraDirty.xapi ),
 		'ai-tutor': Boolean( extraDirty[ 'ai-tutor' ] ),
@@ -165,6 +168,12 @@ export default function SettingsPage() {
 			<DesignSystemForm
 				active={ 'design-system' === selected }
 				onDirty={ reporters[ 'design-system' ] }
+			/>
+		),
+		fonts: (
+			<FontsForm
+				active={ 'fonts' === selected }
+				onDirty={ reporters.fonts }
 			/>
 		),
 		'hub-icons': (

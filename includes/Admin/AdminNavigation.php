@@ -112,6 +112,7 @@ final class AdminNavigation {
 			'tax'                 => __( 'Tax', 'ohmylms' ),
 			'payment-gateways'    => __( 'Payment gateways', 'ohmylms' ),
 			'design-system'       => __( 'Design system', 'ohmylms' ),
+			'fonts'               => __( 'Fonts', 'ohmylms' ),
 			'course-archive'      => __( 'Course archive', 'ohmylms' ),
 			'quiz-design'         => __( 'Quiz design', 'ohmylms' ),
 			'hub-icons'           => __( 'Hub icons', 'ohmylms' ),

@@ -80,19 +80,21 @@ with the rest of the recovered runtime (see [CUTOVER.md](CUTOVER.md)).
 
 ## Design tokens and admin page layout
 
-Colors and fonts are chosen under Settings → Design → Colors & fonts and turned into CSS custom
+Colors are chosen under Settings → Design system and fonts under Settings → Fonts, and turned into CSS custom
 properties by `includes/Design/Tokens.php`. Stylesheets read the variables instead of hard-coding
 brand colors or fonts.
 
 - Learner pages: `--ohmylms-primary-color` (`-rgb`, `-hover-color`, `-soft-color`),
   `--ohmylms-heading-color`, `--ohmylms-body-text-color`, `--ohmylms-progressbar-color`,
-  `--ohmylms-outline-color` and `--ohmylms-font-family`. The font variable is left undefined for
-  "Theme font", so write `var(--ohmylms-font-family, <fallback>)`.
+  `--ohmylms-outline-color` and `--ohmylms-font-family` (an alias of `--oml-font-family`). Both font
+  variables are left undefined for "Theme font", so write `var(--oml-font-family, inherit)` to keep the
+  theme's font, or `var(--ohmylms-font-family, <fallback>)` for a fallback of your own.
 - Admin app: the same brand variables plus `--wp-admin-theme-color*`, `--wp-components-color-*`, the
   Arco `--primary-1…9` scale and `--ohmylms-admin-*` (heading, text, muted, surface, subtle, border,
   radius, gutter, font). The Design screen previews admin colors live; saved values print on reload.
-- Fonts: system, the theme font (learner pages) or one of the Cyrillic-capable Google Fonts in
-  `Tokens::FONTS`. Values are validated; invalid colors and fonts fall back to the defaults.
+- Fonts (Settings → Fonts): a learner font and an admin font, each system, the theme font (learner
+  pages only) or one of the Cyrillic-capable Google Fonts in `Tokens::FONTS`. Values are validated;
+  invalid colors and fonts fall back to the defaults. See "Fonts" in `docs/DESIGN-TOKENS.md`.
 
 Extension admin pages (`registerAdminPage`) render in the new app at `#/extensions/<id>`, inside the app layout.
 

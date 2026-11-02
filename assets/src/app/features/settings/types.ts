@@ -15,6 +15,7 @@ export type GroupId = ( typeof GROUP_IDS )[ number ];
 export const EXTRA_TAB_IDS = [
 	'payment-gateways',
 	'design-system',
+	'fonts',
 	'course-archive',
 	'quiz-design',
 	'hub-icons',

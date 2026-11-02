@@ -295,8 +295,8 @@
 			"gzip": 3000
 		},
 		"chunks/admin-app-settings.js": {
-			"raw": 105800,
-			"gzip": 29900
+			"raw": 108300,
+			"gzip": 30500
 		},
 		"chunks/admin-app-setup.js": {
 			"raw": 30400,

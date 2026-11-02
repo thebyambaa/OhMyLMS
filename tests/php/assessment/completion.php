@@ -198,7 +198,7 @@ try {
     ok(strpos($front, '--ohmylms-primary-color:#ff8800;') !== false || strpos($front, '--oml-primary:#ff8800;') !== false, 'Learner primary color not applied: ' . substr($front, 0, 300));
     ok(substr_count($front, '--ohmylms-font-family:') === 1 && strpos($front, '--ohmylms-font-family:var(--oml-font-family);') !== false, 'Theme font should add no font of its own');
     update_option('ohmylms_font_family', 'Montserrat');
-    ok(strpos(Tokens::frontend_css(), '--ohmylms-font-family:"Montserrat"') !== false, 'Learner font not applied');
+    ok(strpos(Tokens::frontend_css(), '--oml-font-family:"Montserrat"') !== false, 'Learner font not applied');
     // The design system route (which replaced the legacy Design settings group) saves the palette; bad colors store nothing.
     $response = call('POST', 'design-system', ['preset' => 'custom', 'colors' => ['muted' => '#123456']]);
     ok($response->get_status() === 200 && Tokens::color('ohmylms_admin_muted_color') === '#123456', 'Design system did not save the palette: ' . wp_json_encode($response->get_data()));

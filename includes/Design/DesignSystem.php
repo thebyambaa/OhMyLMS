@@ -579,15 +579,17 @@ final class DesignSystem {
 	 *
 	 * Admin feeds it from the Design system settings; learner pages feed it from the learner branding
 	 * options (Tokens::frontend_css), so the names and derived shades are identical but each side keeps
-	 * its own values.
+	 * its own values. Each side also passes its own font: the admin font or the learner font.
 	 *
 	 * @param array  $c             Validated colors (COLOR_KEYS).
 	 * @param int    $button_radius Button radius in pixels.
 	 * @param string $density       One of DENSITIES.
+	 * @param string $font          A Tokens::font_choices() value; 'inherit' leaves --oml-font-family undeclared
+	 *                              so text keeps the surrounding (theme) font. Anything else is 'system'.
 	 * @return array<string,string> Variable name (without the leading dashes) => value.
 	 */
-	public static function variables( $c, $button_radius, $density ) {
-		$font    = Tokens::font( 'ohmylms_font_family' );
+	public static function variables( $c, $button_radius, $density, $font = 'system' ) {
+		$font    = in_array( $font, Tokens::font_choices( 'ohmylms_font_family' ), true ) ? $font : 'system';
 		$primary = $c['primary'];
 		$on      = self::text_on( $primary );
 		$space   = self::spacing( $density );
@@ -644,9 +646,9 @@ final class DesignSystem {
 			$vars[ 'oml-' . $status . '-text' ] = self::readable_status( $c[ $status ], $vars[ 'oml-' . $status . '-soft' ] );
 		}
 		$shadow = Tokens::rgb( $c['heading'] );
-		return $vars + array(
+		$vars  += array(
 			'oml-font-size-xs'   => '12px',
-			'oml-font-family'    => Tokens::stack( 'inherit' === $font ? 'system' : $font ),
+			'oml-font-family'    => Tokens::stack( $font ),
 			'oml-on-shade'       => '#ffffff',
 			'oml-font-size-sm'   => '13px',
 			'oml-font-size-md'   => '14px',
@@ -666,6 +668,10 @@ final class DesignSystem {
 			'oml-z-modal'        => '1000',
 			'oml-z-toast'        => '1100',
 		);
+		if ( 'inherit' === $font ) {
+			unset( $vars['oml-font-family'] );
+		}
+		return $vars;
 	}
 
 	/**
@@ -687,7 +693,7 @@ final class DesignSystem {
 		$primary  = $c['primary'];
 		$on       = self::text_on( $primary );
 		$radii    = self::radii( $radius );
-		$vars     = self::variables( $c, $radius, $settings['density'] );
+		$vars     = self::variables( $c, $radius, $settings['density'], Tokens::font( 'ohmylms_admin_font_family' ) );
 		// The existing admin stylesheets and WordPress/Arco components read these names.
 		if ( $branded ) {
 			$vars += array(
@@ -800,6 +806,10 @@ final class DesignSystem {
 		}
 		wp_enqueue_style( 'ohmylms-admin-design-system', plugins_url( 'assets/css/admin-design-system.css', OHMYLMS_FILE ), $deps, OHMYLMS_VERSION . '.' . substr( (string) hash_file( 'sha256', $path ), 0, 12 ) );
 		wp_add_inline_style( 'ohmylms-admin-design-system', self::css() );
+		$font_url = Tokens::font_url( Tokens::font( 'ohmylms_admin_font_family' ) );
+		if ( '' !== $font_url ) {
+			wp_enqueue_style( 'ohmylms-admin-font', $font_url, array(), null ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- A version query would change the Google Fonts URL.
+		}
 		wp_add_inline_script(
 			'wp-element',
 			'window.ohmylmsDesignSystem=' . wp_json_encode(

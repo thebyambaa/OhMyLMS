@@ -1,13 +1,18 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { get, patch, post } from '../../lib/api';
+import { ApiError, get, patch, post } from '../../lib/api';
 import { getCollection } from '../../lib/api/collection';
 import {
+	ADMIN_FONTS,
 	changedValues,
+	LEARNER_FONTS,
 	parseArchive,
+	parseFonts,
 	validateArchive,
+	validateFonts,
 	validateQuizColors,
+	type AdminFont,
 } from './designSettings';
 import SettingsPage from './SettingsPage';
 
@@ -73,6 +78,11 @@ const quiz = {
 		].map( ( name ) => [ name, '#123456' ] )
 	),
 };
+const fonts = {
+	group: 'fonts',
+	changed: [],
+	values: { font_family: 'inherit', admin_font_family: 'system' },
+};
 
 function show( tab: string ) {
 	return render(
@@ -90,6 +100,9 @@ beforeEach( () => {
 		}
 		if ( path.endsWith( '/quiz-design' ) ) {
 			return quiz;
+		}
+		if ( path.endsWith( '/settings/fonts' ) ) {
+			return fonts;
 		}
 		if ( path.endsWith( '/migrations' ) ) {
 			return [
@@ -136,6 +149,45 @@ describe( 'design settings model', () => {
 				values: { ...archive.values, layout: 'masonry' },
 			} )
 		).toThrow();
+	} );
+
+	it( 'keeps the font allow-lists: theme font for learners only', () => {
+		expect( LEARNER_FONTS ).toEqual( [ 'inherit', ...ADMIN_FONTS ] );
+		expect( ADMIN_FONTS ).toEqual( [
+			'system',
+			'Inter',
+			'Roboto',
+			'Open Sans',
+			'Noto Sans',
+			'Montserrat',
+			'Nunito',
+			'PT Sans',
+			'Fira Sans',
+			'Rubik',
+		] );
+		expect( parseFonts( fonts ).values ).toEqual( fonts.values );
+		for ( const values of [
+			{ ...fonts.values, font_family: 'Comic Sans' },
+			{ ...fonts.values, admin_font_family: 'inherit' },
+			{ font_family: 'inherit' },
+		] ) {
+			expect( () => parseFonts( { ...fonts, values } ) ).toThrow();
+		}
+		expect( () =>
+			parseFonts( { ...fonts, group: 'quiz-design' } )
+		).toThrow();
+		expect(
+			validateFonts( {
+				font_family: 'inherit',
+				admin_font_family: 'inherit' as AdminFont,
+			} )
+		).toEqual( { admin_font_family: expect.any( String ) } );
+		expect(
+			validateFonts( {
+				font_family: 'Rubik',
+				admin_font_family: 'Inter',
+			} )
+		).toEqual( {} );
 	} );
 } );
 
@@ -194,6 +246,83 @@ describe( 'design tabs', () => {
 			await screen.findByText( 'Enter a hex colour such as #6e42d3.' )
 		).toBeVisible();
 		expect( patch ).not.toHaveBeenCalled();
+	} );
+
+	it( 'offers both fonts and saves only the changed one', async () => {
+		vi.mocked( patch ).mockResolvedValue( {
+			...fonts,
+			changed: [ 'admin_font_family' ],
+			values: { ...fonts.values, admin_font_family: 'Noto Sans' },
+		} );
+		show( 'fonts' );
+		const learner = await screen.findByLabelText( 'Learner font' );
+		const admin = screen.getByLabelText( 'Admin font' );
+		expect( learner ).toHaveValue( 'inherit' );
+		expect(
+			within( learner ).getByRole( 'option', { name: 'Theme font' } )
+		).toBeInTheDocument();
+		expect(
+			within( admin ).queryByRole( 'option', { name: 'Theme font' } )
+		).not.toBeInTheDocument();
+		expect( within( admin ).getAllByRole( 'option' ) ).toHaveLength(
+			ADMIN_FONTS.length
+		);
+		expect( admin ).toHaveValue( 'system' );
+		await userEvent.selectOptions( admin, 'Noto Sans' );
+		await userEvent.click(
+			screen.getByRole( 'button', { name: 'Save changes' } )
+		);
+		await waitFor( () =>
+			expect( patch ).toHaveBeenCalledWith(
+				'/ohmylms/v1/settings/fonts',
+				{ admin_font_family: 'Noto Sans' },
+				expect.anything()
+			)
+		);
+		expect(
+			await screen.findByText(
+				'Settings saved. Reload the page to see the new admin font.',
+				{ selector: '.components-notice__content' }
+			)
+		).toBeVisible();
+		expect( screen.getByLabelText( 'Admin font' ) ).toHaveValue(
+			'Noto Sans'
+		);
+	} );
+
+	it( 'shows a font the server rejects on its field', async () => {
+		vi.mocked( patch ).mockRejectedValue(
+			new ApiError( {
+				status: 400,
+				code: 'rest_invalid_param',
+				message: 'Invalid parameter(s): font_family',
+				details: {
+					status: 400,
+					params: {
+						font_family:
+							'font_family is not one of inherit, system, Inter.',
+					},
+				},
+			} )
+		);
+		show( 'fonts' );
+		await userEvent.selectOptions(
+			await screen.findByLabelText( 'Learner font' ),
+			'Montserrat'
+		);
+		await userEvent.click(
+			screen.getByRole( 'button', { name: 'Save changes' } )
+		);
+		expect(
+			await screen.findByText(
+				'font_family is not one of inherit, system, Inter.'
+			)
+		).toBeVisible();
+		expect( patch ).toHaveBeenCalledWith(
+			'/ohmylms/v1/settings/fonts',
+			{ font_family: 'Montserrat' },
+			expect.anything()
+		);
 	} );
 
 	it( 'migrates a course from an active source after confirmation', async () => {

@@ -24,6 +24,9 @@ $_SERVER['HTTP_HOST']   = getenv( 'OHMYLMS_TEST_HOST' ) ? getenv( 'OHMYLMS_TEST_
 $_SERVER['REQUEST_URI'] = '/';
 require dirname( __DIR__, 5 ) . '/wp-load.php';
 
+use OhMyLMS\Design\DesignSystem;
+use OhMyLMS\Design\Tokens;
+
 /**
  * Fake source migrator: copies the title into a draft OhMyLMS course.
  */
@@ -126,7 +129,7 @@ add_filter(
 	}
 );
 
-foreach ( array_merge( array_column( array_values( \OhMyLMS\Settings\DesignSettings::fields( 'course-archive' ) ), 'option' ), array_keys( \OhMyLMS\Design\Tokens::QUIZ_COLORS ) ) as $option ) {
+foreach ( array_merge( array_column( array_values( \OhMyLMS\Settings\DesignSettings::fields( 'course-archive' ) ), 'option' ), array_keys( Tokens::QUIZ_COLORS ), Tokens::FONT_OPTIONS ) as $option ) {
 	$options[ $option ] = get_option( $option, null );
 }
 
@@ -213,6 +216,115 @@ try {
 	ok( '#aabbcc' === get_option( 'ohmylms_quiz_stage_color' ), 'colour stored in its option' );
 	ok( 20 === count( $quiz->get_data()['values'] ), 'twenty colours' );
 	ok( 400 === call_api( 'PATCH', '/settings/quiz-design', array( 'stage' => 'red' ) )->get_status(), 'named colour is 400' );
+
+	// Fonts group: the learner font and the admin font.
+	wp_set_current_user( 0 );
+	ok( 401 === call_api( 'GET', '/settings/fonts' )->get_status(), 'anonymous font read is 401' );
+	wp_set_current_user( $editor );
+	ok( 403 === call_api( 'PATCH', '/settings/fonts', array( 'admin_font_family' => 'Inter' ) )->get_status() && false === get_option( 'ohmylms_admin_font_family' ), 'editor font write is 403 and stores nothing' );
+	wp_set_current_user( $admin );
+	$font_read = call_api( 'GET', '/settings/fonts' );
+	ok(
+		200 === $font_read->get_status() && 'fonts' === $font_read->get_data()['group'] && array(
+			'font_family'       => 'inherit',
+			'admin_font_family' => 'system',
+		) === $font_read->get_data()['values'],
+		'font defaults: theme font for learners, system font for admin'
+	);
+	$fonts = call_api(
+		'PATCH',
+		'/settings/fonts',
+		array(
+			'font_family'       => 'Montserrat',
+			'admin_font_family' => 'Inter',
+		)
+	);
+	ok( 200 === $fonts->get_status() && array( 'font_family', 'admin_font_family' ) === $fonts->get_data()['changed'], 'both fonts saved' );
+	ok( 'Montserrat' === get_option( 'ohmylms_font_family' ) && 'Inter' === get_option( 'ohmylms_admin_font_family' ), 'fonts stored in their options' );
+	$learner_css = Tokens::frontend_css();
+	ok( false !== strpos( $learner_css, '--oml-font-family:"Montserrat", ' ) && false !== strpos( $learner_css, '.ohmylms-page,' ) && false === strpos( $learner_css, 'Inter' ), 'learner pages use the learner font' );
+	ok( false !== strpos( DesignSystem::css(), '--oml-font-family:"Inter", ' ) && false === strpos( DesignSystem::css(), 'Montserrat' ), 'admin screens use the admin font' );
+	$partial = call_api(
+		'PATCH',
+		'/settings/fonts',
+		array(
+			'font_family'       => 'Rubik',
+			'admin_font_family' => 'Inter',
+		)
+	);
+	ok( array( 'font_family' ) === $partial->get_data()['changed'] && 'Inter' === get_option( 'ohmylms_admin_font_family' ), 'only the changed font is written' );
+
+	$refused = call_api(
+		'PATCH',
+		'/settings/fonts',
+		array(
+			'font_family'       => 'Nunito',
+			'admin_font_family' => 'inherit',
+		)
+	);
+	ok( 400 === $refused->get_status() && 'rest_invalid_param' === code_of( $refused ) && isset( $refused->get_data()['data']['params']['admin_font_family'] ), 'the admin cannot choose the theme font' );
+	ok( 'Rubik' === get_option( 'ohmylms_font_family' ) && 'Inter' === get_option( 'ohmylms_admin_font_family' ), 'a rejected font request stores nothing' );
+	foreach ( array( 'Comic Sans', 'inter', '"Inter";}body{display:none', 7, null ) as $bad_font ) {
+		ok( 400 === call_api( 'PATCH', '/settings/fonts', array( 'font_family' => $bad_font ) )->get_status(), 'font outside the allow-list is 400: ' . wp_json_encode( $bad_font ) );
+	}
+	$unknown_font = call_api( 'PATCH', '/settings/fonts', array( 'heading_font' => 'Inter' ) );
+	ok( 400 === $unknown_font->get_status() && 'ohmylms_settings_unknown_field' === code_of( $unknown_font ), 'unknown font field is 400' );
+	ok( 'Rubik' === get_option( 'ohmylms_font_family' ), 'rejected requests leave the learner font' );
+
+	ok( 200 === call_api( 'PATCH', '/settings/fonts', array( 'font_family' => 'inherit' ) )->get_status(), 'theme font saved' );
+	$theme_css = Tokens::frontend_css();
+	ok( false === strpos( $theme_css, '--oml-font-family:' ) && false === strpos( $theme_css, '{font-family:' ), 'theme font: no font variable and no font rule, so learner text inherits the theme font' );
+	ok( false !== strpos( DesignSystem::css(), '--oml-font-family:"Inter", ' ), 'the admin font is independent of the theme font' );
+
+	update_option( 'ohmylms_admin_font_family', 'inherit' );
+	ok( 'system' === get_option( 'ohmylms_admin_font_family' ), 'the option sanitizer refuses a theme font for the admin' );
+	update_option( 'ohmylms_font_family', '</style><script>x</script>' );
+	ok( 'inherit' === get_option( 'ohmylms_font_family' ), 'the option sanitizer refuses unknown learner fonts' );
+	$stored_font = static function () {
+		return 'Papyrus';
+	};
+	add_filter( 'pre_option_ohmylms_admin_font_family', $stored_font );
+	ok( 'system' === call_api( 'GET', '/settings/fonts' )->get_data()['values']['admin_font_family'] && false === strpos( DesignSystem::css(), 'Papyrus' ), 'a malformed stored font reads and renders as the default' );
+	remove_filter( 'pre_option_ohmylms_admin_font_family', $stored_font );
+
+	$font_schema = rest_do_request( new WP_REST_Request( 'OPTIONS', '/ohmylms/v1/settings/fonts' ) )->get_data()['schema'];
+	ok( Tokens::font_choices( 'ohmylms_font_family' ) === $font_schema['properties']['font_family']['enum'] && Tokens::font_choices( 'ohmylms_admin_font_family' ) === $font_schema['properties']['admin_font_family']['enum'], 'schema lists the allowed fonts' );
+	preg_match( '/export const WEB_FONTS = \[([^\]]*)\]/', file_get_contents( dirname( __DIR__, 2 ) . '/assets/src/app/features/settings/designSettings.ts' ), $ts_fonts );
+	preg_match_all( "/'([^']+)'/", $ts_fonts[1] ?? '', $ts_names );
+	ok( Tokens::FONTS === $ts_names[1], 'the settings screen offers exactly the server web fonts' );
+
+	// Web fonts load only where they are used.
+	$styles        = wp_styles();
+	$saved_queue   = $styles->queue;
+	$styles->queue = array();
+	update_option( 'ohmylms_font_family', 'Rubik' );
+	Tokens::enqueue_frontend_font();
+	ok( ! wp_style_is( 'ohmylms-font', 'enqueued' ), 'pages without OhMyLMS styles make no font request' );
+	wp_register_style( 'ohmylms-font-test', false, array(), '1' );
+	wp_enqueue_style( 'ohmylms-font-test' );
+	Tokens::enqueue_frontend_font();
+	ok( wp_style_is( 'ohmylms-font', 'enqueued' ) && false !== strpos( $styles->registered['ohmylms-font']->src, 'family=Rubik:' ), 'learner pages load the chosen web font' );
+	wp_dequeue_style( 'ohmylms-font' );
+	wp_deregister_style( 'ohmylms-font' );
+	update_option( 'ohmylms_font_family', 'inherit' );
+	Tokens::enqueue_frontend_font();
+	ok( ! wp_style_is( 'ohmylms-font', 'registered' ), 'the theme font loads nothing' );
+	wp_dequeue_style( 'ohmylms-font-test' );
+	wp_deregister_style( 'ohmylms-font-test' );
+	require_once ABSPATH . 'wp-admin/includes/class-wp-screen.php';
+	require_once ABSPATH . 'wp-admin/includes/screen.php';
+	update_option( 'ohmylms_admin_font_family', 'Fira Sans' );
+	set_current_screen( 'dashboard' );
+	DesignSystem::enqueue();
+	ok( ! wp_style_is( 'ohmylms-admin-font', 'enqueued' ), 'other wp-admin screens get no admin font' );
+	set_current_screen( 'toplevel_page_ohmylms' );
+	DesignSystem::enqueue();
+	ok( wp_style_is( 'ohmylms-admin-font', 'enqueued' ) && false !== strpos( $styles->registered['ohmylms-admin-font']->src, 'family=Fira+Sans:' ), 'plugin admin screens load the admin web font' );
+	ok( false !== strpos( implode( '', (array) $styles->get_data( 'ohmylms-admin-design-system', 'after' ) ), '--oml-font-family:"Fira Sans", ' ), 'plugin admin screens print the admin font variable' );
+	wp_dequeue_style( 'ohmylms-admin-font' );
+	wp_dequeue_style( 'ohmylms-admin-design-system' );
+	$styles->queue = $saved_queue;
+	unset( $GLOBALS['current_screen'] );
 
 	// Migration.
 	$sources = call_api( 'GET', '/migrations' )->get_data();

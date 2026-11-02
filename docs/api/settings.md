@@ -11,7 +11,8 @@ Registry groups: General, Branding, Account and privacy, Permalinks, Advanced, C
 Payment gateways have their own routes in this namespace (`PaymentGatewaySettingsController`,
 `includes/Settings/PaymentGatewaySettings.php`, see [Payment gateways](#payment-gateways)). The
 Design system, Hub icons, xAPI, AI tutor and MCP tabs use their existing routes (see
-[Other tabs](#other-tabs-existing-routes)). Emails, Integrations and Migration have their own screens.
+[Other tabs](#other-tabs-existing-routes)); Course archive, Quiz design and Fonts are the
+[Design groups](#design-groups). Emails, Integrations and Migration have their own screens.
 
 ## Audit before
 
@@ -325,6 +326,8 @@ nothing read what they registered). Left in `includes/Admin/Settings`: `Permalin
 - **Design settings (layout, archive, quiz design):** implemented 31 October 2026 as the
   `course-archive` and `quiz-design` groups; see [Design groups](#design-groups). (Hub icons, also in
   the legacy Design tab, is implemented over `/hub-icons`.)
+- **Fonts:** the learner and admin fonts had no route after the legacy `design` group was retired, and
+  the admin font had no reader. Restored 2 November 2026 as the `fonts` group; see [fonts](#fonts).
 - **AI tutor validation:** `POST /ai` clamps or replaces invalid values (`provider`, `model`, limits)
   instead of answering 400, and resets policies that are not sent. The tab validates first and sends
   the whole form; a stricter route would change the legacy contract.
@@ -372,7 +375,7 @@ lists seven groups) but follow its contract: `manage_options`, `GET` and `PUT|PA
 | High | **Option-driven function call.** The carousel and popup templates call `"get_{$row['row_display_criteria']}_course_ids"` from `ohmylms_archive_page_row` and from shortcode `course_rows` attributes (any author), so the value chose which function ran. Both templates now require one of `all`, `best_selling`, `top_rated`, `top_reviewed`, `free`, `paid`, `recent`. |
 | High | **No validation.** The removed generic writer stored any value: layouts outside `grid/list`, styles that select no template branch, string column counts, unbounded row arrays with arbitrary keys. |
 | Medium | Readers disagree: `templates/archive-course.php` reads `ohmylms_archive_page_per_page` (never written), other readers `ohmylms_courses_per_page`; Bricks/Elementor default `columns_per_row` to 3, the loop to 4. Reported, readers unchanged. |
-| Low | `ohmylms_single_course_page_layout`, `ohmylms_single_course_page_features` and `ohmylms_container_width` have no readers; `ohmylms_debug_mode` is unused. Not exposed. Colours, fonts and admin colours belong to Branding and the Design system. |
+| Low | `ohmylms_single_course_page_layout`, `ohmylms_single_course_page_features` and `ohmylms_container_width` have no readers; `ohmylms_debug_mode` is unused. Not exposed. Colours and admin colours belong to Branding and the Design system; the two fonts are the `fonts` group. |
 
 ### `course-archive`
 
@@ -395,6 +398,24 @@ Twenty colours named after `Tokens::QUIZ_COLORS` without the `ohmylms_quiz_` pre
 suffix (`stage`, `prompt`, `canvas`, `toolbar`, `toolbar_text`, `accent`, `text`, `answer_1`…`answer_4`,
 `correct`, `player_stage`, `player_prompt`, `player_toolbar`, `player_toolbar_text`,
 `player_answer_1`…`player_answer_4`); `#rgb`/`#rrggbb`, stored lower-case `#rrggbb` in the same options.
+
+### `fonts`
+
+`GET` / `PATCH /ohmylms/v1/settings/fonts`, shown as the Fonts tab (`#/settings?tab=fonts`, `FontsForm.tsx`).
+Web fonts are `Inter`, `Roboto`, `Open Sans`, `Noto Sans`, `Montserrat`, `Nunito`, `PT Sans`, `Fira Sans`,
+`Rubik` (`Tokens::FONTS`; the tab's list is checked against it by the integration test).
+
+| Field | Option | Values | Default | Effect |
+| --- | --- | --- | --- | --- |
+| `font_family` | `ohmylms_font_family` | `inherit` (Theme font), `system`, a web font | `inherit` | Learner pages: `--oml-font-family` from `Tokens::frontend_css()`; `inherit` declares no font, so learner text keeps the theme's |
+| `admin_font_family` | `ohmylms_admin_font_family` | `system`, a web font | `system` | Plugin admin screens only: `--oml-font-family` from `DesignSystem::css()`, under every Design system preset |
+
+Values are case-sensitive; anything else is `400 rest_invalid_param` (for example `inherit` for the admin
+font) and stores nothing. Both options also have a `sanitize_option_*` filter (unknown values store the
+default) and read as the default when malformed. A chosen web font is loaded from Google Fonts only where
+it is used: learner requests that queue an OhMyLMS stylesheet, or plugin admin screens. The admin font
+shows after a reload. Test: `tests/php/design-migration-rest-integration.php`; output rules in
+[DESIGN-TOKENS](../DESIGN-TOKENS.md#fonts).
 
 ## Migration
 
@@ -424,8 +445,9 @@ ohmylms_migration_already_done` (`data.course_id` is the existing copy), `500 oh
 
 `admin.php?page=ohmylms-app#/settings` (one registry entry; the tab is the `tab` query parameter,
 for example `#/settings?tab=tax`). Tabs: the seven groups, then `payment-gateways`,
-`design-system`, `course-archive`, `quiz-design`, `hub-icons`, `xapi`, `ai-tutor`, `mcp` and
-`migration` (source plugin, paged course list, confirmed migration, link to the copy). Legacy
+`design-system`, `fonts`, `course-archive`, `quiz-design`, `hub-icons`, `xapi`, `ai-tutor`, `mcp`,
+`migration` (source plugin, paged course list, confirmed migration, link to the copy), `at-risk` and
+`grade-scale`. Legacy
 routes these replace: `/settings/design-settings(/*)` → `/settings?tab=course-archive` (quiz design
 subtab → `?tab=quiz-design`), `/settings/migration-settings` → `/settings?tab=migration`. Each tab loads when first opened,
 validates like the server, saves only changed fields (gateways) or the whole form (routes that
