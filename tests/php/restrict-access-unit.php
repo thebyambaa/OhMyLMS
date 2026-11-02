@@ -28,6 +28,31 @@ namespace OhMyLMS\Data {
         public function maybe_banned() { return false; }
     }
 }
+namespace OhMyLMS\Design {
+    /**
+     * Thin Ui stub for the standalone access gate: AccessPolicy verify markup calls button/empty_state.
+     */
+    final class Ui {
+        public const STYLE_HANDLE = 'oml-ui';
+        public static function enqueue() {}
+        public static function alert_class( $args = array() ) {
+            $tone  = isset( $args['tone'] ) ? (string) $args['tone'] : 'info';
+            $class = isset( $args['class'] ) ? (string) $args['class'] : '';
+            return trim( 'oml-alert oml-alert-' . $tone . ' ' . $class );
+        }
+        public static function button( $label, $args = array() ) {
+            $href  = isset( $args['href'] ) ? (string) $args['href'] : '';
+            $class = isset( $args['class'] ) ? (string) $args['class'] : '';
+            return '<a class="' . htmlspecialchars( $class, ENT_QUOTES, 'UTF-8' ) . '" href="' . htmlspecialchars( $href, ENT_QUOTES, 'UTF-8' ) . '">' . htmlspecialchars( (string) $label, ENT_QUOTES, 'UTF-8' ) . '</a>';
+        }
+        public static function empty_state( $title, $args = array() ) {
+            $description = isset( $args['description'] ) ? (string) $args['description'] : '';
+            $actions     = isset( $args['actions_html'] ) ? (string) $args['actions_html'] : '';
+            $class       = isset( $args['class'] ) ? (string) $args['class'] : '';
+            return '<div class="' . htmlspecialchars( $class, ENT_QUOTES, 'UTF-8' ) . '"><h4>' . htmlspecialchars( (string) $title, ENT_QUOTES, 'UTF-8' ) . '</h4><p>' . htmlspecialchars( $description, ENT_QUOTES, 'UTF-8' ) . '</p>' . $actions . '</div>';
+        }
+    }
+}
 namespace {
     define('ABSPATH', __DIR__);
     const ADMIN = 1, AUTHOR = 2, STUDENT = 3, ENROLLED = 4, GUEST = 0;
