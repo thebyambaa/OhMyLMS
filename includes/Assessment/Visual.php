@@ -13,6 +13,8 @@ defined( 'ABSPATH' ) || exit;
  * Visual / manipulative question types. Each one answers with a few numbers that the
  * learner sets by dragging or tapping; the key and tolerances never leave the server.
  *
+ * Type settings and answer shape:
+ *
  * number-line   min, max, step, snap, target, tolerance        answer { value }
  * shade-model   shape bar|grid|circle, parts, cols, answer     answer { c0, c3, ... } (shaded cells)
  * count-blocks  places, max_per_place, target, canonical       answer { hundreds, tens, ones }

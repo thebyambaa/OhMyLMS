@@ -1,6 +1,6 @@
 # Skill sources, provenance and review
 
-Phase 3 of the [skill-agnostic plan](SKILL-AGNOSTIC-PLAN.md). Skills can come from anywhere: a person, a syllabus, an import, AI analysis of a syllabus, or AI reading a course's own content. Every skill now records where it came from. Anything a source proposes waits for review, and a skill that something still uses is never deleted.
+Phase 3 of the [skill-agnostic plan](LEARNING-ARCHITECTURE.md). Skills can come from anywhere: a person, a syllabus, an import, AI analysis of a syllabus, or AI reading a course's own content. Every skill now records where it came from. Anything a source proposes waits for review, and a skill that something still uses is never deleted.
 
 ## Provenance
 
@@ -13,6 +13,7 @@ Phase 3 of the [skill-agnostic plan](SKILL-AGNOSTIC-PLAN.md). Skills can come fr
 | `_ohmylms_skill_review` | `approved`, `pending` or `rejected` |
 | `_ohmylms_skill_origin` | Provider, model, prompt version, confidence, created by/at, reviewed by/at |
 | `_ohmylms_skill_status` | `archived`, or absent when active |
+| `_ohmylms_skill_audit` | Audit trail of reviews, archiving and restoring: action, previous state, note, user, time (newest 50) |
 
 Creators declare their origin with `Provenance::with( $origin, $callback )`. The syllabus editor (`syllabus`), the course importer (`import`) and accepted AI suggestions (`ai`, or the source's id) do this. A skill created without a declared origin, including by other plugins through `wp_insert_term()`, is recorded as `manual` and approved.
 
@@ -35,6 +36,9 @@ Read provenance with `Provenance::read( $term_id )`. Shared skills include it as
 ## Review and publishing
 
 - `POST /ohmylms/v1/skills/{id}/review` with `review` (`approved` or `rejected`). Administrators only.
+- The provenance review queue of the [skill workspace](api/skill-workspace.md) lists skills by review
+  state and source and decides several at once, each against the state the reviewer saw, with a note
+  kept in the audit trail.
 - `POST /ohmylms/v1/skills/{id}/archive` and `…/restore`. Administrators only.
 
 Course readiness (`CourseProgram::readiness()` and the readiness report's `completion` list) now blocks publishing while the outline uses a skill that is pending ("Approve the proposed skill … first") or rejected ("Replace the rejected skill …").
@@ -103,7 +107,6 @@ The structure response adds `subject` (the most common subject of the outline's 
   - pending and rejected readiness, administrator review, and deleting an unused skill;
   - the course suggestion run, listing, accepting reuse and new skills, and course isolation;
   - backfill, MCP definitions and anonymous denial.
-- `node --test tests/js/skill-provenance.test.mjs`: badges, suggestions per lesson, accepted skills and saved-lesson checks.
 - Live check on 800.local:
   - A course-content run on a fractions lesson proposed three new skills.
   - Adding one linked it with an "AI · pending review" badge.

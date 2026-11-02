@@ -82,13 +82,14 @@ class WebhookSender {
 				return;
 			}
 			$student      = new \OhMyLMS\Data\Student( $student_id );
+			$sale_price   = $course->get_sale_price();
 			$payload_data = array(
 				'user_id'      => $student_id,
 				'user_email'   => $student->get_email(),
 				'user_name'    => $student->get_name(),
 				'course_id'    => $course_id,
 				'course_title' => $course->get_name(),
-				'course_price' => $course->get_sale_price() ?: $course->get_regular_price(),
+				'course_price' => $sale_price ? $sale_price : $course->get_regular_price(),
 				'order_id'     => $order_id,
 				'order_total'  => $order ? $order->get_total() : 0,
 				'event_time'   => current_time( 'mysql' ),

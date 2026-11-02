@@ -1,5 +1,6 @@
 import { ApiError } from '../../lib/api';
 import {
+	authNotice,
 	buildChanges,
 	categoryLabel,
 	categoryOptions,
@@ -211,5 +212,29 @@ describe( 'error helpers', () => {
 		expect( isPermissionError( make( 401 ) ) ).toBe( true );
 		expect( isPermissionError( make( 403 ) ) ).toBe( true );
 		expect( isPermissionError( make( 500 ) ) ).toBe( false );
+	} );
+} );
+
+describe( 'authNotice', () => {
+	it( 'describes the Google Meet OAuth callback result', () => {
+		expect( authNotice( 'success', null ) ).toEqual( {
+			status: 'success',
+			text: 'Google Meet is connected.',
+		} );
+		expect( authNotice( 'error', 'oauth_failed' ) ).toEqual( {
+			status: 'error',
+			text: 'Google Meet could not be connected. Google could not be reached. Try again.',
+		} );
+		expect( authNotice( 'error', 'no_access_token' )?.text ).toContain(
+			'access token'
+		);
+		expect( authNotice( 'error', 'toString' )?.text ).toBe(
+			'Google Meet could not be connected. Try connecting again.'
+		);
+		expect( authNotice( 'error', null )?.status ).toBe( 'error' );
+	} );
+	it( 'ignores other values', () => {
+		expect( authNotice( null, null ) ).toBeNull();
+		expect( authNotice( 'maybe', 'oauth_failed' ) ).toBeNull();
 	} );
 } );

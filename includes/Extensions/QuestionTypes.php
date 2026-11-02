@@ -223,8 +223,8 @@ final class QuestionTypes {
 				if ( count( $values ) > count( $parts ) ) {
 					$hits = 0; }
 				return array(
-					'correct'  => $hits === count( $parts ),
-					'fraction' => false === $partial_credit ? ( $hits === count( $parts ) ? 1 : 0 ) : $hits / count( $parts ),
+					'correct'  => count( $parts ) === $hits,
+					'fraction' => false === $partial_credit ? ( count( $parts ) === $hits ? 1 : 0 ) : $hits / count( $parts ),
 					'manual'   => false,
 					'blanks'   => $parts,
 				);
@@ -289,7 +289,7 @@ final class QuestionTypes {
 					$hits = 0;
 				}
 				return array(
-					'correct'  => $hits === count( $expected ),
+					'correct'  => count( $expected ) === $hits,
 					'fraction' => $hits / count( $expected ),
 					'manual'   => false,
 				);

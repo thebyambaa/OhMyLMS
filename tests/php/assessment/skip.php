@@ -11,13 +11,13 @@ as_user($admin);
 $skip_skill = (int) call('POST', 'skills', ['name' => 'Skip skill ' . $run, 'public_practice' => true])->get_data()['id'];
 $fixture['terms'][] = [$skip_skill, Taxonomy::NAME];
 for ($n = 1; $n <= 6; $n++) {
-    $response = call('POST', 'question', ['name' => "Skip q$n $run", 'description' => "Which is right? $n $run",
+    $response = create_question(['name' => "Skip q$n $run", 'description' => "Which is right? $n $run",
         'settings' => ['type' => 'single-choice', 'hint' => '<p>First step</p><hr><p>Second step</p>', 'score' => ['enabled' => true, 'value' => 1]],
         'questions' => [['answer' => 'Right', 'is_correct' => 1, 'order_number' => 1], ['answer' => 'Wrong', 'is_correct' => 0, 'order_number' => 2]],
         'skills' => ['p1' => ['primary' => $skip_skill]], 'bank' => ['family_id' => "sk$n-$run"]]);
     ok(status_of($response) === 201, "Creating question $n failed: " . wp_json_encode($response->get_data()));
     $id = remember_post($response->get_data()['id']);
-    ok(status_of(call('POST', 'question-bank/' . $id . '/approve')) === 200, "Approving question $n failed");
+    ok(status_of(call('POST', 'questions/' . $id . '/approve')) === 200, "Approving question $n failed");
 }
 
 $learner = make_user('subscriber');

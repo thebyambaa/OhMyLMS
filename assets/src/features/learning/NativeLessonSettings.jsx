@@ -1,4 +1,3 @@
-/** @jsx createElement */
 import './nativeAuthoringBootstrap';
 // Before the question blocks register, so they also receive the paper span attribute.
 import '../paper/paperBlocks';
@@ -22,23 +21,165 @@ import {
 } from '@wordpress/components';
 import { SVG, Path } from '@wordpress/primitives';
 import { __ } from '@wordpress/i18n';
-import apiFetch from '@wordpress/api-fetch';
 import { createBlock } from '@wordpress/blocks';
-import { searchBank } from '../question-bank/api.mjs';
+import { searchBank } from '../question-bank/public.mjs';
+import { searchChapterContents } from './api.mjs';
+import { LearnerPreviewPanel } from './LearnerPreviewPanel';
 import { installNativeCanvasRecovery } from './nativeCanvas.mjs';
+import { isCourseReturn, isReturnUrl } from './returnLink.mjs';
 
 installNativeCanvasRecovery();
 
+const INLINE_BLOCK = 'ohmylms/shared-multiple-choice';
+
+/** @typedef {import('./api.mjs').ContentOption} ContentOption */
+/** @typedef {{ clientId: string, questionId: number, rootClientId: string }} PlacedBlock An inline check in the lesson. */
+/** @typedef {{ id: number, name: string, url: string, size: string }} ResourceFile A download resource. */
+
 /**
- * Insert approved practice questions using the native block insertion action.
+ * Page data of includes/Learning/NativeLessonEditor.php, which prints it with this editor.
  *
- * @return {Element} Inline-check settings panel.
+ * @return {NonNullable<Window['ohmylmsNativeLesson']>} Native lesson data.
+ */
+const nativeLesson = () =>
+	/** @type {NonNullable<Window['ohmylmsNativeLesson']>} */ (
+		window.ohmylmsNativeLesson
+	);
+
+/**
+ * One placed inline check: its question title, an editor link and reorder controls.
+ *
+ * @param {Object}                      props        Component properties.
+ * @param {PlacedBlock}                 props.check  Placed block.
+ * @param {number}                      props.index  Position, from 0.
+ * @param {number}                      props.count  Number of placed checks.
+ * @param {(direction: number) => void} props.onMove Moves the block up (-1) or down (1).
+ * @param {() => void}                  props.onPick Selects the block in the canvas.
+ * @return {React.ReactElement} List item.
+ */
+function PlacedCheck( { check, index, count, onMove, onPick } ) {
+	const question = useSelect(
+		( select ) =>
+			check.questionId
+				? select( 'core' ).getEntityRecord(
+						'postType',
+						'ohmylms-question',
+						check.questionId
+					)
+				: null,
+		[ check.questionId ]
+	);
+	const title =
+		question?.title?.raw ||
+		question?.title?.rendered ||
+		( check.questionId
+			? `#${ check.questionId }`
+			: __( 'Unknown question', 'ohmylms' ) );
+	return (
+		<li>
+			<Button variant="link" onClick={ onPick }>
+				{ `${ index + 1 }. ${ title }` }
+			</Button>{ ' ' }
+			{ check.questionId > 0 && (
+				<a
+					href={ `post.php?post=${ check.questionId }&action=edit` }
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					{ __( 'Edit question', 'ohmylms' ) }
+				</a>
+			) }
+			<Button
+				variant="tertiary"
+				size="small"
+				disabled={ 0 === index }
+				label={ __( 'Move up', 'ohmylms' ) }
+				onClick={ () => onMove( -1 ) }
+			>
+				{ __( 'Up', 'ohmylms' ) }
+			</Button>
+			<Button
+				variant="tertiary"
+				size="small"
+				disabled={ index === count - 1 }
+				label={ __( 'Move down', 'ohmylms' ) }
+				onClick={ () => onMove( 1 ) }
+			>
+				{ __( 'Down', 'ohmylms' ) }
+			</Button>
+		</li>
+	);
+}
+
+/**
+ * Insert approved practice questions using the native block insertion action, and list, select and
+ * reorder the inline checks already in the lesson.
+ *
+ * @return {React.ReactElement} Inline-check settings panel.
  */
 function InlineChecks() {
 	const [ search, setSearch ] = useState( '' );
-	const [ questions, setQuestions ] = useState( [] );
+	const [ questions, setQuestions ] = useState(
+		/** @type {Awaited<ReturnType<typeof searchBank>>['items']} */ ( [] )
+	);
 	const [ error, setError ] = useState( '' );
-	const { insertBlocks } = useDispatch( 'core/block-editor' );
+	const { insertBlocks, moveBlockToPosition, selectBlock } =
+		useDispatch( 'core/block-editor' );
+	const getBlockIndex = useSelect(
+		( select ) => select( 'core/block-editor' ).getBlockIndex,
+		[]
+	);
+	const placed = useSelect( ( select ) => {
+		const editor = select( 'core/block-editor' );
+		/** @type {PlacedBlock[]} */
+		const found = [];
+		/** @param {import('@wordpress/blocks').BlockInstance[]} blocks Blocks. */
+		const walk = ( blocks ) =>
+			blocks.forEach( ( block ) => {
+				if ( block.name === INLINE_BLOCK ) {
+					found.push( {
+						clientId: block.clientId,
+						questionId: Number( block.attributes.questionId ) || 0,
+						// The root of an existing block is a client ID, or '' at the top level.
+						rootClientId: /** @type {string} */ (
+							editor.getBlockRootClientId( block.clientId )
+						),
+					} );
+				}
+				walk( block.innerBlocks || [] );
+			} );
+		walk( editor.getBlocks() );
+		return found;
+	}, [] );
+	/**
+	 * Swap a check with the previous or next check; the content between them stays in place.
+	 *
+	 * @param {number} index     Position of the check.
+	 * @param {number} direction -1 up, 1 down.
+	 */
+	const move = ( index, direction ) => {
+		const [ first, second ] =
+			direction < 0
+				? [ placed[ index - 1 ], placed[ index ] ]
+				: [ placed[ index ], placed[ index + 1 ] ];
+		if ( ! first || ! second ) {
+			return;
+		}
+		const firstIndex = getBlockIndex( first.clientId );
+		const secondIndex = getBlockIndex( second.clientId );
+		moveBlockToPosition(
+			second.clientId,
+			second.rootClientId,
+			first.rootClientId,
+			firstIndex
+		);
+		moveBlockToPosition(
+			first.clientId,
+			first.rootClientId,
+			second.rootClientId,
+			secondIndex
+		);
+	};
 	useEffect( () => {
 		let active = true;
 		const timer = setTimeout( () => {
@@ -72,6 +213,27 @@ function InlineChecks() {
 					'ohmylms'
 				) }
 			</p>
+			{ placed.length > 0 ? (
+				<ol
+					aria-label={ __(
+						'Inline checks in this lesson',
+						'ohmylms'
+					) }
+				>
+					{ placed.map( ( check, index ) => (
+						<PlacedCheck
+							key={ check.clientId }
+							check={ check }
+							index={ index }
+							count={ placed.length }
+							onMove={ ( direction ) => move( index, direction ) }
+							onPick={ () => selectBlock( check.clientId ) }
+						/>
+					) ) }
+				</ol>
+			) : (
+				<p>{ __( 'No inline checks yet.', 'ohmylms' ) }</p>
+			) }
 			<TextControl
 				label={ __( 'Find a question', 'ohmylms' ) }
 				value={ search }
@@ -108,7 +270,7 @@ function InlineChecks() {
  * @param {number}               props.value     Attachment ID.
  * @param {string}               props.mediaType Media type.
  * @param {(id: number) => void} props.onChange  Selection callback.
- * @return {Element} Media selector.
+ * @return {React.ReactElement} Media selector.
  */
 function LessonMedia( { label, value, mediaType, onChange } ) {
 	const media = useSelect(
@@ -153,7 +315,7 @@ function LessonMedia( { label, value, mediaType, onChange } ) {
 /**
  * LMS settings saved together with the native post's title and block content.
  *
- * @return {Element|null} Lesson panels.
+ * @return {React.ReactElement|null} Lesson panels.
  */
 function LessonSettings() {
 	useBlankPlaceholderTitle();
@@ -169,10 +331,8 @@ function LessonSettings() {
 		[]
 	);
 	const { editPost } = useDispatch( 'core/editor' );
-	const [ returnUrl, setReturnUrl ] = useState(
-		window.ohmylmsNativeLesson.returnUrl
-	);
-	const backLabel = returnUrl.includes( '#/course-edit' )
+	const [ returnUrl, setReturnUrl ] = useState( nativeLesson().returnUrl );
+	const backLabel = isCourseReturn( returnUrl )
 		? __( 'Back to course', 'ohmylms' )
 		: __( 'Back to Content Hub', 'ohmylms' );
 	useEffect( () => {
@@ -181,23 +341,13 @@ function LessonSettings() {
 		}
 		const key = `ohmylms:lesson-return:${ postId }`;
 		try {
-			if ( window.ohmylmsNativeLesson.hasReturn ) {
-				window.sessionStorage.setItem(
-					key,
-					window.ohmylmsNativeLesson.returnUrl
-				);
-				setReturnUrl( window.ohmylmsNativeLesson.returnUrl );
+			if ( nativeLesson().hasReturn ) {
+				window.sessionStorage.setItem( key, nativeLesson().returnUrl );
+				setReturnUrl( nativeLesson().returnUrl );
 			} else {
 				const saved = window.sessionStorage.getItem( key );
-				if ( saved ) {
-					const url = new URL( saved );
-					if (
-						url.origin === window.location.origin &&
-						url.searchParams.get( 'page' ) === 'ohmylms' &&
-						/^#\/(content-hub|course-edit)(\/|$)/.test( url.hash )
-					) {
-						setReturnUrl( saved );
-					}
+				if ( saved && isReturnUrl( saved, window.location.origin ) ) {
+					setReturnUrl( saved );
 				}
 			}
 		} catch {
@@ -210,32 +360,42 @@ function LessonSettings() {
 			openGeneralSidebar( 'edit-post/block' );
 		}
 	}, [ postType, openGeneralSidebar ] );
-	const [ prerequisites, setPrerequisites ] = useState( [] );
+	const [ prerequisites, setPrerequisites ] = useState(
+		/** @type {ContentOption[]} */ ( [] )
+	);
 	const [ searchError, setSearchError ] = useState( '' );
 	if ( postType !== 'ohmylms-lesson' ) {
 		return null;
 	}
+	/** @param {Record<string, unknown>} patch Changed lesson settings. */
 	const change = ( patch ) =>
 		editPost( { ohmylms_lesson_settings: { ...settings, ...patch } } );
 	const drip = settings.drip_settings || {};
+	/** @type {{ enable?: boolean, data?: ContentOption[] }} */
 	const required = settings.prerequisites || {};
+	/** @type {{ file?: ResourceFile[] }} */
 	const resources = settings.download_resource || {};
 	const video = settings.video_settings || {};
 	const lessonType = settings.type || 'text';
+	/** @param {Record<string, unknown>} patch Changed drip settings. */
 	const changeDrip = ( patch ) =>
 		change( { drip_settings: { ...drip, ...patch } } );
+	/** @param {Record<string, unknown>} patch Changed prerequisites. */
 	const changeRequired = ( patch ) =>
 		change( { prerequisites: { ...required, ...patch } } );
+	/** @param {Record<string, unknown>} patch Changed video settings. */
 	const changeVideo = ( patch ) =>
 		change( { video_settings: { ...video, ...patch } } );
+	/** @param {string} search Search text. */
 	async function findPrerequisites( search ) {
-		if ( ! window.ohmylmsNativeLesson.chapterId ) {
+		if ( ! nativeLesson().chapterId ) {
 			return;
 		}
 		try {
-			const result = await apiFetch( {
-				path: `/ohmylms/v1/chapters/${ window.ohmylmsNativeLesson.chapterId }/search-contents?term=${ encodeURIComponent( search ) }`,
-			} );
+			const result = await searchChapterContents(
+				nativeLesson().chapterId,
+				search
+			);
 			setPrerequisites(
 				( Array.isArray( result ) ? result : result.data || [] ).filter(
 					( item ) => Number( item.value ) !== Number( postId )
@@ -243,7 +403,9 @@ function LessonSettings() {
 			);
 			setSearchError( '' );
 		} catch ( error ) {
-			setSearchError( error.message );
+			setSearchError(
+				/** @type {{ message: string }} */ ( error ).message
+			);
 		}
 	}
 	return (
@@ -355,6 +517,89 @@ function LessonSettings() {
 							] }
 							onChange={ ( platform ) =>
 								changeVideo( { platform } )
+							}
+						/>
+						<TextControl
+							type="number"
+							min={ 0 }
+							max={ 86400 }
+							label={ __( 'Duration (seconds)', 'ohmylms' ) }
+							help={ __(
+								'Shown to learners and used to measure the watched share.',
+								'ohmylms'
+							) }
+							value={ video.duration ?? '' }
+							onChange={ ( duration ) =>
+								changeVideo( {
+									duration: Math.min(
+										86400,
+										Math.max(
+											0,
+											Math.trunc( Number( duration ) ) ||
+												0
+										)
+									),
+								} )
+							}
+						/>
+						<SelectControl
+							label={ __( 'Completion', 'ohmylms' ) }
+							value={
+								video.completion_rule === 'watch_percent'
+									? 'watch_percent'
+									: 'none'
+							}
+							options={ [
+								{
+									value: 'none',
+									label: __(
+										'Learners mark the lesson complete',
+										'ohmylms'
+									),
+								},
+								{
+									value: 'watch_percent',
+									label: __(
+										'Learners watch part of the video first',
+										'ohmylms'
+									),
+								},
+							] }
+							onChange={ ( rule ) =>
+								changeVideo( {
+									completion_rule: rule,
+									watch_percent: video.watch_percent || 90,
+								} )
+							}
+						/>
+						{ video.completion_rule === 'watch_percent' && (
+							<TextControl
+								type="number"
+								min={ 1 }
+								max={ 100 }
+								label={ __( 'Share to watch (%)', 'ohmylms' ) }
+								value={ video.watch_percent ?? 90 }
+								onChange={ ( percent ) =>
+									changeVideo( {
+										watch_percent: Math.min(
+											100,
+											Math.max(
+												1,
+												Math.trunc(
+													Number( percent )
+												) || 1
+											)
+										),
+									} )
+								}
+							/>
+						) }
+						<LessonMedia
+							label={ __( 'Video poster', 'ohmylms' ) }
+							value={ video.poster_id || 0 }
+							mediaType="image"
+							onChange={ ( posterId ) =>
+								changeVideo( { poster_id: posterId } )
 							}
 						/>
 						<TextControl
@@ -546,7 +791,7 @@ function LessonSettings() {
 				/>
 				{ required.enable && (
 					<>
-						{ window.ohmylmsNativeLesson.chapterId > 0 && (
+						{ nativeLesson().chapterId > 0 && (
 							<ComboboxControl
 								label={ __( 'Add prerequisite', 'ohmylms' ) }
 								value={ null }
@@ -586,7 +831,9 @@ function LessonSettings() {
 									variant="tertiary"
 									onClick={ () =>
 										changeRequired( {
-											data: required.data.filter(
+											data: /** @type {ContentOption[]} */ (
+												required.data
+											).filter(
 												( candidate ) =>
 													candidate.value !==
 													item.value
@@ -611,18 +858,22 @@ function LessonSettings() {
 						value={ ( resources.file || [] ).map(
 							( file ) => file.id
 						) }
-						onSelect={ ( files ) =>
-							change( {
-								download_resource: {
-									...resources,
-									file: files.map( ( file ) => ( {
-										id: file.id,
-										name: file.filename || file.title,
-										url: file.url,
-										size: file.filesizeHumanReadable || '',
-									} ) ),
-								},
-							} )
+						onSelect={
+							/** @param {{ id: number, filename?: string, title?: string, url: string, filesizeHumanReadable?: string }[]} files Selected attachments. */
+							( files ) =>
+								change( {
+									download_resource: {
+										...resources,
+										file: files.map( ( file ) => ( {
+											id: file.id,
+											name: file.filename || file.title,
+											url: file.url,
+											size:
+												file.filesizeHumanReadable ||
+												'',
+										} ) ),
+									},
+								} )
 						}
 						render={ ( { open } ) => (
 							<Button variant="secondary" onClick={ open }>
@@ -646,7 +897,9 @@ function LessonSettings() {
 								change( {
 									download_resource: {
 										...resources,
-										file: resources.file.filter(
+										file: /** @type {ResourceFile[]} */ (
+											resources.file
+										).filter(
 											( item ) => item.id !== file.id
 										),
 									},
@@ -659,6 +912,7 @@ function LessonSettings() {
 				) ) }
 			</PluginDocumentSettingPanel>
 			<InlineChecks />
+			<LearnerPreviewPanel lessonId={ Number( postId ) } />
 		</>
 	);
 }

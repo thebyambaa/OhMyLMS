@@ -6,6 +6,9 @@
  * @package OhMyLMS
  */
 
+use OhMyLMS\Certificates\Download;
+use OhMyLMS\Certificates\Issuer;
+use OhMyLMS\Certificates\PdfRenderer;
 use OhMyLMS\Engagement\Badge;
 use OhMyLMS\Engagement\Xp;
 use OhMyLMS\Performance\Snapshot;
@@ -81,19 +84,44 @@ $hub_completed = $student->get_completed_course();
 	</section>
 <?php endif; ?>
 
+<?php
+Issuer::sync_for_user( $hub_user );
+$hub_certificates = Issuer::for_user( $hub_user );
+$hub_awarded      = array_column( $hub_certificates, 'course_id' );
+$hub_uncertified  = array_filter(
+	(array) $hub_completed,
+	static function ( $hub_course ) use ( $hub_awarded ) {
+		return ! in_array( (int) $hub_course->get_id(), $hub_awarded, true );
+	}
+);
+?>
 <section class="oml-hub-section" aria-labelledby="oml-certificates-heading">
-	<h2 id="oml-certificates-heading"><?php esc_html_e( 'Completed courses', 'ohmylms' ); ?></h2>
-	<?php if ( ! $hub_completed ) : ?>
+	<h2 id="oml-certificates-heading"><?php esc_html_e( 'Completed courses and certificates', 'ohmylms' ); ?></h2>
+	<?php if ( ! $hub_certificates && ! $hub_uncertified ) : ?>
 		<p class="oml-hub-muted"><?php esc_html_e( 'Courses you complete, and any certificates, will appear here.', 'ohmylms' ); ?></p>
 	<?php else : ?>
 		<ul class="oml-hub-rows oml-hub-cert-list">
-			<?php foreach ( $hub_completed as $hub_course ) : ?>
-				<?php $hub_certificate = $hub_course->get_certificate(); ?>
+			<?php foreach ( $hub_certificates as $hub_certificate ) : ?>
+				<li class="oml-hub-row">
+					<span class="oml-hub-row-name">
+						<?php echo esc_html( $hub_certificate['course_title'] ); ?>
+						<span class="oml-hub-muted">
+							<?php
+							/* translators: 1: date, 2: verification code. */
+							echo esc_html( sprintf( __( 'Certificate of %1$s · code %2$s', 'ohmylms' ), Issuer::local_date( $hub_certificate['completed_at'] ? $hub_certificate['completed_at'] : $hub_certificate['issued_at'] ), $hub_certificate['code'] ) );
+							?>
+						</span>
+					</span>
+					<?php if ( PdfRenderer::available() ) : ?>
+						<a class="oml-hub-button" href="<?php echo esc_url( Download::url( $hub_certificate['code'], 'pdf' ) ); ?>"><?php esc_html_e( 'Download PDF', 'ohmylms' ); ?></a>
+					<?php endif; ?>
+					<a href="<?php echo esc_url( Download::url( $hub_certificate['code'], 'print' ) ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Print', 'ohmylms' ); ?></a>
+					<a href="<?php echo esc_url( Download::verify_url( $hub_certificate['code'] ) ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Verification page', 'ohmylms' ); ?></a>
+				</li>
+			<?php endforeach; ?>
+			<?php foreach ( $hub_uncertified as $hub_course ) : ?>
 				<li class="oml-hub-row">
 					<span class="oml-hub-row-name"><?php echo esc_html( $hub_course->get_name() ); ?></span>
-					<?php if ( $hub_certificate ) : ?>
-						<button type="button" class="ohmylms-button ohmylms-download-certificate" data-course-id="<?php echo esc_attr( $hub_course->get_id() ); ?>" data-student-id="<?php echo esc_attr( $hub_user ); ?>" data-certificate-id="<?php echo esc_attr( $hub_certificate ); ?>"><?php esc_html_e( 'Download certificate', 'ohmylms' ); ?></button>
-					<?php endif; ?>
 				</li>
 			<?php endforeach; ?>
 		</ul>

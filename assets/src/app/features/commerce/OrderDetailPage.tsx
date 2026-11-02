@@ -1,9 +1,15 @@
-import { Table } from '../../../ui/Table';
-import { Button, Modal, Notice, SelectControl } from '@wordpress/components';
+import { WidefatTable } from '../../components/WidefatTable';
+import {
+	Button,
+	Modal,
+	Notice,
+	SelectControl,
+	TextareaControl,
+} from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { changeOrderStatus, trashOrder } from './api';
+import { changeOrderStatus, refundPoints, trashOrder } from './api';
 import { useOrder } from './hooks';
 import {
 	allowedStatuses,
@@ -16,7 +22,7 @@ import {
 	statusLabel,
 } from './model';
 import { OrderNotes } from './OrderNotes';
-import { useOperation } from './useOperation';
+import { useOperation } from '../../hooks/useOperation';
 import type { OrderDetail, OrderStatus } from './types';
 
 function Row( { label, value }: { label: string; value: string } ) {
@@ -33,9 +39,11 @@ function Order( { id }: { id: number } ) {
 	const operation = useOperation();
 	const navigate = useNavigate();
 	const [ target, setTarget ] = useState< OrderStatus | '' >( '' );
-	const [ confirm, setConfirm ] = useState< 'status' | 'trash' | null >(
-		null
-	);
+	const [ confirm, setConfirm ] = useState<
+		'status' | 'trash' | 'points' | null
+	>( null );
+	const [ reason, setReason ] = useState( '' );
+	const [ refunded, setRefunded ] = useState< number | null >( null );
 	const order: OrderDetail | null = request.data;
 
 	if ( request.error && ! order ) {
@@ -79,6 +87,22 @@ function Order( { id }: { id: number } ) {
 		if ( done ) {
 			setTarget( '' );
 			setConfirm( null );
+		}
+	};
+	const restorePoints = async () => {
+		const text = reason.trim();
+		if ( ! text ) {
+			return;
+		}
+		let balance = 0;
+		const done = await operation.run( async ( signal ) => {
+			balance = ( await refundPoints( id, text, signal ) ).balance;
+		} );
+		if ( done ) {
+			setConfirm( null );
+			setReason( '' );
+			setRefunded( balance );
+			request.reload();
 		}
 	};
 	const moveToTrash = async () => {
@@ -191,7 +215,7 @@ function Order( { id }: { id: number } ) {
 
 			<section aria-labelledby="order-items-heading">
 				<h3 id="order-items-heading">{ __( 'Items', 'ohmylms' ) }</h3>
-				<Table caption={ __( 'Order items', 'ohmylms' ) }>
+				<WidefatTable caption={ __( 'Order items', 'ohmylms' ) }>
 					<thead>
 						<tr>
 							<th scope="col">{ __( 'Course', 'ohmylms' ) }</th>
@@ -210,7 +234,7 @@ function Order( { id }: { id: number } ) {
 							</tr>
 						) ) }
 					</tbody>
-				</Table>
+				</WidefatTable>
 				<dl>
 					<Row
 						label={ __( 'Subtotal', 'ohmylms' ) }
@@ -307,12 +331,57 @@ function Order( { id }: { id: number } ) {
 				) : (
 					<p>{ __( 'No refunds recorded.', 'ohmylms' ) }</p>
 				) }
-				<p>
-					{ __(
-						'Refunds are not issued from this screen. Refund payments in the payment provider.',
-						'ohmylms'
-					) }
-				</p>
+				{ order.points ? (
+					<>
+						<p>
+							{ sprintf(
+								/* translators: %d: bonus points. */
+								__( 'Paid with %d bonus points.', 'ohmylms' ),
+								order.points.points
+							) }{ ' ' }
+							{ order.points.refunded &&
+								sprintf(
+									/* translators: %s: date. */
+									__(
+										'The points were refunded on %s.',
+										'ohmylms'
+									),
+									formatDate( order.points.refunded_at )
+								) }
+						</p>
+						{ null !== refunded && (
+							<Notice
+								status="success"
+								onRemove={ () => setRefunded( null ) }
+							>
+								{ sprintf(
+									/* translators: %d: points balance. */
+									__(
+										'Points restored. The learner now has %d points.',
+										'ohmylms'
+									),
+									refunded
+								) }
+							</Notice>
+						) }
+						{ order.points.refundable && (
+							<Button
+								variant="secondary"
+								disabled={ operation.busy }
+								onClick={ () => setConfirm( 'points' ) }
+							>
+								{ __( 'Refund points', 'ohmylms' ) }
+							</Button>
+						) }
+					</>
+				) : (
+					<p>
+						{ __(
+							'Refunds are not issued from this screen. Refund payments in the payment provider.',
+							'ohmylms'
+						) }
+					</p>
+				) }
 			</section>
 
 			{ !! order.related_orders.length && (
@@ -320,7 +389,7 @@ function Order( { id }: { id: number } ) {
 					<h3 id="order-related-heading">
 						{ __( 'Related orders', 'ohmylms' ) }
 					</h3>
-					<Table caption={ __( 'Related orders', 'ohmylms' ) }>
+					<WidefatTable caption={ __( 'Related orders', 'ohmylms' ) }>
 						<thead>
 							<tr>
 								<th scope="col">
@@ -371,7 +440,7 @@ function Order( { id }: { id: number } ) {
 								</tr>
 							) ) }
 						</tbody>
-					</Table>
+					</WidefatTable>
 				</section>
 			) }
 
@@ -397,7 +466,56 @@ function Order( { id }: { id: number } ) {
 				</Button>
 			</section>
 
-			{ confirm && (
+			{ 'points' === confirm && order.points && (
+				<Modal
+					title={ __( 'Refund points', 'ohmylms' ) }
+					onRequestClose={ close }
+					shouldCloseOnClickOutside={ false }
+				>
+					{ operation.error && (
+						<Notice status="error" isDismissible={ false }>
+							{ operation.error }
+						</Notice>
+					) }
+					<p>
+						{ sprintf(
+							/* translators: %d: bonus points. */
+							__(
+								'Give the learner back %d points? The order becomes refunded and the learner loses access to its courses. This cannot be undone.',
+								'ohmylms'
+							),
+							order.points.points
+						) }
+					</p>
+					<TextareaControl
+						__nextHasNoMarginBottom
+						label={ __( 'Reason', 'ohmylms' ) }
+						value={ reason }
+						maxLength={ 500 }
+						required
+						disabled={ operation.busy }
+						onChange={ setReason }
+					/>
+					<Button
+						variant="primary"
+						isDestructive
+						isBusy={ operation.busy }
+						disabled={ operation.busy || ! reason.trim() }
+						accessibleWhenDisabled
+						onClick={ () => void restorePoints() }
+					>
+						{ __( 'Refund points', 'ohmylms' ) }
+					</Button>{ ' ' }
+					<Button
+						variant="tertiary"
+						disabled={ operation.busy }
+						onClick={ close }
+					>
+						{ __( 'Cancel', 'ohmylms' ) }
+					</Button>
+				</Modal>
+			) }
+			{ ( 'status' === confirm || 'trash' === confirm ) && (
 				<Modal
 					title={
 						'trash' === confirm

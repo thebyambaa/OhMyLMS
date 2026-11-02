@@ -5,10 +5,17 @@ import { SelectControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
 /**
+ * Assessment rules in the quiz's `ohmylms_quiz` attribute: `kind` and the other keys of
+ * includes/Assessment/AssessmentSettings.php.
+ *
+ * @typedef {{ kind?: string, accommodations?: Record<string, number>, [ key: string ]: unknown }} NativeAssessmentRules
+ */
+
+/**
  * Share assessment rules through the native document's save transaction.
  *
  * @param {boolean} enabled Whether the native editor is in use.
- * @return {Object} Current rules and their update action.
+ * @return {{settings: NativeAssessmentRules|undefined, setSettings: (assessment: NativeAssessmentRules) => void}} Current rules and their update action.
  */
 export function useNativeAssessmentSettings( enabled = true ) {
 	const value = useSelect(
@@ -32,7 +39,7 @@ export function useNativeAssessmentSettings( enabled = true ) {
 /**
  * Choose how the shared assessment is delivered without resetting its rules.
  *
- * @return {Element|null} Assessment type control.
+ * @return {React.ReactElement|null} Assessment type control.
  */
 export function NativeAssessmentType() {
 	const { settings, setSettings } = useNativeAssessmentSettings();
@@ -43,7 +50,7 @@ export function NativeAssessmentType() {
 		window.ohmylmsNativeLesson?.profile?.panel === 'exam' &&
 		window.ohmylmsNativeLesson?.profile?.data?.id
 	);
-	const options = window.ohmylmsNativeLesson.assessmentTypes || [
+	const options = window.ohmylmsNativeLesson?.assessmentTypes || [
 		{ value: 'quiz', label: __( 'Quiz', 'ohmylms' ) },
 		{ value: 'exam', label: __( 'Exam', 'ohmylms' ) },
 		{ value: 'practice', label: __( 'Practice', 'ohmylms' ) },

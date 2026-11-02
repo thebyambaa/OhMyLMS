@@ -20,7 +20,7 @@ The **Import** button on the Quizzes, Question Bank, Exams, Curriculum and Skill
 
 **Import questions** in the quiz editor's *Quiz authoring* panel (for quizzes and exams alike) adds a file's questions to the end of the open assessment instead of making a new one. A CSV or JSON file is checked, saved to the Question Bank and inserted as question blocks at once; a PDF is read and reviewed first, then **Add N questions to this assessment** inserts them. In an exam the questions are saved as secure (exam-only) bank drafts. As with **Add from question bank**, save the quiz to keep them.
 
-On the Curriculum and Skills tabs the dialog also offers **Choose skills**: the skills chosen are given to every question in the file (or PDF) that names none. In a course, only a quiz can be imported, and it is added to the attach list. PDF imports need the exam converter enabled under Settings > AI tools. Questions an AI assistant added wait for approval on a separate review page (admin.php?page=ohmylms-import-questions), which has no menu entry. REST: `POST /exam-imports` takes a `target` and optional `default_skills` of `exam` (default), `quiz` or `questions`; `POST /exam-imports/rows` turns CSV or JSON rows into a committed job; `POST /exam-imports/{id}/quiz` makes the quiz from a committed quiz job.
+On the Curriculum and Skills tabs the dialog also offers **Choose skills**: the skills chosen are given to every question in the file (or PDF) that names none. In a course, only a quiz can be imported, and it is added to the attach list. PDF imports need the exam converter enabled under Settings > AI tools. Questions an AI assistant added wait for approval on Content Hub › Question bank › Import review (`admin.php?page=ohmylms-content&tab=question-bank&section=import-review`; the old `admin.php?page=ohmylms-import-questions` redirects there). REST: `POST /exam-imports` takes a `target` and optional `default_skills` of `exam` (default), `quiz` or `questions`; `POST /exam-imports/rows` turns CSV or JSON rows into a committed job; `POST /exam-imports/{id}/quiz` makes the quiz from a committed quiz job.
 
 ## Row format
 
@@ -132,8 +132,8 @@ Existing source/shared skill mappings are included for discovery. These are view
 questions, not separate question copies or an additional permission system; bank visibility
 checks remain authoritative. Newly imported PDF questions default to **Exam only**.
 
-`GET /ohmylms/v1/question-bank-organisation` supplies the available views. Bank requests accept
-`organisation` and `scope`. Integrations can extend the view metadata through
+`GET /ohmylms/v1/question-bank-organisation` supplies the available views. `GET /ohmylms/v1/questions` accepts
+`organisation` and `scope` (the removed `GET /question-bank` did before). Integrations can extend the view metadata through
 `ohmylms_question_bank_organisation_views` and resolve references with
 `ohmylms_question_bank_resolve_scope`. Resolved references are limited to skills, banks,
 courses and quizzes; empty scopes return no questions. Discovery currently lists at most
@@ -146,9 +146,11 @@ edited in a spreadsheet and be imported again. Every registered question type is
 
 Where: **Export questions (CSV)** and **(JSON)** in the quiz editor's *Quiz authoring* panel (this is also where
 an exam's questions are edited) and on the Question Bank tab (the questions on the current page); or
-`GET /wp-json/ohmylms/v1/question-bank/export?format=csv|json` with `ids=1,2,3` (up to 200) or `quiz_id=ID`,
-optional `label`. The MCP tool `export_questions` uses the same route. Only people who can edit a question can
-export it, because the file holds every answer key.
+`POST /wp-json/ohmylms/v1/questions/export` with `format` (`csv|json`) and `ids` (up to 200), `filters` or
+`quiz_id`, optional `label` ([questions API](api/questions.md#import-and-export); the former
+`GET /question-bank/export` was removed). The MCP tool `export_questions` uses the same exporter. Only people
+who can edit a question can export it, because the file holds every answer key; a quiz export skips shared
+questions the user may only use and reports them in `skipped`.
 
 How types are written:
 

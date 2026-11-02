@@ -20,7 +20,6 @@ import {
 	levelToDraft,
 	parseBadge,
 	parseLevel,
-	parseMedia,
 	parseOptions,
 	parseSection,
 	tabFromParam,
@@ -45,8 +44,37 @@ describe( 'parsing', () => {
 			parseSection( 'rewards', {
 				enabled: false,
 				purchase_with_points: true,
+				revision: '0123456789abcdef',
 			} )
-		).toEqual( { enabled: false, purchase_with_points: true } );
+		).toEqual( {
+			enabled: false,
+			purchase_with_points: true,
+			revision: '0123456789abcdef',
+		} );
+		expect( () =>
+			parseSection( 'rewards', {
+				enabled: false,
+				purchase_with_points: true,
+			} )
+		).toThrow( ApiError );
+		expect( () =>
+			parseSection( 'rewards', {
+				enabled: false,
+				purchase_with_points: true,
+				revision: 'not-a-revision',
+			} )
+		).toThrow( ApiError );
+		expect(
+			buildPayload( 'rewards', {
+				enabled: true,
+				purchase_with_points: false,
+				revision: '0123456789abcdef',
+			} )
+		).toEqual( {
+			enabled: true,
+			purchase_with_points: false,
+			revision: '0123456789abcdef',
+		} );
 		expect( () =>
 			parseSection( 'leaderboard', {
 				enabled: true,
@@ -83,29 +111,6 @@ describe( 'parsing', () => {
 		expect( () => parseOptions( { ...options, limits: {} } ) ).toThrow(
 			ApiError
 		);
-	} );
-
-	it( 'keeps only allowed image types from the media route', () => {
-		const item = {
-			id: 5,
-			source_url: 'https://e.test/a.png',
-			mime_type: 'image/png',
-			title: { rendered: 'A' },
-			media_details: {
-				sizes: {
-					thumbnail: { source_url: 'https://e.test/a-150.png' },
-				},
-			},
-		};
-		expect( parseMedia( item ) ).toEqual( {
-			id: 5,
-			url: 'https://e.test/a.png',
-			thumbnail_url: 'https://e.test/a-150.png',
-			title: 'A',
-		} );
-		expect( () =>
-			parseMedia( { ...item, mime_type: 'image/svg+xml' } )
-		).toThrow( ApiError );
 	} );
 } );
 
@@ -326,7 +331,8 @@ describe( 'display and errors', () => {
 
 	it( 'maps the tab parameter', () => {
 		expect( tabFromParam( 'badges' ) ).toBe( 'badges' );
-		expect( tabFromParam( 'rewards' ) ).toBe( 'points' );
+		expect( tabFromParam( 'rewards' ) ).toBe( 'rewards' );
+		expect( tabFromParam( 'reward-settings' ) ).toBe( 'points' );
 		expect( tabFromParam( null ) ).toBe( 'points' );
 	} );
 } );

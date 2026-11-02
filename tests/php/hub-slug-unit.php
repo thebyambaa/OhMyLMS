@@ -78,6 +78,7 @@ namespace {
 		make_page( 318, $slug, 'publish', '[ohmylms_student_hub]' );
 	}
 
+	require dirname( __DIR__, 2 ) . '/vendor/autoload.php';
 	require dirname( __DIR__, 2 ) . '/includes/Student/Hub.php';
 	require dirname( __DIR__, 2 ) . '/includes/Student/LegacyPages.php';
 	use OhMyLMS\Student\Hub;

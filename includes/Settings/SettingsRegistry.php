@@ -177,6 +177,7 @@ final class SettingsRegistry {
 					'terms_page_id'             => self::page( __( 'Terms and conditions page.', 'ohmylms' ) ),
 					'privacy_policy_page_id'    => self::page( __( 'Privacy policy page.', 'ohmylms' ) ),
 					'profile_page_id'           => self::page( __( 'Membership profile page (used by memberships).', 'ohmylms' ) ),
+					'language_switcher'         => self::toggle( __( 'Show the English / Mongolian language switcher on learner pages.', 'ohmylms' ), true ),
 				),
 			),
 			'branding'            => array(

@@ -1,30 +1,69 @@
 import {
-	questionPrompt,
-	promptText,
-} from '../question-editor/questionPrompt.mjs';
-import { parseInlineBlankPrompt } from '../question-editor/inlineBlanks.mjs';
-import {
 	extendedIssues,
-	isExtendedType,
-} from '../question-editor/extendedModel.mjs';
-import {
 	interactiveIssues,
+	isExtendedType,
 	isInteractiveType,
-} from '../question-editor/interactiveModel.mjs';
+	parseInlineBlankPrompt,
+	promptText,
+	questionPrompt,
+} from '../question-editor/public.mjs';
+
+/** @typedef {{ label?: string, image_url?: string, image_id?: number|string }} MatchingData A matching pair. */
+
+/**
+ * An answer option of a private question draft.
+ *
+ * @typedef {Object} DraftChoiceOption
+ * @property {number|string}         [id]            Option ID, temporary until saved.
+ * @property {number|string}         [clientKey]     Identity kept across saves.
+ * @property {boolean}               [temp]          Not saved yet.
+ * @property {string}                [answer]        Answer HTML.
+ * @property {boolean|number|string} [is_correct]    Correct answer.
+ * @property {number}                [order_number]  Position.
+ * @property {string}                [image_url]     Image URL.
+ * @property {number|string}         [thumbnail_id]  Image attachment ID.
+ * @property {MatchingData}          [matching_data] Matching pair.
+ */
+
+/**
+ * The private draft of a bank question, as the lesson editors hold it.
+ *
+ * @typedef {Object} ChoiceDraft
+ * @property {number}              [id]          Bank question ID once saved.
+ * @property {string}              [name]        Title.
+ * @property {string}              [description] Prompt HTML.
+ * @property {Record<string, any>} settings      Type settings; their shape depends on the question type and its extension.
+ * @property {DraftChoiceOption[]} questions     Answer options.
+ */
+
+/** @typedef {{ id: string, label?: string }} GridLabel A row or column of a match table grid. */
+
+/**
+ * A part of a structured question.
+ *
+ * @typedef {{ id?: string, marks?: number|string, prompt?: string } & (
+ *     { kind: 'question', question: ChoiceDraft }
+ *     | { kind: 'written' }
+ *     | { kind: 'numerical', answer?: unknown, answers?: unknown[], tolerance?: unknown }
+ *     | { kind: 'text', accepted?: unknown[] }
+ * )} StructuredPart
+ */
 
 /**
  * Check numerical keys before autosaving an incomplete answer field. In a randomized question an
  * answer or tolerance may be a variable or formula such as {{a*b}}; the server checks real examples.
  *
- * @param {Object}  settings  Numerical answer settings.
- * @param {boolean} templated Whether the question has variables.
+ * @param {Record<string, any>} settings  Numerical answer settings.
+ * @param {boolean}             templated Whether the question has variables.
  * @return {boolean} Whether the answer key and tolerance are valid.
  */
 function numericalReady( settings, templated = false ) {
+	/** @param {unknown} value Answer or tolerance. */
 	const formula = ( value ) =>
 		templated &&
 		typeof value === 'string' &&
 		/^\s*\{\{.+\}\}\s*$/.test( value );
+	/** @param {unknown} value Answer or tolerance. */
 	const finite = ( value ) =>
 		formula( value ) ||
 		( [ 'number', 'string' ].includes( typeof value ) &&
@@ -45,7 +84,7 @@ function numericalReady( settings, templated = false ) {
 /**
  * Avoid creating incomplete bank questions while their author is still typing.
  *
- * @param {Object|null} question Private question draft.
+ * @param {ChoiceDraft|null} question Private question draft.
  * @return {boolean} Whether the draft can be saved.
  */
 export function choiceReadyToSave( question ) {
@@ -58,7 +97,14 @@ export function choiceReadyToSave( question ) {
 		promptText( prompt ) || /<img\s/i.test( prompt )
 	);
 	if ( type === 'match-table-grid' ) {
-		const { rows = [], columns = [], key = {} } = question.settings;
+		const {
+			rows = [],
+			columns = [],
+			key = {},
+		} = /** @type {{ rows?: GridLabel[], columns?: GridLabel[], key?: Record<string, string|string[]> }} */ (
+			question.settings
+		);
+		/** @param {GridLabel[]} items Rows or columns. */
 		const validLabels = ( items ) =>
 			items.length > 0 &&
 			items.every( ( item ) => item.id && promptText( item.label ) ) &&
@@ -93,6 +139,7 @@ export function choiceReadyToSave( question ) {
 		);
 	}
 	if ( type === 'structured' ) {
+		/** @type {StructuredPart[]} */
 		const parts = question.settings.parts || [];
 		return (
 			hasPrompt &&
@@ -198,10 +245,10 @@ export function choiceReadyToSave( question ) {
 /**
  * Attach assigned option IDs without replacing edits made during a save.
  *
- * @param {Object} submitted Draft sent to the server.
- * @param {Object} current   Latest local draft.
- * @param {Object} fresh     Refreshed bank record.
- * @return {Object} Current content with canonical identities.
+ * @param {ChoiceDraft}                                  submitted Draft sent to the server.
+ * @param {ChoiceDraft}                                  current   Latest local draft.
+ * @param {{ id?: number, options?: { id?: number }[] }} fresh     Refreshed bank record.
+ * @return {ChoiceDraft} Current content with canonical identities.
  */
 export function reconcileChoiceSave( submitted, current, fresh ) {
 	const identities = new Map(
@@ -229,7 +276,7 @@ export function reconcileChoiceSave( submitted, current, fresh ) {
 
 /**
  * Whether a trusted extension supplies the private answer editor.
- * @param type
+ * @param {string} type Question type.
  */
 function windowSafeCustomType( type ) {
 	return (

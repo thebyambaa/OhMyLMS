@@ -3,6 +3,7 @@
 namespace OhMyLMS\Emails\StudentsEmail;
 
 use OhMyLMS\Emails\Emails;
+use OhMyLMS\I18n\RecipientLocale;
 
 /**
  * Plugin assignment graded implementation.
@@ -71,6 +72,25 @@ class AssignmentGraded {
 			return;
 		}
 
+		RecipientLocale::run(
+			$student,
+			function () use ( $assignment_id, $student_id, $student, $course, $status ) {
+				$this->send( $assignment_id, $student_id, $student, $course, $status );
+			}
+		);
+	}
+
+	/**
+	 * Compose and send the email, in the learner's language.
+	 *
+	 * @param mixed    $assignment_id Assignment identifier.
+	 * @param mixed    $student_id    Student identifier.
+	 * @param \WP_User $student       Learner.
+	 * @param object   $course        Course.
+	 * @param mixed    $status        Status.
+	 */
+	private function send( $assignment_id, $student_id, $student, $course, $status ) {
+		$settings         = Emails::get_template_settings( 'student_assignment_graded', $this->default_settings() );
 		$assignment       = get_post( $assignment_id );
 		$assignment_title = $assignment ? $assignment->post_title : '';
 

@@ -36,10 +36,14 @@ store( 'ohmylms/curriculum', {
 				...c.expanded,
 				[ c.chapterId ]: ! c.expanded[ c.chapterId ],
 			};
-			emit( getElement().ref, 'chapter-toggled', {
-				chapterId: c.chapterId,
-				open: c.expanded[ c.chapterId ],
-			} );
+			emit(
+				/** @type {HTMLElement} */ ( getElement().ref ),
+				'chapter-toggled',
+				{
+					chapterId: c.chapterId,
+					open: c.expanded[ c.chapterId ],
+				}
+			);
 		} ),
 		key: withSyncEvent( ( event ) => {
 			if ( event.key !== 'Enter' && event.key !== ' ' ) {

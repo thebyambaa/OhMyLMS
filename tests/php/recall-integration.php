@@ -67,7 +67,7 @@ try {
 				)
 			);
 			recall_check( ! is_wp_error( $written ), 'Fixture save failed.' );
-			$request = new WP_REST_Request( 'POST', '/ohmylms/v1/question-bank/' . $written['id'] . '/approve' );
+			$request = new WP_REST_Request( 'POST', '/ohmylms/v1/questions/' . $written['id'] . '/approve' );
 			recall_check( 200 === rest_do_request( $request )->get_status(), 'Approval failed.' );
 			$post     = wp_insert_post(
 				array(

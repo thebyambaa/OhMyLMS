@@ -5,7 +5,6 @@ namespace OhMyLMS\Commerce\Rest;
 use OhMyLMS\Commerce\Rest\V1\CouponController;
 use OhMyLMS\Commerce\Rest\V1\OrderRefundController;
 use OhMyLMS\Commerce\Rest\V1\OrdersController;
-use OhMyLMS\Commerce\Rest\V1\SubscriptionController;
 
 /**
  * Plugin api implementation.
@@ -33,7 +32,6 @@ class Api {
 			OrderRefundController::class,
 			CouponController::class,
 			OrdersController::class,
-			SubscriptionController::class,
 		);
 
 		$controllers_v2 = array();

@@ -151,7 +151,7 @@ final class Feedback {
 	 * @param mixed            $response Response data.
 	 */
 	public static function describe_response( QuestionSnapshot $snapshot, $response ) {
-		if ( null === $response || $response === array() || '' === $response ) {
+		if ( null === $response || array() === $response || '' === $response ) {
 			return ''; }
 		$texts = array();
 		foreach ( $snapshot->get_questions() as $option ) {

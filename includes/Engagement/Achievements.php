@@ -9,6 +9,8 @@
  */
 namespace OhMyLMS\Engagement;
 
+use OhMyLMS\Utility\Lock;
+
 /**
  * Plugin achievements implementation.
  */
@@ -20,12 +22,27 @@ class Achievements {
 	 */
 	public static function locked( $user_id, callable $work ) {
 		global $wpdb;
-		$key = 'ohmylms-award-' . md5( $wpdb->prefix . ':' . (int) $user_id );
-		if ( (int) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $key ) ) !== 1 ) {
-			return false; }
-		try {
-			return $work(); } finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $key ) ); }
+		return Lock::with( 'ohmylms-award-' . md5( $wpdb->prefix . ':' . (int) $user_id ), 5, $work, false );
+	}
+
+	/**
+	 * Number of distinct learners holding each badge or level, in one grouped, bounded query (500 slugs).
+	 *
+	 * @param string $type Achievement type: `badge` or `level`.
+	 * @return array<string,int> Slug => learners.
+	 */
+	public static function earned_counts( $type ) {
+		global $wpdb;
+		$column = 'level' === $type ? 'level_id' : 'badge_id';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh grouped count; awards change it at any time.
+		$rows   = $wpdb->get_results(
+			$wpdb->prepare( 'SELECT %i AS slug, COUNT(DISTINCT user_id) AS learners FROM %i WHERE type = %s AND status = %s AND %i IS NOT NULL GROUP BY %i LIMIT 500', $column, $wpdb->prefix . 'ohmylms_user_achievement', $type, 'active', $column, $column )
+		);
+		$counts = array();
+		foreach ( (array) $rows as $row ) {
+			$counts[ (string) $row->slug ] = (int) $row->learners;
+		}
+		return $counts;
 	}
 
 	/**
@@ -154,9 +171,8 @@ class Achievements {
 		}
 
 		$where_sql = implode( ' AND ', $where_clauses );
-		$sql       = "SELECT COUNT(*) FROM $table_name WHERE $where_sql";
-		$query     = $wpdb->prepare( $sql, ...$params );
-		$count     = $wpdb->get_var( $query );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Fixed WHERE clauses that use placeholders.
+		$count = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE $where_sql", $table_name, ...$params ) );
 
 		return $count > 0;
 	}

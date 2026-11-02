@@ -18,17 +18,17 @@ if ( ! empty( $breadcrumb ) ) {
 
 	foreach ( $breadcrumb as $key => $crumb ) {
 
-		echo $before;
+		echo wp_kses_post( $before );
 
-		if ( ! empty( $crumb[1] ) && sizeof( $breadcrumb ) !== $key + 1 ) {
+		if ( ! empty( $crumb[1] ) && count( $breadcrumb ) !== $key + 1 ) {
 			echo '<a href="' . esc_url( $crumb[1] ) . '">' . esc_html( $crumb[0] ) . '</a>';
 		} else {
 			echo esc_html( $crumb[0] );
 		}
 
-		echo $after;
+		echo wp_kses_post( $after );
 	}
 
-	echo $wrap_after;
+	echo wp_kses_post( $wrap_after );
 
 }

@@ -157,6 +157,8 @@ final class Ecommerce {
 		$this->gateways             = $this->gateways();
 		$this->subscription_manager = new SubscriptionManager();
 		$this->subscription_manager::init_hooks();
+		\OhMyLMS\Cohorts\CohortHooks::init();
+		\OhMyLMS\Automation\RuleRunner::init();
 
 		$ajax = new Ajax();
 		$ajax::init();
@@ -220,7 +222,7 @@ final class Ecommerce {
 /**
  * Ecommerce for Ecommerce.
  */
-function ecommerce() {
+function ecommerce() { // phpcs:ignore Universal.Files.SeparateFunctionsFromOO.Mixed -- Loading this class file must also define the package's public accessor.
 	return Ecommerce::instance();
 }
 

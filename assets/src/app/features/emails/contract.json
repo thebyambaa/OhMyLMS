@@ -16,7 +16,11 @@
 		"student_course_completed",
 		"student_cancel_enrollment",
 		"student_assignment_graded",
-		"student_quiz_graded"
+		"student_quiz_graded",
+		"student_exam_results_released",
+		"student_at_risk_nudge",
+		"instructor_assignment_comment",
+		"student_assignment_comment"
 	],
 	"routes": [
 		{
@@ -100,7 +104,11 @@
 						"student_course_completed",
 						"student_cancel_enrollment",
 						"student_assignment_graded",
-						"student_quiz_graded"
+						"student_quiz_graded",
+						"student_exam_results_released",
+						"student_at_risk_nudge",
+						"instructor_assignment_comment",
+						"student_assignment_comment"
 					],
 					"in": "path"
 				}
@@ -129,7 +137,11 @@
 						"student_course_completed",
 						"student_cancel_enrollment",
 						"student_assignment_graded",
-						"student_quiz_graded"
+						"student_quiz_graded",
+						"student_exam_results_released",
+						"student_at_risk_nudge",
+						"instructor_assignment_comment",
+						"student_assignment_comment"
 					],
 					"in": "path"
 				}
@@ -159,7 +171,11 @@
 						"student_course_completed",
 						"student_cancel_enrollment",
 						"student_assignment_graded",
-						"student_quiz_graded"
+						"student_quiz_graded",
+						"student_exam_results_released",
+						"student_at_risk_nudge",
+						"instructor_assignment_comment",
+						"student_assignment_comment"
 					],
 					"in": "path"
 				}
@@ -189,7 +205,11 @@
 						"student_course_completed",
 						"student_cancel_enrollment",
 						"student_assignment_graded",
-						"student_quiz_graded"
+						"student_quiz_graded",
+						"student_exam_results_released",
+						"student_at_risk_nudge",
+						"instructor_assignment_comment",
+						"student_assignment_comment"
 					],
 					"in": "path"
 				}
@@ -242,47 +262,62 @@
 				"student_name",
 				"course_name",
 				"quiz_name"
+			],
+			"student_exam_results_released": [ "student_name", "exam_name" ],
+			"student_at_risk_nudge": [ "student_name", "sender_name", "reasons" ],
+			"instructor_assignment_comment": [
+				"student_name",
+				"course_name",
+				"assignment_name",
+				"commenter_name",
+				"comment"
+			],
+			"student_assignment_comment": [
+				"student_name",
+				"course_name",
+				"assignment_name",
+				"commenter_name",
+				"comment"
 			]
 		}
 	},
 	"definitions": {
 		"EmailWrite": {
 			"type": "object",
-			"description": "Partial: only the fields sent change (update) or are rendered (preview, test).",
+			"description": "Partial: only the fields sent change (update) or are rendered (preview, test). null for a text field, or an empty subject, heading or additional_content, means the default: nothing is stored and the default is sent in each recipient's language. Text equal to the default in the request's language is not stored either.",
 			"properties": {
 				"enabled": {
 					"type": "boolean"
 				},
 				"subject": {
-					"type": "string",
-					"minLength": 1,
+					"type": [ "string", "null" ],
 					"maxLength": 255,
-					"description": "Plain text, one line."
+					"description": "Plain text, one line. Empty or null: the default."
 				},
 				"heading": {
-					"type": "string",
-					"minLength": 1,
+					"type": [ "string", "null" ],
 					"maxLength": 200,
-					"description": "Plain text, one line."
+					"description": "Plain text, one line. Empty or null: the default."
 				},
 				"additional_content": {
-					"type": "string",
+					"type": [ "string", "null" ],
 					"maxLength": 20000,
-					"description": "HTML limited to the email allow-list."
+					"description": "HTML limited to the email allow-list. Empty or null: the default."
 				},
 				"button_text": {
-					"type": "string",
-					"maxLength": 60
+					"type": [ "string", "null" ],
+					"maxLength": 60,
+					"description": "Empty hides the button; null: the default."
 				},
 				"button_link": {
-					"type": "string",
+					"type": [ "string", "null" ],
 					"maxLength": 2048,
-					"description": "Empty or a full http(s) URL."
+					"description": "Empty or a full http(s) URL; null: the default."
 				},
 				"footer_text": {
-					"type": "string",
+					"type": [ "string", "null" ],
 					"maxLength": 5000,
-					"description": "HTML limited to the email allow-list."
+					"description": "HTML limited to the email allow-list; null: the default."
 				},
 				"course_suggestion_text": {
 					"type": [ "string", "null" ],
@@ -316,7 +351,9 @@
 				"footer_text",
 				"course_suggestion_text",
 				"recipient_email",
-				"tags"
+				"tags",
+				"defaults",
+				"customized"
 			],
 			"properties": {
 				"id": {
@@ -332,7 +369,11 @@
 						"student_course_completed",
 						"student_cancel_enrollment",
 						"student_assignment_graded",
-						"student_quiz_graded"
+						"student_quiz_graded",
+						"student_exam_results_released",
+						"student_at_risk_nudge",
+						"instructor_assignment_comment",
+						"student_assignment_comment"
 					]
 				},
 				"title": {
@@ -409,6 +450,50 @@
 								"type": "string"
 							}
 						}
+					}
+				},
+				"defaults": {
+					"type": "object",
+					"description": "Read only. Default text of each field in the language of the request; course_suggestion_text is null on emails without it.",
+					"required": [
+						"subject",
+						"heading",
+						"additional_content",
+						"button_text",
+						"button_link",
+						"footer_text",
+						"course_suggestion_text"
+					],
+					"properties": {
+						"subject": { "type": "string" },
+						"heading": { "type": "string" },
+						"additional_content": { "type": "string" },
+						"button_text": { "type": "string" },
+						"button_link": { "type": "string" },
+						"footer_text": { "type": "string" },
+						"course_suggestion_text": { "type": [ "string", "null" ] }
+					}
+				},
+				"customized": {
+					"type": "object",
+					"description": "Read only. True when the field holds saved text (sent as written) instead of the default (translated per recipient).",
+					"required": [
+						"subject",
+						"heading",
+						"additional_content",
+						"button_text",
+						"button_link",
+						"footer_text",
+						"course_suggestion_text"
+					],
+					"properties": {
+						"subject": { "type": "boolean" },
+						"heading": { "type": "boolean" },
+						"additional_content": { "type": "boolean" },
+						"button_text": { "type": "boolean" },
+						"button_link": { "type": "boolean" },
+						"footer_text": { "type": "boolean" },
+						"course_suggestion_text": { "type": "boolean" }
 					}
 				}
 			}

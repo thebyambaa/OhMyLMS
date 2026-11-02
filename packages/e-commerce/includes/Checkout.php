@@ -6,6 +6,7 @@ use OhMyLMS\Commerce\Data\OrderItemCoupon;
 use OhMyLMS\Commerce\Data\OrderItemCourse;
 use OhMyLMS\Integrations\Funnel\Includes\FunnelManager;
 use OhMyLMS\Data\Student;
+use OhMyLMS\I18n\RecipientLocale;
 use OhMyLMS\Membership\MembershipHelper;
 use OhMyLMS\user\UserHelper;
 use OhMyLMS\user\UserRepository;
@@ -161,7 +162,7 @@ class Checkout {
 		$locale_parts    = explode( '_', $site_locale );
 		$default_country = isset( $locale_parts[1] ) ? $locale_parts[1] : 'US';
 
-		$country = ! empty( $_POST['country'] ) ? sanitize_text_field( wp_unslash( $_POST['country'] ) ) : $default_country;
+		$country = ! empty( $_POST['country'] ) ? sanitize_text_field( wp_unslash( $_POST['country'] ) ) : $default_country; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Only selects the state list; Ajax::checkout() verifies submissions.
 		$states  = ohmylms_get_states( $country );
 
 		$fields = array(
@@ -363,14 +364,19 @@ class Checkout {
 			// Update session for customer and totals.
 			$this->update_session( $posted_data );
 
-			$cart_data = ecommerce()->cart->get_cart_contents();
+			$cart_data      = ecommerce()->cart->get_cart_contents();
 			$membership_ids = array( absint( $posted_data['membership_id'] ?? 0 ) );
 			foreach ( $cart_data as $cart_entry ) {
 				$membership_ids[] = absint( $cart_entry['course_id'] ?? 0 );
 			}
 			foreach ( array_unique( array_filter( $membership_ids ) ) as $membership_id ) {
 				if ( 'ohmylms-membership' === get_post_type( $membership_id ) && \OhMyLMS\Membership\FreeSale::active( ohmylms_get_membership( $membership_id ) ) ) {
-					wp_send_json( array( 'status' => 'error', 'message' => __( 'Use Start free access on the Membership plans page. No payment is needed.', 'ohmylms' ) ) );
+					wp_send_json(
+						array(
+							'status'  => 'error',
+							'message' => __( 'Use Start free access on the Membership plans page. No payment is needed.', 'ohmylms' ),
+						)
+					);
 				}
 			}
 
@@ -394,25 +400,20 @@ class Checkout {
 
 			$this->validate_checkout( $posted_data, $errors, $maybe_by_point );
 
-			$student_id = $this->process_student( $posted_data );
-			$points     = $this->get_total_points( $cart_data );
-
-			$integrations = get_option( 'ohmylms_integrations', array() );
-			if ( ohmylms_is_pro() && isset( $integrations['gamification']['is_enable'] ) && $integrations['gamification']['is_enable'] ) {
-				$user_available_point = \OhMyLMS\Engagement\Point::get_total_points( $student_id );
-
-				if ( $maybe_by_point && $points > $user_available_point ) {
-					$message = __( 'You do not have enough points to purchase this course.', 'ohmylms' );
-					ohmylmse_add_notice( $message, 'error', array() );
-					$this->send_ajax_failure_response();
-				}
-			}
-
 			foreach ( $errors->errors as $code => $messages ) {
 				$data = $errors->get_error_data( $code );
 				foreach ( $messages as $message ) {
 					ohmylmse_add_notice( $message, 'error', $data );
 				}
+			}
+			if ( 0 !== ohmylmse_notice_count( 'error' ) ) {
+				$this->send_ajax_failure_response();
+			}
+
+			$student_id = $this->process_student( $posted_data );
+
+			if ( $maybe_by_point ) {
+				$this->process_point_checkout( $student_id, $cart_data );
 			}
 
 			if ( 0 === ohmylmse_notice_count( 'error' ) ) {
@@ -424,30 +425,11 @@ class Checkout {
 					$this->send_ajax_failure_response();
 				}
 
-				if ( $maybe_by_point ) {
-					// The spend and balance check are serialized, with one debit per order.
-					if ( ! \OhMyLMS\Engagement\Reward::maybe_met_rules( 'purchase_course' ) || ! \OhMyLMS\Engagement\Point::deduct_points( $student_id, 'point', $points, 'purchase_course', null, null, $order_id ) ) {
-						wp_trash_post( $order_id );
-						ohmylmse_add_notice( __( 'Could not redeem points. Please check your balance and retry.', 'ohmylms' ), 'error', array() );
-						$this->send_ajax_failure_response();
-					}
-					$point_debited          = true;
-					$point_payment_complete = false;
-					$order->add_order_note( sprintf( /* translators: %1$d: number. */
-					__( 'Purchased by bonus point(%1$d PTS)', 'ohmylms' ), $points ) );
-					update_post_meta( $order_id, '_purchased_by', 'point' );
-					update_post_meta( $order_id, '_purchased_point', $points );
-					$order->set_total( 0 );
-					$order->save();
-				}
-
-				if ( ! $maybe_by_point && $order->needs_payment() ) {
+				if ( $order->needs_payment() ) {
 					$result = $this->process_order_payment( $order_id, $posted_data );
 					$order  = ohmylms_ecommerce_get_order( $order_id );
 				} else {
 					$result = $this->process_order_without_payment( $order );
-					if ( $maybe_by_point ) {
-						$point_payment_complete = true; }
 				}
 
 				// Handle WP_Error result
@@ -470,7 +452,7 @@ class Checkout {
 				}
 				if ( is_wp_error( $result ) ) {
 					$message = __( 'Failed to process order due to payment.', 'ohmylms' );
-					ohmylmse_add_notice( $result->get_error_message() ?: $message, 'error', array() );
+					ohmylmse_add_notice( $result->get_error_message() ? $result->get_error_message() : $message, 'error', array() );
 					wp_trash_post( $order_id );
 					// Clean up failed order.
 					$this->send_ajax_failure_response();
@@ -530,12 +512,21 @@ class Checkout {
 							$gateway_meta_data = isset( $result['gateway_meta'] ) && is_array( $result['gateway_meta'] ) ? $result['gateway_meta'] : array();
 							$subscription_id   = SubscriptionManager::create_subscription( $order, $posted_data['membership_id'], $gateway_meta_data );
 							if ( is_wp_error( $subscription_id ) ) {
-								$order->add_order_note( sprintf( /* translators: %s: text value. */
-								__( 'Automated subscription creation failed. Error: %s', 'ohmylms' ), $subscription_id->get_error_message() ) );
+								$order->add_order_note(
+									sprintf( /* translators: %s: text value. */
+										__( 'Automated subscription creation failed. Error: %s', 'ohmylms' ),
+										$subscription_id->get_error_message()
+									)
+								);
 							} elseif ( $subscription_id ) {
 								SubscriptionManager::mark_subscription_active( $subscription_id );
-								$order->add_order_note( sprintf( /* translators: %1$d: number; %2$s: text value. */
-								__( 'Subscription #%1$d created and activated for membership: %2$s.', 'ohmylms' ), $subscription_id, get_the_title( $posted_data['membership_id'] ) ) );
+								$order->add_order_note(
+									sprintf( /* translators: %1$d: number; %2$s: text value. */
+										__( 'Subscription #%1$d created and activated for membership: %2$s.', 'ohmylms' ),
+										$subscription_id,
+										get_the_title( $posted_data['membership_id'] )
+									)
+								);
 							}
 						}
 					}
@@ -587,11 +578,41 @@ class Checkout {
 				$this->send_ajax_failure_response();
 			}
 		} catch ( \Exception $e ) {
-			if ( ! empty( $point_debited ) && empty( $point_payment_complete ) ) {
-				\OhMyLMS\Engagement\Point::refund_purchase( $student_id, $order_id ); }
 			ohmylmse_add_notice( $e->getMessage(), 'error' );
 			$this->send_ajax_failure_response();
 		}
+	}
+
+	/**
+	 * Buy a point-priced cart through {@see \OhMyLMS\Engagement\PointPurchase} (one transaction:
+	 * balance check, points order, debit and enrolments) and answer the checkout request.
+	 *
+	 * @param int   $student_id Buyer.
+	 * @param array $cart_data  Cart contents (already checked by `Reward::valid_point_cart()`).
+	 * @return void
+	 */
+	protected function process_point_checkout( $student_id, $cart_data ) {
+		$course_ids = array();
+		foreach ( $cart_data as $cart_item ) {
+			$course_ids[] = (int) ( $cart_item['course_id'] ?? $cart_item['id'] ?? 0 );
+		}
+		$bought = \OhMyLMS\Engagement\PointPurchase::purchase( $student_id, $course_ids );
+		if ( is_wp_error( $bought ) ) {
+			ohmylmse_add_notice( $bought->get_error_message(), 'error', array() );
+			$this->send_ajax_failure_response();
+			return;
+		}
+		$order = ohmylms_ecommerce_get_order( $bought['order_id'] );
+		do_action( 'ohmylms_checkout_after_create_order', $order, array( 'payment_method' => \OhMyLMS\Engagement\PointPurchase::PAYMENT_METHOD ) );
+		do_action( 'ohmylms_after_checkout_process', $order );
+		\ohmylms_empty_cart();
+		wp_send_json(
+			array(
+				'result'   => 'success',
+				'order_id' => $bought['order_id'],
+				'redirect' => $order->get_checkout_redirect_url(),
+			)
+		);
 	}
 
 	/**
@@ -966,8 +987,9 @@ class Checkout {
 	 * @since 1.0.0
 	 */
 	public function get_posted_data() {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Ajax::checkout() verifies the checkout nonce before process_checkout() calls this.
 		$data = array(
-			'payment_method' => isset( $_POST['payment_method'] ) ? wp_unslash( $_POST['payment_method'] ) : '',
+			'payment_method' => isset( $_POST['payment_method'] ) ? ohmylms_clean( wp_unslash( $_POST['payment_method'] ) ) : '',
 			'createaccount'  => (int) (bool) $this->is_registration_enabled(),
 		);
 
@@ -983,6 +1005,7 @@ class Checkout {
 				$data[ $field_key ] = ohmylms_clean( wp_unslash( $_POST[ $field_key ] ) );
 			}
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 		return $data;
 	}
 
@@ -1017,7 +1040,7 @@ class Checkout {
 		}
 
 		if ( $errors->has_errors() ) {
-			throw new \Exception( $errors->get_error_message() );
+			throw new \Exception( $errors->get_error_message() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Shown as a notice through ohmylmse_kses_notice().
 		}
 	}
 
@@ -1058,7 +1081,7 @@ class Checkout {
 			);
 
 			if ( is_wp_error( $student_id ) ) {
-				throw new \Exception( $student_id->get_error_message() );
+				throw new \Exception( $student_id->get_error_message() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Shown as a notice through ohmylmse_kses_notice().
 			}
 
 			wp_set_current_user( $student_id );
@@ -1074,36 +1097,43 @@ class Checkout {
 			// Update session.
 			ecommerce()->session->init_session_cookie();
 
-			// Send email to student with username and password.
-			$to           = $data['email'];
-			$subject      = __( 'Your account has been created', 'ohmylms' );
-			$profile_url  = ohmylms_get_account_endpoint_url( 'dashboard' );
-			$student_name = '';
-			if ( $user ) {
-				$student_name = trim( $user->first_name . ' ' . $user->last_name );
-				if ( empty( $student_name ) ) {
-					$student_name = $user->display_name;
-				}
-			}
+			// Email the new student a link to choose a password; the generated one is never sent.
+			$to = $data['email'];
+			RecipientLocale::run(
+				$user ? $user : $to,
+				static function () use ( $to, $user, $username ) {
+					$subject      = __( 'Your account has been created', 'ohmylms' );
+					$profile_url  = ohmylms_get_account_endpoint_url( 'dashboard' );
+					$student_name = '';
+					if ( $user ) {
+						$student_name = trim( $user->first_name . ' ' . $user->last_name );
+						if ( empty( $student_name ) ) {
+							$student_name = $user->display_name;
+						}
+					}
+					$reset_key = $user ? get_password_reset_key( $user ) : '';
+					$reset_url = $user && ! is_wp_error( $reset_key ) ? network_site_url( 'wp-login.php?action=rp&key=' . rawurlencode( $reset_key ) . '&login=' . rawurlencode( $user->user_login ), 'login' ) : wp_lostpassword_url();
 
-			$message = sprintf(
-				/* translators: %1$s: text value; %2$s: text value; %3$s: text value; %4$s: text value; %5$s: text value; %6$s: text value; %7$s: text value. */
-				__( 'Hello %1$s,<br><br>Your account has been created on %2$s.<br><br>Username: %3$s<br>Password: %4$s<br><br>You can now log in and access your courses from here: <a href="%5$s">%6$s</a><br><br>You can change your password anytime from your account page after logging in.<br><br>Thank you<br>%7$s', 'ohmylms' ),
-				esc_html( $student_name ),
-				esc_html( get_bloginfo( 'name' ) ),
-				esc_html( $username ),
-				esc_html( $password ),
-				esc_url( $profile_url ),
-				esc_html( $profile_url ),
-				esc_html( get_bloginfo( 'name' ) )
-			);
+					$message = sprintf(
+						/* translators: %1$s: name; %2$s: site name; %3$s: username; %4$s: set-password URL; %5$s: account URL; %6$s: account URL text; %7$s: site name. */
+						__( 'Hello %1$s,<br><br>Your account has been created on %2$s.<br><br>Username: %3$s<br><br>Choose your password here: <a href="%4$s">set your password</a><br><br>You can access your courses from here: <a href="%5$s">%6$s</a><br><br>Thank you<br>%7$s', 'ohmylms' ),
+						esc_html( $student_name ),
+						esc_html( get_bloginfo( 'name' ) ),
+						esc_html( $user ? $user->user_login : $username ),
+						esc_url( $reset_url ),
+						esc_url( $profile_url ),
+						esc_html( $profile_url ),
+						esc_html( get_bloginfo( 'name' ) )
+					);
 
-			$headers = array(
-				'MIME-Version: 1.0',
-				'Content-Type: text/html;
+					$headers = array(
+						'MIME-Version: 1.0',
+						'Content-Type: text/html;
             charset = UTF-8',
+					);
+					wp_mail( $to, $subject, $message, $headers );
+				}
 			);
-			wp_mail( $to, $subject, $message, $headers );
 		}
 
 		if ( $student_id && is_multisite() && is_user_logged_in() && ! is_user_member_of_blog() ) {
@@ -1219,7 +1249,7 @@ class Checkout {
 
 			return $order_id;
 		} catch ( \Exception $e ) {
-			throw new \Exception( $e->getMessage() );
+			throw new \Exception( $e->getMessage() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Shown as a notice through ohmylmse_kses_notice().
 		}
 	}
 
@@ -1304,7 +1334,6 @@ class Checkout {
 				}
 				$course_id = isset( $cart_item['course_id'] ) ? (int) $cart_item['course_id'] : (int) $cart_item['id'];
 				$item_id   = $course_id;
-				$cohort_id = ! empty( $cart_item['cohort_id'] ) ? (int) $cart_item['cohort_id'] : 0;
 
 				$enrollment_data = array(
 					'course_id'     => $course_id,
@@ -1315,57 +1344,50 @@ class Checkout {
 					'progress'      => 'running',
 					'start_date'    => current_time( 'mysql' ),
 				);
-				if ( $cohort_id ) {
-					$enrollment_data['cohort_id'] = $cohort_id;
-				}
-				$student = new \OhMyLMS\Data\Student( get_current_user_id() );
 
-				// For a cohort-based enrollment, "already enrolled" is scoped to this
-				// specific batch — students can independently enroll in more than one
-				// batch of the same course (decision log #4, no carry-over).
-				$already_enrolled = $cohort_id
-					? (bool) $wpdb->get_var(
-						$wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE user_id = %d AND course_id = %d AND cohort_id = %d AND status = %s', $enrollment_table, $student_id, $course_id, $cohort_id, 'enrolled' )
-					)
-					: (bool) $wpdb->get_var(
+				// Cohort membership is kept in ohmylms_cohort_members (OhMyLMS\Cohorts), not on the enrolment row.
+				if ( ! empty( $posted_data['membership_id'] ) ) {
+					$already_enrolled = (bool) $wpdb->get_var(
 						$wpdb->prepare(
-							"SELECT COUNT(*) FROM $enrollment_table WHERE user_id=%d AND course_id=%d AND status='enrolled' AND " . ( ! empty( $posted_data['membership_id'] ) ? 'membership_id=%d' : '(membership_id IS NULL OR membership_id=0)' ),
-							! empty( $posted_data['membership_id'] ) ? array( $student_id, $course_id, (int) $posted_data['membership_id'] ) : array( $student_id, $course_id )
+							"SELECT COUNT(*) FROM %i WHERE user_id=%d AND course_id=%d AND status='enrolled' AND membership_id=%d",
+							$enrollment_table,
+							$student_id,
+							$course_id,
+							(int) $posted_data['membership_id']
 						)
 					);
+				} else {
+					$already_enrolled = (bool) $wpdb->get_var(
+						$wpdb->prepare(
+							"SELECT COUNT(*) FROM %i WHERE user_id=%d AND course_id=%d AND status='enrolled' AND (membership_id IS NULL OR membership_id=0)",
+							$enrollment_table,
+							$student_id,
+							$course_id
+						)
+					);
+				}
 
 				if ( $course_id && ! $already_enrolled ) {
-					$existing_where = $cohort_id
-						? array(
-							'user_id'   => $student_id,
-							'course_id' => $course_id,
-							'cohort_id' => $cohort_id,
-						)
-						: array(
-							'user_id'   => $student_id,
-							'course_id' => $course_id,
-							'order_id'  => $order_id,
-						);
+					$existing_where = array(
+						'user_id'   => $student_id,
+						'course_id' => $course_id,
+						'order_id'  => $order_id,
+					);
 
 					$existing_record = $wpdb->get_var(
 						$wpdb->prepare(
-							"SELECT COUNT(*) FROM $enrollment_table WHERE " . implode(
-								' AND ',
-								array_map(
-									function ( $col ) {
-										return "$col = %d";
-									},
-									array_keys( $existing_where )
-								)
-							),
-							array_values( $existing_where )
+							'SELECT COUNT(*) FROM %i WHERE user_id = %d AND course_id = %d AND order_id = %d',
+							$enrollment_table,
+							$existing_where['user_id'],
+							$existing_where['course_id'],
+							$existing_where['order_id']
 						)
 					);
 
+					$origin = \OhMyLMS\Student\EnrolmentMirror::order_origin( $order_id, (int) $enrollment_data['membership_id'] );
 					if ( $existing_record ) {
 						// Update the existing record.
-						$wpdb->update(
-							$enrollment_table,
+						\OhMyLMS\Student\Enrollments::update(
 							array(
 								'order_id'      => $order_id,
 								'membership_id' => $enrollment_data['membership_id'],
@@ -1373,13 +1395,11 @@ class Checkout {
 								'progress'      => 'running',
 								'start_date'    => current_time( 'mysql' ),
 							),
-							$existing_where
+							$existing_where,
+							$origin
 						);
 					} else {
-						$wpdb->insert(
-							$enrollment_table,
-							$enrollment_data
-						);
+						\OhMyLMS\Student\Enrollments::create( $enrollment_data, $origin );
 					}
 
 					if ( 'enrolled' === $enrollment_status ) {
@@ -1573,7 +1593,7 @@ class Checkout {
 	 * This function marks the order as complete and empties the cart.
 	 *
 	 * @param \OhMyLMS\Commerce\Data\Order $order The order object.
-	 * @return void
+	 * @return array
 	 * @since 1.0.0
 	 */
 	public static function process_order_without_payment( $order ) {
@@ -1598,9 +1618,10 @@ class Checkout {
 	 * @since 1.0.0
 	 */
 	public function get_value( $input ) {
-		$value = '';
-		if ( isset( $_POST[ $input ] ) ) {
-			$value = sanitize_text_field( wp_unslash( $_POST[ $input ] ) );
+		$value  = '';
+		$posted = isset( $_POST[ $input ] ) ? sanitize_text_field( wp_unslash( $_POST[ $input ] ) ) : null; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Repopulates a form field; Ajax::checkout() verifies submissions.
+		if ( null !== $posted ) {
+			$value = $posted;
 		} elseif ( is_user_logged_in() ) {
 			$user  = wp_get_current_user();
 			$value = $user->$input;

@@ -1,7 +1,8 @@
 import { createElement } from '@wordpress/element';
 
 /**
- * Native data table in a labelled, keyboard-scrollable region. Headers/cells stay native HTML.
+ * Native data table in a labelled, keyboard-scrollable region, with WordPress's `widefat` (and
+ * `striped`) classes. Headers/cells stay native HTML. Lists use ListTable instead.
  *
  * @param {Object}  props           Native table properties.
  * @param {string}  props.caption   Visible caption and scroll-region label.
@@ -32,7 +33,9 @@ export function Table( {
 				...rest,
 				className: [
 					'oml-table',
+					'widefat',
 					striped && 'oml-table-striped',
+					striped && 'striped',
 					compact && 'oml-table-compact',
 					className,
 				]

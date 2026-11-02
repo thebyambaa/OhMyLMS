@@ -7,6 +7,7 @@
 
 namespace OhMyLMS\Commerce\Abstracts;
 
+use OhMyLMS\Utility\Lock;
 use WP_Error;
 use WP_REST_Controller;
 
@@ -69,16 +70,7 @@ abstract class RestController extends WP_REST_Controller {
 	 * @return bool True when the lock was taken.
 	 */
 	protected function acquire_lock( $name, $ttl = 60 ) {
-		$key = 'ohmylms_lock_' . sanitize_key( $name );
-		if ( add_option( $key, time(), '', 'no' ) ) {
-			return true;
-		}
-		$taken = (int) get_option( $key );
-		if ( $taken && ( time() - $taken ) > $ttl ) {
-			update_option( $key, time(), 'no' );
-			return true;
-		}
-		return false;
+		return Lock::acquire_option( (string) $name, (int) $ttl );
 	}
 
 	/**
@@ -88,7 +80,7 @@ abstract class RestController extends WP_REST_Controller {
 	 * @return void
 	 */
 	protected function release_lock( $name ) {
-		delete_option( 'ohmylms_lock_' . sanitize_key( $name ) );
+		Lock::release_option( (string) $name );
 	}
 
 	/**

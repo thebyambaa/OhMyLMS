@@ -196,12 +196,123 @@ try {
 	$bad['units'][]  = $bad['units'][0];
 	authoring_check( 400 === authoring_request( 'PUT', 'courses/' . $course . '/structure', $bad )->get_status(), 'Duplicate unit rejected.' );
 	authoring_check( Catalog::chapters( $course ) === $before, 'Failed save leaves units unchanged.' );
+	$quiz = authoring_request( 'POST', 'quizzes', array( 'title' => $fixture_tag . ' Quiz' ) );
+	authoring_check( 201 === $quiz->get_status(), 'Create a draft quiz through the quiz API.' );
+	$post_ids[] = $quiz->get_data()['id'];
+	$assignment = authoring_request( 'POST', 'assignments', array( 'title' => $fixture_tag . ' Assignment' ) );
+	authoring_check( 201 === $assignment->get_status(), 'Create a draft assignment through the assignment API.' );
+	$post_ids[]         = $assignment->get_data()['id'];
+	$current            = authoring_request( 'GET', 'courses/' . $course . '/structure' )->get_data();
+	$first_unit         = $current['units'][0]['id'];
+	$second_unit        = wp_generate_uuid4();
+	$quiz_item          = wp_generate_uuid4();
+	$assignment_item    = wp_generate_uuid4();
+	$program            = $current['program'];
+	$program['items'][] = array(
+		'id'         => $quiz_item,
+		'type'       => 'quiz',
+		'content_id' => $quiz->get_data()['id'],
+		'chapter_id' => $first_unit,
+		'required'   => true,
+	);
+	$program['items'][] = array(
+		'id'         => $assignment_item,
+		'type'       => 'assignment',
+		'content_id' => $assignment->get_data()['id'],
+		'chapter_id' => $first_unit,
+		'required'   => true,
+	);
+	$units              = $current['units'];
+	$units[]            = array(
+		'id'          => $second_unit,
+		'title'       => 'Second unit',
+		'number'      => '',
+		'description' => '',
+	);
+	$added              = authoring_request(
+		'PUT',
+		'courses/' . $course . '/structure',
+		array(
+			'revision' => $current['structure_revision'],
+			'units'    => $units,
+			'program'  => $program,
+		)
+	);
+	authoring_check( 200 === $added->get_status(), 'Quiz, assignment and a second unit save: ' . wp_json_encode( $added->get_data() ) );
+	$current    = $added->get_data();
+	$second_id  = $current['unit_ids'][ $second_unit ];
+	$post_ids[] = $second_id;
+	$types      = array_column( $current['program']['items'], 'type', 'id' );
+	authoring_check( 'quiz' === $types[ $quiz_item ] && 'assignment' === $types[ $assignment_item ], 'Quiz and assignment placements survive the save.' );
+	$by_id = array_column( $current['program']['items'], null, 'id' );
+	$moved = array( $by_id[ $assignment_item ], $by_id[ $quiz_item ], array_merge( $by_id[ $activity ], array( 'chapter_id' => $second_id ) ) );
+	unset( $moved[2]['group_id'] );
+	$program          = $current['program'];
+	$program['items'] = $moved;
+	$reordered        = authoring_request(
+		'PUT',
+		'courses/' . $course . '/structure',
+		array(
+			'revision' => $current['structure_revision'],
+			'units'    => $current['units'],
+			'program'  => $program,
+		)
+	);
+	authoring_check( 200 === $reordered->get_status(), 'Reorder and cross-unit move save: ' . wp_json_encode( $reordered->get_data() ) );
+	$current = authoring_request( 'GET', 'courses/' . $course . '/structure' )->get_data();
+	$first   = array_values(
+		array_filter(
+			$current['program']['items'],
+			static function ( $item ) use ( $first_unit ) {
+				return $first_unit === $item['chapter_id'];
+			}
+		)
+	);
+	authoring_check( array( $assignment_item, $quiz_item ) === array_column( $first, 'id' ), 'Activity order within a unit survives reopen.' );
+	$lesson_row = array_column( $current['program']['items'], null, 'id' )[ $activity ];
+	authoring_check( $second_id === $lesson_row['chapter_id'], 'Lesson moved to another unit keeps its placement identity.' );
+	$unit_path = 'courses/' . $course . '/structure/units/' . $second_id;
+	authoring_check( 409 === authoring_request( 'DELETE', $unit_path, array( 'revision' => $reopen['structure_revision'] ) )->get_status(), 'Stale unit deletion rejected.' );
+	authoring_check( in_array( $second_id, array_column( Catalog::chapters( $course ), 'id' ), true ), 'Stale unit deletion keeps the unit.' );
+	global $wpdb;
+	$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Tagged fixture placement, removed below.
+		$wpdb->prefix . 'ohmylms_content_relationship',
+		array(
+			'chapter_id'   => $second_id,
+			'content_id'   => $lesson,
+			'content_type' => 'lesson',
+			'order_number' => 1,
+		)
+	);
+	$current = authoring_request( 'GET', 'courses/' . $course . '/structure' )->get_data();
+	$in_use  = authoring_request( 'DELETE', $unit_path, array( 'revision' => $current['structure_revision'] ) );
+	$wpdb->delete( $wpdb->prefix . 'ohmylms_content_relationship', array( 'chapter_id' => $second_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Remove the fixture placement.
+	authoring_check( 409 === $in_use->get_status() && 'ohmylms_chapter_in_use' === $in_use->get_data()['code'], 'A unit holding native placements is refused.' );
+	$current        = authoring_request( 'GET', 'courses/' . $course . '/structure' )->get_data();
+	$delete_failure = static function () {
+		throw new RuntimeException( 'Fixture failure while deleting the unit.' );
+	};
+	add_action( 'before_delete_post', $delete_failure );
+	try {
+		authoring_check( 500 === authoring_request( 'DELETE', $unit_path, array( 'revision' => $current['structure_revision'] ) )->get_status(), 'Failed unit deletion is surfaced.' );
+	} finally {
+		remove_action( 'before_delete_post', $delete_failure );
+	}
+	$current = authoring_request( 'GET', 'courses/' . $course . '/structure' )->get_data();
+	authoring_check( array_column( $current['program']['items'], null, 'id' )[ $activity ]['chapter_id'] === $second_id && in_array( $second_id, array_column( Catalog::chapters( $course ), 'id' ), true ), 'Failed unit deletion rolls back the unit and its placements.' );
+	$deleted = authoring_request( 'DELETE', $unit_path, array( 'revision' => $current['structure_revision'] ) );
+	authoring_check( 200 === $deleted->get_status(), 'Unit deletion succeeds: ' . wp_json_encode( $deleted->get_data() ) );
+	authoring_check( ! in_array( $second_id, array_column( Catalog::chapters( $course ), 'id' ), true ) && ! get_post( $second_id ), 'Deleted unit is gone.' );
+	$detached = array_column( $deleted->get_data()['program']['items'], null, 'id' )[ $activity ];
+	authoring_check( 0 === $detached['chapter_id'] && 'draft' === get_post_status( $lesson ), 'Deleting a unit leaves its lesson unplaced and the shared lesson intact.' );
+	$payload['revision'] = $deleted->get_data()['structure_revision'];
 	wp_set_current_user( $user_ids['author'] );
+	authoring_check( 403 === authoring_request( 'DELETE', 'courses/' . $course . '/structure/units/' . $first_unit, array( 'revision' => $payload['revision'] ) )->get_status(), 'Other author cannot delete units.' );
 	authoring_check( 403 === authoring_request( 'GET', 'courses/' . $course . '/structure' )->get_status(), 'Other author cannot read private outline.' );
 	authoring_check( 403 === authoring_request( 'PUT', 'courses/' . $course . '/structure', $payload )->get_status(), 'Other author cannot overwrite outline.' );
 	authoring_check( 403 === authoring_request( 'GET', 'curriculum/tree' )->get_status(), 'Other author cannot administer curriculum.' );
 	$list = authoring_request( 'GET', 'authoring/courses', array( 'search' => $fixture_tag ) )->get_data();
-	authoring_check( empty( $list['items'] ), 'Author list excludes another authorâ€™s drafts.' );
+	authoring_check( empty( $list['items'] ), 'Author list excludes another author’s drafts.' );
 	echo "Authoring REST integration: $checks checks passed.\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CLI test count, not an HTML response.
 } finally {
 	wp_set_current_user( $user_ids['administrator'] ?? 0 );

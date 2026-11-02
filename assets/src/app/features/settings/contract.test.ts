@@ -1,5 +1,7 @@
 import contract from './contract.json';
+import { buildGatewayPatch, parseGateway } from './gateways';
 import { SPECS, type FieldSpec } from './model';
+import { stripeRaw } from './tabFixtures';
 import { FIELD_NAMES, GROUP_IDS } from './types';
 
 interface SchemaFragment {
@@ -59,8 +61,42 @@ describe( 'settings REST contract', () => {
 			'GET /settings/countries/{code}/states',
 			'POST /settings/general/restore-pages',
 			'POST /settings/advanced/clear-cache',
+			'GET /settings/payment-gateways',
+			'GET /settings/payment-gateways/{gateway}',
+			'PUT|PATCH|POST /settings/payment-gateways/{gateway}',
 		] );
 		expect( contract.capability ).toBe( 'manage_options' );
+	} );
+
+	it( 'keeps the gateway write keys and limits the client uses', () => {
+		const gateways = contract.paymentGateways;
+		expect( gateways.writeKeys ).toEqual( [
+			'enabled',
+			'mode',
+			'values',
+			'secrets',
+			'clear_secrets',
+		] );
+		expect( gateways.fieldTypes ).toEqual( [
+			'text',
+			'textarea',
+			'toggle',
+			'secret',
+		] );
+		const stripe = parseGateway( stripeRaw );
+		const body = buildGatewayPatch( stripe, {
+			enabled: true,
+			mode: 'live',
+			values: { ...stripe.values, title: 'x' },
+			secrets: { secret_key: 'sk' },
+			clear: [ 'sandbox_secret_key' ],
+		} );
+		for ( const key of Object.keys( body ) ) {
+			expect( gateways.writeKeys ).toContain( key );
+		}
+		expect( new RegExp( gateways.secretPattern ).test( 'a b' ) ).toBe(
+			false
+		);
 	} );
 
 	it( 'lists the same groups and fields as the client types', () => {

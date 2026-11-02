@@ -57,5 +57,5 @@ MCP tools: `get_skill_map`, `compare_syllabuses`, `get_student_skill_map`.
 
 ## Tests
 
-`php tests/php/skill-map-unit.php`, `node --test tests/js/skill-map.test.mjs`, and
+`php tests/php/skill-map-unit.php`, `npm run test:app` (the typed skill map, `features/curriculum/`), and
 `OHMYLMS_TEST_CREDENTIALS=... php tests/php/skill-map-integration.php` on the isolated test site.

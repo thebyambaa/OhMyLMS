@@ -14,7 +14,7 @@ export function useHubAction( actions ) {
 	useEffect( () => {
 		const run = () => {
 			const params = hashQuery( window.location.hash );
-			const handler = latest.current[ params.get( 'action' ) ];
+			const handler = latest.current[ String( params.get( 'action' ) ) ];
 			if ( ! handler ) {
 				return;
 			}

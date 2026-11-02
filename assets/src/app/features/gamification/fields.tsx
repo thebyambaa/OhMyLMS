@@ -5,7 +5,7 @@ import {
 	ToggleControl,
 } from '@wordpress/components';
 import type { ReactNode } from 'react';
-import { toNumber } from './model';
+import { pickerColor, toNumber } from './model';
 
 interface FieldProps {
 	label: string;
@@ -44,18 +44,21 @@ export function TextField( {
 	);
 }
 
-// A whole-number input whose value is `null` while empty, so partial typing is never lost.
+// A number input (whole numbers unless `step` says otherwise) whose value is `null` while empty,
+// so partial typing is never lost.
 export function NumberField( {
 	value,
 	onChange,
 	min,
 	max,
+	step = 1,
 	...field
 }: FieldProps & {
 	value: number | null;
 	onChange: ( value: number | null ) => void;
 	min: number;
 	max: number;
+	step?: number;
 } ) {
 	return (
 		<TextControl
@@ -69,7 +72,7 @@ export function NumberField( {
 			disabled={ field.disabled }
 			min={ min }
 			max={ max }
-			step={ 1 }
+			step={ step }
 			aria-invalid={ field.error ? true : undefined }
 		/>
 	);
@@ -157,9 +160,7 @@ export function ColorField( {
 	onChange: ( value: string ) => void;
 	pickerLabel: string;
 } ) {
-	const swatch = /^#[0-9a-fA-F]{6}$/.test( value )
-		? value.toLowerCase()
-		: '#000000';
+	const swatch = pickerColor( value );
 	return (
 		<div>
 			<TextField

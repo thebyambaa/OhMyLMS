@@ -439,7 +439,7 @@ class OfferButtonElement extends Element {
 		}
 
 		$this->set_attribute( '_root', 'class', 'ohmylms-offer-button ' . esc_attr( $settings['class'] ) );
-		echo '<div ' . $this->render_attributes( '_root' ) . '>';
+		echo '<div ' . $this->render_attributes( '_root' ) . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Bricks render_attributes() escapes the attributes.
 
 		printf(
 			'<a href="%s" class="%s" style="%s" data-action="%s">%s</a>',
@@ -473,7 +473,7 @@ class OfferButtonElement extends Element {
 			if ( empty( $current_step ) ) {
 				$current_step = get_query_var( 'step' );
 				if ( empty( $current_step ) && isset( $_GET['step'] ) ) {
-					$current_step = sanitize_text_field( wp_unslash( $_GET['step'] ));
+					$current_step = sanitize_text_field( wp_unslash( $_GET['step'] ) );
 				}
 			}
 
@@ -487,7 +487,7 @@ class OfferButtonElement extends Element {
 				$action_url  = add_query_arg( 'action', $action, $base_url );
 
 				// Add nonce.
-				$nonce = $_GET['funnel_nonce'] ?? wp_create_nonce( 'funnel_action_' . $order_id . '_' . $current_step );
+				$nonce = isset( $_GET['funnel_nonce'] ) ? sanitize_text_field( wp_unslash( $_GET['funnel_nonce'] ) ) : wp_create_nonce( 'funnel_action_' . $order_id . '_' . $current_step );
 				return add_query_arg( '_wpnonce', $nonce, $action_url );
 			}
 		}
@@ -500,6 +500,5 @@ class OfferButtonElement extends Element {
 	 */
 	public function enqueue_scripts() {
 		wp_enqueue_script( 'ohmylms-frontend' );
-		wp_enqueue_script( 'ohmylms-add-to-cart' );
 	}
 }

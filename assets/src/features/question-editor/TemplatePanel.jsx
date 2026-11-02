@@ -17,18 +17,23 @@ import {
 	templateIssues,
 	variableDefaults,
 } from './templateModel.mjs';
-import { FormulaControl } from '../math/FormulaControl';
+import { FormulaControl } from '../math/public.mjs';
+import { request } from '../rest.mjs';
+
+/** @typedef {import('./editorTypes').Data} Data */
+/** @typedef {import('./editorTypes').OnPatch} OnPatch */
+
+/** @type {Record<string, string>} */
 const variableLabels = {
 	int: __( 'Whole number', 'ohmylms' ),
 	decimal: __( 'Decimal', 'ohmylms' ),
 	choice: __( 'Pick from a list', 'ohmylms' ),
 	expr: __( 'Calculated', 'ohmylms' ),
 };
-const request = ( options ) => window.wp.apiFetch( options );
 
 /**
  * Question text without markup, for a one-line example.
- * @param html
+ * @param {string|null|undefined} html
  */
 const plain = ( html ) =>
 	String( html || '' )
@@ -38,34 +43,37 @@ const plain = ( html ) =>
 
 /**
  * The example's wording: the question text where it carries the question, else the title.
- * @param sample
+ * @param {Data} sample
  */
 export const exampleText = ( sample ) => plain( sample.body ) || sample.title;
 
 /**
  * A number field that stores a number, or nothing while empty.
- * @param value
- * @param onChange
- * @param extra
+ * @param {number|undefined}                  value    Stored number.
+ * @param {(value: number|undefined) => void} onChange Receives the number, or undefined when empty.
+ * @param {Data}                              [extra]  More TextControl props.
+ * @return {{type: 'number', step: string, value: number|string, onChange: (text: string) => void}} TextControl props.
  */
 const number = ( value, onChange, extra = {} ) => ( {
 	type: 'number',
 	step: 'any',
 	value: value ?? '',
-	onChange: ( text ) => onChange( text === '' ? undefined : Number( text ) ),
+	onChange: ( /** @type {string} */ text ) =>
+		onChange( text === '' ? undefined : Number( text ) ),
 	...extra,
 } );
 
 /**
  * Text kept as typed while a parsed value is stored (so a trailing comma or newline is not eaten).
- * @param root0
- * @param root0.value
- * @param root0.format
- * @param root0.parse
- * @param root0.onChange
- * @param root0.multiline
- * @param root0.label
- * @param root0.help
+ * @template T
+ * @param {Object}               root0
+ * @param {T}                    root0.value
+ * @param {(value: T) => string} root0.format
+ * @param {(text: string) => T}  root0.parse
+ * @param {(value: T) => void}   root0.onChange
+ * @param {boolean}              [root0.multiline]
+ * @param {string}               [root0.label]
+ * @param {string}               [root0.help]
  */
 function ParsedField( {
 	value,
@@ -96,18 +104,20 @@ function ParsedField( {
 /**
  * "Randomize numbers": turns a question into a template that draws new numbers every time
  * it is issued, with the learner's worked solution and answer following the same numbers.
- * @param root0
- * @param root0.question
- * @param root0.onChange
- * @param root0.readOnly
+ * @param {Object}  root0
+ * @param {Data}    root0.question
+ * @param {OnPatch} root0.onChange
+ * @param {boolean} [root0.readOnly]
  */
 export function TemplatePanel( { question, onChange, readOnly } ) {
 	const settings = question.settings || {};
 	const template = settings.template;
-	const [ preview, setPreview ] = useState( null );
+	const [ preview, setPreview ] = useState(
+		/** @type {Data|null} */ ( null )
+	);
 	const [ busy, setBusy ] = useState( false );
 	const [ sampleCount, setSampleCount ] = useState( 5 );
-	const save = ( next ) =>
+	const save = ( /** @type {Data|null} */ next ) =>
 		onChange( {
 			settings: next
 				? {
@@ -116,7 +126,7 @@ export function TemplatePanel( { question, onChange, readOnly } ) {
 					}
 				: ( ( { template: removed, ...rest } ) => rest )( settings ),
 		} );
-	const patch = ( fields ) =>
+	const patch = ( /** @type {Data} */ fields ) =>
 		save( {
 			...template,
 			...fields,
@@ -141,8 +151,12 @@ export function TemplatePanel( { question, onChange, readOnly } ) {
 			</details>
 		);
 	}
+	/** @type {Data[]} */
 	const variables = template.variables || [];
-	const setVariable = ( index, fields ) =>
+	const setVariable = (
+		/** @type {number} */ index,
+		/** @type {Data} */ fields
+	) =>
 		patch( {
 			variables: variables.map( ( v, i ) =>
 				i === index
@@ -153,8 +167,12 @@ export function TemplatePanel( { question, onChange, readOnly } ) {
 					: v
 			),
 		} );
+	/** @type {Data[]} */
 	const rules = template.set || [];
-	const setRule = ( index, fields ) =>
+	const setRule = (
+		/** @type {number} */ index,
+		/** @type {Data} */ fields
+	) =>
 		patch( {
 			set: rules.map( ( r, i ) =>
 				i === index
@@ -171,23 +189,26 @@ export function TemplatePanel( { question, onChange, readOnly } ) {
 		setBusy( true );
 		try {
 			setPreview(
-				await request( {
-					path: '/ohmylms/v1/question-template/preview',
-					method: 'POST',
-					data: {
-						name: question.name || '',
-						description: question.description || '',
-						settings,
-						questions: question.questions || [],
-						count: sampleCount,
-					},
-				} )
+				/** @type {Data} */ (
+					await request( {
+						path: '/ohmylms/v1/question-template/preview',
+						method: 'POST',
+						data: {
+							name: question.name || '',
+							description: question.description || '',
+							settings,
+							questions: question.questions || [],
+							count: sampleCount,
+						},
+					} )
+				)
 			);
 		} catch ( error ) {
 			setPreview( {
 				valid: false,
 				message:
-					error?.message ||
+					/** @type {{message?: string}|null|undefined} */ ( error )
+						?.message ||
 					__( 'Could not build examples.', 'ohmylms' ),
 				samples: [],
 			} );
@@ -524,35 +545,37 @@ export function TemplatePanel( { question, onChange, readOnly } ) {
 							: preview.message }
 					</Notice>
 					<ol>
-						{ ( preview.samples || [] ).map( ( sample ) => (
-							<li key={ sample.seed }>
-								<strong>{ exampleText( sample ) }</strong>
-								{ sample.expected !== '' && (
-									<span>
-										{ ' — ' }
-										{ sprintf(
-											/* translators: %s: computed expected answer. */ __(
-												'answer: %s',
-												'ohmylms'
-											),
-											sample.expected
-										) }
-									</span>
-								) }
-								{ sample.errors?.length > 0 && (
-									<em>
-										{ ' ' }
-										{ sprintf(
-											/* translators: %s: math evaluation error message. */ __(
-												'(cannot work out: %s)',
-												'ohmylms'
-											),
-											sample.errors.join( ', ' )
-										) }
-									</em>
-								) }
-							</li>
-						) ) }
+						{ ( preview.samples || [] ).map(
+							( /** @type {Data} */ sample ) => (
+								<li key={ sample.seed }>
+									<strong>{ exampleText( sample ) }</strong>
+									{ sample.expected !== '' && (
+										<span>
+											{ ' — ' }
+											{ sprintf(
+												/* translators: %s: computed expected answer. */ __(
+													'answer: %s',
+													'ohmylms'
+												),
+												sample.expected
+											) }
+										</span>
+									) }
+									{ sample.errors?.length > 0 && (
+										<em>
+											{ ' ' }
+											{ sprintf(
+												/* translators: %s: math evaluation error message. */ __(
+													'(cannot work out: %s)',
+													'ohmylms'
+												),
+												sample.errors.join( ', ' )
+											) }
+										</em>
+									) }
+								</li>
+							)
+						) }
 					</ol>
 				</div>
 			) }

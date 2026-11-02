@@ -1,42 +1,93 @@
 import { hasCapability } from '../bootstrap/config';
-import { certificateEditor, certificates } from './certificates';
-import { coupons, orderDetail, orders } from './commerce';
-import { contentHub } from './content-hub';
+import {
+	accountHub,
+	accountHubClass,
+	accountHubRoster,
+	accountHubSchool,
+} from './account-hub';
+import {
+	assignmentEditor,
+	assignmentGrading,
+	assignments,
+	assignmentSubmissions,
+} from './assignments';
+import {
+	certificateEditor,
+	certificates,
+	certificatesIssued,
+} from './certificates';
+import { automations, cohorts, coupons, orderDetail, orders } from './commerce';
+import { subscriptionDetail, subscriptions } from './commerce/subscriptions';
+import { contentHub, contentHubOverview } from './content-hub';
 import { courseEditor, courses } from './courses';
 import {
 	courseEditor as courseStructureEditor,
 	courses as courseStructures,
 	courseSettings,
 } from './course-structure';
-import { curriculum } from './curriculum';
-import { courseReport, dashboard, earnings } from './dashboard';
+import {
+	bundles,
+	curriculum,
+	curriculumCompare,
+	skillMap,
+	skillWorkspaceAiRuns,
+	skillWorkspaceContentLinks,
+	skillWorkspaceMappings,
+	skillWorkspacePlacement,
+	skillWorkspaceProvenance,
+	skillWorkspaceQuizzes,
+	subjectProfiles,
+} from './curriculum';
+import { courseReport, courseRoster, dashboard, earnings } from './dashboard';
 import { emails } from './emails';
+import { examEditor, examImportReview, exams } from './exams';
+import { extensionPages } from './extensions';
 import { gamification } from './gamification';
-import { home } from './home';
+import {
+	gradebook,
+	gradebookMastery,
+	gradebookRollup,
+	gradebookRoster,
+	gradebookStudent,
+} from './gradebook';
 import { integrations } from './integrations';
 import { lessons, lessonEditor } from './lessons';
 import { membershipEditor, memberships } from './memberships';
-import { quizAttempts, quizEditor, quizzes } from './quizzes';
+import { questionEditor, questions } from './questions';
+import { quizAttempts, quizEditor, quizReports, quizzes } from './quizzes';
+import { sessionEditor, sessions } from './sessions';
 import { settings } from './settings';
 import { setup } from './setup';
-import { students } from './students';
+import { studentReport, students } from './students';
 import { syllabusEditor } from './syllabus';
 import { taxonomies } from './taxonomies';
 import { webhooks } from './webhooks';
 import type { FeatureDefinition } from './types';
 
 /**
- * Every feature of the app, in navigation order. Add new features with an explicit import and one entry;
- * nothing is discovered automatically.
+ * Every feature of the app. Add new features with an explicit import and one entry; nothing is discovered
+ * automatically. Each names its admin page and tab (`group`, `tab`), which must match
+ * includes/Admin/AdminNavigation.php (checked by routing/navigation-contract.test.ts).
  */
 export const features: readonly FeatureDefinition[] = [
 	dashboard,
 	earnings,
 	courseReport,
-	home,
+	courseRoster,
 	setup,
+	contentHubOverview,
 	contentHub,
+	skillWorkspaceMappings,
+	skillWorkspaceAiRuns,
+	skillWorkspaceContentLinks,
+	skillWorkspacePlacement,
+	skillWorkspaceQuizzes,
+	skillWorkspaceProvenance,
 	curriculum,
+	skillMap,
+	subjectProfiles,
+	curriculumCompare,
+	bundles,
 	syllabusEditor,
 	courseStructures,
 	courseStructureEditor,
@@ -45,23 +96,51 @@ export const features: readonly FeatureDefinition[] = [
 	quizzes,
 	quizEditor,
 	quizAttempts,
+	quizReports,
+	assignments,
+	assignmentEditor,
+	assignmentSubmissions,
+	assignmentGrading,
+	gradebook,
+	gradebookRoster,
+	gradebookStudent,
+	gradebookMastery,
+	gradebookRollup,
+	exams,
+	examImportReview,
+	examEditor,
 	courseSettings,
 	lessons,
 	lessonEditor,
+	questions,
+	questionEditor,
 	orders,
 	orderDetail,
 	coupons,
+	subscriptions,
+	subscriptionDetail,
 	memberships,
 	membershipEditor,
+	cohorts,
+	automations,
 	students,
+	studentReport,
+	accountHub,
+	accountHubSchool,
+	accountHubRoster,
+	accountHubClass,
 	certificates,
+	certificatesIssued,
 	certificateEditor,
+	sessions,
+	sessionEditor,
 	gamification,
 	emails,
 	integrations,
 	settings,
 	taxonomies,
 	webhooks,
+	extensionPages,
 ];
 
 /**
@@ -80,8 +159,12 @@ export function getVisibleFeatures(
 	);
 }
 
+const ADDRESS_NAMES = [ 'page', 'tab', 'section', 'view' ];
+
 /**
- * Describe mistakes in a feature list: duplicate ids or paths, and malformed paths.
+ * Describe mistakes in a feature list: duplicate ids or paths, malformed paths, and addresses that
+ * cannot work (a Dashboard tab, a tab elsewhere missing, a path parameter named like an address slot
+ * without being mapped).
  *
  * @param all Feature list to check.
  * @return Human-readable problems; empty when the list is valid.
@@ -93,6 +176,24 @@ export function findRegistryProblems(
 	const ids = new Set< string >();
 	const paths = new Set< string >();
 	for ( const feature of all ) {
+		if ( ( 'dashboard' === feature.group ) === Boolean( feature.tab ) ) {
+			problems.push(
+				`Feature "${ feature.id }" needs a tab, except on the Dashboard.`
+			);
+		}
+		for ( const name of ( feature.path.match( /:[A-Za-z_]+/g ) ?? [] ).map(
+			( token ) => token.slice( 1 )
+		) ) {
+			if (
+				ADDRESS_NAMES.includes( name ) &&
+				! feature.params?.[ name ] &&
+				! feature.tab?.includes( `:${ name }` )
+			) {
+				problems.push(
+					`Feature "${ feature.id }" must map its ":${ name }" parameter in params.`
+				);
+			}
+		}
 		if ( ids.has( feature.id ) ) {
 			problems.push( `Duplicate feature id "${ feature.id }".` );
 		}

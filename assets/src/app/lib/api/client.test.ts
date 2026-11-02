@@ -56,6 +56,26 @@ describe( 'request', () => {
 		expect( spy.mock.calls[ 0 ]?.[ 1 ]?.body ).toBe( '{"x":1}' );
 	} );
 
+	it( 'sends a multipart body untouched', async () => {
+		const spy = mockFetch( () =>
+			Promise.resolve( jsonResponse( { id: 3 } ) )
+		);
+		const body = new FormData();
+		body.append( 'file', new Blob( [ 'x' ] ), 'a.pdf' );
+
+		const result = await request( {
+			path: '/ohmylms/v1/upload',
+			method: 'POST',
+			body,
+		} );
+
+		expect( result ).toEqual( { id: 3 } );
+		const init = spy.mock.calls[ 0 ]?.[ 1 ];
+		expect( init?.method ).toBe( 'POST' );
+		expect( init?.body ).toBe( body );
+		expect( new Headers( init?.headers ).get( 'Content-Type' ) ).toBeNull();
+	} );
+
 	it( 'maps a WP_Error response to ApiError', async () => {
 		mockFetch( () =>
 			Promise.resolve(

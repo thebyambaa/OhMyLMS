@@ -6,6 +6,9 @@ export const syllabusEditor: FeatureDefinition = {
 	id: 'syllabus-editor',
 	title: __( 'Syllabus editor', 'ohmylms' ),
 	path: '/content-hub/curriculum/syllabus/:id',
+	group: 'content',
+	tab: 'curriculum',
+	view: 'syllabus',
 	capability: 'manage_options',
 	hidden: true,
 	component: lazy(

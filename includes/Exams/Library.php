@@ -21,22 +21,23 @@ final class Library {
 	const TYPE = 'ohmylms-exam';
 	const META = '_ohmylms_exam';
 
-	/** Register the exam type, authoring API and separate player. */
+	/**
+	 * Register the exam type and separate player. The authoring API is {@see Rest\LibraryController}
+	 * and {@see Rest\ComposerController}.
+	 */
 	public static function init() {
 		add_action( 'init', array( __CLASS__, 'register' ) );
-		add_action( 'rest_api_init', array( __CLASS__, 'routes' ) );
 		Profile::init();
 		Player::init();
-		Composer::init();
+		Results::init();
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'styles' ) );
 	}
 
-	/** Load scoped exam import styling only in the LMS admin application. */
+	/** Load the figure runtime of imported exam questions only in the admin app. */
 	public static function styles() {
 		$screen = get_current_screen();
-		if ( $screen && 'toplevel_page_ohmylms' === $screen->id ) {
+		if ( $screen && \OhMyLMS\Admin\AppPage::is_app_screen( $screen->id ) ) {
 			\OhMyLMS\ExamImport\FigureContent::enqueue();
-			wp_enqueue_style( 'ohmylms-exam-import', plugins_url( 'assets/css/exam-import.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/exam-import.css' ) );
 		}
 	}
 
@@ -52,35 +53,6 @@ final class Library {
 				'supports'     => array( 'title', 'author' ),
 			)
 		);
-	}
-
-	/** Register creation, listing, publication and release separately. */
-	public static function routes() {
-		foreach ( array(
-			'GET'  => 'listing',
-			'POST' => 'create',
-		) as $method => $callback ) {
-			register_rest_route(
-				'ohmylms/v1',
-				'/exams',
-				array(
-					'methods'             => $method,
-					'permission_callback' => array( __CLASS__, 'permission' ),
-					'callback'            => array( __CLASS__, $callback ),
-				)
-			);
-		}
-		foreach ( array( 'publish', 'release' ) as $operation ) {
-			register_rest_route(
-				'ohmylms/v1',
-				'/exams/(?P<id>\d+)/' . $operation,
-				array(
-					'methods'             => 'POST',
-					'permission_callback' => array( __CLASS__, 'permission' ),
-					'callback'            => array( __CLASS__, $operation ),
-				)
-			);
-		}
 	}
 
 	/**
@@ -123,7 +95,7 @@ final class Library {
 			'job_id'           => (int) $data['job_id'],
 			'version_ids'      => $data['version_ids'],
 			'source_pages'     => $data['source_pages'],
-			'released'         => AssessmentSettings::get( $data['quiz_id'] )['released'],
+			'released'         => Results::summary( $id )['released'],
 			'composed'         => ! empty( $data['composed'] ),
 			'editor_url'       => ! empty( $data['composed'] ) ? (string) get_edit_post_link( (int) $data['quiz_id'], 'raw' ) : '',
 			'instructions'     => (string) ( $data['instructions'] ?? '' ),
@@ -203,7 +175,7 @@ final class Library {
 		$course = self::create_content(
 			'courses',
 			array(
-				'name'   => $title,
+				'title'  => $title,
 				'status' => 'draft',
 			)
 		);
@@ -453,7 +425,8 @@ final class Library {
 	}
 
 	/**
-	 * Explicitly release results and the private mark scheme using engine policy.
+	 * Release the results and private mark scheme of every pending attempt, logged and notified like
+	 * the typed release route ({@see Results::release()}).
 	 *
 	 * @param \WP_REST_Request $request Exam ID.
 	 * @return array|\WP_Error Exam summary.
@@ -462,8 +435,7 @@ final class Library {
 		if ( ! self::permission( $request ) || ! current_user_can( 'publish_posts' ) ) {
 			return self::error( 'permission', __( 'You cannot release these results.', 'ohmylms' ), 403 );
 		}
-		$data   = get_post_meta( $request['id'], self::META, true );
-		$result = AssessmentSettings::save( $data['quiz_id'], array( 'released' => true ) );
+		$result = Results::release( (int) $request['id'], null, true );
 		return is_wp_error( $result ) ? $result : self::view( $request['id'] );
 	}
 

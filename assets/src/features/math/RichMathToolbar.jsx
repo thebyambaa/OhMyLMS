@@ -9,7 +9,7 @@ import { mathEnabled } from './loader.mjs';
  * Equation tools keep the text selection when clicked.
  * @param {Object}                   props          Toolbar properties.
  * @param {(source: string) => void} props.onInsert Insert at the text caret.
- * @return {Object|null} Toolbar buttons.
+ * @return {React.ReactElement|null} Toolbar buttons.
  */
 export function RichMathToolbar( { onInsert } ) {
 	const variables = useContext( MathVariables );
@@ -33,7 +33,9 @@ export function RichMathToolbar( { onInsert } ) {
 				<Button
 					key={ label }
 					label={ label }
-					onMouseDown={ ( event ) => event.preventDefault() }
+					onMouseDown={ (
+						/** @type {import('react').MouseEvent} */ event
+					) => event.preventDefault() }
 					onClick={ () => onInsert( source ) }
 				>
 					{ text }
@@ -42,7 +44,9 @@ export function RichMathToolbar( { onInsert } ) {
 			{ variables.map( ( variable ) => (
 				<Button
 					key={ variable.name }
-					onMouseDown={ ( event ) => event.preventDefault() }
+					onMouseDown={ (
+						/** @type {import('react').MouseEvent} */ event
+					) => event.preventDefault() }
 					onClick={ () => onInsert( `{{${ variable.name }}}` ) }
 				>{ `{{${ variable.name }}}` }</Button>
 			) ) }

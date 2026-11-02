@@ -38,6 +38,11 @@ final class NumericAnswer {
 			$value = (float) $text;
 			return is_finite( $value ) ? $value : null;
 		}
+		// LaTeX from a <math-field>: \frac{3}{4}, \dfrac{3}{4}, -\frac{3}{4} and mixed 1\frac{1}{2}
+		// are rewritten to the plain fraction syntax below; nothing else of LaTeX is evaluated.
+		if ( $allow_fractions && preg_match( '/^([+-]?)\s*(\d+)?\s*\\\\[dt]?frac\s*\{\s*(\d+)\s*\}\s*\{\s*(\d+)\s*\}$/', $text, $latex ) ) {
+			$text = $latex[1] . ( '' !== $latex[2] ? $latex[2] . ' ' : '' ) . $latex[3] . '/' . $latex[4];
+		}
 		if ( $allow_fractions && preg_match( '/^([+-]?)(?:(\d+)\s+)?(\d+)\s*\/\s*(\d+)$/', $text, $match ) ) {
 			$denominator = (float) $match[4];
 			if ( 0.0 === $denominator ) {

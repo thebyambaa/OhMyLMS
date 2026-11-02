@@ -7,13 +7,18 @@
 
 namespace OhMyLMS\Assets;
 
-use OhMyLMS\Admin\AppPage;
+use OhMyLMS\Admin\AdminNavigation;
+use OhMyLMS\Assessment\Interactive;
+use OhMyLMS\Assessment\MathLive;
 use OhMyLMS\Design\Ui;
+use OhMyLMS\Extensions\Registry;
+use OhMyLMS\Extensions\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Enqueues the built `admin-app` entry on its own admin page only.
+ * Enqueues the built `admin-app` entry (one bundle) on the six OhMyLMS admin pages, except on sections the
+ * server renders itself.
  */
 final class AdminAppAssets {
 
@@ -21,6 +26,11 @@ final class AdminAppAssets {
 	 * Script and style handle.
 	 */
 	const HANDLE = 'ohmylms-admin-app';
+
+	/**
+	 * Extension host handle, passed to `ohmylms_enqueue_extension_scripts` on this page.
+	 */
+	const EXTENSIONS_HANDLE = 'ohmylms-app-extensions';
 
 	/**
 	 * Register hooks. Runs after the design system stylesheet (priority 30) so it can depend on it.
@@ -60,7 +70,7 @@ final class AdminAppAssets {
 	 * @param string $hook_suffix Current admin page hook suffix.
 	 */
 	public static function enqueue( $hook_suffix ) {
-		if ( ! AppPage::is_app_screen( $hook_suffix ) || ! current_user_can( AppPage::CAPABILITY ) ) {
+		if ( ! AdminNavigation::shows_app( $hook_suffix ) || ! current_user_can( AdminNavigation::hook_capability( $hook_suffix ) ) ) {
 			return;
 		}
 		$build = self::locate();
@@ -82,13 +92,58 @@ final class AdminAppAssets {
 			wp_enqueue_style( self::HANDLE, $build['url'] . '/admin-app.css', $style_deps, $build['asset']['version'] );
 		}
 
-		wp_enqueue_script( self::HANDLE, $build['url'] . '/admin-app.js', $build['asset']['dependencies'], $build['asset']['version'], true );
+		$host         = self::enqueue_extension_host( $build );
+		$dependencies = array_merge( $build['asset']['dependencies'], $host );
+		wp_enqueue_script( self::HANDLE, $build['url'] . '/admin-app.js', array_values( array_unique( $dependencies ) ), $build['asset']['version'], true );
+		self::enqueue_question_editor_runtime( $host ? self::EXTENSIONS_HANDLE : self::HANDLE );
 		wp_set_script_translations( self::HANDLE, 'ohmylms', OHMYLMS_DIR . '/languages' );
 		wp_add_inline_script(
 			self::HANDLE,
 			'window.ohmylmsApp = ' . wp_json_encode( self::bootstrap_data(), JSON_HEX_TAG | JSON_HEX_AMP ) . ';',
 			'before'
 		);
+	}
+
+	/**
+	 * Load the extension host (`window.ohmylms.extensions`) and the scripts extensions add for it.
+	 *
+	 * The host loads first, then everything queued on `ohmylms_enqueue_extension_scripts`, then the app, so
+	 * extensions register before the app renders (docs/EXTENSIONS.md).
+	 *
+	 * @param array $build Located build, from {@see self::locate()}.
+	 * @return string[] Handles the app must load after; empty when the host is not built.
+	 */
+	private static function enqueue_extension_host( array $build ) {
+		$asset_file = $build['dir'] . '/admin-app-extensions.asset.php';
+		if ( ! is_file( $asset_file ) || ! is_file( $build['dir'] . '/admin-app-extensions.js' ) ) {
+			return array();
+		}
+		$asset = require $asset_file;
+		// Extension editors may open the media library.
+		wp_enqueue_media();
+		wp_enqueue_script( self::EXTENSIONS_HANDLE, $build['url'] . '/admin-app-extensions.js', $asset['dependencies'], $asset['version'], true );
+		wp_localize_script( self::EXTENSIONS_HANDLE, 'ohmylmsExtensionManifest', array_merge( Registry::manifest(), array( 'settings' => Settings::manifest() ) ) );
+		$scripts = wp_scripts();
+		$before  = $scripts->queue;
+		do_action( 'ohmylms_enqueue_extension_scripts', self::EXTENSIONS_HANDLE );
+		return array_merge( array( self::EXTENSIONS_HANDLE ), array_values( array_diff( $scripts->queue, $before ) ) );
+	}
+
+	/**
+	 * What the built-in question editors need at runtime, as on the existing admin's screen: the
+	 * learners' interactive widgets for previews (`window.OhMyLMSInteractive`, see
+	 * {@see \OhMyLMS\Assessment\Interactive::enqueue()}), the media library, the math field styles, and
+	 * the math configuration (`window.ohmylmsMath`) that the math input loader reads before it loads
+	 * the runtime on demand.
+	 *
+	 * @param string $handle Script that carries `window.ohmylmsMath`: the extension host when it is
+	 *                       built (so extension scripts can read it too), otherwise the app.
+	 */
+	private static function enqueue_question_editor_runtime( $handle ) {
+		wp_enqueue_media();
+		Interactive::enqueue();
+		MathLive::enqueue_style();
+		wp_localize_script( $handle, 'ohmylmsMath', MathLive::config() );
 	}
 
 	/**

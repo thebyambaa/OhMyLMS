@@ -22,7 +22,7 @@ test( 'native Gutenberg edits lessons and saves LMS settings together', async ( 
 			( url ) => ! url.pathname.endsWith( 'wp-login.php' )
 		);
 	}
-	await page.goto( '/wp-admin/admin.php?page=ohmylms#/content-hub/lessons' );
+	await page.goto( '/wp-admin/admin.php?page=ohmylms-app#/content-hub/lessons' );
 	await page.waitForFunction( () => window.wp?.apiFetch );
 	const lesson = await page.evaluate( () =>
 		wp.apiFetch( {
@@ -39,12 +39,7 @@ test( 'native Gutenberg edits lessons and saves LMS settings together', async ( 
 	);
 	try {
 		await page.goto(
-			`/wp-admin/admin.php?page=ohmylms#/lesson-edit/${ lesson.id }?returnTo=${ encodeURIComponent( '/content-hub/curriculum/syllabus/24?node=s%3A1' ) }`
-		);
-		await page.waitForURL(
-			( url ) =>
-				url.pathname.endsWith( '/post.php' ) &&
-				url.searchParams.get( 'post' ) === String( lesson.id )
+			`/wp-admin/post.php?post=${ lesson.id }&action=edit&ohmylms_return=${ encodeURIComponent( '/content-hub/curriculum/syllabus/24?node=s%3A1' ) }`
 		);
 		const canvas = page.frameLocator( 'iframe[name="editor-canvas"]' );
 		const paragraph = canvas.locator( '[data-type="core/paragraph"]' );

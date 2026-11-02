@@ -7,6 +7,7 @@
 
 namespace OhMyLMS\Engagement;
 
+use OhMyLMS\Utility\Transaction;
 use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
@@ -286,6 +287,59 @@ final class GamificationStore {
 		}
 
 		return (bool) update_option( $option, $settings );
+	}
+
+	/**
+	 * Stale-save revision of a stored section option (16 hex characters).
+	 *
+	 * @param mixed $stored Unserialized option value, or null when the option does not exist.
+	 * @return string
+	 */
+	public static function revision( $stored ) {
+		return substr( hash( 'sha256', (string) wp_json_encode( $stored ) ), 0, 16 );
+	}
+
+	/**
+	 * Prepare and store the sent fields of a section in one transaction. With a revision, the option row
+	 * is locked first and a different stored revision answers `ohmylms_gamification_conflict` (409)
+	 * without writing.
+	 *
+	 * @param string $section  Section id.
+	 * @param array  $input    Sent fields.
+	 * @param string $revision Revision the editor loaded, or '' to skip the check.
+	 * @return true|WP_Error
+	 * @throws \RuntimeException When the option could not be written; the transaction is rolled back.
+	 */
+	public static function save_checked( $section, array $input, $revision ) {
+		return Transaction::run(
+			static function () use ( $section, $input, $revision ) {
+				global $wpdb;
+				$option = GamificationRegistry::option( $section );
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Lock the option row so the revision check and the write are atomic.
+				$row = $wpdb->get_var( $wpdb->prepare( 'SELECT option_value FROM %i WHERE option_name=%s FOR UPDATE', $wpdb->options, $option ) );
+				if ( '' !== $revision ) {
+					$current = self::revision( null === $row ? null : maybe_unserialize( $row ) );
+					if ( $current !== $revision ) {
+						return new WP_Error(
+							'ohmylms_gamification_conflict',
+							__( 'These settings were changed by someone else. Reload them before saving.', 'ohmylms' ),
+							array(
+								'status'   => 409,
+								'revision' => $current,
+							)
+						);
+					}
+				}
+				$next = self::prepare( $section, $input );
+				if ( is_wp_error( $next ) ) {
+					return $next;
+				}
+				if ( ! self::save( $section, $next ) ) {
+					throw new \RuntimeException( 'save failed' );
+				}
+				return true;
+			}
+		);
 	}
 
 	/**

@@ -17,7 +17,7 @@ test( 'all remaining activity modes play and the maths generator saves in Gutenb
 	await page.locator( '#user_pass' ).fill( credentials.password );
 	await page.locator( '#wp-submit' ).click();
 	await page.waitForURL( ( u ) => ! u.pathname.endsWith( 'wp-login.php' ) );
-	await page.goto( '/wp-admin/admin.php?page=ohmylms' );
+	await page.goto( '/wp-admin/admin.php?page=ohmylms-app' );
 	await page.waitForFunction( () => Boolean( window.wp?.apiFetch ) );
 
 	test.setTimeout( 300000 );
@@ -45,28 +45,28 @@ test( 'all remaining activity modes play and the maths generator saves in Gutenb
 			const api = ( path, data ) =>
 				wp.apiFetch( { path, method: 'POST', data } );
 			const ids = {};
-			for ( const [ key, def ] of Object.entries( families ) ) {
-				const q = await api( '/ohmylms/v1/question', {
+			for ( const [ key, { questions, ...def } ] of Object.entries(
+				families
+			) ) {
+				const q = await api( '/ohmylms/v1/questions', {
 					...def,
+					options: questions,
 					name: `Activities ${ key }`,
-					quiz_id: 0,
 					settings: {
 						...def.settings,
 						score: { enabled: true, value: 1 },
 					},
 				} );
-				await api( `/ohmylms/v1/question-bank/${ q.id }/approve`, {} );
+				await api( `/ohmylms/v1/questions/${ q.id }/approve`, {} );
 				ids[ key ] = q.id;
 			}
-			const math = await api( '/ohmylms/v1/question', {
+			const math = await api( '/ohmylms/v1/questions', {
 				name: 'Maths generator fixture',
-				quiz_id: 0,
 				settings: {
 					type: 'numerical',
 					answer: 1,
 					score: { enabled: true, value: 1 },
 				},
-				questions: [],
 			} );
 			ids.math = math.id;
 			const content = Object.entries( modes )
@@ -351,7 +351,7 @@ test( 'all remaining activity modes play and the maths generator saves in Gutenb
 					async ( id ) =>
 						(
 							await wp.apiFetch( {
-								path: `/ohmylms/v1/question/${ id }`,
+								path: `/ohmylms/v1/questions/${ id }`,
 							} )
 						).settings.maths_generator?.kind,
 					fixture.ids.math
@@ -369,7 +369,7 @@ test( 'all remaining activity modes play and the maths generator saves in Gutenb
 		await page.evaluate(
 			async ( id ) =>
 				wp.apiFetch( {
-					path: `/ohmylms/v1/question-bank/${ id }/approve`,
+					path: `/ohmylms/v1/questions/${ id }/approve`,
 					method: 'POST',
 					data: {},
 				} ),
@@ -398,7 +398,7 @@ test( 'all remaining activity modes play and the maths generator saves in Gutenb
 		).toBeVisible();
 		expect( errors ).toEqual( [] );
 	} finally {
-		await page.goto( '/wp-admin/admin.php?page=ohmylms' );
+		await page.goto( '/wp-admin/admin.php?page=ohmylms-app' );
 		await page.waitForFunction( () => Boolean( window.wp?.apiFetch ) );
 		await page.evaluate( async ( fixture ) => {
 			for ( const post of [ fixture.post, fixture.mathPost ] )
@@ -408,7 +408,7 @@ test( 'all remaining activity modes play and the maths generator saves in Gutenb
 				} );
 			for ( const id of Object.values( fixture.ids ) )
 				await wp.apiFetch( {
-					path: `/ohmylms/v1/question/${ id }`,
+					path: `/ohmylms/v1/questions/${ id }`,
 					method: 'DELETE',
 				} );
 		}, fixture );

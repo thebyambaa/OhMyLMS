@@ -22,6 +22,8 @@ class TaxService {
 
 	/**
 	 * Instance of this class
+	 *
+	 * @var TaxService|null
 	 */
 	private static $instance = null;
 

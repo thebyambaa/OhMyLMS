@@ -21,6 +21,34 @@ final class Registry {
 	);
 
 	/**
+	 * IDs registered by OhMyLMS itself, by kind.
+	 *
+	 * @var array<string,string[]>
+	 */
+	private static $core = array();
+
+	/**
+	 * Remember everything registered so far as shipped with OhMyLMS. Called once, before
+	 * `ohmylms_register_extensions` lets add-ons register their own items.
+	 */
+	public static function mark_core() {
+		foreach ( self::$items as $kind => $items ) {
+			self::$core[ $kind ] = array_keys( $items );
+		}
+	}
+
+	/**
+	 * Whether an item ships with OhMyLMS rather than an add-on.
+	 *
+	 * @param string $kind Kind.
+	 * @param string $id   Id.
+	 * @return bool
+	 */
+	public static function is_core( $kind, $id ) {
+		return in_array( $id, self::$core[ $kind ] ?? array(), true );
+	}
+
+	/**
 	 * Register for Registry.
 	 *
 	 * @param mixed $kind Kind.
@@ -33,14 +61,14 @@ final class Registry {
 			throw new \InvalidArgumentException( 'Invalid extension identifier.' );
 		}
 		if ( isset( self::$items[ $kind ][ $id ] ) ) {
-			throw new \InvalidArgumentException( 'Extension already registered: ' . $id );
+			throw new \InvalidArgumentException( 'Extension already registered: ' . $id ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Developer-facing registration error; not output here.
 		}
 		if ( empty( $definition['label'] ) ) {
 			throw new \InvalidArgumentException( 'An extension label is required.' );
 		}
 		foreach ( 'question' === $kind ? array( 'render', 'validate', 'grade' ) : array( 'render' ) as $callback ) {
 			if ( ! is_callable( $definition[ $callback ] ?? null ) ) {
-				throw new \InvalidArgumentException( 'Missing callback: ' . $callback );
+				throw new \InvalidArgumentException( 'Missing callback: ' . $callback ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Developer-facing registration error; not output here.
 			}
 		}
 		if ( 'layout' === $kind && ( ! isset( $definition['contexts'] ) || array_diff( $definition['contexts'], array( 'course', 'chapter', 'lesson', 'quiz' ) ) ) ) {

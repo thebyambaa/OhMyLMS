@@ -48,26 +48,18 @@ class LessonFactory {
 		// Check if input is false and post is set.
 		if ( false === $lesson && isset( $post, $post->ID ) && OHMYLMS_LESSON_CPT === get_post_type( $post->ID ) ) {
 			return absint( $post->ID );
-		}
-
-		// If input is numeric, check if lesson exists.
-		elseif ( is_numeric( $lesson ) ) {
+		} elseif ( is_numeric( $lesson ) ) {
+			// If input is numeric, check if lesson exists.
 			return $this->is_lesson_exist( $lesson ) ? $lesson : false;
-		}
-
-		// If input is an instance of Lesson.
-		elseif ( $lesson instanceof Lesson ) {
+		} elseif ( $lesson instanceof Lesson ) {
+			// If input is an instance of Lesson.
 			$id = $lesson->get_id();
 			return $this->is_lesson_exist( $id ) ? $id : false;
-		}
-
-		// If input contains a valid ID property.
-		elseif ( ! empty( $lesson->ID ) ) {
+		} elseif ( ! empty( $lesson->ID ) ) {
+			// If input contains a valid ID property.
 			return $this->is_lesson_exist( $lesson->ID ) ? $lesson->ID : false;
-		}
-
-		// Otherwise, return false.
-		else {
+		} else {
+			// Otherwise, return false.
 			return false;
 		}
 	}

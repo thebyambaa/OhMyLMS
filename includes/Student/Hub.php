@@ -40,6 +40,7 @@ final class Hub {
 	/** Register the shortcode, settings page, and compatible legacy navigation. */
 	public static function init() {
 		LegacyPages::init();
+		LegacyLessonLinks::init();
 		TeacherActions::init();
 		ParentActions::init();
 		FamilyActions::init();
@@ -75,7 +76,6 @@ final class Hub {
 	 * @return array
 	 */
 	public static function query_vars( $vars ) {
-		$vars[] = 'hub_lesson';
 		return array_merge( $vars, array( 'hub_section', 'hub_view', 'hub_class', 'hub_q', 'hub_course', 'hub_skill_course', 'hub_skill_unit', 'hub_period', 'hub_type', 'hub_role', 'hub_child', 'hub_scope', 'hub_school', 'ohmylms_child_setup', 'ohmylms_family_invite', 'hub_candidate_page', 'ohmylms_invite', 'id', 'current_page' ) );
 	}
 
@@ -365,7 +365,7 @@ final class Hub {
 	 * @return string
 	 */
 	public static function admin_home_url() {
-		return admin_url( 'admin.php?page=' . OHMYLMS_SLUG . '#/accounthub' );
+		return \OhMyLMS\Admin\LegacyRoutes::app_url( '/account-hub' );
 	}
 
 	/** Send the retired Student Home admin address to the Account Hub home tab. */
@@ -454,12 +454,7 @@ final class Hub {
 		if ( post_password_required( $course_id ) && ! current_user_can( 'edit_post', $course_id ) ) {
 			return;
 		}
-		$target = self::course_url( $course_id );
-		$lesson = get_query_var( 'hub_lesson', '' );
-		if ( is_string( $lesson ) && wp_is_uuid( $lesson ) ) {
-			$target = add_query_arg( 'hub_lesson', $lesson, $target );
-		}
-		wp_safe_redirect( $target );
+		wp_safe_redirect( self::course_url( $course_id ) );
 		exit;
 	}
 
@@ -655,9 +650,7 @@ final class Hub {
 		wp_enqueue_style( 'ohmylms-frontend' );
 		wp_enqueue_style( 'ohmylms-general' );
 		wp_enqueue_script( 'ohmylms-frontend' );
-		wp_enqueue_script( 'ohmylms-add-to-cart' );
 		if ( 'catalog' === get_query_var( 'hub_view' ) ) {
-			wp_enqueue_script( 'ohmylms-slick' );
 			wp_enqueue_style( 'ohmylms-shortcode-course-list', plugins_url( 'assets/css/shortcode-course-list.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/shortcode-course-list.css' ) );
 		}
 		Dashboard::assets();

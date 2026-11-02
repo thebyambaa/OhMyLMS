@@ -82,6 +82,28 @@ export const detail: OrderDetail = {
 		},
 	],
 	allowed_statuses: [ 'cancelled' ],
+	points: null,
+};
+export const pointsDetail: OrderDetail = {
+	...detail,
+	id: 312,
+	number: '312',
+	total: '0.00',
+	subtotal: '0.00',
+	discount_total: '0.00',
+	payment_method: 'points',
+	payment_method_title: 'Bonus points',
+	coupon_lines: [],
+	refunds: [],
+	total_refunded: '0.00',
+	remaining_refundable: '0.00',
+	related_orders: [],
+	points: {
+		points: 80,
+		refunded: false,
+		refunded_at: null,
+		refundable: true,
+	},
 };
 export const pendingDetail: OrderDetail = {
 	...detail,

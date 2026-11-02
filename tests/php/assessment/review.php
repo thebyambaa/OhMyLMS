@@ -54,9 +54,9 @@ ok(AnswerReview::enabled(ohmylms_get_quiz($quiz_id)->get_settings()), 'The switc
 
 $choice = choice_question($quiz_id, 'Pick the right one', 2);
 $create = static function ($name, $type, $score, $options = [], $extra = []) use ($quiz_id) {
-    $response = call('POST', 'question', ['quiz_id' => $quiz_id, 'name' => $name, 'settings' => array_merge(['type' => $type, 'score' => ['enabled' => true, 'value' => $score]], $extra), 'questions' => $options]);
+    $response = create_question(['quiz_id' => $quiz_id, 'name' => $name, 'settings' => array_merge(['type' => $type, 'score' => ['enabled' => true, 'value' => $score]], $extra), 'questions' => $options]);
     ok(status_of($response) === 201, "Creating $name failed: " . wp_json_encode($response->get_data()));
-    return remember_post($response->get_data()['id']);
+    return remember_post($response->get_data()['created_id']);
 };
 $multi = $create('Pick primes', 'multiple-choice', 3, [['answer' => '2', 'is_correct' => 1], ['answer' => '3', 'is_correct' => 1], ['answer' => '4', 'is_correct' => 0], ['answer' => '9', 'is_correct' => 0]]);
 $blank = $create('The capital of France is {Paris}.', 'fill-in-the-blank', 1, [['answer' => 'Paris', 'is_correct' => 1]]);
@@ -140,7 +140,7 @@ as_user($student);
 // The review shows the questions as they were when the attempt was taken.
 as_user($admin);
 $options = option_rows($choice);
-call('PUT', 'question/' . $choice, ['name' => 'Edited wording', 'questions' => [['id' => $options[0]['id'], 'answer' => 'Changed', 'is_correct' => 0], ['id' => $options[1]['id'], 'answer' => 'Other', 'is_correct' => 1]]]);
+ok(status_of(edit_question($choice, ['name' => 'Edited wording', 'questions' => [['id' => (int) $options[0]['id'], 'answer' => 'Changed', 'is_correct' => 0], ['id' => (int) $options[1]['id'], 'answer' => 'Other', 'is_correct' => 1]]])) === 200, 'Question edit failed');
 as_user($student);
 $by = $entries_for();
 ok(isset($by['Pick the right one']) && $by['Pick the right one']['expected'] === ['Right'], 'Editing the question changed a past review: ' . wp_json_encode(array_keys($by)));

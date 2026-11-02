@@ -169,13 +169,18 @@ class Order extends Data {
 			do_action( 'ohmylms_order_status_' . $status_transition['to'], $this->get_id(), $this, $status_transition );
 			if ( ! empty( $status_transition['from'] ) ) {
 				$transition_note = sprintf( /* translators: %1$s: text value; %2$s: text value. */
-				__( 'Order status changed from %1$s to %2$s.', 'ohmylms' ), $status_transition['from'], $status_transition['to'] );
+					__( 'Order status changed from %1$s to %2$s.', 'ohmylms' ),
+					$status_transition['from'],
+					$status_transition['to']
+				);
 				$this->add_order_note( $transition_note );
 				do_action( 'ohmylms_order_status_' . $status_transition['from'] . '_to_' . $status_transition['to'], $this->get_id(), $this );
 				do_action( 'ohmylms_order_status_changed', $this->get_id(), $status_transition['from'], $status_transition['to'], $this );
 			} else {
 				$transition_note = sprintf( /* translators: %s: text value. */
-				__( 'Order status set to %s.', 'ohmylms' ), $status_transition['to'] );
+					__( 'Order status set to %s.', 'ohmylms' ),
+					$status_transition['to']
+				);
 				$this->add_order_note( $transition_note );
 			}
 		} catch ( \Exception $e ) {
@@ -1026,7 +1031,10 @@ class Order extends Data {
 
 		if ( $old_status ) {
 			$transition_note         = sprintf( /* translators: %1$s: text value; %2$s: text value. */
-			__( 'Order status changed from %1$s to %2$s.', 'ohmylms' ), $old_status, $new_status );
+				__( 'Order status changed from %1$s to %2$s.', 'ohmylms' ),
+				$old_status,
+				$new_status
+			);
 			$this->status_transition = array(
 				'from' => ! empty( $this->status_transition['from'] ) ? $this->status_transition['from'] : $old_status,
 				'to'   => $new_status,

@@ -47,5 +47,5 @@ $add_to_cart = apply_filters(
 
 
 <div class="cta-button-ara">
-	<?php echo $add_to_cart; ?>
+	<?php echo $add_to_cart; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Link markup escaped in the sprintf() above. ?>
 </div>

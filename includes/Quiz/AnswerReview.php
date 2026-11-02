@@ -11,10 +11,12 @@ use OhMyLMS\Assessment\AssessmentSettings;
 use OhMyLMS\Assessment\AttemptItems;
 use OhMyLMS\Assessment\AttemptReport;
 use OhMyLMS\Assessment\Engine;
+use OhMyLMS\Assessment\GradeEvents;
 use OhMyLMS\Assessment\Grader;
 use OhMyLMS\Assessment\InlineBlanks;
 use OhMyLMS\Assessment\Interactive;
 use OhMyLMS\Assessment\ReviewLines;
+use OhMyLMS\Assessment\Rubric;
 use OhMyLMS\Assessment\Schema;
 use OhMyLMS\Assessment\Structured;
 use OhMyLMS\Assessment\StructuredPart;
@@ -116,7 +118,8 @@ final class AnswerReview {
 			return '';
 		}
 		if ( ! is_user_logged_in() ) {
-			return '<p class="ohmylms-answer-review-login"><a href="' . esc_url( wp_login_url( get_permalink() ?: home_url( '/' ) ) ) . '">' . esc_html__( 'Log in to see your quiz results.', 'ohmylms' ) . '</a></p>';
+			$permalink = get_permalink();
+			return '<p class="ohmylms-answer-review-login"><a href="' . esc_url( wp_login_url( $permalink ? $permalink : home_url( '/' ) ) ) . '">' . esc_html__( 'Log in to see your quiz results.', 'ohmylms' ) . '</a></p>';
 		}
 		return self::for_quiz( $quiz_id );
 	}
@@ -425,7 +428,8 @@ final class AnswerReview {
 	 *
 	 * Each entry: name (HTML), type, verdict (correct|partial|incorrect|pending|unanswered),
 	 * awarded, max, given (string[]), expected (string[]|null when the type has no readable
-	 * key, such as a teacher-marked answer) and explanation (HTML).
+	 * key, such as a teacher-marked answer) and explanation (HTML). A marked short or long answer of a
+	 * versioned attempt also has rubric (see rubric(); empty when it was not graded with its rubric).
 	 *
 	 * @param int $attempt_id Attempt ID.
 	 * @return array[]
@@ -450,6 +454,9 @@ final class AnswerReview {
 					$entry = self::entry( $question, $row, (float) $item['marks'] );
 					if ( 'structured' === $entry['type'] ) {
 						$entry['parts'] = self::parts( $attempt_id, $item, $question, $row );
+					}
+					if ( Rubric::applies( $entry['type'] ) && ! in_array( $entry['verdict'], array( 'pending', 'unanswered' ), true ) ) {
+						$entry['rubric'] = self::rubric( $attempt_id, $item, $question );
 					}
 					$entry['number'] = count( $entries ) + 1;
 					$entries[]       = $entry;
@@ -480,6 +487,39 @@ final class AnswerReview {
 	private static function parts( $attempt_id, array $item, $question, $row ) {
 		$given = $row ? maybe_unserialize( $row['given_answer'] ) : array();
 		return self::part_rows( $question->get_settings(), is_array( $given ) ? $given : array(), AttemptReport::parts( $attempt_id, $item, $question ) );
+	}
+
+	/**
+	 * How a teacher scored each rubric criterion of a marked short or long answer: the breakdown saved
+	 * with the current manual grade, without the criteria's marking notes.
+	 *
+	 * @param int    $attempt_id Attempt ID.
+	 * @param array  $item       Attempt item.
+	 * @param object $question   Frozen snapshot.
+	 * @return array[] title, awarded, max and level (the chosen level's description, or '') per criterion.
+	 */
+	private static function rubric( $attempt_id, array $item, $question ) {
+		$scores = GradeEvents::rubric( GradeEvents::current( 'quiz', (int) $attempt_id, (int) $item['id'] ) );
+		$lines  = array();
+		foreach ( $scores ? Rubric::criteria( $question->get_settings() ) : array() as $criterion ) {
+			if ( ! isset( $scores[ $criterion['id'] ] ) ) {
+				continue;
+			}
+			$awarded = $scores[ $criterion['id'] ];
+			$level   = '';
+			foreach ( $criterion['levels'] as $candidate ) {
+				if ( abs( $candidate['points'] - $awarded ) < self::EPSILON ) {
+					$level = $candidate['description'];
+				}
+			}
+			$lines[] = array(
+				'title'   => trim( wp_strip_all_tags( $criterion['title'] ) ),
+				'awarded' => $awarded,
+				'max'     => $criterion['points'],
+				'level'   => trim( wp_strip_all_tags( $level ) ),
+			);
+		}
+		return $lines;
 	}
 
 	/**
@@ -514,8 +554,11 @@ final class AnswerReview {
 			$unit     = trim( (string) ( $part['unit'] ?? '' ) );
 			$expected = null;
 			if ( 'question' === $part['kind'] ) {
-				$expected_lines = ReviewLines::expected( $child->get_type(), $child->get_settings() ) ?: self::expected_lines( $child->get_type(), $child, self::options( $child ), $child->get_settings() );
-				$expected       = $expected_lines ? implode( '; ', $expected_lines ) : null;
+				$expected_lines = ReviewLines::expected( $child->get_type(), $child->get_settings() );
+				if ( ! $expected_lines ) {
+					$expected_lines = self::expected_lines( $child->get_type(), $child, self::options( $child ), $child->get_settings() );
+				}
+				$expected = $expected_lines ? implode( '; ', $expected_lines ) : null;
 			} elseif ( 'numerical' === $part['kind'] ) {
 				$numbers  = isset( $part['answers'] ) && is_array( $part['answers'] ) ? $part['answers'] : ( isset( $part['answer'] ) ? array( $part['answer'] ) : array() );
 				$expected = trim( implode( ' / ', array_map( 'strval', array_filter( $numbers, 'is_scalar' ) ) ) . ' ' . $unit );
@@ -563,6 +606,10 @@ final class AnswerReview {
 		} else {
 			$verdict = $awarded > 0 ? 'partial' : 'incorrect';
 		}
+		$expected = ReviewLines::expected( $type, $settings );
+		if ( ! $expected ) {
+			$expected = self::expected_lines( $type, $question, $options, $settings );
+		}
 		return array(
 			'question_id' => (int) $question->get_id(),
 			'name'        => self::prompt( $question, $type ),
@@ -571,7 +618,7 @@ final class AnswerReview {
 			'awarded'     => $awarded,
 			'max'         => $max,
 			'given'       => $present ? ( ReviewLines::given( $type, (array) $given, $settings ) ?? self::given_lines( $type, $options, (array) $given ) ) : array(),
-			'expected'    => ReviewLines::expected( $type, $settings ) ?: self::expected_lines( $type, $question, $options, $settings ),
+			'expected'    => $expected,
 			'explanation' => wp_kses_post( (string) ( $settings['explanation'] ?? '' ) ),
 		);
 	}

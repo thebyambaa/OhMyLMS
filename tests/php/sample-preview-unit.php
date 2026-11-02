@@ -162,6 +162,8 @@ namespace {
 			foreach ( explode( ' AND ', $where ) as $clause ) {
 				if ( preg_match( '/^(\w+) NOT IN \(([\d,]+)\)$/', $clause, $m ) ) {
 					if ( in_array( (string) $row[ $m[1] ], explode( ',', $m[2] ), true ) ) { return false; }
+				} elseif ( preg_match( '/^(\w+) IN \(([\d,]+)\)$/', $clause, $m ) ) {
+					if ( ! in_array( (string) $row[ $m[1] ], explode( ',', $m[2] ), true ) ) { return false; }
 				} elseif ( preg_match( '/^(\w+)<>%d$/', $clause, $m ) ) {
 					if ( (int) $row[ $m[1] ] === (int) array_shift( $args ) ) { return false; }
 				} elseif ( preg_match( '/^(\w+)=%[ds]$/', $clause, $m ) ) {
@@ -187,7 +189,9 @@ namespace {
 	// ---- Pure planning ----
 	check( S::plan_create( array() ) === S::steps(), 'An empty site needs every step' );
 	check( S::plan_create( array_fill_keys( S::steps(), true ) ) === array(), 'A complete site needs nothing' );
-	check( S::plan_create( array( 'school' => true, 'year' => true, 'class' => true, 'user:teacher' => true ) ) === array( 'user:school', 'user:parent', 'user:student', 'member:school', 'member:teacher', 'class:teacher', 'class:student', 'guardian' ), 'Only the missing steps remain, in order' );
+	$partial = array( 'school' => true, 'year' => true, 'class:a' => true, 'class:b' => true, 'user:teacher' => true );
+	check( S::plan_create( $partial ) === array_values( array_diff( S::steps(), array_keys( $partial ) ) ) && 'user:school' === S::plan_create( $partial )[0] && 'guardian' === array_slice( S::steps(), -1 )[0], 'Only the missing steps remain, in order' );
+	check( 2 === count( S::definitions()['classes'] ) && 9 === count( S::definitions()['people'] ) && in_array( 'roster:b:student-6', S::steps(), true ), 'Two classes, a school admin, a teacher, a parent and six students are planned' );
 	check( S::is_sample_user( 'teacher', 'Sample-Preview-Teacher@EXAMPLE.invalid' ), 'A marked account on the reserved domain is a sample' );
 	check( ! S::is_sample_user( 'teacher', 'real@school.test' ) && ! S::is_sample_user( '', 'a@example.invalid' ) && ! S::is_sample_user( 'admin', 'a@example.invalid' ) && ! S::is_sample_user( array(), 'a@example.invalid' ), 'A real address or an unknown marker is never a sample' );
 	check( S::is_sample_school( array( 'name' => 'Sample Preview School', 'slug' => 'sample-preview-school-2' ) ) && ! S::is_sample_school( array( 'name' => 'Real School', 'slug' => 'sample-preview-school' ) ) && ! S::is_sample_school( array( 'name' => 'Sample Preview School', 'slug' => 'real-school' ) ) && ! S::is_sample_school( null ), 'School marker needs both the name and the slug' );
@@ -196,16 +200,10 @@ namespace {
 	$blocked = S::plan_removal( array( 'school' => array( 'id' => 5, 'name' => 'Sample Preview School', 'slug' => 'sample-preview-school' ), 'users' => array(), 'outsiders' => array( 'Invitations were sent for the school' ), 'activity' => array() ) );
 	check( ! $blocked['allowed'] && array() === $blocked['remove'] && 1 === count( $blocked['blockers'] ), 'Signs of real use block removal and empty the removal list' );
 
-	// ---- REST permissions ----
-	S::register();
-	check( 3 === count( $routes ), 'Status, create and remove routes are registered' );
+	// ---- Permissions (REST: Rest\V1\AccountHubSampleSchoolController) ----
+	check( ! method_exists( S::class, 'register' ), 'The retired school/sample-preview routes are not registered' );
 	$current = 2;
-	check( $routes['/school/sample-preview/create']['permission_callback']() instanceof WP_Error, 'A non-admin can create sample people' );
-	check( $routes['/school/sample-preview/remove']['permission_callback']() instanceof WP_Error, 'A non-admin can remove sample people' );
-	$current = 1;
-	check( true === $routes['/school/sample-preview/create']['permission_callback'](), 'An administrator is allowed' );
-	check( 'POST' === $routes['/school/sample-preview/create']['methods'] && 'POST' === $routes['/school/sample-preview/remove']['methods'] && 'GET' === $routes['/school/sample-preview']['methods'], 'Writes are POST only' );
-	$current = 2;
+	try { S::remove( true ); check( false, 'A non-admin removed sample data' ); } catch ( RuntimeException $e ) { check( 403 === $e->getCode(), 'Non-admin remove is forbidden' ); }
 	try { S::create(); check( false, 'A non-admin created sample data' ); } catch ( RuntimeException $e ) { check( 403 === $e->getCode(), 'Non-admin create is forbidden' ); }
 	$current = 1;
 
@@ -221,22 +219,21 @@ namespace {
 	// ---- Create ----
 	$status = S::create();
 	check( $status['complete'] && $status['exists'], 'Create completes' );
-	check( 4 === count( $users ), 'Exactly one school admin, teacher, parent and student exist' );
+	check( 9 === count( $users ), 'Exactly one school admin, teacher, parent and six students exist' );
 	foreach ( $users as $user ) {
 		check( isset( $meta[ $user->ID ][ S::META ] ) && S::is_sample_user( $meta[ $user->ID ][ S::META ], $user->user_email ), 'Every created account carries the marker and a non-deliverable address' );
 		check( 40 <= strlen( $user->user_pass ) && ! in_array( $user->user_pass, array( '', 'password' ), true ), 'Passwords are long random values' );
 	}
-	check( 4 === count( array_unique( array_map( fn( $u ) => $u->user_pass, $users ) ) ), 'No two sample accounts share a password' );
+	check( 9 === count( array_unique( array_map( fn( $u ) => $u->user_pass, $users ) ) ), 'No two sample accounts share a password' );
 	check( false === strpos( wp_json_encode_stub( $status ), 'user_pass' ), 'No password is ever returned' );
 	function wp_json_encode_stub( $v ) { return json_encode( $v ); }
-	check( 1 === count( $db['schools'] ) && 1 === count( $db['academic_years'] ) && 1 === count( $db['classes'] ), 'One school, year and class' );
+	check( 1 === count( $db['schools'] ) && 1 === count( $db['academic_years'] ) && 2 === count( $db['classes'] ), 'One school, one year and two classes' );
 	check( 'Sample Preview School' === $db['schools'][0]['name'] && 'sample-preview-school' === $db['schools'][0]['slug'], 'The school is clearly marked sample' );
 	check( 1 === count( $db['guardian_links'] ) && 'active' === $db['guardian_links'][0]['status'], 'The parent is linked to the student as guardian' );
-	$classes = array_map( fn( $r ) => $r['role'], $db['class_memberships'] );
-	sort( $classes );
-	check( array( 'student', 'teacher' ) === $classes, 'Teacher and student are in the class' );
+	$classes = array_count_values( array_map( fn( $r ) => $r['role'], $db['class_memberships'] ) );
+	check( array( 'teacher' => 2, 'student' => 6 ) == $classes, 'The teacher teaches both classes and each class has three students' );
 	check( $db['guardian_links'][0]['guardian_user_id'] === $options[ S::OPTION ]['users']['parent'] && $db['guardian_links'][0]['student_user_id'] === $options[ S::OPTION ]['users']['student'], 'The link joins the sample parent and sample student' );
-	check( 'Sample Student' === $users[ $options[ S::OPTION ]['users']['student'] ]->display_name && 'Sample Teacher' === $users[ $options[ S::OPTION ]['users']['teacher'] ]->display_name, 'Names carry the Sample marker' );
+	check( 'Sample Student 1' === $users[ $options[ S::OPTION ]['users']['student'] ]->display_name && 'Sample Teacher' === $users[ $options[ S::OPTION ]['users']['teacher'] ]->display_name, 'Names carry the Sample marker' );
 
 	// ---- Idempotent ----
 	$before = sizes();
@@ -248,7 +245,7 @@ namespace {
 	$db['guardian_links'] = array();
 	check( ! S::status()['complete'] && S::status()['exists'], 'A missing link shows as partial' );
 	S::create();
-	check( 1 === count( $db['guardian_links'] ) && 4 === count( $users ) && 1 === count( $db['schools'] ), 'Create restores only the missing guardian link' );
+	check( 1 === count( $db['guardian_links'] ) && 9 === count( $users ) && 1 === count( $db['schools'] ), 'Create restores only the missing guardian link' );
 
 	// ---- Removal ----
 	$real = wp_insert_user( array( 'user_login' => 'real-parent', 'user_email' => 'p@example.test', 'user_pass' => 'x', 'display_name' => 'Real Parent', 'role' => 'ohmylms_parent' ) );
@@ -256,7 +253,7 @@ namespace {
 	$before = sizes();
 	$preview = S::remove( false );
 	check( ! $preview['removed'] && $preview['allowed'] && $before === sizes(), 'Without confirmation nothing is removed' );
-	check( 5 === count( $preview['remove'] ), 'The preview lists the school and the four marked accounts only' );
+	check( 10 === count( $preview['remove'] ), 'The preview lists the school and the nine marked accounts only' );
 	foreach ( $preview['remove'] as $line ) {
 		check( false === strpos( $line, '#' . $real ) && false === strpos( $line, '#' . $lookalike ), 'Unmarked accounts are not listed' );
 	}
@@ -277,7 +274,7 @@ namespace {
 	$removed = S::remove( true );
 	check( $removed['removed'], 'Confirmed removal succeeds when nothing real is attached' );
 	check( array() === $db['schools'] && array() === $db['classes'] && array() === $db['academic_years'] && array() === $db['guardian_links'] && array() === $db['school_memberships'] && array() === $db['class_memberships'], 'The sample school rows are gone' );
-	check( 4 === count( $deleted_users ) && isset( $users[ $real ] ) && isset( $users[ $lookalike ] ), 'Only the four marked accounts were deleted; unmarked lookalikes stay' );
+	check( 9 === count( $deleted_users ) && isset( $users[ $real ] ) && isset( $users[ $lookalike ] ), 'Only the nine marked accounts were deleted; unmarked lookalikes stay' );
 	check( ! isset( $options[ S::OPTION ] ), 'The ledger is cleared' );
 	check( ! S::status()['exists'], 'Status shows nothing left' );
 

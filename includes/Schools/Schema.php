@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || exit;
 
 /** Additive, independently versioned school schema. Existing learning tables stay intact. */
 final class Schema {
-	const VERSION = '2';
+	const VERSION = '3';
 	/**
 	 * Table for Schema.
 	 *
@@ -36,7 +36,7 @@ final class Schema {
 			'school_memberships'      => "school_id bigint unsigned NOT NULL, user_id bigint unsigned NOT NULL, role varchar(30) NOT NULL, status varchar(20) NOT NULL DEFAULT 'active', joined_at datetime NOT NULL, UNIQUE KEY membership (school_id,user_id,role), KEY user_scope (user_id,status), KEY school_scope (school_id,status)",
 			'school_student_profiles' => 'school_id bigint unsigned NOT NULL, user_id bigint unsigned NOT NULL, external_student_id varchar(100) NOT NULL, UNIQUE KEY student (school_id,user_id), UNIQUE KEY external_student (school_id,external_student_id)',
 			'academic_years'          => "school_id bigint unsigned NOT NULL, label varchar(100) NOT NULL, starts_at date NOT NULL, ends_at date NOT NULL, status varchar(20) NOT NULL DEFAULT 'active', UNIQUE KEY school_year (school_id,label)",
-			'classes'                 => "school_id bigint unsigned NOT NULL, academic_year_id bigint unsigned NOT NULL, name varchar(190) NOT NULL, subject varchar(100) NOT NULL DEFAULT '', grade varchar(50) NOT NULL DEFAULT '', status varchar(20) NOT NULL DEFAULT 'active', KEY school_year (school_id,academic_year_id,status)",
+			'classes'                 => "school_id bigint unsigned NOT NULL, academic_year_id bigint unsigned NOT NULL, name varchar(190) NOT NULL, subject varchar(100) NOT NULL DEFAULT '', grade varchar(50) NOT NULL DEFAULT '', status varchar(20) NOT NULL DEFAULT 'active', source_class_id bigint unsigned NOT NULL DEFAULT 0, KEY school_year (school_id,academic_year_id,status), KEY source_class (source_class_id)",
 			'class_memberships'       => "class_id bigint unsigned NOT NULL, user_id bigint unsigned NOT NULL, role varchar(20) NOT NULL, status varchar(20) NOT NULL DEFAULT 'active', joined_at datetime NOT NULL, UNIQUE KEY membership (class_id,user_id,role), KEY user_scope (user_id,status)",
 			'guardian_links'          => "school_id bigint unsigned NOT NULL, guardian_user_id bigint unsigned NOT NULL, student_user_id bigint unsigned NOT NULL, status varchar(20) NOT NULL DEFAULT 'active', approved_by bigint unsigned NOT NULL, approved_at datetime NOT NULL, UNIQUE KEY guardian (school_id,guardian_user_id,student_user_id), KEY child (student_user_id,status), KEY parent_scope (guardian_user_id,status)",
 			'school_invitations'      => 'token_hash char(64) NOT NULL, school_id bigint unsigned NOT NULL, class_id bigint unsigned NOT NULL DEFAULT 0, student_user_id bigint unsigned NOT NULL DEFAULT 0, role varchar(30) NOT NULL, email varchar(190) NOT NULL, expires_at datetime NOT NULL, consumed_at datetime NULL, revoked_at datetime NULL, invited_by bigint unsigned NOT NULL, created_at datetime NOT NULL, UNIQUE KEY token_hash (token_hash), KEY school_scope (school_id,expires_at)',

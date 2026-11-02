@@ -2,7 +2,9 @@
 
 namespace OhMyLMS\Emails\CreatorsEmail;
 
+use OhMyLMS\Admin\LegacyRoutes;
 use OhMyLMS\Emails\Emails;
+use OhMyLMS\I18n\RecipientLocale;
 
 /**
  * Plugin quiz submitted implementation.
@@ -140,6 +142,24 @@ class QuizSubmitted {
 			return;
 		}
 
+		RecipientLocale::each(
+			$to,
+			function ( $recipients ) use ( $quiz_id, $student, $course ) {
+				$this->compose_single( $quiz_id, $student, $course, $recipients );
+			}
+		);
+	}
+
+	/**
+	 * Compose and send one submission to recipients who share a language, in that language.
+	 *
+	 * @param mixed        $quiz_id Quiz identifier.
+	 * @param \WP_User     $student Learner.
+	 * @param object       $course  Course.
+	 * @param string|array $to      Recipients.
+	 */
+	private function compose_single( $quiz_id, $student, $course, $to ) {
+		$settings       = Emails::get_template_settings( 'instructor_quiz_submitted', $this->default_settings() );
 		$quiz           = get_post( $quiz_id );
 		$quiz_title     = $quiz ? $quiz->post_title : '';
 		$email_settings = Emails::get_email_settings();
@@ -147,7 +167,7 @@ class QuizSubmitted {
 		$subject = isset( $settings['subject'] ) ? $settings['subject'] : '';
 		$subject = $this->replace_tags( $subject, $student->display_name, $course->get_name(), $quiz_title );
 
-		$settings['button_link'] = admin_url( 'admin.php?page=ohmylms#/quiz-report/' . $quiz_id . '/grade-quiz/' . $attempt_id );
+		$settings['button_link'] = LegacyRoutes::app_url( '/quizzes/' . absint( $quiz_id ) . '/attempts' );
 
 		ob_start();
 		ohmylms_get_template(
@@ -186,6 +206,23 @@ class QuizSubmitted {
 			return;
 		}
 
+		RecipientLocale::each(
+			$to,
+			function ( $recipients ) use ( $course, $items ) {
+				$this->compose_digest( $course, $items, $recipients );
+			}
+		);
+	}
+
+	/**
+	 * Compose and send a course digest to recipients who share a language, in that language.
+	 *
+	 * @param object       $course Course.
+	 * @param array        $items  Queued submissions.
+	 * @param string|array $to     Recipients.
+	 */
+	private function compose_digest( $course, $items, $to ) {
+		$settings       = Emails::get_template_settings( 'instructor_quiz_submitted', $this->default_settings() );
 		$email_settings = Emails::get_email_settings();
 
 		/* translators: 1: submission count, 2: course name */
@@ -205,13 +242,13 @@ class QuizSubmitted {
 				'quiz_title'   => $q ? $q->post_title : __( 'Unknown Quiz', 'ohmylms' ),
 				'time'         => $item['time'],
 				'grade_link'   => ! empty( $item['attempt_id'] )
-					? admin_url( 'admin.php?page=ohmylms#/quiz-report/' . $item['quiz_id'] . '/grade-quiz/' . $item['attempt_id'] )
+					? LegacyRoutes::app_url( '/quizzes/' . absint( $item['quiz_id'] ) . '/attempts' )
 					: '',
 			);
 		}
 
 		$digest_settings                = $settings;
-		$digest_settings['button_link'] = admin_url( 'admin.php?page=ohmylms#/quiz-report' );
+		$digest_settings['button_link'] = LegacyRoutes::app_url( '/reports/quizzes' );
 
 		ob_start();
 		ohmylms_get_template(

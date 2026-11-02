@@ -9,6 +9,7 @@ use OhMyLMS\Learning\Schema;
 use OhMyLMS\Learning\LearningPath;
 use OhMyLMS\Skills\Evidence;
 use OhMyLMS\Skills\Taxonomy;
+use OhMyLMS\Student\Enrollments;
 use OhMyLMS\QuestionBank\AccessPolicy;
 use WP_REST_Server;
 
@@ -266,7 +267,6 @@ class LearningController extends RestController {
 	 * @param mixed $request REST request.
 	 */
 	public function complete( $request ) {
-		global $wpdb;
 		$course  = (int) $request['id'];
 		$student = get_current_user_id();
 		$state   = CompletionPolicy::status( $student, $course );
@@ -277,31 +277,8 @@ class LearningController extends RestController {
 				continue; }
 			if ( 'lesson' !== $item['type'] || ! LearningPath::available( $item, $student, $course ) ) {
 				return AccessPolicy::denied( __( 'This activity cannot be marked complete here.', 'ohmylms' ) ); }
-			$table = $wpdb->prefix . 'ohmylms_user_progress';
-			$key   = 'ohmylms_activity_' . $state['enrollment_id'];
-			if ( ! $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 3)', $key ) ) ) {
-				return CourseProgram::error( __( 'Please retry completing the lesson.', 'ohmylms' ), 409 ); }
-			try {
-				$existing = $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE enrollment_id=%d AND content_id=%d AND status=\'completed\'', $table, $state['enrollment_id'], $item['content_id'] ) );
-				if ( ! $existing ) {
-					if ( ! $wpdb->insert(
-						$table,
-						array(
-							'enrollment_id' => $state['enrollment_id'],
-							'content_id'    => $item['content_id'],
-							'content_type'  => ohmylms_get_lesson( $item['content_id'] )->get_type(),
-							'status'        => 'completed',
-							'start_date'    => current_time( 'mysql' ),
-						)
-					) ) {
-						return CourseProgram::error( __( 'Could not save lesson completion.', 'ohmylms' ), 500 ); }
-					\OhMyLMS\DataStores\StudentStore::clear_learning_cache( $student, $course );
-					do_action( 'ohmylms_lesson_completed', $item['content_id'], $course, $student );
-				}
-				$result = CompletionPolicy::award( $student, $course );
-				return is_wp_error( $result ) ? $result : rest_ensure_response( $result + array( 'next_action' => LearningPath::next( $result ) ) );
-			} finally {
-				$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $key ) ); }
+			$result = CompletionPolicy::complete_lesson( $student, $course, $state['enrollment_id'], $item['content_id'] );
+			return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
 		}
 		return CourseProgram::error( __( 'Learning activity not found.', 'ohmylms' ), 404 );
 	}
@@ -312,16 +289,14 @@ class LearningController extends RestController {
 	 * @param mixed $request REST request.
 	 */
 	public function report( $request ) {
-		global $wpdb;
 		$course = (int) $request['id'];
 		$page   = max( 1, (int) $request['page'] );
-		$rows   = $wpdb->get_results( $wpdb->prepare( 'SELECT user_id FROM %i WHERE course_id=%d AND status=\'enrolled\' ORDER BY id LIMIT 25 OFFSET %d', $wpdb->prefix . 'ohmylms_user_enrollment', $course, ( $page - 1 ) * 25 ), ARRAY_A );
 		$result = array();
-		foreach ( $rows as $row ) {
-			$state    = CompletionPolicy::status( $row['user_id'], $course );
-			$user     = get_userdata( $row['user_id'] );
+		foreach ( Enrollments::course_user_ids( $course, 25, ( $page - 1 ) * 25 ) as $user_id ) {
+			$state    = CompletionPolicy::status( $user_id, $course );
+			$user     = get_userdata( $user_id );
 			$result[] = array(
-				'student_id' => (int) $row['user_id'],
+				'student_id' => $user_id,
 				'name'       => $user ? $user->display_name : '',
 				'progress'   => is_wp_error( $state ) ? null : $state,
 			);
@@ -330,7 +305,7 @@ class LearningController extends RestController {
 			array(
 				'students' => $result,
 				'page'     => $page,
-				'total'    => (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE course_id=%d AND status=\'enrolled\'', $wpdb->prefix . 'ohmylms_user_enrollment', $course ) ),
+				'total'    => Enrollments::count_in_course( $course ),
 			)
 		);
 	}

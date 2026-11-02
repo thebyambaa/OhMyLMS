@@ -7,6 +7,8 @@
 
 namespace OhMyLMS;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * OhMyLMS Data Exception Class
  *
@@ -14,12 +16,6 @@ namespace OhMyLMS;
  *
  * @package OhMyLMS\Classes
  * @since   1.0.0
- */
-
-defined( 'ABSPATH' ) || exit;
-
-/**
- * Data exception class.
  */
 class DataException extends \Exception {
 

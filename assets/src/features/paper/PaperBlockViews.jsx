@@ -4,10 +4,13 @@ import { __, _n, sprintf } from '@wordpress/i18n';
 import { answerSpace, columnsLayout } from './paperModel.mjs';
 
 /**
- * Printed views of the paper blocks, shared by the editor (with editable text) and the print page.
+ * Printed views of the paper blocks in the editor (with editable text); OhMyLMS\Exams\PaperRenderer prints the
+ * same markup on the print page.
  * `text( key, tagName, className, placeholder )` renders one text attribute: a RichText field in the
  * editor, the saved value on the print page.
  */
+
+/** @typedef {import('./paperModel.mjs').SavedFields} SavedFields */
 
 /**
  * Renders one text attribute of a paper block.
@@ -17,7 +20,7 @@ import { answerSpace, columnsLayout } from './paperModel.mjs';
  * @param {string} tagName     Element to render.
  * @param {string} className   Class name.
  * @param {string} placeholder Editor placeholder.
- * @return {Element|null} Text element.
+ * @return {React.ReactElement|null} Text element.
  */
 
 export const CANDIDATE_FIELDS = [ 'name', 'class', 'number', 'date' ];
@@ -46,25 +49,27 @@ export function paperTextDefaults() {
  * @return {string} Label.
  */
 export function candidateLabel( field ) {
-	return {
+	/** @type {Record<string, string>} */
+	const labels = {
 		name: __( 'Name', 'ohmylms' ),
 		class: __( 'Class', 'ohmylms' ),
 		number: __( 'Candidate number', 'ohmylms' ),
 		date: __( 'Date', 'ohmylms' ),
-	}[ field ];
+	};
+	return labels[ field ];
 }
 
 /**
  * Exam header: school, exam title, details, time and marks, and boxes for the candidate.
  *
- * @param {Object}    props            Properties.
- * @param {Object}    props.attributes Block attributes.
- * @param {string}    props.title      Exam title.
- * @param {number}    props.minutes    Time allowed, 0 for none.
- * @param {number}    props.total      Total marks.
- * @param {TextField} props.text       Text field renderer.
- * @param {string}    props.version    Version letter, empty when the paper has one version.
- * @return {Element} Header.
+ * @param {Object}      props            Properties.
+ * @param {SavedFields} props.attributes Block attributes.
+ * @param {string}      props.title      Exam title.
+ * @param {number}      props.minutes    Time allowed, 0 for none.
+ * @param {number}      props.total      Total marks.
+ * @param {TextField}   props.text       Text field renderer.
+ * @param {string}      props.version    Version letter, empty when the paper has one version.
+ * @return {React.ReactElement} Header.
  */
 export function PaperHeaderView( {
 	attributes,
@@ -74,7 +79,7 @@ export function PaperHeaderView( {
 	text,
 	version = '',
 } ) {
-	const fields = (
+	const fields = /** @type {string[]} */ (
 		attributes.fields || [ 'name', 'class', 'number' ]
 	).filter( ( field ) => CANDIDATE_FIELDS.includes( field ) );
 	const details = [
@@ -155,10 +160,10 @@ export function PaperHeaderView( {
 /**
  * Instructions: a heading and the instruction list.
  *
- * @param {Object}    props          Properties.
- * @param {TextField} props.text     Text field renderer.
- * @param {Element}   props.children Instruction content.
- * @return {Element} Instructions.
+ * @param {Object}          props          Properties.
+ * @param {TextField}       props.text     Text field renderer.
+ * @param {React.ReactNode} props.children Instruction content.
+ * @return {React.ReactElement} Instructions.
  */
 export function PaperInstructionsView( { text, children } ) {
 	return (
@@ -177,11 +182,11 @@ export function PaperInstructionsView( { text, children } ) {
 /**
  * Section heading with the marks of its questions.
  *
- * @param {Object}    props            Properties.
- * @param {Object}    props.attributes Block attributes.
- * @param {number}    props.total      Marks up to the next section.
- * @param {TextField} props.text       Text field renderer.
- * @return {Element} Section heading.
+ * @param {Object}      props            Properties.
+ * @param {SavedFields} props.attributes Block attributes.
+ * @param {number}      props.total      Marks up to the next section.
+ * @param {TextField}   props.text       Text field renderer.
+ * @return {React.ReactElement} Section heading.
  */
 export function PaperSectionView( { attributes, total, text } ) {
 	return (
@@ -208,8 +213,8 @@ export function PaperSectionView( { attributes, total, text } ) {
 /**
  * Class names and style of a columns section.
  *
- * @param {Object} attributes Block attributes.
- * @return {{className: string, style: Object}} Wrapper properties.
+ * @param {SavedFields} attributes Block attributes.
+ * @return {{className: string, style: import('react').CSSProperties}} Wrapper properties.
  */
 export function columnsProps( attributes ) {
 	const layout = columnsLayout( attributes );
@@ -224,7 +229,7 @@ export function columnsProps( attributes ) {
 /**
  * Page break; the label shows only in the editor.
  *
- * @return {Element} Page break.
+ * @return {React.ReactElement} Page break.
  */
 export function PaperPageBreakView() {
 	return (
@@ -237,9 +242,9 @@ export function PaperPageBreakView() {
 /**
  * Extra answer space: ruled lines, a squared grid or a blank box.
  *
- * @param {Object} props            Properties.
- * @param {Object} props.attributes Block attributes.
- * @return {Element} Answer space.
+ * @param {Object}      props            Properties.
+ * @param {SavedFields} props.attributes Block attributes.
+ * @return {React.ReactElement} Answer space.
  */
 export function PaperAnswerSpaceView( { attributes } ) {
 	const space = answerSpace( attributes );
@@ -255,11 +260,11 @@ export function PaperAnswerSpaceView( { attributes } ) {
 /**
  * Formula sheet: a heading and free content, starting on a new page when set.
  *
- * @param {Object}    props            Properties.
- * @param {Object}    props.attributes Block attributes.
- * @param {TextField} props.text       Text field renderer.
- * @param {Element}   props.children   Sheet content.
- * @return {Element} Formula sheet.
+ * @param {Object}          props            Properties.
+ * @param {SavedFields}     props.attributes Block attributes.
+ * @param {TextField}       props.text       Text field renderer.
+ * @param {React.ReactNode} props.children   Sheet content.
+ * @return {React.ReactElement} Formula sheet.
  */
 export function PaperFormulaSheetView( { attributes, text, children } ) {
 	return (

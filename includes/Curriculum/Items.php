@@ -9,6 +9,7 @@
  */
 namespace OhMyLMS\Curriculum;
 
+use OhMyLMS\Utility\Lock;
 use OhMyLMS\Utility\Transaction;
 
 defined( 'ABSPATH' ) || exit;
@@ -47,7 +48,10 @@ final class Items {
 	public static function get( $id ) {
 		global $wpdb;
 		$id = (int) $id;
-		return $id > 0 ? ( $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . self::table() . ' WHERE id=%d', $id ), ARRAY_A ) ?: null ) : null;
+		if ( $id <= 0 ) {
+			return null; }
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id=%d', self::table(), $id ), ARRAY_A );
+		return $row ? $row : null;
 	}
 
 	/**
@@ -57,11 +61,25 @@ final class Items {
 		return Access::error( 'ohmylms_curriculum_missing', __( 'Curriculum item not found.', 'ohmylms' ), 404 );
 	}
 
-	/** id => parent id for every item. */
+	/**
+	 * Number of items of every level, and how many are syllabuses.
+	 *
+	 * @return array{total:int,syllabuses:int}
+	 */
+	public static function counts() {
+		global $wpdb;
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT COUNT(*) AS total, SUM(is_syllabus = 1) AS syllabuses FROM %i', self::table() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- One fresh aggregate.
+		return array(
+			'total'      => $row ? (int) $row->total : 0,
+			'syllabuses' => $row ? (int) $row->syllabuses : 0,
+		);
+	}
+
+	/** Map of id => parent id for every item. */
 	public static function parents() {
 		global $wpdb;
 		$map = array();
-		foreach ( $wpdb->get_results( 'SELECT id, parent_id FROM ' . self::table() . ' ORDER BY parent_id, position, id', ARRAY_A ) as $row ) {
+		foreach ( $wpdb->get_results( $wpdb->prepare( 'SELECT id, parent_id FROM %i ORDER BY parent_id, position, id', self::table() ), ARRAY_A ) as $row ) {
 			$map[ (int) $row['id'] ] = (int) $row['parent_id']; }
 		return $map;
 	}
@@ -72,7 +90,21 @@ final class Items {
 	 * @return array[] Rows ordered for display: by parent, then sibling position. */
 	public static function all() {
 		global $wpdb;
-		return $wpdb->get_results( 'SELECT * FROM ' . self::table() . ' ORDER BY parent_id, position, id', ARRAY_A ) ?: array();
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i ORDER BY parent_id, position, id', self::table() ), ARRAY_A );
+		return $rows ? $rows : array();
+	}
+
+	/**
+	 * Items whose name or code contains a search, by name (at most 20).
+	 *
+	 * @param string $search Search text.
+	 * @return array[]
+	 */
+	public static function search( $search ) {
+		global $wpdb;
+		$like = '%' . $wpdb->esc_like( $search ) . '%';
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE name LIKE %s OR code LIKE %s ORDER BY name LIMIT 20', self::table(), $like, $like ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Bounded search of the plugin's curriculum table; results change with every edit.
+		return is_array( $rows ) ? $rows : array();
 	}
 
 	/** Ordered child IDs of a parent.
@@ -81,7 +113,7 @@ final class Items {
 	 */
 	public static function child_ids( $parent_id ) {
 		global $wpdb;
-		return array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM ' . self::table() . ' WHERE parent_id=%d ORDER BY position, id', (int) $parent_id ) ) );
+		return array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i WHERE parent_id=%d ORDER BY position, id', self::table(), (int) $parent_id ) ) );
 	}
 
 	/** The item itself followed by every descendant ID.
@@ -175,8 +207,13 @@ final class Items {
 			if ( ! $partial || array_key_exists( $key, $data ) ) {
 				$value = trim( sanitize_text_field( (string) ( $data[ $key ] ?? '' ) ) );
 				if ( mb_strlen( $value ) > 60 ) {
-					return Access::error( 'ohmylms_curriculum_invalid', sprintf( /* translators: %s: text value. */
-					__( '%s can have at most 60 characters.', 'ohmylms' ), $label ) ); }
+					return Access::error(
+						'ohmylms_curriculum_invalid',
+						sprintf( /* translators: %s: text value. */
+							__( '%s can have at most 60 characters.', 'ohmylms' ),
+							$label
+						)
+					); }
 				$fields[ $key ] = $value;
 			}
 		}
@@ -189,19 +226,22 @@ final class Items {
 	 */
 	public static function exclusive( callable $work ) {
 		global $wpdb;
-		$lock = self::LOCK . '-' . md5( $wpdb->prefix );
-		if ( (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) !== '1' ) {
-			return Access::error( 'ohmylms_curriculum_busy', __( 'Another change is being saved. Try again in a moment.', 'ohmylms' ), 409 );
-		}
-		try {
-			return Transaction::run( $work );
-		} catch ( \Throwable $error ) {
-			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-				error_log( 'OhMyLMS curriculum write failed: ' . $error->getMessage() ); }
-			return Access::error( 'ohmylms_curriculum_failed', __( 'The change could not be saved. Nothing was changed.', 'ohmylms' ), 500 );
-		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
-		}
+		return Lock::with(
+			self::LOCK . '-' . md5( $wpdb->prefix ),
+			5,
+			static function () use ( $work ) {
+				try {
+					return Transaction::run( $work );
+				} catch ( \Throwable $error ) {
+					if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+						error_log( 'OhMyLMS curriculum write failed: ' . $error->getMessage() ); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Only with WP_DEBUG.
+					return Access::error( 'ohmylms_curriculum_failed', __( 'The change could not be saved. Nothing was changed.', 'ohmylms' ), 500 );
+				}
+			},
+			static function () {
+				return Access::error( 'ohmylms_curriculum_busy', __( 'Another change is being saved. Try again in a moment.', 'ohmylms' ), 409 );
+			}
+		);
 	}
 
 	/** Write dense 0..n-1 positions for a sibling group, touching only rows that changed.
@@ -213,7 +253,7 @@ final class Items {
 	private static function renumber( $parent_id, array $ordered ) {
 		global $wpdb;
 		$current = array();
-		foreach ( $wpdb->get_results( $wpdb->prepare( 'SELECT id, position FROM ' . self::table() . ' WHERE parent_id=%d', (int) $parent_id ), ARRAY_A ) as $row ) {
+		foreach ( $wpdb->get_results( $wpdb->prepare( 'SELECT id, position FROM %i WHERE parent_id=%d', self::table(), (int) $parent_id ), ARRAY_A ) as $row ) {
 			$current[ (int) $row['id'] ] = (int) $row['position']; }
 		foreach ( Tree::positions( $ordered ) as $id => $position ) {
 			if ( ( $current[ $id ] ?? -1 ) !== $position && $wpdb->update( self::table(), array( 'position' => $position ), array( 'id' => (int) $id ) ) === false ) {
@@ -256,13 +296,24 @@ final class Items {
 		$parent_id = (int) $parent_id;
 		$parents   = self::parents();
 		if ( count( $parents ) >= self::MAX_ITEMS ) {
-			return Access::error( 'ohmylms_curriculum_limit', sprintf( /* translators: %d: number. */
-			__( 'A curriculum can have at most %d items.', 'ohmylms' ), self::MAX_ITEMS ), 409 ); }
+			return Access::error(
+				'ohmylms_curriculum_limit',
+				sprintf( /* translators: %d: number. */
+					__( 'A curriculum can have at most %d items.', 'ohmylms' ),
+					self::MAX_ITEMS
+				),
+				409
+			); }
 		if ( $parent_id && ! isset( $parents[ $parent_id ] ) ) {
 			return Access::error( 'ohmylms_curriculum_invalid', __( 'The parent item does not exist.', 'ohmylms' ) ); }
 		if ( $parent_id && Tree::depth( $parents, $parent_id ) + 1 > self::MAX_DEPTH ) {
-			return Access::error( 'ohmylms_curriculum_depth', sprintf( /* translators: %d: number. */
-			__( 'Curriculum items can be nested at most %d levels deep.', 'ohmylms' ), self::MAX_DEPTH ) ); }
+			return Access::error(
+				'ohmylms_curriculum_depth',
+				sprintf( /* translators: %d: number. */
+					__( 'Curriculum items can be nested at most %d levels deep.', 'ohmylms' ),
+					self::MAX_DEPTH
+				)
+			); }
 		$now = current_time( 'mysql', true );
 		$row = $fields + array(
 			'uuid'       => wp_generate_uuid4(),
@@ -352,8 +403,13 @@ final class Items {
 					return Access::error( 'ohmylms_curriculum_cycle', __( 'An item cannot be moved under itself or one of its own descendants.', 'ohmylms' ) ); }
 				$base = $parent_id ? Tree::depth( $parents, $parent_id ) : 0;
 				if ( $base + Tree::height( $parents, $id ) > self::MAX_DEPTH ) {
-					return Access::error( 'ohmylms_curriculum_depth', sprintf( /* translators: %d: number. */
-					__( 'Curriculum items can be nested at most %d levels deep.', 'ohmylms' ), self::MAX_DEPTH ) ); }
+					return Access::error(
+						'ohmylms_curriculum_depth',
+						sprintf( /* translators: %d: number. */
+							__( 'Curriculum items can be nested at most %d levels deep.', 'ohmylms' ),
+							self::MAX_DEPTH
+						)
+					); }
 				global $wpdb;
 				$old_parent = (int) $parents[ (int) $id ];
 				if ( $old_parent !== $parent_id ) {
@@ -383,16 +439,14 @@ final class Items {
 	 */
 	public static function dependents( $id ) {
 		global $wpdb;
-		$ids          = self::with_descendants( $id );
-		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-		$bundles      = static function ( array $in ) use ( $wpdb ) {
-			$in_placeholders = implode( ',', array_fill( 0, count( $in ), '%d' ) );
-			return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(DISTINCT bundle_id) FROM ' . Schema::table( 'bundle_items' ) . " WHERE item_type='curriculum' AND item_id IN ($in_placeholders)", $in ) );
+		$ids     = self::with_descendants( $id );
+		$bundles = static function ( array $in ) use ( $wpdb ) {
+			return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(DISTINCT bundle_id) FROM %i WHERE item_type=\'curriculum\' AND item_id IN (' . implode( ',', array_fill( 0, count( $in ), '%d' ) ) . ')', array_merge( array( Schema::table( 'bundle_items' ) ), $in ) ) );
 		};
 		return array(
 			'children'    => count( self::child_ids( $id ) ),
 			'descendants' => count( $ids ) - 1,
-			'links'       => (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . Schema::table( 'curriculum_links' ) . " WHERE item_id IN ($placeholders)", $ids ) ),
+			'links'       => (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE item_id IN (' . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')', array_merge( array( Schema::table( 'curriculum_links' ) ), $ids ) ) ),
 			'own_links'   => (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE item_id=%d', Schema::table( 'curriculum_links' ), (int) $id ) ),
 			'bundles'     => $bundles( $ids ),
 			'own_bundles' => $bundles( array( (int) $id ) ),
@@ -409,12 +463,13 @@ final class Items {
 	 *   'promote' - children move up to the item's parent, keeping their order;
 	 *   'delete'  - the whole branch is removed.
 	 *
-	 * @param mixed  $id Id.
-	 * @param string $strategy Strategy.
-	 * @param bool   $confirm Confirm.
+	 * @param mixed       $id Id.
+	 * @param string      $strategy Strategy.
+	 * @param bool        $confirm Confirm.
+	 * @param string|null $expected_revision Optional delete_revision() the confirmation was shown for.
 	 * @throws \RuntimeException When the operation cannot be completed.
 	 */
-	public static function delete( $id, $strategy = '', $confirm = false ) {
+	public static function delete( $id, $strategy = '', $confirm = false, $expected_revision = null ) {
 		global $wpdb;
 		$item = self::get( $id );
 		if ( ! $item ) {
@@ -432,10 +487,13 @@ final class Items {
 			return Access::error( 'ohmylms_curriculum_needs_confirmation', __( 'Deleting this item removes its structure links and skill groups. Confirm to continue; linked courses, skills, banks and exams, and the skills inside skill groups, are not deleted.', 'ohmylms' ), 409, array( 'dependents' => $dependents ) );
 		}
 		return self::exclusive(
-			static function () use ( $wpdb, $id, $item, $strategy, $branch ) {
+			static function () use ( $wpdb, $id, $item, $strategy, $branch, $expected_revision ) {
 				$parents = self::parents();
 				if ( ! isset( $parents[ (int) $id ] ) ) {
 					return self::missing(); }
+				if ( null !== $expected_revision && ! hash_equals( self::delete_revision( $id ), (string) $expected_revision ) ) {
+					return Access::error( 'ohmylms_curriculum_stale', __( 'This item or the branch under it changed. Review the deletion again.', 'ohmylms' ), 409 );
+				}
 				$parent_id = (int) $item['parent_id'];
 				if ( 'promote' === $strategy ) {
 					$children = self::child_ids( $id );
@@ -472,6 +530,17 @@ final class Items {
 		);
 	}
 
+	/**
+	 * Hash of an item's details and everything deleting it would affect.
+	 *
+	 * @param int $id Item ID.
+	 * @return string Empty for a missing item.
+	 */
+	public static function delete_revision( $id ) {
+		$item = self::get( $id );
+		return $item ? hash( 'sha256', (string) wp_json_encode( array( $item['updated_at'], self::with_descendants( $id ), self::dependents( $id ) ) ) ) : '';
+	}
+
 	/** Remove item rows plus every link and bundle membership that points at them.
 	 *
 	 * @param array $ids Ids.
@@ -479,11 +548,10 @@ final class Items {
 	 */
 	private static function delete_rows( array $ids ) {
 		global $wpdb;
-		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-		$links        = $wpdb->query( $wpdb->prepare( 'DELETE FROM ' . Schema::table( 'curriculum_links' ) . " WHERE item_id IN ($placeholders)", $ids ) );
-		$members      = $wpdb->query( $wpdb->prepare( 'DELETE FROM ' . Schema::table( 'bundle_items' ) . " WHERE item_type='curriculum' AND item_id IN ($placeholders)", $ids ) );
-		$groups       = Syllabus::delete_for_items( $ids );
-		if ( false === $links || false === $members || false === $groups || $wpdb->query( $wpdb->prepare( 'DELETE FROM ' . self::table() . " WHERE id IN ($placeholders)", $ids ) ) === false ) {
+		$links   = $wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE item_id IN (' . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')', array_merge( array( Schema::table( 'curriculum_links' ) ), $ids ) ) );
+		$members = $wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE item_type=\'curriculum\' AND item_id IN (' . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')', array_merge( array( Schema::table( 'bundle_items' ) ), $ids ) ) );
+		$groups  = Syllabus::delete_for_items( $ids );
+		if ( false === $links || false === $members || false === $groups || $wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE id IN (' . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')', array_merge( array( self::table() ), $ids ) ) ) === false ) {
 			throw new \RuntimeException( 'Delete failed' ); }
 		do_action( 'ohmylms_curriculum_items_deleted', $ids );
 		return array(

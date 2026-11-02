@@ -521,39 +521,37 @@ class EmailController extends RestController {
 				),
 				'subject'                => array(
 					'description' => __( 'Subject line. Plain text; merge tags allowed.', 'ohmylms' ),
-					'type'        => 'string',
-					'minLength'   => 1,
+					'type'        => array( 'string', 'null' ),
 					'maxLength'   => EmailManager::MAX_SUBJECT * 4,
 					'context'     => $contexts,
 				),
 				'heading'                => array(
 					'description' => __( 'Heading at the top of the message. Plain text; merge tags allowed.', 'ohmylms' ),
-					'type'        => 'string',
-					'minLength'   => 1,
+					'type'        => array( 'string', 'null' ),
 					'maxLength'   => EmailManager::MAX_HEADING * 4,
 					'context'     => $contexts,
 				),
 				'additional_content'     => array(
 					'description' => __( 'Message body as HTML limited to the email allow-list; merge tags allowed.', 'ohmylms' ),
-					'type'        => 'string',
+					'type'        => array( 'string', 'null' ),
 					'maxLength'   => EmailManager::MAX_HTML * 4,
 					'context'     => $contexts,
 				),
 				'button_text'            => array(
 					'description' => __( 'Text of the call-to-action button. Empty hides the button where the template allows it.', 'ohmylms' ),
-					'type'        => 'string',
+					'type'        => array( 'string', 'null' ),
 					'maxLength'   => EmailManager::MAX_BUTTON * 4,
 					'context'     => $contexts,
 				),
 				'button_link'            => array(
 					'description' => __( 'Address of the button: empty, or a full http or https URL. Emails that compute their own destination ignore it.', 'ohmylms' ),
-					'type'        => 'string',
+					'type'        => array( 'string', 'null' ),
 					'maxLength'   => EmailManager::MAX_LINK * 2,
 					'context'     => $contexts,
 				),
 				'footer_text'            => array(
 					'description' => __( 'Closing text as HTML limited to the email allow-list; merge tags allowed.', 'ohmylms' ),
-					'type'        => 'string',
+					'type'        => array( 'string', 'null' ),
 					'maxLength'   => EmailManager::MAX_FOOTER * 4,
 					'context'     => $contexts,
 				),
@@ -584,10 +582,38 @@ class EmailController extends RestController {
 					'context'     => $contexts,
 					'readonly'    => true,
 				),
+				'defaults'               => array(
+					'description' => __( 'Default text of each field in the language of the request. A field that is not customized is sent in this text, translated into each recipient\'s language. Send null (or an empty subject, heading or message) to go back to it.', 'ohmylms' ),
+					'type'        => 'object',
+					'properties'  => $this->text_field_properties( array( 'string', 'null' ) ),
+					'context'     => $contexts,
+					'readonly'    => true,
+				),
+				'customized'             => array(
+					'description' => __( 'Whether each field holds saved text instead of the default. Saved text is sent as written, in every language.', 'ohmylms' ),
+					'type'        => 'object',
+					'properties'  => $this->text_field_properties( 'boolean' ),
+					'context'     => $contexts,
+					'readonly'    => true,
+				),
 			),
 		);
 
 		return $this->add_additional_fields_schema( $this->schema );
+	}
+
+	/**
+	 * One schema property per customizable text field.
+	 *
+	 * @param string|string[] $type JSON type of each property.
+	 * @return array
+	 */
+	private function text_field_properties( $type ) {
+		$properties = array();
+		foreach ( EmailManager::TEXT_FIELDS as $field ) {
+			$properties[ $field ] = array( 'type' => $type );
+		}
+		return $properties;
 	}
 
 	/**

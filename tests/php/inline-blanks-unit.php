@@ -1,5 +1,6 @@
 <?php
 define('ABSPATH', __DIR__);
+require dirname(__DIR__, 2) . '/vendor/autoload.php';
 require dirname(__DIR__, 2) . '/includes/Assessment/InlineBlanks.php';
 require dirname(__DIR__, 2) . '/includes/Assessment/QuestionSnapshot.php';
 require dirname(__DIR__, 2) . '/includes/Extensions/QuestionTypes.php';

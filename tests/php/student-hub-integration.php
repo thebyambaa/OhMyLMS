@@ -93,7 +93,7 @@ try {
 	ohmylms_hub_check( ! Hub::uses_workspace_landmark(), 'An embedded workspace must retain its theme landmark.' );
 	// Legacy entry points must not mount the retired frontend app, even for a platform admin.
 	ohmylms_hub_check( Hub::base_url() === \OhMyLMS\Schools\Views::portal_url(), 'New school links still use the retired portal endpoint.' );
-	foreach ( array( 'student-registration', 'teacher-registration', 'parent-registration', 'sign-in', 'school-dashboard', 'teacher-dashboard', 'parent-dashboard', 'student-assignments', 'admin-management' ) as $hub_legacy_view ) {
+	foreach ( array( 'student-registration', 'teacher-registration', 'parent-registration', 'sign-in', 'school-dashboard', 'teacher-dashboard', 'parent-dashboard', 'student-assignments' ) as $hub_legacy_view ) {
 		$hub_legacy_html = \OhMyLMS\Schools\Views::render( $hub_legacy_view );
 		ohmylms_hub_check( false === strpos( $hub_legacy_html, 'data-ohmylms-school-view' ) && false !== strpos( $hub_legacy_html, '<a href=' ), 'Legacy frontend view still mounts React: ' . $hub_legacy_view );
 	}
@@ -106,9 +106,9 @@ try {
 					'class'  => 456,
 				)
 			),
-			'page=ohmylms-schools'
+			'page=ohmylms-accounts&tab=schools&id=123'
 		),
-		'Platform school editor no longer resolves to wp-admin.'
+		'Platform school editor no longer resolves to the Account Hub school.'
 	);
 	wp_set_current_user( 0 );
 	foreach ( array(

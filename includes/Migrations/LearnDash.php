@@ -738,7 +738,6 @@ class LearnDash {
 	 */
 	private function enroll_student( $student_id, $course_id ) {
 		global $wpdb;
-		$enrollment_table = $wpdb->prefix . 'ohmylms_user_enrollment';
 
 		$enrollment_data = array(
 			'course_id'  => $course_id,
@@ -756,10 +755,7 @@ class LearnDash {
 			);
 
 			if ( ! $existing_record ) {
-				$wpdb->insert(
-					$enrollment_table,
-					$enrollment_data
-				);
+				\OhMyLMS\Student\Enrollments::create( $enrollment_data, array( 'source' => 'import' ) );
 			}
 
 			update_user_meta( $student_id, '_is_ohmylms_student', 'yes' );
@@ -785,13 +781,12 @@ class LearnDash {
 			}
 		}
 
-		$placeholders = implode( ',', array_fill( 0, count( $meta_keys ), '%s' ) );
-		$sql          = $wpdb->prepare(
-			"SELECT DISTINCT user_id FROM {$wpdb->usermeta} WHERE meta_key IN ($placeholders)",
-			...$meta_keys
+		$results = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT DISTINCT user_id FROM {$wpdb->usermeta} WHERE meta_key IN (" . implode( ',', array_fill( 0, count( $meta_keys ), '%s' ) ) . ')',
+				...$meta_keys
+			)
 		);
-
-		$results = $wpdb->get_col( $sql );
 
 		return array_map( 'intval', $results );
 	}

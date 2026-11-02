@@ -2,16 +2,18 @@ import { lazy } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import type { FeatureDefinition } from '../types';
 
-/** Membership plan list at `#/memberships`. */
+/** Membership plan list at `#/memberships`; the old `?panel=cohorts|automations` opens those tabs. */
 export const memberships: FeatureDefinition = {
 	id: 'memberships',
 	title: __( 'Memberships', 'ohmylms' ),
 	path: '/memberships',
+	group: 'commerce',
+	tab: 'memberships',
 	capability: 'manage_options',
 	component: lazy(
 		() =>
 			import(
-				/* webpackChunkName: "admin-app-memberships" */ './MembershipsPage'
+				/* webpackChunkName: "admin-app-memberships" */ './MembershipsRoute'
 			)
 	),
 };
@@ -24,6 +26,8 @@ export const membershipEditor: FeatureDefinition = {
 	id: 'memberships-editor',
 	title: __( 'Membership plan', 'ohmylms' ),
 	path: '/memberships/:id',
+	group: 'commerce',
+	tab: 'memberships',
 	hidden: true,
 	capability: 'manage_options',
 	component: lazy(

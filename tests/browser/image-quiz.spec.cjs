@@ -16,7 +16,7 @@ test( 'image quiz persists the buzzer, scores once and supports mobile and autho
 	await page.locator( '#user_pass' ).fill( credentials.password );
 	await page.locator( '#wp-submit' ).click();
 	await page.waitForURL( ( u ) => ! u.pathname.endsWith( 'wp-login.php' ) );
-	await page.goto( '/wp-admin/admin.php?page=ohmylms' );
+	await page.goto( '/wp-admin/admin.php?page=ohmylms-app' );
 	await page.waitForFunction( () => Boolean( window.wp?.apiFetch ) );
 
 	const imageBytes = Array.from(
@@ -37,21 +37,20 @@ test( 'image quiz persists the buzzer, scores once and supports mobile and autho
 		} );
 		const questions = [];
 		for ( let index = 0; index < 2; index++ ) {
-			const q = await api( '/ohmylms/v1/question', {
+			const q = await api( '/ohmylms/v1/questions', {
 				name: `What logo is this? ${ index + 1 }`,
-				quiz_id: 0,
 				thumbnail_id: media.id,
 				settings: {
 					type: 'single-choice',
 					score: { enabled: true, value: 1 },
 				},
-				questions: [
+				options: [
 					{ answer: 'WordPress', is_correct: true },
 					{ answer: 'Other', is_correct: false },
 				],
 			} );
 			questions.push( q.id );
-			await api( `/ohmylms/v1/question-bank/${ q.id }/approve`, {} );
+			await api( `/ohmylms/v1/questions/${ q.id }/approve`, {} );
 		}
 		const post = await api( '/wp/v2/pages', {
 			title: 'Image quiz fixture',
@@ -201,7 +200,7 @@ test( 'image quiz persists the buzzer, scores once and supports mobile and autho
 			} )
 		).toHaveValue( '10' );
 	} finally {
-		await page.goto( '/wp-admin/admin.php?page=ohmylms' );
+		await page.goto( '/wp-admin/admin.php?page=ohmylms-app' );
 		await page.waitForFunction( () => Boolean( window.wp?.apiFetch ) );
 		await page.evaluate( async ( fixture ) => {
 			await wp.apiFetch( {
@@ -210,7 +209,7 @@ test( 'image quiz persists the buzzer, scores once and supports mobile and autho
 			} );
 			for ( const id of fixture.questions ) {
 				await wp.apiFetch( {
-					path: `/ohmylms/v1/question/${ id }`,
+					path: `/ohmylms/v1/questions/${ id }`,
 					method: 'DELETE',
 				} );
 			}

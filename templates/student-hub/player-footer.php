@@ -8,9 +8,6 @@
 defined( 'ABSPATH' ) || exit;
 ?>
 <nav class="oml-player-journey" aria-label="<?php esc_attr_e( 'Activity navigation', 'ohmylms' ); ?>">
-	<?php if ( $player_navigation['lesson'] ) : ?>
-		<a href="<?php echo esc_url( $player_navigation['lesson']['url'] ); ?>"><?php esc_html_e( 'Lesson overview', 'ohmylms' ); ?>: <?php echo esc_html( $player_navigation['lesson']['title'] ); ?></a>
-	<?php endif; ?>
 	<?php
 	foreach ( array(
 		'previous' => __( 'Previous activity', 'ohmylms' ),

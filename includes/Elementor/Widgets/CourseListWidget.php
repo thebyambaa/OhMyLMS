@@ -73,7 +73,7 @@ class CourseListWidget extends Widget_Base {
 	 * @return array
 	 */
 	public function get_script_depends() {
-		return array( 'ohmylms-frontend', 'ohmylms-add-to-cart' );
+		return array( 'ohmylms-frontend' );
 	}
 
 	/**

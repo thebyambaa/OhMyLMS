@@ -79,7 +79,8 @@ final class Sessions {
 		global $wpdb;
 		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE uuid=%s', Schema::table( 'practice_sessions' ), (string) $uuid ), ARRAY_A );
 		if ( $row ) {
-			$row['policy'] = json_decode( $row['policy'], true ) ?: array(); }
+			$policy        = json_decode( $row['policy'], true );
+			$row['policy'] = $policy ? $policy : array(); }
 		return $row ? $row : null;
 	}
 
@@ -106,8 +107,10 @@ final class Sessions {
 		$bank  = Schema::table( 'qb_questions' );
 		$rows  = $wpdb->get_results( $wpdb->prepare( 'SELECT i.*, COALESCE(q.family_id,\'\') AS family_id FROM %i i LEFT JOIN %i q ON q.question_id=i.question_id WHERE i.session_id=%d ORDER BY i.position', $items, $bank, (int) $session_id ), ARRAY_A );
 		foreach ( $rows as &$row ) {
-			$row['option_order'] = json_decode( $row['option_order'], true ) ?: array();
-			$row['display']      = json_decode( $row['display'], true ) ?: array();
+			$option_order        = json_decode( $row['option_order'], true );
+			$display             = json_decode( $row['display'], true );
+			$row['option_order'] = $option_order ? $option_order : array();
+			$row['display']      = $display ? $display : array();
 			$row['response']     = null === $row['response'] ? null : json_decode( $row['response'], true );
 		}
 		return $rows;
@@ -123,7 +126,8 @@ final class Sessions {
 			return \OhMyLMS\Placement\Placement::issue( $session );
 		}
 		$items   = self::items( $session['id'] );
-		$policy  = is_array( $session['policy'] ) ? $session['policy'] : ( json_decode( $session['policy'], true ) ?: array() );
+		$policy  = is_array( $session['policy'] ) ? $session['policy'] : json_decode( $session['policy'], true );
+		$policy  = $policy ? $policy : array();
 		$lesson  = ( $policy['style'] ?? '' ) === 'lesson';
 		$planned = count(
 			array_filter(
@@ -279,7 +283,8 @@ final class Sessions {
 	 */
 	public static function complete( array $session, $reason ) {
 		global $wpdb;
-		$policy    = is_array( $session['policy'] ) ? $session['policy'] : ( json_decode( $session['policy'], true ) ?: array() );
+		$policy    = is_array( $session['policy'] ) ? $session['policy'] : json_decode( $session['policy'], true );
+		$policy    = $policy ? $policy : array();
 		$completed = $wpdb->update(
 			Schema::table( 'practice_sessions' ),
 			array(

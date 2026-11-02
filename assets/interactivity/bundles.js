@@ -21,6 +21,7 @@ const { state } = store( 'ohmylms/bundles', {
 } );
 
 // Announces through the persistent status region; cleared first so repeats are read again.
+/** @param {string} text Announcement. */
 function announce( text ) {
 	state.status = '';
 	setTimeout( () => {
@@ -28,6 +29,11 @@ function announce( text ) {
 	}, 50 );
 }
 
+/**
+ * @param {boolean} follow Follow (POST) or unfollow (DELETE).
+ * @param {string}  id     Bundle ID.
+ * @return {Promise<{html?: string}>} REST answer.
+ */
 async function request( follow, id ) {
 	const response = await fetch(
 		`${ state.root }bundles/${ encodeURIComponent( id ) }/follow`,
@@ -48,6 +54,11 @@ async function request( follow, id ) {
 	return data;
 }
 
+/**
+ * @param {HTMLButtonElement} button Follow or unfollow button.
+ * @param {boolean}           follow Follow (true) or unfollow.
+ * @param {string}            id     Bundle ID.
+ */
 async function change( button, follow, id ) {
 	button.disabled = true;
 	try {
@@ -55,7 +66,9 @@ async function change( button, follow, id ) {
 		const current = document.getElementById( 'ohmylms-bundles' );
 		const holder = document.createElement( 'div' );
 		holder.innerHTML = data.html || '';
-		const next = holder.querySelector( '#ohmylms-bundles' );
+		const next = /** @type {HTMLElement|null} */ (
+			holder.querySelector( '#ohmylms-bundles' )
+		);
 		if ( current && next ) {
 			current.replaceWith( next );
 			next.focus();
@@ -63,7 +76,8 @@ async function change( button, follow, id ) {
 			current.replaceChildren();
 		}
 		announce( follow ? state.messages.added : state.messages.removed );
-	} catch ( error ) {
+	} catch ( caught ) {
+		const error = /** @type {Error|undefined} */ ( caught );
 		button.disabled = false;
 		announce( ( error && error.message ) || state.messages.error );
 	}

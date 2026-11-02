@@ -3,15 +3,19 @@ import { createElement } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Button } from '@wordpress/components';
 
+/** @typedef {import('./editorTypes').Data} Data */
+
 /**
  * The names of the variables a question template defines, in order.
  *
- * @param {Object} settings Question settings.
+ * @param {Data|null|undefined} settings Question settings.
  * @return {string[]} Variable names.
  */
 export const variableNames = ( settings ) =>
 	( settings?.template?.variables || [] )
-		.map( ( variable ) => String( variable?.name || '' ) )
+		.map( ( /** @type {Data|null} */ variable ) =>
+			String( variable?.name || '' )
+		)
 		.filter( Boolean );
 
 /**
@@ -20,7 +24,7 @@ export const variableNames = ( settings ) =>
  * @param {Object}               props        Component properties.
  * @param {string[]}             props.names  Variable names.
  * @param {(name: string)=>void} props.onPick Called with the chosen name.
- * @return {Element|null} Chips, or nothing when there are no variables.
+ * @return {React.ReactElement|null} Chips, or nothing when there are no variables.
  */
 export function VariableChips( { names, onPick } ) {
 	if ( ! names.length ) {

@@ -2,6 +2,7 @@
 /** Pure unit checks for syllabus CSV row cleaning and import planning (no WordPress database). */
 define('ABSPATH', __DIR__ . '/');
 function __($text) { return $text; }
+function wp_strip_all_tags($text) { return trim(strip_tags(preg_replace('@<(script|style)[^>]*?>.*?</\\1>@si', '', (string) $text))); }
 require dirname(__DIR__, 2) . '/vendor/autoload.php';
 use OhMyLMS\Curriculum\SyllabusCourse;
 use OhMyLMS\Curriculum\SyllabusPlan;

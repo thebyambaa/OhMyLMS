@@ -2,7 +2,9 @@
 
 namespace OhMyLMS\Emails\CreatorsEmail;
 
+use OhMyLMS\Admin\LegacyRoutes;
 use OhMyLMS\Emails\Emails;
+use OhMyLMS\I18n\RecipientLocale;
 
 /**
  * Plugin assignment submitted implementation.
@@ -128,6 +130,25 @@ class AssignmentSubmitted {
 			return;
 		}
 
+		RecipientLocale::each(
+			$to,
+			function ( $recipients ) use ( $assignment_id, $student_id, $student, $course ) {
+				$this->compose_single( $assignment_id, $student_id, $student, $course, $recipients );
+			}
+		);
+	}
+
+	/**
+	 * Compose and send one submission to recipients who share a language, in that language.
+	 *
+	 * @param mixed        $assignment_id Assignment identifier.
+	 * @param mixed        $student_id    Student identifier.
+	 * @param \WP_User     $student       Learner.
+	 * @param object       $course        Course.
+	 * @param string|array $to            Recipients.
+	 */
+	private function compose_single( $assignment_id, $student_id, $student, $course, $to ) {
+		$settings         = Emails::get_template_settings( 'instructor_assignment_submitted', $this->default_settings() );
 		$assignment       = get_post( $assignment_id );
 		$assignment_title = $assignment ? $assignment->post_title : '';
 		$email_settings   = Emails::get_email_settings();
@@ -135,7 +156,7 @@ class AssignmentSubmitted {
 		$subject = isset( $settings['subject'] ) ? $settings['subject'] : '';
 		$subject = $this->replace_tags( $subject, $student->display_name, $course->get_name(), $assignment_title );
 
-		$settings['button_link'] = admin_url( 'admin.php?page=ohmylms#/assignment-report/' . $assignment_id . '/grade-assignment/' . $student_id );
+		$settings['button_link'] = LegacyRoutes::assignment_grading_url( $assignment_id, $student_id );
 
 		ob_start();
 		ohmylms_get_template(
@@ -174,6 +195,23 @@ class AssignmentSubmitted {
 			return;
 		}
 
+		RecipientLocale::each(
+			$to,
+			function ( $recipients ) use ( $course, $items ) {
+				$this->compose_digest( $course, $items, $recipients );
+			}
+		);
+	}
+
+	/**
+	 * Compose and send a course digest to recipients who share a language, in that language.
+	 *
+	 * @param object       $course Course.
+	 * @param array        $items  Queued submissions.
+	 * @param string|array $to     Recipients.
+	 */
+	private function compose_digest( $course, $items, $to ) {
+		$settings       = Emails::get_template_settings( 'instructor_assignment_submitted', $this->default_settings() );
 		$email_settings = Emails::get_email_settings();
 
 		/* translators: 1: submission count, 2: course name */
@@ -192,12 +230,12 @@ class AssignmentSubmitted {
 				'student_name'     => $s ? $s->display_name : __( 'Unknown Student', 'ohmylms' ),
 				'assignment_title' => $a ? $a->post_title : __( 'Unknown Assignment', 'ohmylms' ),
 				'time'             => $item['time'],
-				'grade_link'       => admin_url( 'admin.php?page=ohmylms#/assignment-report/' . $item['assignment_id'] . '/grade-assignment/' . $item['student_id'] ),
+				'grade_link'       => LegacyRoutes::assignment_grading_url( $item['assignment_id'], $item['student_id'] ),
 			);
 		}
 
 		$digest_settings                = $settings;
-		$digest_settings['button_link'] = admin_url( 'admin.php?page=ohmylms#/assignment-report' );
+		$digest_settings['button_link'] = LegacyRoutes::app_url( '/assignments' );
 
 		ob_start();
 		ohmylms_get_template(

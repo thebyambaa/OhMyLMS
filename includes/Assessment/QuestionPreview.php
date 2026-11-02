@@ -13,74 +13,9 @@ defined( 'ABSPATH' ) || exit;
 
 /** Render unsaved questions without publishing content or starting learner attempts. */
 final class QuestionPreview {
-	/** Register the author API and isolated frontend document. */
+	/** Register the isolated frontend document. The author API is {@see Rest\QuestionPreviewController}. */
 	public static function init() {
-		add_action( 'rest_api_init', array( __CLASS__, 'routes' ) );
 		add_action( 'template_redirect', array( __CLASS__, 'document' ), 0 );
-	}
-
-	/** Register an authenticated, non-publishing preview operation. */
-	public static function routes() {
-		register_rest_route(
-			'ohmylms/v1',
-			'/question-preview',
-			array(
-				'methods'             => 'POST',
-				'permission_callback' => array( __CLASS__, 'permission' ),
-				'callback'            => array( __CLASS__, 'create' ),
-				'args'                => array(
-					'post_id'        => array(
-						'type'     => 'integer',
-						'required' => true,
-						'minimum'  => 1,
-					),
-					'question'       => array(
-						'type'       => 'object',
-						'required'   => true,
-						'properties' => array(
-							'id'          => array(
-								'type'    => 'integer',
-								'minimum' => 0,
-							),
-							'name'        => array( 'type' => 'string' ),
-							'description' => array( 'type' => 'string' ),
-							'image_src'   => array( 'type' => 'string' ),
-							'video_src'   => array( 'type' => 'string' ),
-							'settings'    => array( 'type' => 'object' ),
-							'questions'   => array(
-								'type'     => 'array',
-								'maxItems' => 1000,
-								'items'    => array( 'type' => 'object' ),
-							),
-						),
-					),
-					'settings'       => array(
-						'type'    => 'object',
-						'default' => array(),
-					),
-					'kind'           => array(
-						'type'    => 'string',
-						'default' => 'quiz',
-					),
-					'ordinal'        => array(
-						'type'    => 'integer',
-						'minimum' => 1,
-						'maximum' => 10000,
-						'default' => 1,
-					),
-					'question_count' => array(
-						'type'    => 'integer',
-						'minimum' => 1,
-						'maximum' => 10000,
-						'default' => 1,
-					),
-					'seed'           => array(
-						'type'    => 'integer',
-						'default' => 1,
-					),
-				),
-			)
-		);
 	}
 
 	/**
@@ -221,7 +156,9 @@ final class QuestionPreview {
 		wp_enqueue_style( 'ohmylms-frontend' );
 		wp_enqueue_script( 'ohmylms-frontend' );
 		MathLive::enqueue();
-		$figure_markup = (string) ( $saved['question']['description'] ?? '' ) . implode( ' ', array_column( $saved['question']['settings']['parts'] ?? array(), 'prompt' ) );
+		// Most types store parts as a list of prompts; Shade a model stores a number of parts.
+		$parts         = $saved['question']['settings']['parts'] ?? array();
+		$figure_markup = (string) ( $saved['question']['description'] ?? '' ) . ( is_array( $parts ) ? implode( ' ', array_column( $parts, 'prompt' ) ) : '' );
 		if ( false !== strpos( $figure_markup, 'ohmylms-import-figure' ) ) {
 			\OhMyLMS\ExamImport\FigureContent::enqueue();
 		}

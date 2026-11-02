@@ -20,7 +20,6 @@ defined( 'ABSPATH' ) || exit;
 		/**
 		 * Membership.
 		 *
-		 *
 		 * @since 1.0.0
 		 */
 		do_action( 'ohmylms_recurring_totals_subtotals', $membership );

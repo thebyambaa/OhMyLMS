@@ -1,27 +1,29 @@
-import { Button, Modal, Notice, TextControl } from '@wordpress/components';
+import { Button, Modal, Notice } from '@wordpress/components';
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import { Table } from '../../../ui/Table';
+import { useSearchParams } from 'react-router-dom';
+import { ListTable } from '../../../ui/ListTable';
 import { useBootstrap } from '../../bootstrap/BootstrapContext';
-import { Pagination } from '../../components/Pagination';
+import { useListState } from '../../components/listQuery';
+import {
+	PageTitleAction,
+	PageTitleActions,
+} from '../../layout/PageTitleActions';
 import { normalizeApiError } from '../../lib/api';
 import type { Collection } from '../../lib/api/collection';
-import {
-	changeArchive,
-	getSkillSummary,
-	listSkills,
-	saveSkill,
-	type SkillInput,
-	type SkillSummary,
-} from './api';
+import { changeArchive, listSkills, type SkillSummary } from './api';
 import { SkillEditor } from './SkillEditor';
 import { SkillLinks } from './SkillLinks';
 
+const NO_FILTERS = { search: '' };
+
 export default function SkillsPage() {
 	const { user } = useBootstrap();
-	const [ query, setQuery ] = useState( '' );
-	const [ search, setSearch ] = useState( '' );
-	const [ page, setPage ] = useState( 1 );
+	const list = useListState( NO_FILTERS, { search: 's' } );
+	const { page, setPage } = list;
+	const search = list.filters.search;
+	const [ query, setQuery ] = useState( search );
+	useEffect( () => setQuery( search ), [ search ] );
 	const [ version, setVersion ] = useState( 0 );
 	const [ data, setData ] = useState< Collection< SkillSummary > >( {
 		items: [],
@@ -30,7 +32,6 @@ export default function SkillsPage() {
 	} );
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState< string | null >( null );
-	const [ editError, setEditError ] = useState< string | null >( null );
 	const [ message, setMessage ] = useState< string | null >( null );
 	const [ editor, setEditor ] = useState< {
 		item: SkillSummary | null;
@@ -42,6 +43,22 @@ export default function SkillsPage() {
 	const [ busy, setBusy ] = useState( false );
 	const operation = useRef< AbortController | null >( null );
 	useEffect( () => () => operation.current?.abort(), [] );
+	const [ params, setParams ] = useSearchParams();
+	const add = params.get( 'add' );
+	useEffect( () => {
+		if ( '1' !== add ) {
+			return;
+		}
+		setEditor( { item: null } );
+		setParams(
+			( current ) => {
+				const next = new URLSearchParams( current );
+				next.delete( 'add' );
+				return next;
+			},
+			{ replace: true }
+		);
+	}, [ add, setParams ] );
 	useEffect( () => {
 		const controller = new AbortController();
 		setLoading( true );
@@ -62,7 +79,7 @@ export default function SkillsPage() {
 					page > 1 &&
 					problem.code === 'ohmylms_skill_invalid_page'
 				) {
-					setPage( ( current ) => current - 1 );
+					setPage( page - 1, { replace: true } );
 					return;
 				}
 				setError( problem.message );
@@ -70,11 +87,9 @@ export default function SkillsPage() {
 			}
 		);
 		return () => controller.abort();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ page, search, version ] );
-	async function run(
-		work: ( signal: AbortSignal ) => Promise< void >,
-		editing = false
-	) {
+	async function run( work: ( signal: AbortSignal ) => Promise< void > ) {
 		if ( operation.current ) {
 			return;
 		}
@@ -82,15 +97,12 @@ export default function SkillsPage() {
 		operation.current = controller;
 		setBusy( true );
 		setError( null );
-		setEditError( null );
 		setMessage( null );
 		try {
 			await work( controller.signal );
 		} catch ( failure ) {
 			if ( ! controller.signal.aborted ) {
-				( editing ? setEditError : setError )(
-					normalizeApiError( failure ).message
-				);
+				setError( normalizeApiError( failure ).message );
 			}
 		} finally {
 			if ( ! controller.signal.aborted ) {
@@ -99,21 +111,19 @@ export default function SkillsPage() {
 			}
 		}
 	}
-	function save( value: SkillInput ) {
-		void run( async ( signal ) => {
-			await saveSkill( value, editor?.item?.id ?? null, signal );
-			if ( ! signal.aborted ) {
-				setEditor( null );
-				setMessage( __( 'Skill saved.', 'ohmylms' ) );
-				setVersion( ( current ) => current + 1 );
-			}
-		}, true );
-	}
 	return (
-		<section aria-labelledby="skills-heading">
-			<h2 id="skills-heading">
-				{ __( 'Content Hub — Skills', 'ohmylms' ) }
-			</h2>
+		<section>
+			<PageTitleActions>
+				<PageTitleAction
+					disabled={ busy }
+					onClick={ () => {
+						setMessage( null );
+						setEditor( { item: null } );
+					} }
+				>
+					{ __( 'Add skill', 'ohmylms' ) }
+				</PageTitleAction>
+			</PageTitleActions>
 			<p>
 				{ __(
 					'Shared skills, hierarchy and prerequisites. Skills are a core feature.',
@@ -137,133 +147,106 @@ export default function SkillsPage() {
 					</Button>
 				</Notice>
 			) }
-			<Button
-				variant="primary"
-				disabled={ busy }
-				onClick={ () => {
-					setEditError( null );
-					setEditor( { item: null } );
-				} }
-			>
-				{ __( 'Add skill', 'ohmylms' ) }
-			</Button>
-			<form
-				role="search"
-				aria-label={ __( 'Find skills', 'ohmylms' ) }
-				onSubmit={ ( event ) => {
-					event.preventDefault();
-					setSearch( query.trim() );
-					setPage( 1 );
-					setVersion( ( current ) => current + 1 );
-				} }
-			>
-				<TextControl
-					label={ __( 'Search skills by name', 'ohmylms' ) }
-					value={ query }
-					maxLength={ 200 }
-					onChange={ setQuery }
-				/>
-				<Button type="submit" variant="secondary">
-					{ __( 'Search', 'ohmylms' ) }
-				</Button>
-			</form>
 			<div aria-live="polite">
 				{ loading && __( 'Loading skills…', 'ohmylms' ) }
-				{ ! loading &&
-					! error &&
-					! data.items.length &&
-					__( 'No skills found.', 'ohmylms' ) }
 			</div>
 			{ ! error && (
 				<div aria-busy={ loading }>
-					<Table caption={ __( 'Skills library', 'ohmylms' ) }>
-						<thead>
-							<tr>
-								<th scope="col">{ __( 'Name', 'ohmylms' ) }</th>
-								<th scope="col">{ __( 'Code', 'ohmylms' ) }</th>
-								<th scope="col">
-									{ __( 'Status', 'ohmylms' ) }
-								</th>
-								<th scope="col">
-									{ __( 'Actions', 'ohmylms' ) }
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							{ data.items.map( ( item ) => (
-								<tr key={ item.id }>
-									<th scope="row">{ item.name }</th>
-									<td>{ item.code }</td>
-									<td>
-										{ item.archived
-											? __( 'Archived', 'ohmylms' )
-											: __( 'Active', 'ohmylms' ) }
-									</td>
-									<td>
-										<Button
-											variant="tertiary"
-											disabled={ busy || loading }
-											onClick={ () =>
-												void run( async ( signal ) => {
-													const fresh =
-														await getSkillSummary(
-															item.id,
-															signal
-														);
-													if ( ! signal.aborted ) {
-														setEditor( {
-															item: fresh,
-														} );
-													}
-												} )
-											}
-											aria-label={ `${ __( 'Edit skill', 'ohmylms' ) }: ${ item.name }` }
-										>
-											{ __( 'Edit', 'ohmylms' ) }
-										</Button>
-										<Button
-											variant="tertiary"
-											disabled={ busy || loading }
-											onClick={ () => setLinks( item ) }
-										>
-											{ __( 'Links', 'ohmylms' ) }
-										</Button>
-										{ user.capabilities.manage_options && (
-											<Button
-												variant="tertiary"
-												disabled={ busy || loading }
-												onClick={ () =>
-													setConfirmation( item )
-												}
-											>
-												{ item.archived
-													? __( 'Restore', 'ohmylms' )
-													: __(
-															'Archive',
-															'ohmylms'
-														) }
-											</Button>
-										) }
-									</td>
-								</tr>
-							) ) }
-						</tbody>
-					</Table>
-					<Pagination
-						page={ page }
-						pages={ data.totalPages }
-						busy={ loading }
-						onChange={ setPage }
+					<ListTable< SkillSummary >
+						caption={ __( 'Skills library', 'ohmylms' ) }
+						heading={ __( 'Skills list', 'ohmylms' ) }
+						formLabel={ __( 'Find skills', 'ohmylms' ) }
+						busy={ busy || loading }
+						rows={ data.items }
+						rowKey={ ( item ) => item.id }
+						emptyMessage={
+							loading ? '' : __( 'No skills found.', 'ohmylms' )
+						}
+						search={ {
+							label: __( 'Search skills by name', 'ohmylms' ),
+							submitLabel: __( 'Search', 'ohmylms' ),
+							value: query,
+							maxLength: 200,
+							onChange: setQuery,
+							onSubmit: () => {
+								list.setFilters( { search: query.trim() } );
+								setVersion( ( current ) => current + 1 );
+							},
+						} }
+						pagination={ {
+							page,
+							totalPages: data.totalPages,
+							onChange: setPage,
+							href: list.pageHref,
+						} }
+						columns={ [
+							{
+								id: 'name',
+								label: __( 'Name', 'ohmylms' ),
+								primary: true,
+								render: ( item ) => (
+									<strong className="row-title">
+										{ item.name }
+									</strong>
+								),
+							},
+							{
+								id: 'code',
+								label: __( 'Code', 'ohmylms' ),
+								render: ( item ) => item.code,
+							},
+							{
+								id: 'status',
+								label: __( 'Status', 'ohmylms' ),
+								render: ( item ) =>
+									item.archived
+										? __( 'Archived', 'ohmylms' )
+										: __( 'Active', 'ohmylms' ),
+							},
+						] }
+						rowActions={ ( item ) => [
+							{
+								key: 'edit',
+								label: __( 'Edit', 'ohmylms' ),
+								disabled: busy || loading,
+								ariaLabel: `${ __( 'Edit skill', 'ohmylms' ) }: ${ item.name }`,
+								onClick: () => {
+									setMessage( null );
+									setEditor( { item } );
+								},
+							},
+							{
+								key: 'links',
+								label: __( 'Links', 'ohmylms' ),
+								disabled: busy || loading,
+								onClick: () => setLinks( item ),
+							},
+							user.capabilities.manage_options && {
+								key: item.archived ? 'untrash' : 'archive',
+								label: item.archived
+									? __( 'Restore', 'ohmylms' )
+									: __( 'Archive', 'ohmylms' ),
+								destructive: ! item.archived,
+								disabled: busy || loading,
+								onClick: () => setConfirmation( item ),
+							},
+						] }
 					/>
 				</div>
 			) }
 			{ editor && (
 				<SkillEditor
-					item={ editor.item }
-					busy={ busy }
-					error={ editError }
+					id={ editor.item?.id ?? null }
 					onClose={ () => setEditor( null ) }
-					onSave={ save }
+					onSaved={ () => {
+						setEditor( null );
+						setMessage( __( 'Skill saved.', 'ohmylms' ) );
+						setVersion( ( current ) => current + 1 );
+					} }
+					onLinks={ () => {
+						setLinks( editor.item );
+						setEditor( null );
+					} }
 				/>
 			) }
 			{ links && (

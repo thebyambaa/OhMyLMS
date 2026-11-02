@@ -61,7 +61,7 @@ final class Editor {
 		if ( isset( $_POST['ohmylms_save'] ) ) {
 			check_admin_referer( 'ohmylms_extension_settings' );
 			if ( 'question' === $context ) {
-				$settings = json_decode( wp_unslash( $_POST['settings'] ?? '' ), true );
+				$settings = json_decode( wp_unslash( $_POST['settings'] ?? '' ), true ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- JSON payload; decoded values are sanitized with map_deep() before saving.
 				$type     = Registry::get( 'question', $settings['type'] ?? '' );
 				if ( ! is_array( $settings ) || ! $type ) {
 					echo '<p role="alert">Invalid question settings or unknown question type.</p>';} else {

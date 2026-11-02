@@ -29,7 +29,7 @@ final class Selector {
 	/** Types where the learner builds or places the answer from given pieces. */
 	const GUIDED = array( 'fill-in-the-blank', 'reorder', 'build-expression', 'number-line', 'shade-model', 'count-blocks', 'set-clock', 'make-amount', 'fill-level', 'build-chart', 'grid-build' );
 
-	/** recognize, guided or produce: the order a lesson moves through (easiest first).
+	/** Recognize, guided or produce: the order a lesson moves through (easiest first).
 	 *
 	 * @param mixed $type Type.
 	 */
@@ -142,7 +142,8 @@ final class Selector {
 	 * @param mixed $term_id Term identifier.
 	 */
 	public static function pool( $term_id ) {
-		$terms = array_merge( array( (int) $term_id ), array_map( 'intval', get_term_children( (int) $term_id, Taxonomy::NAME ) ?: array() ) );
+		$children = get_term_children( (int) $term_id, Taxonomy::NAME );
+		$terms    = array_merge( array( (int) $term_id ), array_map( 'intval', $children ? $children : array() ) );
 		return self::eligible( $terms );
 	}
 
@@ -175,8 +176,7 @@ final class Selector {
 		if ( ! $terms ) {
 			return array();
 		}
-		$placeholders = implode( ',', array_fill( 0, count( $terms ), '%d' ) );
-		$manual       = array_keys(
+		$manual = array_keys(
 			array_filter(
 				\OhMyLMS\Extensions\Registry::all( 'question' ),
 				static function ( $definition ) {
@@ -184,15 +184,15 @@ final class Selector {
 				}
 			)
 		);
-		$rows         = $wpdb->get_results(
+		$rows   = $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT DISTINCT q.question_id, q.approved_version_id AS version_id, q.difficulty, q.family_id, q.bank_id, q.author_id, s.term_id AS primary_term_id, v.type, v.settings
-             FROM ' . Schema::table( 'qb_questions' ) . ' q
-             JOIN ' . Schema::table( 'qb_version_skills' ) . " s ON s.version_id=q.approved_version_id AND s.role='primary'
-             JOIN " . Schema::table( 'qb_question_versions' ) . " v ON v.id=q.approved_version_id
+				"SELECT DISTINCT q.question_id, q.approved_version_id AS version_id, q.difficulty, q.family_id, q.bank_id, q.author_id, s.term_id AS primary_term_id, v.type, v.settings
+             FROM %i q
+             JOIN %i s ON s.version_id=q.approved_version_id AND s.role='primary'
+             JOIN %i v ON v.id=q.approved_version_id
              JOIN {$wpdb->posts} p ON p.ID=q.question_id
-             WHERE q.approved_version_id>0 AND q.secure=0 AND p.post_status NOT IN ('trash', %s) AND s.term_id IN ($placeholders)",
-				array_merge( array( Usage::ARCHIVED ), $terms )
+             WHERE q.approved_version_id>0 AND q.secure=0 AND p.post_status NOT IN ('trash', %s) AND s.term_id IN (" . implode( ',', array_fill( 0, count( $terms ), '%d' ) ) . ')',
+				array_merge( array( Schema::table( 'qb_questions' ), Schema::table( 'qb_version_skills' ), Schema::table( 'qb_question_versions' ), Usage::ARCHIVED ), $terms )
 			),
 			ARRAY_A
 		);
@@ -204,11 +204,13 @@ final class Selector {
 							return null; }
 						// Structured questions with teacher-marked parts cannot give immediate practice feedback.
 						if ( in_array( $row['type'], array( 'structured', 'passage' ), true ) ) {
-							if ( \OhMyLMS\Assessment\Structured::has_manual( json_decode( $row['settings'], true ) ?: array() ) ) {
+							$settings = json_decode( $row['settings'], true );
+							if ( \OhMyLMS\Assessment\Structured::has_manual( $settings ? $settings : array() ) ) {
 								return null;
 							}
 						}
-						$row['is_template'] = \OhMyLMS\Assessment\Template::has( json_decode( $row['settings'], true ) ?: array() );
+						$settings           = json_decode( $row['settings'], true );
+						$row['is_template'] = \OhMyLMS\Assessment\Template::has( $settings ? $settings : array() );
 						unset( $row['settings'] );
 						return $row;
 					},

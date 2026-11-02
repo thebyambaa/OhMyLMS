@@ -7,18 +7,13 @@
 
 namespace OhMyLMS\WPBakery\Elements;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * WPBakery Course List Element
  *
  * @package OhMyLMS\WPBakery\Elements
  * @since 1.0.0
- */
-
-
-defined( 'ABSPATH' ) || exit;
-
-/**
- * CourseListElement class
  */
 class CourseListElement {
 

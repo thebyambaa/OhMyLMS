@@ -32,28 +32,6 @@ final class Dashboard {
 					remove_action( 'ohmylms_lms_student_profile_before_dashboard_content', 'ohmylms_lms_student_profile_name' ); }
 			}
 		);
-		add_action(
-			'rest_api_init',
-			static function () {
-				register_rest_route(
-					'ohmylms/v1',
-					'/student/dashboard-theme',
-					array(
-						'methods'             => 'PUT',
-						'permission_callback' => static function () {
-							return is_user_logged_in(); },
-						'callback'            => static function ( $request ) {
-							$theme = $request->get_param( 'theme' );
-							if ( ! is_string( $theme ) || ! in_array( $theme, self::THEMES, true ) ) {
-								return new \WP_Error( 'dashboard_theme', __( 'Choose an available theme.', 'ohmylms' ), array( 'status' => 400 ) );
-							}
-							update_user_meta( get_current_user_id(), '_ohmylms_dashboard_theme', $theme );
-							return rest_ensure_response( array( 'theme' => $theme ) );
-						},
-					)
-				);
-			}
-		);
 		// Load before the page head: shortcode templates render after wp_head.
 		add_action(
 			'wp_enqueue_scripts',
@@ -67,6 +45,21 @@ final class Dashboard {
 				self::assets();
 			}
 		);
+	}
+
+	/**
+	 * Save a learner's dashboard theme ({@see Rest\DashboardController}).
+	 *
+	 * @param int   $user  User ID.
+	 * @param mixed $theme One of THEMES.
+	 * @return true|\WP_Error
+	 */
+	public static function save_theme( $user, $theme ) {
+		if ( ! is_string( $theme ) || ! in_array( $theme, self::THEMES, true ) ) {
+			return new \WP_Error( 'dashboard_theme', __( 'Choose an available theme.', 'ohmylms' ), array( 'status' => 400 ) );
+		}
+		update_user_meta( $user, '_ohmylms_dashboard_theme', $theme );
+		return true;
 	}
 
 	/**

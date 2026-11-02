@@ -6,7 +6,6 @@ import {
 	describeFailure,
 	isCompleted,
 	nextStep,
-	parseCurrencies,
 	parseState,
 	parseStateResponse,
 	parseStepResponse,
@@ -84,14 +83,6 @@ describe( 'parseState', () => {
 				},
 			} )
 		).toThrow( ApiError );
-	} );
-
-	it( 'validates currencies', () => {
-		expect(
-			parseCurrencies( [ { code: 'USD', name: 'x', symbol: '$' } ] )
-		).toHaveLength( 1 );
-		expect( () => parseCurrencies( [ { code: 1 } ] ) ).toThrow( ApiError );
-		expect( () => parseCurrencies( {} ) ).toThrow( ApiError );
 	} );
 } );
 

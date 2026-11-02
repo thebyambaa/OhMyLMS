@@ -5,7 +5,6 @@
  * @package OhMyLMS
  */
 
-
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -48,7 +47,7 @@ function ohmylms_update_121_create_video_progress_table() {
 	$table_name      = $wpdb->prefix . 'ohmylms_video_progress';
 
 	// Check if table already exists.
-	if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table_name}'" ) != $table_name ) {
+	if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table_name ) ) != $table_name ) {
 		$sql = "CREATE TABLE {$table_name} (
 			id bigint(20) unsigned NOT NULL auto_increment,
 			user_id bigint(20) NOT NULL,
@@ -135,6 +134,76 @@ function ohmylms_update_1212_schedule_student_migration() {
  */
 function ohmylms_update_1212_db_version() {
 	\OhMyLMS\Install::update_db_version( '1.2.12' );
+}
+
+/**
+ * Delete the stored data of the removed administrator assistant: its settings (including the encrypted
+ * provider key) and the development worker's configuration and job records.
+ *
+ * @return void
+ * @since 1.2.21
+ */
+function ohmylms_update_1221_remove_admin_assistant() {
+	foreach ( array( 'ohmylms_admin_assistant', 'ohmylms_coding_worker', 'ohmylms_coding_jobs' ) as $option ) {
+		delete_option( $option );
+	}
+}
+
+/**
+ * Create the `ohmylms_enrolments` table (docs/api/enrolments.md). Down: `EnrolmentSchema::uninstall()`.
+ *
+ * @return void
+ * @since 1.2.21
+ */
+function ohmylms_update_1221_create_enrolments_table() {
+	\OhMyLMS\Student\EnrolmentSchema::install();
+}
+
+/**
+ * Schedule the batched fill of `ohmylms_enrolments` from `ohmylms_user_enrollment`. Readers switch to the
+ * new table once it completes; down: `EnrolmentMigration::revert()`.
+ *
+ * @return void
+ * @since 1.2.21
+ */
+function ohmylms_update_1221_schedule_enrolment_migration() {
+	\OhMyLMS\Student\EnrolmentMigration::start();
+}
+
+/**
+ * Update database version to 1.2.21
+ *
+ * @return void
+ * @since 1.2.21
+ */
+function ohmylms_update_1221_db_version() {
+	\OhMyLMS\Install::update_db_version( '1.2.21' );
+}
+
+/**
+ * Forget saved email texts that are only a default. Saving an email used to store all of its fields,
+ * so defaults were frozen in the language of the administrator who saved; a subject, heading, message,
+ * button or footer that equals its default in any interface language (English, Mongolian) is removed
+ * and translated per recipient again. Customized texts, `enable` and recipients are kept. Idempotent.
+ *
+ * @return void
+ * @since 1.2.22
+ */
+function ohmylms_update_1222_forget_email_defaults() {
+	$locales = array_merge( array( 'en_US' ), array_keys( \OhMyLMS\I18n\InterfaceLanguage::locales() ) );
+	foreach ( \OhMyLMS\Emails\EmailManager::ids() as $email_id ) {
+		\OhMyLMS\Emails\EmailManager::forget_defaults( $email_id, $locales );
+	}
+}
+
+/**
+ * Update database version to 1.2.22
+ *
+ * @return void
+ * @since 1.2.22
+ */
+function ohmylms_update_1222_db_version() {
+	\OhMyLMS\Install::update_db_version( '1.2.22' );
 }
 
 /**

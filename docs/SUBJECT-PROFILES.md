@@ -92,4 +92,4 @@ Profiles are site settings, not plugin code. Profiles for languages, sciences, t
 
 - `php tests/php/subject-profiles-unit.php`: 22 pure checks covering keys, validation, ordinals and labels.
 - With `OHMYLMS_STRUCTURE_INTEGRATION=1`, `tests/php/subject-profiles-integration.php`: 22 checks. They cover the built-in defaults, unchanged Mathematics behaviour, per-subject domains, levels and placement, guarded saves, the default profile, customising and restoring a built-in profile, MCP tool definitions and anonymous denial. The stored option is restored afterwards.
-- `node --test tests/js/subject-profiles.test.mjs` plus the level-aware cases in `ai-analysis.test.mjs` and `skill-map.test.mjs`.
+- `npm run test:app` for the typed subjects screen (`#/content-hub/curriculum/subjects`). The JavaScript tests of the recovered screen were deleted at the cutover.

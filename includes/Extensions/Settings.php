@@ -35,14 +35,38 @@ final class Settings {
 		if ( empty( $definition['contexts'] ) || array_diff( $definition['contexts'], self::$contexts ) || ( $definition['schema']['type'] ?? '' ) !== 'object' ) {
 			throw new \InvalidArgumentException( 'Settings require supported contexts and an object schema.' );
 		}
+		if ( isset( $definition['sanitize'] ) && ! is_callable( $definition['sanitize'] ) ) {
+			throw new \InvalidArgumentException( 'Settings sanitize must be callable.' );
+		}
 		$definition['schema']['additionalProperties'] = false;
 		self::$definitions[ $id ]                     = $definition;
 	}
 	/**
-	 * Manifest for Settings.
+	 * Manifest for Settings: the public definitions, without server callbacks.
 	 */
 	public static function manifest() {
-		return self::$definitions; }
+		return array_map(
+			static function ( $definition ) {
+				unset( $definition['sanitize'] );
+				return $definition;
+			},
+			self::$definitions
+		);
+	}
+	/**
+	 * Definitions that apply to one content context, without server callbacks.
+	 *
+	 * @param string $context Content context, for example `membership`.
+	 * @return array Definitions keyed by settings ID.
+	 */
+	public static function for_context( $context ) {
+		return array_filter(
+			self::manifest(),
+			static function ( $definition ) use ( $context ) {
+				return in_array( $context, (array) $definition['contexts'], true );
+			}
+		);
+	}
 	/**
 	 * Init for Settings.
 	 */
@@ -56,66 +80,46 @@ final class Settings {
 			4
 		);
 		add_filter( 'rest_request_after_callbacks', array( __CLASS__, 'after_content' ), 10, 3 );
-		add_action(
-			'rest_api_init',
-			static function () {
-				register_rest_route(
-					'ohmylms/v1',
-					'/extension-settings/(?P<type>[a-z]+)/(?P<id>\d+)',
-					array(
-						array(
-							'methods'             => 'GET',
-							'callback'            => array( __CLASS__, 'read' ),
-							'permission_callback' => array( __CLASS__, 'permission' ),
-						),
-						array(
-							'methods'             => 'PUT',
-							'callback'            => array( __CLASS__, 'save' ),
-							'permission_callback' => array( __CLASS__, 'permission' ),
-						),
-					)
-				);
-			}
-		);
 	}
 	/**
-	 * Permission for Settings.
+	 * Whether a content context can carry extension settings.
 	 *
-	 * @param mixed $request REST request.
+	 * @param mixed $context Content context, for example `course`.
+	 * @return bool
 	 */
-	public static function permission( $request ) {
-		$post = get_post( (int) $request['id'] );
-		if ( ! in_array( $request['type'], self::$contexts, true ) || ! $post || $post->post_type !== 'ohmylms-' . $request['type'] ) {
-			return new \WP_Error( 'ohmylms_invalid_content', 'Invalid LMS content.', array( 'status' => 404 ) );
-		}
-		return current_user_can( 'edit_post', $post->ID ) ? true : new \WP_Error( 'ohmylms_forbidden', 'You cannot edit this content.', array( 'status' => rest_authorization_required_code() ) );
+	public static function supports( $context ) {
+		return in_array( $context, self::$contexts, true );
 	}
 	/**
-	 * Read for Settings.
+	 * Saved settings of one post that apply to its content context.
 	 *
-	 * @param mixed $request REST request.
+	 * @param mixed $type Content context.
+	 * @param mixed $post_id Post identifier.
+	 * @return array Settings keyed by settings ID.
 	 */
-	public static function read( $request ) {
-		$saved  = (array) get_post_meta( (int) $request['id'], '_ohmylms_extension_settings', true );
+	public static function stored( $type, $post_id ) {
+		$saved  = (array) get_post_meta( (int) $post_id, '_ohmylms_extension_settings', true );
 		$result = array();
 		foreach ( self::$definitions as $id => $definition ) {
-			if ( in_array( $request['type'], $definition['contexts'], true ) && isset( $saved[ $id ] ) ) {
+			if ( in_array( $type, $definition['contexts'], true ) && isset( $saved[ $id ] ) ) {
 				$result[ $id ] = $saved[ $id ]; }
 		}
-		return rest_ensure_response( array( 'settings' => (object) $result ) );
+		return $result;
 	}
 	/**
-	 * Save for Settings.
+	 * Validate incoming settings, merge them into the post's saved settings and store them.
 	 *
-	 * @param mixed $request REST request.
+	 * @param mixed $type Content context.
+	 * @param mixed $post_id Post identifier.
+	 * @param mixed $incoming Settings keyed by settings ID.
+	 * @return array|\WP_Error What {@see self::stored()} returns after the save.
 	 */
-	public static function save( $request ) {
-		$incoming = $request->get_param( 'settings' );
-		$saved    = self::prepare( $request['type'], $incoming, (array) get_post_meta( (int) $request['id'], '_ohmylms_extension_settings', true ) );
+	public static function update( $type, $post_id, $incoming ) {
+		$saved = self::prepare( $type, $incoming, (array) get_post_meta( (int) $post_id, '_ohmylms_extension_settings', true ) );
 		if ( is_wp_error( $saved ) ) {
 			return $saved; }
-		update_post_meta( (int) $request['id'], '_ohmylms_extension_settings', wp_slash( $saved ) );
-		return self::read( $request );
+		update_post_meta( (int) $post_id, '_ohmylms_extension_settings', wp_slash( $saved ) );
+		return self::stored( $type, $post_id );
 	}
 	/**
 	 * Prepare for Settings.
@@ -140,6 +144,14 @@ final class Settings {
 			if ( is_wp_error( $clean ) ) {
 				$clean->add_data( array( 'status' => 400 ) );
 				return $clean; }
+			if ( isset( $definition['sanitize'] ) ) {
+				// The callback's result must still match the schema it was registered with.
+				$clean = call_user_func( $definition['sanitize'], $clean, $type, $id );
+				$valid = is_wp_error( $clean ) ? $clean : rest_validate_value_from_schema( $clean, $definition['schema'], $id );
+				if ( is_wp_error( $valid ) ) {
+					$valid->add_data( array( 'status' => 400 ) );
+					return $valid; }
+			}
 			$saved[ $id ] = $clean;
 		}
 		return $saved;

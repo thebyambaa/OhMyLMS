@@ -70,7 +70,7 @@ describe( 'QuizzesPage', () => {
 		);
 		const table = await screen.findByRole( 'table', { name: 'Quizzes' } );
 		const rows = within( table ).getAllByRole( 'row' );
-		expect( rows ).toHaveLength( 3 );
+		expect( rows ).toHaveLength( 4 );
 		const first = within( rows[ 1 ]! );
 		expect(
 			first.getByRole( 'link', { name: 'Fractions check' } )
@@ -84,15 +84,12 @@ describe( 'QuizzesPage', () => {
 			first.getByRole( 'link', {
 				name: 'Edit questions of Fractions check',
 			} )
-		).toHaveAttribute(
-			'href',
-			'http://example.test/wp-admin/admin.php?page=ohmylms#/quiz-edit/11'
-		);
+		).toHaveAttribute( 'href', '/quizzes/11' );
 		const trashed = within( rows[ 2 ]! );
 		expect(
 			trashed.getByRole( 'button', { name: 'Restore Trashed quiz' } )
 		).toBeInTheDocument();
-		expect( screen.getByText( '2 quizzes found.' ) ).toBeInTheDocument();
+		expect( screen.getAllByText( '2 quizzes found.' ) ).toHaveLength( 2 );
 	} );
 	it( 'hides actions the user may not use', async () => {
 		vi.mocked( api.listQuizzes ).mockResolvedValue( {
@@ -156,7 +153,7 @@ describe( 'QuizzesPage', () => {
 		renderPage();
 		await screen.findByRole( 'table' );
 		await user.type(
-			screen.getByRole( 'textbox', { name: 'Search quizzes' } ),
+			screen.getByRole( 'searchbox', { name: 'Search quizzes' } ),
 			'frac{Enter}'
 		);
 		await waitFor( () =>
@@ -168,9 +165,8 @@ describe( 'QuizzesPage', () => {
 				expect.any( AbortSignal )
 			)
 		);
-		await user.selectOptions(
-			screen.getByRole( 'combobox', { name: 'Status' } ),
-			'trash'
+		await user.click(
+			await screen.findByRole( 'link', { name: 'Trash' } )
 		);
 		await waitFor( () =>
 			expect( api.listQuizzes ).toHaveBeenLastCalledWith(
@@ -182,7 +178,7 @@ describe( 'QuizzesPage', () => {
 			)
 		);
 		await user.selectOptions(
-			screen.getByRole( 'combobox', { name: 'Course' } ),
+			await screen.findByRole( 'combobox', { name: 'Course' } ),
 			'Maths 101'
 		);
 		await waitFor( () =>

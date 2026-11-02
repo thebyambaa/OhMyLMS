@@ -2,7 +2,7 @@
 
 See [ASSESSMENT-MODULES.md](ASSESSMENT-MODULES.md) for source module boundaries, public interfaces and extension guidance.
 
-Gutenberg is now the default for quiz and standalone bank-question authoring. **Add Quiz** and question-bank creation/edit actions open WordPress’s actual editor. See [Gutenberg authoring](GUTENBERG-AUTHORING.md) for the current workflow. The form workspace described below remains available only through the temporary rollback setting.
+Gutenberg is now the default for quiz and standalone bank-question authoring. **Add Quiz** and question-bank creation/edit actions open WordPress’s actual editor. See [Gutenberg authoring](GUTENBERG-AUTHORING.md) for the current workflow. The legacy form workspace below is retired; it is kept here only as a field reference for parity work.
 
 The Questions tab uses a Wayground-style overview: question and point totals, Create question controls, numbered cards with type and points, prompt summaries, answer options and correctness indicators. Each card provides Preview, Duplicate, Remove, keyboard or drag reorder, and Edit actions. The right-hand Find questions panel searches this quiz by prompt or type and opens the existing question bank picker. Edit opens the fullscreen question workspace; Save question returns to the overview. Version controls remain available for the selected question.
 

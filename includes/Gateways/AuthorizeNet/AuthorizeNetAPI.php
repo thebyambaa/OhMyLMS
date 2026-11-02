@@ -101,10 +101,9 @@ class AuthorizeNetAPI {
 					),
 				);
 			}
-		} elseif ( 'POST' === $request_type || 'PUT' === $request_type ) {
-			// Some POST/PUT requests might not have a specific wrapper but still need merchant auth if body is expected
-			// For now, assume $request_body_wrapper is always provided for POST/PUT that need auth.
 		}
+		// Some POST/PUT requests might not have a specific wrapper but still need merchant auth if body is expected
+		// For now, assume $request_body_wrapper is always provided for POST/PUT that need auth.
 
 		$args = array(
 			'method'  => $request_type,
@@ -112,12 +111,10 @@ class AuthorizeNetAPI {
 			'timeout' => $timeout,
 		);
 
+		// A POST/PUT request_body_wrapper that doesn't fit the key model (e.g. direct array for some other API)
+		// is not sent. This is less likely to be used with Authorize.Net's current structure; requests should have a top-level key.
 		if ( ! empty( $body_to_encode ) ) {
 			$args['body'] = wp_json_encode( $body_to_encode );
-		} elseif ( ( 'POST' === $request_type || 'PUT' === $request_type ) && empty( $body_to_encode ) && ! empty( $request_body_wrapper ) ) {
-			// If request_body_wrapper was passed but didn't fit the key model (e.g. direct array for some other API)
-			// This part is less likely to be used with Authorize.Net's current structure.
-			// For now, this case is not fully handled; requests should have a top-level key.
 		}
 
 		$response = wp_remote_request( $full_api_url, $args );
@@ -150,7 +147,7 @@ class AuthorizeNetAPI {
 	 * @param int   $timeout Optional timeout in seconds. Default 60. Refunds may need 90-120 seconds.
 	 * @return array|WP_Error The API response.
 	 */
-	public function createTransaction( array $transaction_request_content, $timeout = 60 ) {
+	public function createTransaction( array $transaction_request_content, $timeout = 60 ) { // phpcs:ignore WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid -- Public name mirrors the Authorize.Net operation; kept for compatibility.
 		// Automatically increase timeout for refund transactions.
 		if ( isset( $transaction_request_content['transactionType'] ) &&
 			'refundTransaction' === $transaction_request_content['transactionType'] ) {
@@ -171,7 +168,7 @@ class AuthorizeNetAPI {
 	 * @param array $profile_details_content Content for the 'profile' and other parts of the request.
 	 * @return array|WP_Error The API response.
 	 */
-	public function createCustomerProfile( array $profile_details_content ) {
+	public function createCustomerProfile( array $profile_details_content ) { // phpcs:ignore WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid -- Public name mirrors the Authorize.Net operation; kept for compatibility.
 		$payload = array(
 			'createCustomerProfileRequest' => $profile_details_content,
 		);
@@ -184,7 +181,7 @@ class AuthorizeNetAPI {
 	 * @param array $subscription_details_content Content for the 'subscription' part of the request.
 	 * @return array|WP_Error The API response.
 	 */
-	public function createSubscription( array $subscription_details_content ) {
+	public function createSubscription( array $subscription_details_content ) { // phpcs:ignore WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid -- Public name mirrors the Authorize.Net operation; kept for compatibility.
 		$payload = array(
 			'createSubscriptionRequest' => array( // Assuming REST equivalent of ARBCreateSubscriptionRequest.
 				'subscription' => $subscription_details_content,
@@ -202,7 +199,7 @@ class AuthorizeNetAPI {
 	 * @param string $subscription_id The ID of the subscription to cancel.
 	 * @return array|WP_Error The API response.
 	 */
-	public function cancelSubscription( $subscription_id ) {
+	public function cancelSubscription( $subscription_id ) { // phpcs:ignore WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid -- Public name mirrors the Authorize.Net operation; kept for compatibility.
 		// For REST, typically a DELETE request to /subscriptions/{subscription_id}
 		// Some APIs might expect a payload even for DELETE, or use a POST to a cancel endpoint.
 		// This is a simplified version assuming no body is needed for DELETE.

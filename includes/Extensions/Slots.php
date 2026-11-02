@@ -34,6 +34,7 @@ final class Slots {
 		do_action( 'ohmylms_render_slot', $name, $context );
 		if ( ! defined( 'OHMYLMS_SOURCE_ASSETS' ) || ! OHMYLMS_SOURCE_ASSETS ) {
 			return; }
+		SourceAssets::enqueue();
 		printf( '<div data-ohmylms-slot="%s" data-ohmylms-context="%s"></div>', esc_attr( $name ), esc_attr( wp_json_encode( $context ) ) );
 		if ( strpos( $name, 'checkout.' ) === 0 ) {
 			printf( '<div data-ohmylms-slot="%s" data-ohmylms-kind="checkout-field" data-ohmylms-context="%s"></div>', esc_attr( $name ), esc_attr( wp_json_encode( $context ) ) );

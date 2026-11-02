@@ -125,7 +125,7 @@ class FunnelEndpoint {
 	 */
 	private function handle_funnel_action( $order_id, $step, $action ) {
 		// Verify nonce for security.
-		if ( ! wp_verify_nonce( $_REQUEST['_wpnonce'] ?? '', 'funnel_action_' . $order_id . '_' . $step ) ) {
+		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ?? '' ) ), 'funnel_action_' . $order_id . '_' . $step ) ) {
 			wp_die( esc_html__( 'Security check failed.', 'ohmylms' ), esc_html__( 'Error', 'ohmylms' ), array( 'response' => 403 ) );
 		}
 
@@ -161,7 +161,7 @@ class FunnelEndpoint {
 
 		$current_step_data = null;
 		foreach ( $funnel_steps as $funnel_step ) {
-			if ( $funnel_step['step_id'] === 'step_' . $step ) {
+			if ( 'step_' . $step === $funnel_step['step_id'] ) {
 				$current_step_data = $funnel_step;
 				break;
 			}
@@ -176,7 +176,7 @@ class FunnelEndpoint {
 
 		// Check if purchase failed.
 		if ( is_wp_error( $purchase_result ) ) {
-			wp_die( $purchase_result->get_error_message(), esc_html__( 'Payment Error', 'ohmylms' ), array( 'response' => 400 ) );
+			wp_die( esc_html( $purchase_result->get_error_message() ), esc_html__( 'Payment Error', 'ohmylms' ), array( 'response' => 400 ) );
 		}
 
 		// Check accepted action from condition configuration.
@@ -237,7 +237,7 @@ class FunnelEndpoint {
 
 		$current_step_data = null;
 		foreach ( $funnel_steps as $funnel_step ) {
-			if ( $funnel_step['step_id'] === 'step_' . $step ) {
+			if ( 'step_' . $step === $funnel_step['step_id'] ) {
 				$current_step_data = $funnel_step;
 				break;
 			}
@@ -299,7 +299,7 @@ class FunnelEndpoint {
 				return $step;
 			}
 
-			if ( $step['step_id'] === 'step_' . $current_step_id ) {
+			if ( 'step_' . $current_step_id === $step['step_id'] ) {
 				$found_current = true;
 			}
 		}
@@ -327,7 +327,7 @@ class FunnelEndpoint {
 
 		$step_data = null;
 		foreach ( $funnel_steps as $funnel_step ) {
-			if ( $funnel_step['step_id'] === 'step_' . $step ) {
+			if ( 'step_' . $step === $funnel_step['step_id'] ) {
 				$step_data = $funnel_step;
 				break;
 			}
@@ -660,12 +660,21 @@ class FunnelEndpoint {
 			if ( $membership && 'one_time' !== $membership->get_subscription_period() ) {
 				$subscription_id = SubscriptionManager::create_subscription( $original_order, $product->get_id() );
 				if ( is_wp_error( $subscription_id ) ) {
-					$original_order->add_order_note( sprintf( /* translators: %s: text value. */
-					__( 'Automated subscription creation failed. Error: %s', 'ohmylms' ), $subscription_id->get_error_message() ) );
+					$original_order->add_order_note(
+						sprintf( /* translators: %s: text value. */
+							__( 'Automated subscription creation failed. Error: %s', 'ohmylms' ),
+							$subscription_id->get_error_message()
+						)
+					);
 				} elseif ( $subscription_id ) {
 					SubscriptionManager::mark_subscription_active( $subscription_id );
-					$original_order->add_order_note( sprintf( /* translators: %1$d: number; %2$s: text value. */
-					__( 'Subscription #%1$d created and activated for membership: %2$s.', 'ohmylms' ), $subscription_id, get_the_title( $product->get_id() ) ) );
+					$original_order->add_order_note(
+						sprintf( /* translators: %1$d: number; %2$s: text value. */
+							__( 'Subscription #%1$d created and activated for membership: %2$s.', 'ohmylms' ),
+							$subscription_id,
+							get_the_title( $product->get_id() )
+						)
+					);
 				}
 			}
 		}
@@ -702,10 +711,10 @@ class FunnelEndpoint {
 				$wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE user_id = %d AND course_id = %d', $enrollment_table, $student_id, $course_id )
 			);
 
+			$origin = \OhMyLMS\Student\EnrolmentMirror::order_origin( $order->get_id() );
 			if ( $existing_record ) {
 				// Update the existing record.
-				$wpdb->update(
-					$enrollment_table,
+				\OhMyLMS\Student\Enrollments::update(
 					array(
 						'order_id'   => $order->get_id(),
 						'status'     => $enrollment_status,
@@ -715,13 +724,11 @@ class FunnelEndpoint {
 					array(
 						'user_id'   => $student_id,
 						'course_id' => $course_id,
-					)
+					),
+					$origin
 				);
 			} else {
-				$wpdb->insert(
-					$enrollment_table,
-					$enrollment_data
-				);
+				\OhMyLMS\Student\Enrollments::create( $enrollment_data, $origin );
 			}
 
 			if ( 'enrolled' === $enrollment_status ) {

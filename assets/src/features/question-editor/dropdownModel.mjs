@@ -1,7 +1,9 @@
+/** @typedef {import('./editorTypes').Data} Data */
+
 /**
  * Correct choices in both legacy and version two dropdown contracts.
- * @param {Object} slot Dropdown.
- * @return {Array} Correct choices.
+ * @param {Data} slot Dropdown.
+ * @return {string[]} Correct choices.
  */
 export function dropdownAnswers( slot ) {
 	if ( Array.isArray( slot.answers ) ) {
@@ -12,10 +14,10 @@ export function dropdownAnswers( slot ) {
 
 /**
  * Rename a choice without losing its correctness tick.
- * @param {Object} slot  Dropdown.
+ * @param {Data}   slot  Dropdown.
  * @param {number} index Choice position.
  * @param {string} text  New label.
- * @return {Object} Dropdown patch.
+ * @return {Data} Dropdown patch.
  */
 export function renameDropdownChoice( slot, index, text ) {
 	const old = slot.choices[ index ];
@@ -23,8 +25,9 @@ export function renameDropdownChoice( slot, index, text ) {
 		answer === old ? text : answer
 	);
 	return {
-		choices: slot.choices.map( ( choice, position ) =>
-			position === index ? text : choice
+		choices: slot.choices.map(
+			( /** @type {string} */ choice, /** @type {number} */ position ) =>
+				position === index ? text : choice
 		),
 		answers,
 		answer: answers[ 0 ] || '',
@@ -33,9 +36,9 @@ export function renameDropdownChoice( slot, index, text ) {
 
 /**
  * Upgrade editable dropdown settings and derive their total points.
- * @param {Object} settings Existing settings.
- * @param {Array}  slots    Edited dropdowns.
- * @return {Object} Settings patch.
+ * @param {Data}   settings Existing settings.
+ * @param {Data[]} slots    Edited dropdowns.
+ * @return {Data} Settings patch.
  */
 export function dropdownSettings( settings, slots ) {
 	const fallback =

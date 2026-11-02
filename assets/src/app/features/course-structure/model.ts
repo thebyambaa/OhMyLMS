@@ -144,26 +144,6 @@ export function parseOutline( raw: unknown ): Outline {
 }
 
 /**
- * Move stable rows without changing references in groups, outcomes or learner evidence.
- * @param rows
- * @param index
- * @param offset
- */
-export function move< T >( rows: T[], index: number, offset: number ): T[] {
-	const next = [ ...rows ];
-	const target = index + offset;
-	if (
-		index >= 0 &&
-		index < rows.length &&
-		target >= 0 &&
-		target < rows.length
-	) {
-		[ next[ index ], next[ target ] ] = [ next[ target ]!, next[ index ]! ];
-	}
-	return next;
-}
-
-/**
  * Transport only the editable outline; preserve every program field from the read snapshot.
  * @param outline
  */
@@ -178,31 +158,33 @@ export function savePayload( outline: Outline ) {
 	};
 }
 
+/** Assessment styles that end their unit (or the course); moves keep them after other activities. */
+export const TERMINAL = [ 'unit-test', 'course-challenge' ];
+
 /**
- * Move only within a unit; terminal assessments keep their position.
- * @param items
- * @param id
- * @param offset
+ * Remove a unit that was never saved. Its activities and skill targets stay in the program, unplaced.
+ * @param outline
+ * @param unit
  */
-export function moveActivity( items: Activity[], id: string, offset: number ) {
-	const current = items.find( ( item ) => item.id === id );
-	if ( ! current ) {
-		return items;
-	}
-	const siblings = items.filter(
-		( item ) =>
-			item.chapter_id === current.chapter_id &&
-			! [ 'unit-test', 'course-challenge' ].includes( item.style ?? '' )
-	);
-	const index = siblings.findIndex( ( item ) => item.id === id );
-	const other = siblings[ index + offset ];
-	if ( index < 0 || ! other ) {
-		return items;
-	}
-	return items.map( ( item ) => {
-		if ( item.id === current.id ) {
-			return other;
+export function removeNewUnit( outline: Outline, unit: string ): Outline {
+	const detach = < T extends Row >( row: T ): T => {
+		if ( row.chapter_id !== unit ) {
+			return row;
 		}
-		return item.id === other.id ? current : item;
-	} );
+		const next: Row = { ...row, chapter_id: 0 };
+		delete next.group_id;
+		return next as T;
+	};
+	return {
+		...outline,
+		units: outline.units.filter( ( row ) => row.id !== unit ),
+		program: {
+			...outline.program,
+			items: outline.program.items.map( detach ),
+			outcomes: outline.program.outcomes.map( detach ),
+			groups: outline.program.groups.filter(
+				( group ) => group.chapter_id !== unit
+			),
+		},
+	};
 }

@@ -18,15 +18,18 @@ try {
     $wpdb->insert($wpdb->prefix . 'ohmylms_user_enrollment', ['user_id'=>$student, 'course_id'=>$course, 'status'=>'enrolled', 'progress'=>'running', 'start_date'=>current_time('mysql')]);
     foreach ([0, $student] as $viewer) {
         wp_set_current_user($viewer);
-        foreach ([['GET','students'], ['GET','students/'.$student], ['POST','students'], ['POST','students/unban']] as [$method,$path]) {
-            student_check(student_request($method,$path,['ids'=>[$student]])->get_status() >= 400, 'Unauthorized student access: '.$path);
+        foreach ([['GET','students',[]], ['GET','students/'.$student,[]], ['POST','students/'.$student,['blocked'=>true]], ['POST','students/'.$student,['blocked'=>false]]] as [$method,$path,$params]) {
+            student_check(in_array(student_request($method,$path,$params)->get_status(), [401, 403], true), 'Unauthorized student access: '.$method.' '.$path);
         }
     }
     wp_set_current_user($admin->ID);
-    student_check(student_request('POST','students',['ids'=>[$student]])->get_status() === 200, 'Block failed');
+    student_check(in_array(student_request('POST','students/'.$admin->ID,['blocked'=>true])->get_status(), [404, 422], true) && get_user_meta($admin->ID,'_ohmylms_banned_student',true) !== 'yes', 'An administrator could be blocked');
+    $blocked = student_request('POST','students/'.$student,['blocked'=>true]);
+    student_check($blocked->get_status() === 200 && true === $blocked->get_data()['blocked'], 'Block failed');
     student_check(get_user_meta($student,'_ohmylms_banned_student',true) === 'yes', 'Block metadata missing');
     student_check($wpdb->get_var($wpdb->prepare("SELECT status FROM {$wpdb->prefix}ohmylms_user_enrollment WHERE user_id=%d",$student)) === 'banned', 'Enrollment not blocked');
-    student_check(student_request('POST','students/unban',['ids'=>[$student]])->get_status() === 200, 'Unblock failed');
+    $unblocked = student_request('POST','students/'.$student,['blocked'=>false]);
+    student_check($unblocked->get_status() === 200 && false === $unblocked->get_data()['blocked'], 'Unblock failed');
     student_check(get_user_meta($student,'_ohmylms_banned_student',true) !== 'yes', 'Block metadata retained');
     student_check($wpdb->get_var($wpdb->prepare("SELECT status FROM {$wpdb->prefix}ohmylms_user_enrollment WHERE user_id=%d",$student)) === 'enrolled', 'Enrollment not restored');
     echo "Student permissions and block/unblock integration passed.\n";

@@ -7,9 +7,6 @@
 
 namespace OhMyLMS\Rest;
 
-use OhMyLMS\Admin\Settings\AdminSettings;
-use OhMyLMS\Admin\Settings\RegisterSettings;
-
 /**
  * API Manager class.
  *
@@ -42,6 +39,7 @@ class Api {
 			\OhMyLMS\Rest\V1\CourseCatalogController::class,
 			\OhMyLMS\Rest\V1\CourseSettingsController::class,
 			\OhMyLMS\Rest\V1\LessonAuthoringController::class,
+			\OhMyLMS\Rest\V1\LessonPreviewController::class,
 			\OhMyLMS\Rest\V1\SyllabusEditorController::class,
 			\OhMyLMS\Rest\V1\CourseStructureController::class,
 			\OhMyLMS\Rest\V1\LearningController::class,
@@ -53,14 +51,16 @@ class Api {
 			\OhMyLMS\Rest\V1\ChapterController::class,
 			\OhMyLMS\Rest\V1\LessonController::class,
 			\OhMyLMS\Rest\V1\QuizController::class,
-			\OhMyLMS\Rest\V1\QuestionController::class,
+			\OhMyLMS\Rest\V1\QuizQuestionsController::class,
 			\OhMyLMS\Rest\V1\AssessmentController::class,
 			\OhMyLMS\Rest\V1\QuestionBankController::class,
+			\OhMyLMS\Rest\V1\QuestionsController::class,
 			\OhMyLMS\Rest\V1\QuestionImportController::class,
 			\OhMyLMS\Rest\V1\QuestionBankToolsController::class,
 			\OhMyLMS\Rest\V1\CourseStructureToolsController::class,
 			\OhMyLMS\Rest\V1\SkillAssessmentToolsController::class,
 			\OhMyLMS\Rest\V1\SkillController::class,
+			\OhMyLMS\Rest\V1\SkillAuthoringController::class,
 			\OhMyLMS\Rest\V1\AttemptController::class,
 			\OhMyLMS\Rest\V1\PracticeController::class,
 			\OhMyLMS\Rest\V1\PlacementController::class,
@@ -72,11 +72,15 @@ class Api {
 			\OhMyLMS\Rest\V1\CourseOrganizationController::class,
 			\OhMyLMS\Rest\V1\SkillMappingController::class,
 			\OhMyLMS\Rest\V1\ComparisonController::class,
+			\OhMyLMS\Rest\V1\SkillMapOverlayController::class,
+			\OhMyLMS\Rest\V1\SkillWorkspaceController::class,
 			\OhMyLMS\Rest\V1\BundleController::class,
 			\OhMyLMS\Rest\V1\MyBundlesController::class,
 			\OhMyLMS\Rest\V1\PreviewController::class,
 			\OhMyLMS\Rest\V1\TemplateController::class,
 			\OhMyLMS\Rest\V1\SettingsController::class,
+			\OhMyLMS\Rest\V1\PaymentGatewaySettingsController::class,
+			\OhMyLMS\Rest\V1\DesignSettingsController::class,
 			\OhMyLMS\Rest\V1\DesignSystemController::class,
 			\OhMyLMS\Rest\V1\HubIconsController::class,
 			\OhMyLMS\Rest\V1\CategoryController::class,
@@ -84,12 +88,51 @@ class Api {
 			\OhMyLMS\Rest\V1\EmailController::class,
 			\OhMyLMS\Rest\V1\DashboardController::class,
 			\OhMyLMS\Rest\V1\AnalyticsController::class,
+			\OhMyLMS\Rest\V1\CourseRosterController::class,
+			\OhMyLMS\Rest\V1\StudentReportController::class,
+			\OhMyLMS\Rest\V1\SessionsController::class,
 			\OhMyLMS\Rest\V1\CertificateController::class,
+			\OhMyLMS\Rest\V1\IssuedCertificatesController::class,
 			\OhMyLMS\Rest\V1\MigrationController::class,
 			\OhMyLMS\Rest\V1\NotificationController::class,
 			\OhMyLMS\Rest\V1\IntegrationsController::class,
 			\OhMyLMS\Rest\V1\AppController::class,
 			\OhMyLMS\Rest\V1\WebhookController::class,
+			\OhMyLMS\Rest\V1\SubscriptionsController::class,
+			\OhMyLMS\Rest\V1\AssignmentsController::class,
+			\OhMyLMS\Rest\V1\AssignmentDeliveryController::class,
+			\OhMyLMS\Rest\V1\AccountHubController::class,
+			\OhMyLMS\Rest\V1\AccountHubRosterController::class,
+			\OhMyLMS\Rest\V1\AccountHubSchoolLifecycleController::class,
+			\OhMyLMS\Rest\V1\AccountHubGuardiansController::class,
+			\OhMyLMS\Rest\V1\AccountHubClassWorkController::class,
+			\OhMyLMS\Rest\V1\AccountHubReportsController::class,
+			\OhMyLMS\Rest\V1\AccountHubSampleSchoolController::class,
+			\OhMyLMS\Rest\V1\AccountHubInvitationAcceptController::class,
+			\OhMyLMS\Rest\V1\ExamsController::class,
+			\OhMyLMS\Rest\V1\ExamImportsController::class,
+			\OhMyLMS\Rest\V1\ExamImportSourceController::class,
+			\OhMyLMS\Rest\V1\AccountHubUsersController::class,
+			\OhMyLMS\Rest\V1\ContentHubOverviewController::class,
+			\OhMyLMS\Rest\V1\QuizReportsController::class,
+			\OhMyLMS\Rest\V1\CheckoutSettingsController::class,
+			\OhMyLMS\Rest\V1\PointPurchasesController::class,
+			\OhMyLMS\Rest\V1\CartController::class,
+			\OhMyLMS\Rest\V1\CohortsController::class,
+			\OhMyLMS\Rest\V1\AutomationsController::class,
+			\OhMyLMS\Assessment\Rest\ResponseMediaController::class,
+			\OhMyLMS\ExamImport\Rest\JobsController::class,
+			\OhMyLMS\ExamImport\Rest\WorkflowController::class,
+			\OhMyLMS\ExamImport\Rest\FiguresController::class,
+			\OhMyLMS\Exams\Rest\LibraryController::class,
+			\OhMyLMS\Exams\Rest\ComposerController::class,
+			\OhMyLMS\QuestionBank\Rest\OrganisationController::class,
+			\OhMyLMS\Practice\Rest\DashboardController::class,
+			\OhMyLMS\Assessment\Rest\QuestionPreviewController::class,
+			\OhMyLMS\Blocks\Rest\QuizPlayerController::class,
+			\OhMyLMS\Blocks\Rest\QuestionPlayerController::class,
+			\OhMyLMS\MCP\Rest\ServerController::class,
+			\OhMyLMS\AI\Rest\SettingsController::class,
 		);
 		$controllers_v1  = apply_filters( 'ohmylms_rest_v1_controllers', $controllers_v1 );
 		$controllers_v2  = array();
@@ -97,7 +140,6 @@ class Api {
 
 		// Init REST API routes.
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ), 10 );
-		add_action( 'rest_api_init', array( $this, 'register_admin_settings' ), 10 );
 	}
 
 	/**
@@ -111,21 +153,6 @@ class Api {
 		foreach ( $this->class_map as $controller_class ) {
 			$controller_instance = new $controller_class();
 			$controller_instance->register_routes();
-		}
-	}
-
-	/**
-	 * Register admin settings.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return void
-	 */
-	public function register_admin_settings() {
-		$settings = AdminSettings::get_settings_objects();
-
-		foreach ( $settings as $setting ) {
-			new RegisterSettings( $setting );
 		}
 	}
 }

@@ -145,6 +145,83 @@
 				"body": "{ deleted: true, previous: Enrollment }"
 			},
 			"errors": [ 401, 403, 404, 500 ]
+		},
+		{
+			"name": "report",
+			"method": "GET",
+			"path": "/students/{id}/report",
+			"description": "Counts of courses, quiz attempts, assignment submissions and skill states.",
+			"args": { "id": { "type": "integer", "minimum": 1, "in": "path" } },
+			"success": { "status": 200, "body": "ReportSummary" },
+			"errors": [ 401, 403, 404 ]
+		},
+		{
+			"name": "quizAttempts",
+			"method": "GET",
+			"path": "/students/{id}/quiz-attempts",
+			"args": {
+				"id": { "type": "integer", "minimum": 1, "in": "path" },
+				"page": { "type": "integer", "default": 1, "minimum": 1 },
+				"per_page": {
+					"type": "integer",
+					"default": 10,
+					"minimum": 1,
+					"maximum": 50
+				}
+			},
+			"success": {
+				"status": 200,
+				"body": "QuizAttemptRow[]",
+				"headers": [ "X-WP-Total", "X-WP-TotalPages", "Link" ]
+			},
+			"errors": [ 400, 401, 403, 404 ]
+		},
+		{
+			"name": "assignmentSubmissions",
+			"method": "GET",
+			"path": "/students/{id}/assignment-submissions",
+			"args": {
+				"id": { "type": "integer", "minimum": 1, "in": "path" },
+				"page": { "type": "integer", "default": 1, "minimum": 1 },
+				"per_page": {
+					"type": "integer",
+					"default": 10,
+					"minimum": 1,
+					"maximum": 50
+				}
+			},
+			"success": {
+				"status": 200,
+				"body": "SubmissionRow[]",
+				"headers": [ "X-WP-Total", "X-WP-TotalPages", "Link" ]
+			},
+			"errors": [ 400, 401, 403, 404 ]
+		},
+		{
+			"name": "skills",
+			"method": "GET",
+			"path": "/students/{id}/skills",
+			"args": {
+				"id": { "type": "integer", "minimum": 1, "in": "path" },
+				"page": { "type": "integer", "default": 1, "minimum": 1 },
+				"per_page": {
+					"type": "integer",
+					"default": 10,
+					"minimum": 1,
+					"maximum": 50
+				},
+				"filter": {
+					"type": "string",
+					"default": "all",
+					"enum": [ "all", "review_due", "struggling" ]
+				}
+			},
+			"success": {
+				"status": 200,
+				"body": "SkillRow[]",
+				"headers": [ "X-WP-Total", "X-WP-TotalPages", "Link" ]
+			},
+			"errors": [ 400, 401, 403, 404 ]
 		}
 	],
 	"definitions": {
@@ -255,6 +332,8 @@
 		"rest_missing_callback_param": 400,
 		"ohmylms_student_invalid_page": 400,
 		"ohmylms_enrollment_invalid_page": 400,
+		"ohmylms_student_report_invalid_page": 400,
+		"ohmylms_student_report_cannot_view": [ 401, 403 ],
 		"rest_cookie_invalid_nonce": 403,
 		"ohmylms_student_cannot_view": [ 401, 403 ],
 		"ohmylms_student_cannot_edit": [ 401, 403 ],

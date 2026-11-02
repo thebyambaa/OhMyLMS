@@ -257,8 +257,8 @@ class ChapterStore extends DataStore {
 			return;
 		}
 		global $wpdb;
-		$table_name = $wpdb->prefix . 'ohmylms_content_relationship';
-		$chapter_id = $chapter->get_id();
+		$table_name   = $wpdb->prefix . 'ohmylms_content_relationship';
+		$chapter_id   = $chapter->get_id();
 		$values       = array( $table_name );
 		$placeholders = array();
 		foreach ( $lessons as $index => $lesson ) {
@@ -272,15 +272,15 @@ class ChapterStore extends DataStore {
 		}
 
 		// Construct the query with ON DUPLICATE KEY UPDATE.
-		$insert_query = "
+		$insert_query = '
 			INSERT INTO %i (chapter_id, content_id, order_number, content_type)
-			VALUES " . implode( ', ', $placeholders ) . '
+			VALUES ' . implode( ', ', $placeholders ) . '
 			ON DUPLICATE KEY UPDATE
 			order_number = VALUES(order_number)
 		';
 
 		// Execute the query using prepared statements to prevent SQL injection.
-		$wpdb->query( $wpdb->prepare( $insert_query, $values ) );
+		$wpdb->query( $wpdb->prepare( $insert_query, $values ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- One placeholder group per row is built above.
 		$this->invalidate_chapter_cache( $chapter_id );
 
 		return true;
@@ -410,7 +410,7 @@ class ChapterStore extends DataStore {
 					$post      = get_post( $lesson_id );
 
 					// check post author.
-					if ( $post && (int) $post->post_author !== (int) get_current_user_id() ) {
+					if ( $post && (int) get_current_user_id() !== (int) $post->post_author ) {
 						continue;
 					}
 				}

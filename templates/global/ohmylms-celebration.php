@@ -5,6 +5,7 @@
  *
  * @package OhMyLMS
  */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }

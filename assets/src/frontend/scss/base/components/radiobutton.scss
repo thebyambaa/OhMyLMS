@@ -33,7 +33,19 @@
 				transition: all 0.3s ease;
 
 				&::before {
-					content: url(data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgNiA2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxjaXJjbGUgY3g9IjMiIGN5PSIzIiByPSIzIiBmaWxsPSIjZmZmIi8+PC9zdmc+);
+					content: "";
+					background-color: var(--oml-on-primary, #fff);
+					--icon-mask: url(data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgNiA2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxjaXJjbGUgY3g9IjMiIGN5PSIzIiByPSIzIiBmaWxsPSIjZmZmIi8+PC9zdmc+);
+					mask-image: var(--icon-mask);
+					mask-repeat: no-repeat;
+					mask-position: center;
+					mask-size: contain;
+					mask-mode: alpha;
+					-webkit-mask-image: var(--icon-mask);
+					-webkit-mask-repeat: no-repeat;
+					-webkit-mask-position: center;
+					-webkit-mask-size: contain;
+					aspect-ratio: #{'6 / 6'};
 					display: block;
 					width: 6px;
 					height: auto;

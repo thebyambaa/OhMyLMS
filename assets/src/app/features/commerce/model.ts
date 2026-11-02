@@ -9,20 +9,25 @@ import type {
 	CouponLine,
 	CouponPayload,
 	CouponQuery,
-	CourseOption,
 	LineItem,
 	OrderDetail,
 	OrderNote,
 	OrderQuery,
 	OrderStatus,
 	OrderSummary,
+	PointSummary,
 	RefundRecord,
 	RelatedOrder,
 	StatusCounts,
 } from './types';
+import { createValidators } from '../../lib/validation';
+
+const { record, text } = createValidators( invalidResponse );
+export const { positiveId } = createValidators( invalidResponse );
+
+export { COURSE_OPTION_LIMIT } from '../students/public';
 
 export const PER_PAGE = 20;
-export const COURSE_OPTION_LIMIT = 100;
 export const NOTE_MAX_LENGTH = 2000;
 export const CODE_MAX_LENGTH = 50;
 
@@ -126,18 +131,6 @@ export function invalidResponse(): ApiError {
 	} );
 }
 
-function record( value: unknown ): Record< string, unknown > {
-	if ( ! value || 'object' !== typeof value || Array.isArray( value ) ) {
-		throw invalidResponse();
-	}
-	return value as Record< string, unknown >;
-}
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
-}
 function nullableText( value: unknown ): string | null {
 	return null === value ? null : text( value );
 }
@@ -159,13 +152,6 @@ export function count( value: unknown ): number {
 }
 function nullableCount( value: unknown ): number | null {
 	return null === value ? null : count( value );
-}
-export function positiveId( value: unknown ): number {
-	const id = count( value );
-	if ( id < 1 ) {
-		throw invalidResponse();
-	}
-	return id;
 }
 function money( value: unknown ): string {
 	const amount = text( value );
@@ -288,7 +274,44 @@ export function parseOrderDetail( value: unknown ): OrderDetail {
 		allowed_statuses: list( item.allowed_statuses, ( status ) =>
 			oneOf( status, ORDER_STATUSES )
 		),
+		points: parsePointSummary( item.points ?? null ),
 	};
+}
+
+/**
+ * Bonus points spent on an order, or `null` for orders not paid with points.
+ *
+ * @param value Decoded JSON.
+ * @return Summary.
+ */
+export function parsePointSummary( value: unknown ): PointSummary | null {
+	if ( null === value ) {
+		return null;
+	}
+	const item = record( value );
+	return {
+		points: count( item.points ),
+		refunded: flag( item.refunded ),
+		refunded_at: nullableText( item.refunded_at ),
+		refundable: flag( item.refundable ),
+	};
+}
+
+/**
+ * Result of a points refund.
+ *
+ * @param value Decoded JSON.
+ * @return Summary and the learner's new balance.
+ */
+export function parsePointRefund(
+	value: unknown
+): PointSummary & { balance: number } {
+	const item = record( value );
+	const summary = parsePointSummary( item );
+	if ( ! summary ) {
+		throw invalidResponse();
+	}
+	return { ...summary, balance: Number( item.balance ) };
 }
 
 export function parseNote( value: unknown ): OrderNote {
@@ -355,15 +378,6 @@ export function parseDeletedId( value: unknown ): number {
 		throw invalidResponse();
 	}
 	return positiveId( record( item.previous ).id );
-}
-
-export function parseCourseOption( value: unknown ): CourseOption {
-	const item = record( value );
-	return {
-		id: positiveId( item.id ),
-		title: text( item.title ),
-		status: text( item.status ),
-	};
 }
 
 /**

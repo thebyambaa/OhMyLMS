@@ -85,12 +85,17 @@ try {
 	wp_using_ext_object_cache( false );
 	$wpdb->insert( $wpdb->posts, array( 'ID' => 900003, 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Page title', 'post_content' => '', 'post_excerpt' => '', 'to_ping' => '', 'pinged' => '', 'post_content_filtered' => '' ) );
 	$controller = new OhMyLMS\Rest\V1\SettingsController();
-	$method = new ReflectionMethod( $controller, 'get_page_title' );
-	$method->setAccessible( true );
-	api_check( 'Page title' === $method->invoke( $controller, 900003 ), 'Published page title missing' );
-	api_check( '' === $method->invoke( $controller, 900001 ), 'Course accepted as a page' );
+	$page_title = function ( $id ) use ( $controller ) {
+		$request = new WP_REST_Request( 'GET', '/ohmylms/v1/settings/pages' );
+		$request->set_param( 'include', array( $id ) );
+		$request->set_param( 'per_page', OhMyLMS\Rest\V1\SettingsController::PAGE_PICKER_LIMIT );
+		$pages = $controller->get_pages( $request )->get_data();
+		return 1 === count( $pages ) && $id === $pages[0]['id'] ? $pages[0]['title'] : '';
+	};
+	api_check( 'Page title' === $page_title( 900003 ), 'Published page title missing' );
+	api_check( '' === $page_title( 900001 ), 'Course accepted as a page' );
 	wp_update_post( array( 'ID' => 900003, 'post_status' => 'draft' ) );
-	api_check( '' === $method->invoke( $controller, 900003 ), 'Draft page title exposed' );
+	api_check( '' === $page_title( 900003 ), 'Draft page title exposed' );
 	foreach ( array( 910004 => 'publish', 910005 => 'draft', 910006 => 'publish' ) as $id => $status ) {
 		$wpdb->insert( $wpdb->posts, array( 'ID' => $id, 'post_type' => 'ohmylms_coupon', 'post_status' => $status, 'post_title' => 910006 === $id ? 'native-code-extra' : 'native-code', 'post_content' => '', 'post_excerpt' => '', 'to_ping' => '', 'pinged' => '', 'post_content_filtered' => '' ) );
 	}

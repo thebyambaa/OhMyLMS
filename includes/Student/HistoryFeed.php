@@ -137,7 +137,8 @@ final class HistoryFeed {
 				$item['label']  = $is_exam ? __( 'Exam', 'ohmylms' ) : __( 'Quiz', 'ohmylms' );
 				$attempt        = $wpdb->get_row( $wpdb->prepare( 'SELECT total, status FROM %i WHERE id=%d AND student_id=%d', $wpdb->prefix . 'ohmylms_quiz_attempts', (int) $row['ref'], $student_id ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- One of the learner's own attempts.
 				$marks          = $quiz ? (float) $quiz->get_total_marks() : 0.0;
-				$item['result'] = $attempt && $marks > 0 ? round( 100 * (float) $attempt['total'] / $marks ) . '%' : '';
+				$released       = ! AssessmentSchema::ready() || AssessmentSettings::feedback_visible( (int) $row['ref'] );
+				$item['result'] = $attempt && $marks > 0 && $released ? round( 100 * (float) $attempt['total'] / $marks ) . '%' : '';
 				$item['detail'] = $attempt ? ucfirst( (string) $attempt['status'] ) : '';
 			} else {
 				$item['name']  = get_the_title( (int) $row['item'] );

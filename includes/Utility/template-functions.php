@@ -5,7 +5,6 @@
  * @package OhMyLMS
  */
 
-
 use OhMyLMS\Commerce\Checkout;
 use function OhMyLMS\Commerce\ecommerce;
 /**
@@ -178,7 +177,7 @@ function ohmylms_checkout_payment() {
 
 
 /**
- * place order button for mobile
+ * Place order button for mobile
  *
  * @since 1.0.0
  */
@@ -221,7 +220,7 @@ add_action( 'the_post', 'ohmylms_setup_course_data' );
 /**
  * Put $category as global variable
  *
- * @return void
+ * @return null
  *
  * @since 1.0.0
  */
@@ -235,7 +234,7 @@ add_action( 'wp', 'ohmylms_setup_category_data' );
 /**
  * Put $category as global variable
  *
- * @return void
+ * @return int
  *
  * @since 1.0.0
  */
@@ -396,7 +395,7 @@ if ( ! function_exists( 'ohmylms_loop_course_description' ) ) {
 		if ( ! empty( get_the_content() ) ) {
 			?>
 			<div class="ohmylms-loop-course-description">
-				<?php echo get_the_content(); ?>
+				<?php echo wp_kses_post( get_the_content() ); ?>
 			</div>
 			<?php
 		}
@@ -415,7 +414,7 @@ if ( ! function_exists( 'ohmylms_loop_course_update' ) ) {
 		$course = ohmylms_get_course( $course_id );
 		$date   = '';
 		if ( $course ) {
-			$date = date( 'M d, Y', $course->get_date_modified( 'edit' )->getTimestamp() );
+			$date = gmdate( 'M d, Y', $course->get_date_modified( 'edit' )->getTimestamp() );
 		}
 
 		?>
@@ -775,7 +774,7 @@ if ( ! function_exists( 'ohmylms_course_skeleton' ) ) {
 		$loop_start = ob_get_clean();
 
 		if ( $echo ) {
-			echo $loop_start;
+			echo $loop_start; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Template output; the template escapes its fields.
 		} else {
 			return $loop_start;
 		}
@@ -846,7 +845,7 @@ if ( ! function_exists( 'ohmylms_template_loop_course_thumbnail' ) ) {
 	 * @since 1.0.0
 	 */
 	function ohmylms_template_loop_course_thumbnail() {
-		echo ohmylms_get_product_thumbnail( 'ohmylms_thumbnail' );
+		echo ohmylms_get_product_thumbnail( 'ohmylms_thumbnail' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- ohmylms_get_product_thumbnail() escapes its values.
 	}
 }
 
@@ -981,7 +980,7 @@ if ( ! function_exists( 'ohmylms_output_content_wrapper_end' ) ) {
 
 if ( ! function_exists( 'ohmylms_scroll_to_top' ) ) {
 	/**
-	 * scroll to top.
+	 * Scroll to top.
 	 *
 	 * @since 1.0.0
 	 */
@@ -1221,9 +1220,7 @@ if ( ! function_exists( 'ohmylms_checkout_form_contact_title' ) ) {
 				echo esc_html__( 'Contact', 'ohmylms' );
 			echo '</h2>';
 
-		if ( is_user_logged_in() ) {
-
-		} else {
+		if ( ! is_user_logged_in() && \OhMyLMS\Commerce\ecommerce()->checkout()->is_login_enabled() ) {
 			?>
 					<div class="ohmylms-form-login-toggle">
 					<?php echo esc_html__( 'Already have an account?', 'ohmylms' ); ?>
@@ -1271,34 +1268,37 @@ if ( ! function_exists( 'ohmylms_circular_progressbar' ) ) {
 	 * .
 	 * @return string The HTML for the circular progress bar.
 	 */
-	function ohmylms_circular_progressbar( $sqSize = 110, $progress = 0, $thikness = 5, $backgroundColor = '#EAEDF4', $forgroundColor = '#5B65F5' ) {
+	function ohmylms_circular_progressbar( $sqSize = 110, $progress = 0, $thikness = 5, $backgroundColor = '#EAEDF4', $forgroundColor = '#5B65F5' ) { // phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase -- Public parameter names kept for named-argument compatibility.
 		ob_start();
 
-		$progressPercent = $progress;
-		$radius          = ( $sqSize - 6 ) / 2;
-		$dashArray       = $radius * M_PI * 2;
-		$dashOffset      = $dashArray - $dashArray * $progressPercent / 100;
+		$sq_size          = $sqSize; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase -- Public parameter name.
+		$background_color = $backgroundColor; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase -- Public parameter name.
+		$foreground_color = $forgroundColor; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase -- Public parameter name.
+		$progress_percent = $progress;
+		$radius           = ( $sq_size - 6 ) / 2;
+		$dash_array       = $radius * M_PI * 2;
+		$dash_offset      = $dash_array - $dash_array * $progress_percent / 100;
 		?>
-		<svg class="circle-progress-svg" width="<?php echo esc_attr( $sqSize ); ?>" height="<?php echo esc_attr( $sqSize ); ?>" viewBox="0 0 <?php echo esc_attr( $sqSize ); ?> <?php echo esc_attr( $sqSize ); ?>">
+		<svg class="circle-progress-svg" width="<?php echo esc_attr( $sq_size ); ?>" height="<?php echo esc_attr( $sq_size ); ?>" viewBox="0 0 <?php echo esc_attr( $sq_size ); ?> <?php echo esc_attr( $sq_size ); ?>">
 			<circle
 				class="circle-background"
-				cx=<?php echo $sqSize / 2; ?>
-				cy=<?php echo $sqSize / 2; ?>
-				r=<?php echo $radius; ?>
+				cx=<?php echo esc_attr( $sq_size / 2 ); ?>
+				cy=<?php echo esc_attr( $sq_size / 2 ); ?>
+				r=<?php echo esc_attr( $radius ); ?>
 				stroke-width="<?php echo esc_attr( $thikness ); ?>px"
-				stroke="<?php echo esc_attr( $backgroundColor ); ?>"
+				stroke="<?php echo esc_attr( $background_color ); ?>"
 			>
 			</circle>
 
 			<circle
 			class="circle-progress"
-			cy=<?php echo $sqSize / 2; ?>
-			cx=<?php echo $sqSize / 2; ?>
-			r=<?php echo $radius; ?>
+			cy=<?php echo esc_attr( $sq_size / 2 ); ?>
+			cx=<?php echo esc_attr( $sq_size / 2 ); ?>
+			r=<?php echo esc_attr( $radius ); ?>
 			stroke-width="<?php echo esc_attr( $thikness ); ?>px"
-			stroke="<?php echo esc_attr( $forgroundColor ); ?>"
-			transform="rotate(-90 <?php echo esc_attr( $sqSize / 2 ); ?> <?php echo esc_attr( $sqSize / 2 ); ?> )"
-			style="stroke-dasharray: <?php echo esc_attr( $dashArray ); ?>; stroke-dashoffset: <?php echo esc_attr( $dashOffset ); ?>"
+			stroke="<?php echo esc_attr( $foreground_color ); ?>"
+			transform="rotate(-90 <?php echo esc_attr( $sq_size / 2 ); ?> <?php echo esc_attr( $sq_size / 2 ); ?> )"
+			style="stroke-dasharray: <?php echo esc_attr( $dash_array ); ?>; stroke-dashoffset: <?php echo esc_attr( $dash_offset ); ?>"
 			>
 			</circle>
 
@@ -1371,7 +1371,7 @@ if ( ! function_exists( 'ohmylms_get_header' ) ) {
 					$theme_slug = $theme->get( 'TextDomain' );
 
 					// Output the header block template part.
-					echo $ohmylms_block_template_parts['header'];
+					echo $ohmylms_block_template_parts['header']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Rendered block template part.
 					?>
 				<?php
 		} else {
@@ -1402,7 +1402,7 @@ if ( ! function_exists( 'ohmylms_get_footer' ) ) {
 			$theme_slug = $theme->get( 'TextDomain' );
 
 			// Output the footer block template part.
-			echo isset( $ohmylms_block_template_parts['footer'] ) ? $ohmylms_block_template_parts['footer'] : do_blocks( '<!-- wp:template-part {"slug":"footer","theme":"' . $theme_slug . '","tagName":"footer","className":"site-footer","layout":{"inherit":true}} /-->' );
+			echo isset( $ohmylms_block_template_parts['footer'] ) ? $ohmylms_block_template_parts['footer'] : do_blocks( '<!-- wp:template-part {"slug":"footer","theme":"' . $theme_slug . '","tagName":"footer","className":"site-footer","layout":{"inherit":true}} /-->' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Rendered block template part.
 			?>
 			<?php wp_footer(); ?>
 			</body>
@@ -1428,7 +1428,7 @@ function ohmylms_get_rating_html( $rating, $count = 0 ) {
 	$html = '';
 	if ( 0 < $rating ) {
 		ob_start();
-		echo '(' . $count . ( 1 == $count ? esc_html__( ' Rating', 'ohmylms' ) : esc_html__( ' Ratings', 'ohmylms' ) ) . ')';
+		echo '(' . esc_html( $count ) . ( 1 == $count ? esc_html__( ' Rating', 'ohmylms' ) : esc_html__( ' Ratings', 'ohmylms' ) ) . ')';
 		$html = ob_get_clean();
 	}
 	return apply_filters( 'ohmylms_get_rating_html', $html, $rating, $count );
@@ -1654,7 +1654,7 @@ if ( ! function_exists( 'ohmylms_completed_courses_tab_content' ) ) {
 
 if ( ! function_exists( 'ohmylms_account_student_dashboard_header' ) ) {
 	/**
-	 * this function should be removed after studendt dashboard is ready.
+	 * This function should be removed after studendt dashboard is ready.
 	 */
 	function ohmylms_account_student_dashboard_header() {
 		$current_user_id = get_current_user_id();

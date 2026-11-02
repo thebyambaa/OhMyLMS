@@ -3,6 +3,7 @@
 namespace OhMyLMS\Emails\StudentsEmail;
 
 use OhMyLMS\Emails\Emails;
+use OhMyLMS\I18n\RecipientLocale;
 
 /**
  * Plugin new order implementation.
@@ -96,8 +97,25 @@ class NewOrder {
 			return;
 		}
 
-		$subject = isset( $settings['subject'] ) ? $settings['subject'] : '';
-		$subject = Emails::replace_merge_tags( $subject, $order );
+		RecipientLocale::run(
+			$user,
+			function () use ( $order, $data, $to ) {
+				$this->send( $order, $data, $to );
+			}
+		);
+	}
+
+	/**
+	 * Compose and send the email, in the learner's language.
+	 *
+	 * @param mixed  $order The order object containing details of the new order.
+	 * @param mixed  $data  Additional data related to the order.
+	 * @param string $to    Learner's address.
+	 */
+	private function send( $order, $data, $to ) {
+		$settings = Emails::get_template_settings( 'student_new_order', $this->default_settings() );
+		$subject  = isset( $settings['subject'] ) ? $settings['subject'] : '';
+		$subject  = Emails::replace_merge_tags( $subject, $order );
 
 		$email_settings = Emails::get_email_settings();
 

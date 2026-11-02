@@ -20,13 +20,6 @@ final class Bootstrap {
 	public static function init() {
 		add_action( 'init', array( Schema::class, 'install' ), 7 );
 		add_action(
-			'admin_enqueue_scripts',
-			static function () {
-				if ( isset( $_GET['page'] ) && 'ohmylms' === $_GET['page'] ) {
-					wp_enqueue_style( 'ohmylms-learning-editor', plugins_url( 'assets/css/learning-program.css', OHMYLMS_FILE ), array(), OHMYLMS_VERSION ); }
-			}
-		);
-		add_action(
 			'ohmylms_skill_state_updated',
 			static function ( $student ) {
 				self::$dirty[ (int) $student ] = true;
@@ -74,6 +67,7 @@ final class Bootstrap {
 		add_action( 'shutdown', array( __CLASS__, 'flush' ), 30 );
 		add_action( 'ohmylms_process_evidence', array( __CLASS__, 'flush' ), 30 );
 		Frontend::init();
+		LessonPreview::init();
 	}
 
 	/**

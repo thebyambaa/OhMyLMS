@@ -54,7 +54,7 @@ class EcommerceDateTime extends DateTime {
 	 * Get offset for Ecommerce date time.
 	 */
 	public function getOffset() {
-		return $this->utc_offset ?: parent::getOffset();
+		return $this->utc_offset ? $this->utc_offset : parent::getOffset();
 	}
 
 	/**

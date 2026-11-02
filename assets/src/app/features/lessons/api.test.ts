@@ -24,6 +24,44 @@ it( 'rejects malformed and cross-lesson responses', async () => {
 	expect( () =>
 		parseLesson( { ...lesson, resources: [ { name: 'File', url: 5 } ] } )
 	).toThrow();
+	expect( () =>
+		parseLesson( { ...lesson, drip: { ...lesson.drip, type: 'weekly' } } )
+	).toThrow();
+	expect( () =>
+		parseLesson( {
+			...lesson,
+			prerequisites: { enable: true, items: [ { id: '4' } ] },
+		} )
+	).toThrow();
+	expect( () => parseLesson( { ...lesson, cover_image_id: -1 } ) ).toThrow();
+	expect( () => parseLesson( { ...lesson, custom_type: 'no' } ) ).toThrow();
+	expect( () =>
+		parseLesson( {
+			...lesson,
+			video: { ...lesson.video, provider: 'tiktok' },
+		} )
+	).toThrow();
+	expect( () =>
+		parseLesson( {
+			...lesson,
+			video: { ...lesson.video, completion: 'always' },
+		} )
+	).toThrow();
+	expect( () =>
+		parseLesson( {
+			...lesson,
+			inline_questions: [
+				{
+					position: 1,
+					kind: 'html',
+					question_id: 1,
+					uuid: '',
+					title: '',
+					status: 'approved',
+				},
+			],
+		} )
+	).toThrow();
 	vi.mocked( client.get ).mockResolvedValue( { ...lesson, id: 13 } );
 	await expect(
 		readLesson( 12, new AbortController().signal )
@@ -41,6 +79,29 @@ it( 'saves exactly the editable fields and publishes only a confirmed revision',
 	);
 	expect( savePayload( lesson ) ).not.toHaveProperty( 'status' );
 	expect( savePayload( lesson ) ).not.toHaveProperty( 'chapter_id' );
+	expect( savePayload( lesson ) ).not.toHaveProperty( 'media_urls' );
+	expect( savePayload( lesson ) ).not.toHaveProperty( 'inline_questions' );
+	expect( savePayload( lesson ).video ).not.toHaveProperty( 'poster_url' );
+	expect( Object.keys( savePayload( lesson ).video ).sort() ).toEqual( [
+		'aspect_ratio',
+		'autoplay',
+		'completion',
+		'controls',
+		'duration',
+		'loop',
+		'poster_id',
+		'provider',
+		'watch_percent',
+	] );
+	expect(
+		savePayload( {
+			...lesson,
+			prerequisites: {
+				enable: true,
+				items: [ { id: 30, title: 'Numbers' } ],
+			},
+		} ).prerequisites
+	).toEqual( { enable: true, ids: [ 30 ] } );
 	await publishLesson( lesson, signal );
 	expect( client.post ).toHaveBeenCalledWith(
 		'/ohmylms/v1/authoring/lessons/12/publish',

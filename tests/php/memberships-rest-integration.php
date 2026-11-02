@@ -588,10 +588,168 @@ try {
 	ok_error( call_api( 'GET', '/courses', array( 'per_page' => 51 ) ), 400, 'rest_invalid_param', 'course per_page above 50' );
 	ok( 2 === count( call_api( 'GET', '/courses', array( 'include' => array( $c1, $c3 ) ) )->get_data() ), 'courses by id' );
 
+	// Extension settings: declared per context in PHP, validated before anything is written.
+	$ext    = $tag . '-benefit';
+	$course = $tag . '-course-only';
+	ohmylms_register_extension_settings(
+		$ext,
+		array(
+			'contexts' => array( 'membership' ),
+			'schema'   => array(
+				'type'       => 'object',
+				'properties' => array(
+					'benefit' => array(
+						'type'      => 'string',
+						'maxLength' => 20,
+					),
+					'seats'   => array(
+						'type'    => 'integer',
+						'minimum' => 0,
+					),
+				),
+			),
+			'sanitize' => static function ( $value ) {
+				if ( isset( $value['benefit'] ) ) {
+					$value['benefit'] = trim( $value['benefit'] );
+				}
+				return 'blocked' === ( $value['benefit'] ?? '' ) ? new WP_Error( 'acme_blocked', 'This benefit is not allowed.' ) : $value;
+			},
+		)
+	);
+	ohmylms_register_extension_settings(
+		$course,
+		array(
+			'contexts' => array( 'course' ),
+			'schema'   => array( 'type' => 'object' ),
+		)
+	);
+	$threw = false;
+	try {
+		ohmylms_register_extension_settings(
+			$tag . '-bad-sanitize',
+			array(
+				'contexts' => array( 'membership' ),
+				'schema'   => array( 'type' => 'object' ),
+				'sanitize' => 'ohmylms_no_such_function',
+			)
+		);
+	} catch ( InvalidArgumentException $e ) {
+		$threw = true;
+	}
+	ok( $threw, 'a sanitize option that is not callable is refused' );
+	ok( ! isset( \OhMyLMS\Extensions\Settings::manifest()[ $ext ]['sanitize'] ), 'the public manifest carries no sanitize callback' );
+
+	$ext_options = call_api( 'GET', '/options' )->get_data();
+	ok( in_array( $ext, $ext_options['extension_settings'], true ) && ! in_array( $course, $ext_options['extension_settings'], true ), 'options list only the namespaces registered for memberships' );
+
+	$gamma = make_plan(
+		array(
+			'name'               => $tag . ' gamma',
+			'regular_price'      => '10',
+			'extension_settings' => array(
+				$ext => array(
+					'benefit' => '  Tutoring  ',
+					'seats'   => 3,
+				),
+			),
+		)
+	);
+	ok(
+		array(
+			'benefit' => 'Tutoring',
+			'seats'   => 3,
+		) === $gamma['extension_settings'][ $ext ],
+		'create stores settings through the schema and the sanitize callback'
+	);
+	$gamma_view = call_api( 'GET', '/' . $gamma['id'] )->get_data();
+	ok( ! array_key_exists( 'extension_settings', $gamma_view ), 'view context omits extension settings' );
+	$gamma_edit = call_api( 'GET', '/' . $gamma['id'], array( 'context' => 'edit' ) )->get_data();
+	ok( 'Tutoring' === $gamma_edit['extension_settings'][ $ext ]['benefit'], 'edit context reads extension settings back' );
+	$listed = call_api(
+		'GET',
+		'',
+		array(
+			'include' => array( $gamma['id'] ),
+			'context' => 'edit',
+		)
+	)->get_data();
+	ok( 3 === $listed[0]['extension_settings'][ $ext ]['seats'], 'edit-context list includes extension settings' );
+
+	// Values stored by a namespace that is no longer registered are kept but not exposed.
+	$stored            = get_post_meta( $gamma['id'], '_ohmylms_extension_settings', true );
+	$stored['retired'] = array( 'kept' => true );
+	update_post_meta( $gamma['id'], '_ohmylms_extension_settings', $stored );
+	$renamed_gamma = call_api( 'PATCH', '/' . $gamma['id'], array( 'name' => $tag . ' gamma renamed' ) )->get_data();
+	ok( ! isset( $renamed_gamma['extension_settings']['retired'] ) && 'Tutoring' === $renamed_gamma['extension_settings'][ $ext ]['benefit'], 'omitting extension_settings keeps them; unregistered namespaces are hidden' );
+	$replaced_ext = call_api( 'PATCH', '/' . $gamma['id'], array( 'extension_settings' => array( $ext => array( 'seats' => 5 ) ) ) )->get_data();
+	ok( array( 'seats' => 5 ) === $replaced_ext['extension_settings'][ $ext ], 'a namespace is replaced as a whole' );
+	ok( array( 'kept' => true ) === get_post_meta( $gamma['id'], '_ohmylms_extension_settings', true )['retired'], 'other namespaces survive an update' );
+
+	$snapshot = get_post_meta( $gamma['id'], '_ohmylms_extension_settings', true );
+	$rejected = call_api(
+		'PATCH',
+		'/' . $gamma['id'],
+		array(
+			'name'               => $tag . ' must not save',
+			'extension_settings' => array( $ext => array( 'benefit' => str_repeat( 'x', 21 ) ) ),
+		)
+	);
+	ok_error( $rejected, 400, 'ohmylms_membership_invalid_extension_settings', 'too long extension value' );
+	ok( 'extension_settings' === $rejected->get_data()['data']['field'] && $ext === $rejected->get_data()['data']['namespace'], 'the error names the field and the extension' );
+	ok_error( call_api( 'PATCH', '/' . $gamma['id'], array( 'extension_settings' => array( $ext => array( 'price' => 0 ) ) ) ), 400, 'ohmylms_membership_invalid_extension_settings', 'unknown nested property' );
+	ok_error( call_api( 'PATCH', '/' . $gamma['id'], array( 'extension_settings' => array( $ext => array( 'seats' => -1 ) ) ) ), 400, 'ohmylms_membership_invalid_extension_settings', 'value below the schema minimum' );
+	$unknown = call_api( 'PATCH', '/' . $gamma['id'], array( 'extension_settings' => array( $course => array( 'x' => 1 ) ) ) );
+	ok_error( $unknown, 400, 'ohmylms_membership_invalid_extension_settings', 'a namespace registered for another context' );
+	ok( 'ohmylms_unknown_settings' === $unknown->get_data()['data']['reason'], 'the reason is the unregistered namespace' );
+	$blocked = call_api( 'PATCH', '/' . $gamma['id'], array( 'extension_settings' => array( $ext => array( 'benefit' => ' blocked ' ) ) ) );
+	ok_error( $blocked, 400, 'ohmylms_membership_invalid_extension_settings', 'sanitize callback rejection' );
+	ok( 'acme_blocked' === $blocked->get_data()['data']['reason'], 'the sanitize error code is reported' );
+	ok_error( call_api( 'PATCH', '/' . $gamma['id'], array( 'extension_settings' => 'text' ) ), 400, 'rest_invalid_param', 'extension_settings must be an object' );
+	ok_error(
+		call_api(
+			'PATCH',
+			'/' . $gamma['id'],
+			array(
+				'sale_price'         => '50',
+				'extension_settings' => array( $ext => array( 'seats' => 9 ) ),
+			)
+		),
+		422,
+		'ohmylms_membership_sale_price_too_high',
+		'valid extension values with an invalid plan'
+	);
+	ok( get_post_meta( $gamma['id'], '_ohmylms_extension_settings', true ) === $snapshot && get_the_title( $gamma['id'] ) === $tag . ' gamma renamed', 'rejected requests wrote neither the plan nor its extension settings' );
+	$rejected_create = call_api(
+		'POST',
+		'',
+		array(
+			'name'               => $tag . ' rejected ext',
+			'extension_settings' => array( $ext => array( 'seats' => 'many' ) ),
+		)
+	);
+	ok_error( $rejected_create, 400, 'ohmylms_membership_invalid_extension_settings', 'create with invalid extension values' );
+	ok( 0 === (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'ohmylms-membership' AND post_title = %s", $tag . ' rejected ext' ) ), 'a rejected create wrote no plan' );
+
+	$generic = rest_do_request( new WP_REST_Request( 'GET', '/ohmylms/v1/extension-settings/membership/' . $gamma['id'] ) );
+	ok( 200 === $generic->get_status() && 5 === ( (array) $generic->get_data()['settings'] )[ $ext ]['seats'], 'the SDK extension-settings endpoint reads the same values' );
+
+	$gamma_copy = call_api( 'POST', '/' . $gamma['id'] . '/duplicate' )->get_data();
+	$plan_ids[] = $gamma_copy['id'];
+	ok( array( 'seats' => 5 ) === $gamma_copy['extension_settings'][ $ext ], 'duplicate copies extension settings' );
+
+	wp_set_current_user( $subscriber );
+	$denied_ext = call_api( 'PATCH', '/' . $gamma['id'], array( 'extension_settings' => array( $ext => array( 'seats' => 99 ) ) ) );
+	ok( 403 === $denied_ext->get_status(), 'a subscriber cannot write extension settings' );
+	ok( 403 === rest_do_request( new WP_REST_Request( 'GET', '/ohmylms/v1/extension-settings/membership/' . $gamma['id'] ) )->get_status(), 'a subscriber cannot read them through the SDK endpoint' );
+	wp_set_current_user( 0 );
+	ok( 401 === call_api( 'PATCH', '/' . $gamma['id'], array( 'extension_settings' => array( $ext => array( 'seats' => 99 ) ) ) )->get_status(), 'anonymous writes are refused' );
+	wp_set_current_user( $admin );
+	ok( get_post_meta( $gamma['id'], '_ohmylms_extension_settings', true ) === $snapshot, 'refused writes changed nothing' );
+
 	// Schema.
 	$schema = rest_do_request( new WP_REST_Request( 'OPTIONS', '/ohmylms/v1/memberships' ) )->get_data()['schema'];
 	ok( 'http://json-schema.org/draft-04/schema#' === $schema['$schema'] && 'membership' === $schema['title'], 'schema header' );
-	foreach ( array( 'id', 'name', 'slug', 'status', 'description', 'permalink', 'regular_price', 'sale_price', 'sale_start_date', 'sale_end_date', 'price', 'sign_up_fee', 'billing_period', 'billing_interval', 'currency', 'all_learning_content', 'course_ids', 'courses', 'excluded_course_ids', 'excluded_courses', 'curriculum_item_ids', 'course_count', 'member_count', 'created_at', 'updated_at' ) as $property ) {
+	foreach ( array( 'id', 'name', 'slug', 'status', 'description', 'permalink', 'regular_price', 'sale_price', 'sale_start_date', 'sale_end_date', 'price', 'sign_up_fee', 'billing_period', 'billing_interval', 'currency', 'all_learning_content', 'course_ids', 'courses', 'excluded_course_ids', 'excluded_courses', 'curriculum_item_ids', 'course_count', 'member_count', 'extension_settings', 'created_at', 'updated_at' ) as $property ) {
 		ok( isset( $schema['properties'][ $property ] ), "schema property $property" );
 	}
 	ok( ! empty( $schema['properties']['id']['readonly'] ) && ! empty( $schema['properties']['price']['readonly'] ), 'schema marks computed fields readonly' );

@@ -13,8 +13,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Get post meta.
-$post_id           = get_the_ID();
-$zoom_meeting_data = get_post_meta( $post_id, '_zoom_meeting_data', true );
+$meeting_post_id   = get_the_ID();
+$zoom_meeting_data = get_post_meta( $meeting_post_id, '_zoom_meeting_data', true );
 
 // If no meeting data, show a fallback notice instead of rendering nothing.
 if ( empty( $zoom_meeting_data ) ) {
@@ -57,7 +57,7 @@ $has_password       = '' !== $password;
 // Zoom's own agenda field is plain text only (formatting gets stripped before it's sent
 // to their API), so for on-site display prefer the lesson's original rich post content
 // and only fall back to Zoom's flattened copy if that's empty.
-$post_content_raw = get_post_field( 'post_content', $post_id );
+$post_content_raw = get_post_field( 'post_content', $meeting_post_id );
 $agenda_html      = trim( $post_content_raw )
 	? apply_filters( 'the_content', $post_content_raw )
 	: wp_kses_post( nl2br( $meeting_data['agenda'] ) );
@@ -126,22 +126,21 @@ $google_calendar_url = sprintf(
 );
 
 // Attachments (uploaded via the Live Class settings panel, if the Pro plugin saved any).
-$attachments = json_decode( get_post_meta( $post_id, '_attachments', true ), true );
+$attachments = json_decode( get_post_meta( $meeting_post_id, '_attachments', true ), true );
 if ( ! is_array( $attachments ) ) {
 	$attachments = array();
 }
 
 // Replay, if the instructor attached one (manually, or auto-attached from
 // Zoom cloud once the session ended — see ohmylms-pro's Zoom webhook).
-$recording_source = get_post_meta( $post_id, '_recording_source', true );
-$recording_url    = get_post_meta( $post_id, '_recording_url', true );
-$recording_state  = get_post_meta( $post_id, '_recording_state', true );
+$recording_source = get_post_meta( $meeting_post_id, '_recording_source', true );
+$recording_url    = get_post_meta( $meeting_post_id, '_recording_url', true );
+$recording_state  = get_post_meta( $meeting_post_id, '_recording_state', true );
 $has_recording    = ( 'attached' === $recording_state ) && ! empty( $recording_url );
 
-// YouTube/Vimeo/Uploaded play through the site's custom video player
-// (assets/src/frontend/js/lesson/video-player.js — same one lesson videos
-// use), which does its own URL parsing from data-video-url. Drive and Zoom
-// aren't real video files the player can load — those stay a plain iframe.
+// YouTube/Vimeo/Uploaded play through the lesson video player (ohmylms/video,
+// OhMyLMS\Extensions\Video). Drive and Zoom aren't real video files the
+// player can load — those stay a plain iframe.
 $recording_uses_custom_player = in_array( $recording_source, array( 'YouTube', 'Vimeo', 'Uploaded' ), true );
 
 $recording_embed_src = '';
@@ -165,14 +164,16 @@ if ( $has_recording ) {
 	<div class="creator-zoom-recording">
 		<h2 class="creator-zoom-recording__title"><?php esc_html_e( 'Session Replay', 'ohmylms' ); ?></h2>
 		<?php if ( $recording_uses_custom_player ) : ?>
-			<div
-				class="ohmylms-custom-video-player ohmylms-responsive-video-wrapper"
-				style="aspect-ratio: 16/9;"
-				data-video-url="<?php echo esc_attr( $recording_url ); ?>"
-				data-autoplay="false"
-				data-loop="false"
-				data-muted="false"
-			></div>
+			<?php
+			\OhMyLMS\Extensions\Video::render(
+				array(
+					'url'    => $recording_url,
+					'custom' => true,
+					'logo'   => '',
+					'title'  => $topic,
+				)
+			);
+			?>
 		<?php elseif ( $recording_embed_src ) : ?>
 			<div class="creator-zoom-recording__embed">
 				<iframe src="<?php echo esc_url( $recording_embed_src ); ?>" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen frameborder="0"></iframe>
@@ -223,7 +224,7 @@ $attachments_html = ob_get_clean();
 	<?php if ( 'not_started' === $meeting_state ) : ?>
 		<div class="meeting-status not-started">
 			<h1 class="meeting-title"><?php echo esc_html( $topic ); ?></h1>
-			<div class="meeting-agenda ohmylms-wysiwyg-content"><?php echo $agenda_html; ?></div>
+			<div class="meeting-agenda ohmylms-wysiwyg-content"><?php echo $agenda_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Filtered post content (the_content) or wp_kses_post() output. ?></div>
 
 			<div id="zoom-countdown" class="zoom-countdown">
 				<div class="countdown-item"><span class="num" id="days">0</span><span class="label">Days</span></div>
@@ -238,14 +239,14 @@ $attachments_html = ob_get_clean();
 				<span class="copy-btn" data-copy-target="meeting-link">
 					<strong><?php esc_html_e( 'Meeting Link:', 'ohmylms' ); ?></strong>
 					<a href="<?php echo esc_url( $join_url ); ?>" target="_blank" id="meeting-link" class="meeting-link-text"><?php echo esc_html( $join_url ); ?></a>
-					<?php echo $copy_icon; ?>
+					<?php echo $copy_icon; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static SVG icon markup. ?>
 					<span class="copied-message">Copied!</span>
 				</span>
 
 				<span class="copy-btn" data-copy-target="meeting-id">
 					<strong><?php esc_html_e( 'Meeting ID:', 'ohmylms' ); ?></strong>
 					<span id="meeting-id"><?php echo esc_html( $meeting_id ); ?></span>
-					<?php echo $copy_icon; ?>
+					<?php echo $copy_icon; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static SVG icon markup. ?>
 					<span class="copied-message">Copied!</span>
 				</span>
 
@@ -253,7 +254,7 @@ $attachments_html = ob_get_clean();
 					<span class="copy-btn" data-copy-target="meeting-pass">
 						<strong><?php esc_html_e( 'Password:', 'ohmylms' ); ?></strong>
 						<span id="meeting-pass"><?php echo esc_html( $password ); ?></span>
-						<?php echo $copy_icon; ?>
+						<?php echo $copy_icon; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static SVG icon markup. ?>
 						<span class="copied-message">Copied!</span>
 					</span>
 				<?php endif; ?>
@@ -261,7 +262,7 @@ $attachments_html = ob_get_clean();
 				<span><strong><?php esc_html_e( 'Duration:', 'ohmylms' ); ?></strong> <?php echo esc_html( $duration_formatted ); ?></span>
 			</div>
 
-			<?php echo $attachments_html; ?>
+			<?php echo $attachments_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Buffered output of this template, escaped above. ?>
 
 			<div class="meeting-actions">
 				<a href="#" class="ohmylms-btn disabled-btn" disabled><?php esc_html_e( 'Join Meeting', 'ohmylms' ); ?></a>
@@ -275,7 +276,7 @@ $attachments_html = ob_get_clean();
 	<?php elseif ( 'ongoing' === $meeting_state ) : ?>
 		<div class="meeting-status ongoing">
 			<h1 class="meeting-title"><?php echo esc_html( $topic ); ?></h1>
-			<div class="meeting-agenda ohmylms-wysiwyg-content"><?php echo $agenda_html; ?></div>
+			<div class="meeting-agenda ohmylms-wysiwyg-content"><?php echo $agenda_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Filtered post content (the_content) or wp_kses_post() output. ?></div>
 			<p class="meeting-live-notice"><?php esc_html_e( 'Meeting is live now!', 'ohmylms' ); ?></p>
 
 			<div class="meeting-info">
@@ -284,14 +285,14 @@ $attachments_html = ob_get_clean();
 				<span class="copy-btn" data-copy-target="meeting-link">
 					<strong><?php esc_html_e( 'Meeting Link:', 'ohmylms' ); ?></strong>
 					<a href="<?php echo esc_url( $join_url ); ?>" target="_blank" id="meeting-link" class="meeting-link-text"><?php echo esc_html( $join_url ); ?></a>
-					<?php echo $copy_icon; ?>
+					<?php echo $copy_icon; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static SVG icon markup. ?>
 					<span class="copied-message">Copied!</span>
 				</span>
 
 				<span class="copy-btn" data-copy-target="meeting-id">
 					<strong><?php esc_html_e( 'Meeting ID:', 'ohmylms' ); ?></strong>
 					<span id="meeting-id"><?php echo esc_html( $meeting_id ); ?></span>
-					<?php echo $copy_icon; ?>
+					<?php echo $copy_icon; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static SVG icon markup. ?>
 					<span class="copied-message">Copied!</span>
 				</span>
 
@@ -299,7 +300,7 @@ $attachments_html = ob_get_clean();
 					<span class="copy-btn" data-copy-target="meeting-pass">
 						<strong><?php esc_html_e( 'Password:', 'ohmylms' ); ?></strong>
 						<span id="meeting-pass"><?php echo esc_html( $password ); ?></span>
-						<?php echo $copy_icon; ?>
+						<?php echo $copy_icon; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static SVG icon markup. ?>
 						<span class="copied-message">Copied!</span>
 					</span>
 				<?php endif; ?>
@@ -307,7 +308,7 @@ $attachments_html = ob_get_clean();
 				<span><strong><?php esc_html_e( 'Duration:', 'ohmylms' ); ?></strong> <?php echo esc_html( $duration_formatted ); ?></span>
 			</div>
 
-			<?php echo $attachments_html; ?>
+			<?php echo $attachments_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Buffered output of this template, escaped above. ?>
 
 			<div class="meeting-actions">
 				<a href="<?php echo esc_url( $join_url ); ?>" target="_blank" class="ohmylms-btn join-btn"><?php esc_html_e( 'Join Meeting', 'ohmylms' ); ?></a>
@@ -317,9 +318,9 @@ $attachments_html = ob_get_clean();
 	<?php else : ?>
 		<div class="meeting-status ended">
 			<h1 class="meeting-title"><?php echo esc_html( $topic ); ?></h1>
-			<div class="meeting-agenda ohmylms-wysiwyg-content"><?php echo $agenda_html; ?></div>
+			<div class="meeting-agenda ohmylms-wysiwyg-content"><?php echo $agenda_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Filtered post content (the_content) or wp_kses_post() output. ?></div>
 
-			<?php echo $recording_html; ?>
+			<?php echo $recording_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Buffered output of this template and Video::render(), escaped above. ?>
 
 			<div class="meeting-info">
 				<span><strong><?php esc_html_e( 'Started on:', 'ohmylms' ); ?></strong> <?php echo esc_html( $start_dt->format( 'M d, Y h:i A' ) ); ?> (<?php echo esc_html( $timezone ); ?>)</span>
@@ -327,7 +328,7 @@ $attachments_html = ob_get_clean();
 				<span class="copy-btn" data-copy-target="meeting-id">
 					<strong><?php esc_html_e( 'Meeting ID:', 'ohmylms' ); ?></strong>
 					<span id="meeting-id"><?php echo esc_html( $meeting_id ); ?></span>
-					<?php echo $copy_icon; ?>
+					<?php echo $copy_icon; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static SVG icon markup. ?>
 					<span class="copied-message">Copied!</span>
 				</span>
 
@@ -335,16 +336,16 @@ $attachments_html = ob_get_clean();
 					<span class="copy-btn" data-copy-target="meeting-pass">
 						<strong><?php esc_html_e( 'Password:', 'ohmylms' ); ?></strong>
 						<span id="meeting-pass"><?php echo esc_html( $password ); ?></span>
-						<?php echo $copy_icon; ?>
+						<?php echo $copy_icon; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static SVG icon markup. ?>
 						<span class="copied-message">Copied!</span>
 					</span>
 				<?php endif; ?>
 			</div>
 
-			<?php echo $attachments_html; ?>
+			<?php echo $attachments_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Buffered output of this template, escaped above. ?>
 
 			<p class="meeting-ended-notice"><?php esc_html_e( 'This meeting has ended.', 'ohmylms' ); ?></p>
-			<?php do_action( 'ohmylms/after_meeting_end', $post_id ); ?>
+			<?php do_action( 'ohmylms/after_meeting_end', $meeting_post_id ); ?>
 		</div>
 	<?php endif; ?>
 </div>

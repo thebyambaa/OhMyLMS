@@ -53,6 +53,8 @@ class Emails {
 			\OhMyLMS\Emails\StudentsEmail\QuizGraded::class,
 			\OhMyLMS\Emails\StudentsEmail\ManualEnrollment::class,
 			\OhMyLMS\Emails\StudentsEmail\EmailVerification::class,
+			\OhMyLMS\Emails\StudentsEmail\AssignmentComment::class,
+			\OhMyLMS\Emails\CreatorsEmail\AssignmentComment::class,
 		);
 		return $emails;
 	}
@@ -75,6 +77,10 @@ class Emails {
 			'student_cancel_enrollment'       => \OhMyLMS\Emails\StudentsEmail\CancelEnrollment::class,
 			'student_assignment_graded'       => \OhMyLMS\Emails\StudentsEmail\AssignmentGraded::class,
 			'student_quiz_graded'             => \OhMyLMS\Emails\StudentsEmail\QuizGraded::class,
+			'student_exam_results_released'   => \OhMyLMS\Emails\StudentsEmail\ExamResultsReleased::class,
+			'student_at_risk_nudge'           => \OhMyLMS\Emails\StudentsEmail\AtRiskNudge::class,
+			'instructor_assignment_comment'   => \OhMyLMS\Emails\CreatorsEmail\AssignmentComment::class,
+			'student_assignment_comment'      => \OhMyLMS\Emails\StudentsEmail\AssignmentComment::class,
 		);
 	}
 

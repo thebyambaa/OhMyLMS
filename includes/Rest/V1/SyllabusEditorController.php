@@ -11,6 +11,7 @@ use OhMyLMS\Curriculum\Access;
 use OhMyLMS\Curriculum\Items;
 use OhMyLMS\Curriculum\Syllabus;
 use OhMyLMS\Curriculum\SyllabusCourse;
+use OhMyLMS\Curriculum\SyllabusSettings;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -65,7 +66,11 @@ class SyllabusEditorController extends \WP_REST_Controller {
 	 */
 	private function snapshot( $syllabus_id ) {
 		$outline = Syllabus::outline( $syllabus_id );
-		return is_wp_error( $outline ) ? $outline : SyllabusCourse::decorate( $outline, $syllabus_id ) + array( 'course' => SyllabusCourse::summary( $syllabus_id ) );
+		return is_wp_error( $outline ) ? $outline : SyllabusCourse::decorate( $outline, $syllabus_id ) + array(
+			'course'       => SyllabusCourse::summary( $syllabus_id ),
+			'settings'     => SyllabusSettings::get( $syllabus_id ),
+			'requirements' => SyllabusCourse::requirements( $syllabus_id ),
+		);
 	}
 
 	/**
@@ -98,18 +103,22 @@ class SyllabusEditorController extends \WP_REST_Controller {
 				'maxLength' => 2000,
 			),
 		);
+		$profile                           = array(
+			'type'      => 'string',
+			'maxLength' => 100,
+		);
 		$group_fields                      = $fields;
 		$group_fields['code']['maxLength'] = 60;
 		return array(
-			'add_group'    => array(
+			'add_group'        => array(
 				'fields'   => $group_fields + array( 'item_id' => $id ),
 				'required' => array( 'name', 'item_id' ),
 			),
-			'edit_group'   => array(
+			'edit_group'       => array(
 				'fields'   => $group_fields + array( 'group_id' => $id ),
 				'required' => array( 'group_id', 'name' ),
 			),
-			'move_group'   => array(
+			'move_group'       => array(
 				'fields'   => array(
 					'group_id' => $id,
 					'item_id'  => $id,
@@ -117,22 +126,22 @@ class SyllabusEditorController extends \WP_REST_Controller {
 				),
 				'required' => array( 'group_id', 'item_id', 'position' ),
 			),
-			'create_skill' => array(
+			'create_skill'     => array(
 				'fields'   => $fields + array( 'group_id' => $id ),
 				'required' => array( 'group_id', 'name' ),
 			),
-			'edit_skill'   => array(
+			'edit_skill'       => array(
 				'fields'   => $fields + array( 'term_id' => $id ),
 				'required' => array( 'term_id', 'name' ),
 			),
-			'attach_skill' => array(
+			'attach_skill'     => array(
 				'fields'   => array(
 					'group_id' => $id,
 					'term_id'  => $id,
 				),
 				'required' => array( 'group_id', 'term_id' ),
 			),
-			'move_skill'   => array(
+			'move_skill'       => array(
 				'fields'   => array(
 					'group_id'    => $id,
 					'term_id'     => $id,
@@ -141,18 +150,120 @@ class SyllabusEditorController extends \WP_REST_Controller {
 				),
 				'required' => array( 'group_id', 'term_id', 'destination', 'position' ),
 			),
-			'detach_skill' => array(
+			'detach_skill'     => array(
 				'fields'   => array(
 					'group_id' => $id,
 					'term_id'  => $id,
 				),
 				'required' => array( 'group_id', 'term_id' ),
 			),
-			'sync_course'  => array(
+			'delete_group'     => array(
+				'fields'   => array(
+					'group_id' => $id,
+					'confirm'  => array( 'type' => 'boolean' ),
+				),
+				'required' => array( 'group_id' ),
+			),
+			'edit_source'      => array(
+				'fields'   => array(
+					'name'            => $fields['name'],
+					'code'            => $group_fields['code'],
+					'version'         => $group_fields['code'],
+					'description'     => $fields['description'],
+					'subject'         => $profile,
+					'grade'           => $profile,
+					'language'        => $profile,
+					'categories'      => array(
+						'type'     => 'array',
+						'maxItems' => 50,
+						'items'    => array(
+							'type'      => 'string',
+							'maxLength' => 60,
+						),
+					),
+					'category_styles' => array(
+						'type'                 => 'object',
+						'maxProperties'        => 50,
+						'additionalProperties' => array(
+							'type'                 => 'object',
+							'additionalProperties' => false,
+							'properties'           => array(
+								'icon'  => array(
+									'type'      => 'string',
+									'maxLength' => 60,
+								),
+								'color' => array(
+									'type'    => 'string',
+									'pattern' => '^#[0-9a-fA-F]{6}$',
+								),
+							),
+						),
+					),
+				),
+				'required' => array(),
+			),
+			'set_requirements' => array(
+				'fields'   => array(
+					'skills' => array(
+						'type'     => 'array',
+						'minItems' => 1,
+						'maxItems' => Syllabus::MAX_SKILLS,
+						'items'    => array(
+							'type'                 => 'object',
+							'required'             => array( 'term_id' ),
+							'additionalProperties' => false,
+							'properties'           => array(
+								'term_id'  => $id,
+								'required' => array( 'type' => 'boolean' ),
+								'target'   => array(
+									'type' => 'string',
+									'enum' => array( 'proficient', 'mastered' ),
+								),
+							),
+						),
+					),
+				),
+				'required' => array( 'skills' ),
+			),
+			'sync_course'      => array(
 				'fields'   => array(),
 				'required' => array(),
 			),
-			'import'       => array(
+			'sheet_edit'       => array(
+				'fields'   => array(
+					'changes' => array(
+						'type'     => 'array',
+						'minItems' => 1,
+						'maxItems' => \OhMyLMS\Curriculum\SyllabusSheet::MAX_CHANGES,
+						'items'    => array(
+							'type'                 => 'object',
+							'required'             => array( 'kind', 'id', 'field', 'previous', 'value' ),
+							'additionalProperties' => false,
+							'properties'           => array(
+								'kind'     => array(
+									'type' => 'string',
+									'enum' => array( 'item', 'group', 'skill' ),
+								),
+								'id'       => $id,
+								'field'    => array(
+									'type' => 'string',
+									'enum' => array( 'name', 'code' ),
+								),
+								'previous' => array(
+									'type'      => 'string',
+									'maxLength' => 400,
+								),
+								'value'    => array(
+									'type'      => 'string',
+									'maxLength' => 400,
+								),
+							),
+						),
+					),
+				),
+				'required' => array( 'changes' ),
+			),
+			'import'           => array(
 				'fields'   => array(
 					'rows'            => array(
 						'type'     => 'array',
@@ -234,8 +345,35 @@ class SyllabusEditorController extends \WP_REST_Controller {
 			case 'detach_skill':
 				$result = Syllabus::remove_skill( $id, $data['group_id'], $data['term_id'] );
 				break;
+			case 'delete_group':
+				$result = Syllabus::delete_group( $id, $data['group_id'], rest_sanitize_boolean( $data['confirm'] ?? false ) );
+				break;
+			case 'edit_source':
+				$result = SyllabusSettings::save_source(
+					$id,
+					array_intersect_key( $data, array_flip( array( 'name', 'code', 'version', 'description' ) ) ),
+					array_intersect_key( $data, array_flip( array( 'subject', 'grade', 'language', 'categories', 'category_styles' ) ) )
+				);
+				break;
+			case 'set_requirements':
+				$mine    = Syllabus::skill_ids( Items::with_descendants( $id ) );
+				$changes = array();
+				foreach ( $data['skills'] as $skill ) {
+					if ( ! in_array( $skill['term_id'], $mine, true ) ) {
+						return Access::error( 'ohmylms_syllabus_invalid', __( 'Choose skills placed in this syllabus.', 'ohmylms' ), 400 );
+					}
+					if ( array_key_exists( 'required', $skill ) ) {
+						$skill['required'] = rest_sanitize_boolean( $skill['required'] );
+					}
+					$changes[] = $skill;
+				}
+				$result = SyllabusCourse::set_requirements( $id, $changes );
+				break;
+			case 'sheet_edit':
+				$result = \OhMyLMS\Curriculum\SyllabusSheet::apply( $id, $data['changes'] );
+				break;
 			case 'import':
-				$result = $this->import_rows( $id, $data );
+				$result = Syllabus::import_reviewed( $id, $data['rows'], $data['dry_run'], $data['review_revision'] ?? '' );
 				if ( is_wp_error( $result ) ) {
 					return $result;
 				}
@@ -262,36 +400,5 @@ class SyllabusEditorController extends \WP_REST_Controller {
 			$snapshot['course_error'] = $synced->get_error_message();
 		}
 		return $snapshot;
-	}
-
-	/**
-	 * Review and apply against the same syllabus state under the domain's named lock.
-	 * The domain import owns its transaction; do not wrap its caught failures in another transaction.
-	 *
-	 * @param int   $syllabus_id Syllabus ID.
-	 * @param array $data Validated rows, dry-run flag and optional reviewed revision.
-	 * @return array|\WP_Error
-	 */
-	private function import_rows( $syllabus_id, array $data ) {
-		global $wpdb;
-		$lock = Items::LOCK . '-' . md5( $wpdb->prefix );
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Non-cacheable domain advisory lock.
-			return Access::error( 'ohmylms_syllabus_busy', __( 'Another author is changing the syllabus. Try again.', 'ohmylms' ), 409 );
-		}
-		try {
-			$outline = Syllabus::outline( $syllabus_id );
-			if ( is_wp_error( $outline ) ) {
-				return $outline; }
-			$revision = hash( 'sha256', wp_json_encode( array( $outline, $data['rows'] ) ) );
-			if ( ! $data['dry_run'] && ! hash_equals( $revision, $data['review_revision'] ?? '' ) ) {
-				return Access::error( 'ohmylms_syllabus_review_stale', __( 'The syllabus or import rows changed. Review the import again before applying it.', 'ohmylms' ), 409 );
-			}
-			$report = Syllabus::import( $syllabus_id, $data['rows'], $data['dry_run'] );
-			if ( ! is_wp_error( $report ) ) {
-				$report['review_revision'] = $revision; }
-			return $report;
-		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Release the non-cacheable domain advisory lock.
-		}
 	}
 }

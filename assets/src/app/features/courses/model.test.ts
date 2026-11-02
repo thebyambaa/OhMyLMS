@@ -13,7 +13,6 @@ import {
 	parseCourse,
 	parseCourseDetail,
 	parseLocalDateTime,
-	parseMedia,
 	parseOptions,
 	serverFieldError,
 	statusLabel,
@@ -83,32 +82,6 @@ describe( 'parsers', () => {
 		expect( () =>
 			parseOptions( { ...options, abilities: { publish: true } } )
 		).toThrow();
-	} );
-	it( 'reads media items and falls back to the full image', () => {
-		expect(
-			parseMedia( {
-				id: 3,
-				source_url: 'https://example.test/a.png',
-				title: { rendered: 'A' },
-				media_details: {
-					sizes: {
-						thumbnail: {
-							source_url: 'https://example.test/a-150.png',
-						},
-					},
-				},
-			} )
-		).toEqual( {
-			id: 3,
-			url: 'https://example.test/a.png',
-			thumbnail_url: 'https://example.test/a-150.png',
-			title: 'A',
-		} );
-		expect(
-			parseMedia( { id: 4, source_url: 'https://example.test/b.png' } )
-				.thumbnail_url
-		).toBe( 'https://example.test/b.png' );
-		expect( () => parseMedia( { id: 4 } ) ).toThrow();
 	} );
 } );
 

@@ -9,7 +9,7 @@ import {
 	Spinner,
 	TextControl,
 } from '@wordpress/components';
-import { addQuestionsToQuiz, listSkills, searchBank } from './api.mjs';
+import { listSkills, searchBank } from './api.mjs';
 import {
 	cleanFilters,
 	DIFFICULTIES,
@@ -20,32 +20,31 @@ import {
 } from './model.mjs';
 
 /**
- * Pick existing bank questions and place them in a quiz by reference.
- * Marks and placement belong to the quiz; the question content stays in the bank.
- * @param root0
- * @param root0.quizId
- * @param root0.existingIds
- * @param root0.onAdded
- * @param root0.onClose
- * @param root0.onPick
+ * Pick existing bank questions for a quiz document. The caller inserts them as question blocks, and
+ * saving the document places them by reference; the question content stays in the bank.
+ * @param {Object}                     root0               Component properties.
+ * @param {number}                     [root0.quizId]      Quiz being edited; its questions are left out of the results.
+ * @param {number[]}                   [root0.existingIds] Questions already in the document.
+ * @param {() => void}                 root0.onClose       Close the picker.
+ * @param {(ids: number[]) => unknown} root0.onPick        Receives the chosen question IDs.
+ * @return {React.ReactElement} Picker.
  */
-export function BankPicker( {
-	quizId,
-	existingIds,
-	onAdded,
-	onClose,
-	onPick,
-} ) {
-	const [ filters, setFilters ] = useState( {
-		search: '',
-		skill: '',
-		difficulty: '',
-		status: 'approved',
-	} );
-	const [ items, setItems ] = useState( null );
-	const [ skills, setSkills ] = useState( [] );
-	const [ chosen, setChosen ] = useState( [] );
-	const [ pin, setPin ] = useState( false );
+export function BankPicker( { quizId, existingIds, onClose, onPick } ) {
+	const [ filters, setFilters ] = useState(
+		/** @type {{search: string, skill: string, difficulty: string, status: ''|'approved'}} */ ( {
+			search: '',
+			skill: '',
+			difficulty: '',
+			status: 'approved',
+		} )
+	);
+	const [ items, setItems ] = useState(
+		/** @type {import('./api.mjs').RestData[]|null} */ ( null )
+	);
+	const [ skills, setSkills ] = useState(
+		/** @type {import('./model.mjs').Skill[]} */ ( [] )
+	);
+	const [ chosen, setChosen ] = useState( /** @type {number[]} */ ( [] ) );
 	const [ busy, setBusy ] = useState( false );
 	const [ error, setError ] = useState( '' );
 	useEffect( () => {
@@ -77,22 +76,21 @@ export function BankPicker( {
 		setBusy( true );
 		setError( '' );
 		try {
-			if ( onPick ) {
-				await onPick( chosen );
-				onClose();
-				return;
-			}
-			const result = await addQuestionsToQuiz( quizId, chosen, pin );
-			onAdded( result.content || [], result.added || chosen );
+			await onPick( chosen );
 			onClose();
 		} catch ( cause ) {
 			setError(
-				cause.message || __( 'Could not add the questions.', 'ohmylms' )
+				/** @type {{ message?: string }} */ ( cause ).message ||
+					__( 'Could not add the questions.', 'ohmylms' )
 			);
 		} finally {
 			setBusy( false );
 		}
 	}
+	/**
+	 * @param {keyof typeof filters} key Filter.
+	 * @return {(value: string) => void} Change handler.
+	 */
 	const set = ( key ) => ( value ) =>
 		setFilters( {
 			...filters,
@@ -206,16 +204,6 @@ export function BankPicker( {
 					</ul>
 				);
 			} )() }
-			{ ! onPick && (
-				<CheckboxControl
-					label={ __(
-						'Pin the current version (later edits will not change this quiz)',
-						'ohmylms'
-					) }
-					checked={ pin }
-					onChange={ setPin }
-				/>
-			) }
 			<Button
 				variant="primary"
 				isBusy={ busy }

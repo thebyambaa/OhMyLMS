@@ -4,7 +4,6 @@ import {
 	parseInlineBlankPrompt,
 	placeBlankToken,
 } from '../../assets/src/features/question-editor/inlineBlanks.mjs';
-import { canLeaveQuestion } from '../../assets/src/features/quiz-editor/model.mjs';
 
 test( 'curly brackets create ordered drop positions and independent repeated tokens', () => {
 	const parsed = parseInlineBlankPrompt(
@@ -37,25 +36,4 @@ test( 'empty braces remain literal question text', () => {
 	);
 	assert.equal( parsed.answers.length, 1 );
 	assert.equal( parsed.parts[ 0 ].text, 'Keep {} and { } but replace ' );
-} );
-test( 'inline blanks can autosave without legacy separate answer options', () => {
-	const question = {
-		name: 'The capital is {Paris}.',
-		settings: { type: 'fill-in-the-blank', score: { value: 1 } },
-		questions: [],
-	};
-	assert.equal(
-		canLeaveQuestion( question, () => ( { isValid: false } ) ),
-		true
-	);
-	assert.equal(
-		canLeaveQuestion(
-			{
-				...question,
-				settings: { ...question.settings, score: { value: -1 } },
-			},
-			() => ( { isValid: true } )
-		),
-		false
-	);
 } );

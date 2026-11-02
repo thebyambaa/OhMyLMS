@@ -18,43 +18,9 @@ final class Workflow {
 	const HOOK         = 'ohmylms_extract_exam_import';
 	const MAX_REQUESTS = 125;
 
-	/** Register stages and author-only review operations. */
+	/** Register the extraction stages. The review operations are {@see Rest\WorkflowController}. */
 	public static function init() {
 		add_action( self::HOOK, array( __CLASS__, 'process' ), 10, 3 );
-		add_action( 'rest_api_init', array( __CLASS__, 'routes' ) );
-	}
-
-	/** Register discrete extraction, review and draft commit actions. */
-	public static function routes() {
-		register_rest_route(
-			'ohmylms/v1',
-			'/exam-import-skills',
-			array(
-				'methods'             => 'GET',
-				'permission_callback' => array( Jobs::class, 'permission' ),
-				'callback'            => array( __CLASS__, 'skills' ),
-			)
-		);
-		register_rest_route(
-			'ohmylms/v1',
-			'/exam-imports/rows',
-			array(
-				'methods'             => 'POST',
-				'permission_callback' => array( Jobs::class, 'permission' ),
-				'callback'            => array( __CLASS__, 'rows' ),
-			)
-		);
-		foreach ( array( 'extract', 'review', 'commit', 'quiz' ) as $operation ) {
-			register_rest_route(
-				'ohmylms/v1',
-				'/exam-imports/(?P<id>\d+)/' . $operation,
-				array(
-					'methods'             => 'POST',
-					'permission_callback' => array( Jobs::class, 'permission' ),
-					'callback'            => array( __CLASS__, $operation ),
-				)
-			);
-		}
 	}
 
 	/**
@@ -81,6 +47,7 @@ final class Workflow {
 			'has_mark_scheme' => ! empty( $job['mark_scheme'] ),
 			'draft_revision'  => 0,
 			'draft'           => array(),
+			'rejected'        => Review::rejected( $job ),
 		);
 	}
 
@@ -226,7 +193,7 @@ final class Workflow {
 						foreach ( $question['figures'] as &$figure ) {
 							$figure['approved'] = false;
 							$figure['selected'] = 'original';
-							unset( $figure['spec'] );
+							unset( $figure['spec'], $figure['proposal'] );
 							$asset              = Figures::enqueue_crop( $id, $figure['page'], $figure['bounds'], (int) $post->post_author );
 							$figure['asset_id'] = is_wp_error( $asset ) ? '' : $asset['id'];
 						}
@@ -306,19 +273,28 @@ final class Workflow {
 				if ( ! empty( $job['question_ids'] ) ) {
 					return Jobs::status( $request );
 				}
-				if ( 'ready_for_review' !== $job['state'] || (int) $request['revision'] !== (int) $job['draft_revision'] || count(
+				// Rows a teacher rejected in the review screen are left out of the commit.
+				$rejected = Review::rejected( $job );
+				$kept     = array_values(
 					array_filter(
-						$job['draft'],
+						(array) ( $job['draft'] ?? array() ),
+						static function ( $row ) use ( $rejected ) {
+							return ! in_array( (string) $row['number'], $rejected, true ); }
+					)
+				);
+				if ( 'ready_for_review' !== $job['state'] || (int) $request['revision'] !== (int) $job['draft_revision'] || ! $kept || count(
+					array_filter(
+						$kept,
 						static function ( $row ) {
 							return ! empty( $row['reviewed'] ); }
 					)
-				) !== count( $job['draft'] ) ) {
+				) !== count( $kept ) ) {
 					return new \WP_Error( 'exam_review', __( 'Save and confirm review of every question first.', 'ohmylms' ), array( 'status' => 409 ) );
 				}
 				$rows = array();
-				foreach ( $job['draft'] as $row ) {
+				foreach ( $kept as $row ) {
 					$figure_settings = array(
-						'figures'       => $row['figures'] ?? array(),
+						'figures'       => FigureContent::committed( (array) ( $row['figures'] ?? array() ) ),
 						'figure_review' => array(
 							'complete' => ! empty( $row['figures_complete'] ),
 							'required' => ! empty( $row['requires_source'] ),

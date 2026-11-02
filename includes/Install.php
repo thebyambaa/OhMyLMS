@@ -45,6 +45,16 @@ class Install {
 			'ohmylms_update_1212_schedule_student_migration',
 			'ohmylms_update_1212_db_version',
 		),
+		'1.2.21' => array(
+			'ohmylms_update_1221_remove_admin_assistant',
+			'ohmylms_update_1221_create_enrolments_table',
+			'ohmylms_update_1221_schedule_enrolment_migration',
+			'ohmylms_update_1221_db_version',
+		),
+		'1.2.22' => array(
+			'ohmylms_update_1222_forget_email_defaults',
+			'ohmylms_update_1222_db_version',
+		),
 	);
 
 
@@ -61,6 +71,8 @@ class Install {
 		add_action( 'init', array( __CLASS__, 'create_student_role' ) );
 		add_action( 'admin_init', array( __CLASS__, 'update' ), 5 );
 		add_action( 'admin_init', array( __CLASS__, 'maybe_resume_student_migration' ), 6 );
+		add_action( 'admin_init', array( \OhMyLMS\Student\EnrolmentMigration::class, 'watchdog' ), 6 );
+		\OhMyLMS\Student\EnrolmentMigration::register();
 	}
 
 
@@ -458,6 +470,7 @@ class Install {
 			";
 		// The webhooks tables are defined once, next to their migration.
 		$tables .= \OhMyLMS\Integrations\Webhooks\Includes\WebhooksMigration::get_schema( $charset_collate );
+		$tables .= "\n" . \OhMyLMS\Student\EnrolmentSchema::sql() . "\n";
 		return $tables;
 	}
 
@@ -762,11 +775,8 @@ class Install {
 		$default_profile_page_id = get_option( 'ohmylms_profile_page_id' );
 
 		// Update the profile page setting to point to the new student profile page.
-		$new_student_profile_page_id = get_option( 'ohmylms_student_profile_page_id' );
-		if ( $new_student_profile_page_id ) {
-			// Keep the old profile page setting as is (for legacy shortcode)
-			// The new student profile page will be used via the new settings.
-		}
+		// Keep the old profile page setting as is (for legacy shortcode).
+		// The new student profile page (ohmylms_student_profile_page_id) is used via the new settings.
 	}
 
 	/**

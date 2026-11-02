@@ -11,13 +11,17 @@ use OhMyLMS\Abstracts\RestController;
 use OhMyLMS\Assessment\AttemptReport;
 use OhMyLMS\Assessment\AssessmentSettings;
 use OhMyLMS\Assessment\AttemptItems;
+use OhMyLMS\Assessment\GradeEvents;
+use OhMyLMS\Assessment\Rubric;
 use OhMyLMS\Assessment\Schema;
 use OhMyLMS\Data\Quiz;
 use OhMyLMS\DataException;
+use OhMyLMS\Learning\CourseStructure;
 use OhMyLMS\QuestionBank\AccessPolicy;
 use OhMyLMS\QuestionBank\DraftWriter;
-use OhMyLMS\QuestionBank\Usage;
+use OhMyLMS\Quiz\AttemptReports;
 use OhMyLMS\Quiz\GradingPolicy;
+use OhMyLMS\Quiz\Questions;
 use OhMyLMS\Quiz\QuizSettings;
 use OhMyLMS\Quiz\Review;
 use OhMyLMS\Utility\Transaction;
@@ -37,9 +41,9 @@ defined( 'ABSPATH' ) || exit;
  * - `ohmylms/v1/quizzes`: the typed API of the TypeScript admin. List, create, read, update the quiz
  *   and its settings, trash/delete, and review and grade attempts. Every route is authorised on the
  *   object: `edit_post` / `delete_post` for the quiz, and {@see GradingPolicy} for attempts.
- * - `ohmylms/v1/quiz`: the question-authoring routes (content, question removal, import/export, skills,
- *   raw create/update) that the question editor and internal callers still use. They keep their
- *   response shape.
+ * - `ohmylms/v1/quiz`: the question-authoring routes (import/export, skills, raw create/update) that
+ *   the question editor and internal callers still use. They keep their response shape. The questions
+ *   of a quiz are served by {@see QuizQuestionsController}.
  *
  * Authentication is WordPress core's: cookie requests need the `X-WP-Nonce` header, which core verifies
  * before any permission callback runs.
@@ -291,10 +295,23 @@ class QuizController extends RestController {
 					'args'                => array(
 						'name'       => array(
 							'type'              => 'string',
+							'maxLength'         => self::MAX_TITLE,
+							'validate_callback' => 'rest_validate_request_arg',
 							'sanitize_callback' => 'sanitize_text_field',
 						),
-						'content'    => array( 'type' => 'string' ),
-						'csv'        => array( 'type' => 'string' ),
+						'content'    => array(
+							'type'      => 'string',
+							'maxLength' => \OhMyLMS\Quiz\Exchange\Document::MAX_BYTES,
+						),
+						'csv'        => array(
+							'type'      => 'string',
+							'maxLength' => \OhMyLMS\Quiz\Exchange\Document::MAX_BYTES,
+						),
+						'review'     => array(
+							'description' => __( 'Review token from the dry run; when sent, the import must be the checked file and name.', 'ohmylms' ),
+							'type'        => 'string',
+							'pattern'     => '^[a-f0-9]{64}$',
+						),
 						'format'     => array(
 							'type'    => 'string',
 							'enum'    => array( 'auto', 'ohmylms', 'csv' ),
@@ -332,23 +349,6 @@ class QuizController extends RestController {
 		);
 		register_rest_route(
 			$this->namespace,
-			$item . '/content',
-			array(
-				'args' => $id,
-				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_questions' ),
-					'permission_callback' => array( $this, 'check_item_permission' ),
-				),
-				array(
-					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'update_questions' ),
-					'permission_callback' => array( $this, 'check_item_permission' ),
-				),
-			)
-		);
-		register_rest_route(
-			$this->namespace,
 			$item . '/export',
 			array(
 				array(
@@ -365,17 +365,6 @@ class QuizController extends RestController {
 				array(
 					'methods'             => WP_REST_Server::EDITABLE,
 					'callback'            => array( $this, 'set_skills' ),
-					'permission_callback' => array( $this, 'check_item_permission' ),
-				),
-			)
-		);
-		register_rest_route(
-			$this->namespace,
-			$item . '/questions/(?P<question_id>[\d]+)',
-			array(
-				array(
-					'methods'             => WP_REST_Server::DELETABLE,
-					'callback'            => array( $this, 'remove_question' ),
 					'permission_callback' => array( $this, 'check_item_permission' ),
 				),
 			)
@@ -682,6 +671,17 @@ class QuizController extends RestController {
 								'maximum' => 1000000,
 							),
 						),
+						'rubric'      => array(
+							'description'          => __( 'Points by rubric criterion ID, for a short or long text question graded with its rubric. The marks must be the rubric score, scaled to the question\'s marks in the attempt.', 'ohmylms' ),
+							'type'                 => 'object',
+							'minProperties'        => 1,
+							'maxProperties'        => Rubric::MAX_CRITERIA,
+							'additionalProperties' => array(
+								'type'    => 'number',
+								'minimum' => 0,
+								'maximum' => Rubric::MAX_POINTS,
+							),
+						),
 					),
 				),
 			),
@@ -822,18 +822,7 @@ class QuizController extends RestController {
 	 * @return int[]
 	 */
 	private function quiz_ids_in_course( $course_id ) {
-		global $wpdb;
-
-		$rows = $wpdb->get_col(
-			$wpdb->prepare(
-				'SELECT DISTINCT content.content_id FROM %i content INNER JOIN %i chapter ON chapter.chapter_id = content.chapter_id WHERE chapter.course_id = %d LIMIT 5000',
-				$wpdb->prefix . 'ohmylms_content_relationship',
-				$wpdb->prefix . 'ohmylms_chapter_relationship',
-				$course_id
-			)
-		);
-
-		return array_map( 'intval', $rows );
+		return CourseStructure::content_ids( $course_id );
 	}
 
 	/**
@@ -843,8 +832,6 @@ class QuizController extends RestController {
 	 * @return array{attempts:array<int,array{total:int,pending:int}>,questions:array<int,int>,courses:array<int,int>}
 	 */
 	private function page_stats( array $ids ) {
-		global $wpdb;
-
 		$stats = array(
 			'attempts'  => array(),
 			'questions' => array(),
@@ -854,25 +841,9 @@ class QuizController extends RestController {
 		if ( ! $ids ) {
 			return $stats;
 		}
-		$holders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT quiz_id, COUNT(*) AS total, SUM(status = 'in-review') AS pending FROM %i WHERE quiz_id IN ({$holders}) GROUP BY quiz_id", array_merge( array( $wpdb->prefix . 'ohmylms_quiz_attempts' ), $ids ) ) );
-		foreach ( (array) $rows as $row ) {
-			$stats['attempts'][ (int) $row->quiz_id ] = array(
-				'total'   => (int) $row->total,
-				'pending' => (int) $row->pending,
-			);
-		}
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT quiz_id, COUNT(*) AS total FROM %i WHERE quiz_id IN ({$holders}) GROUP BY quiz_id", array_merge( array( $wpdb->prefix . 'ohmylms_quiz_questions_relationship' ), $ids ) ) );
-		foreach ( (array) $rows as $row ) {
-			$stats['questions'][ (int) $row->quiz_id ] = (int) $row->total;
-		}
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT content.content_id, MIN(chapter.course_id) AS course_id FROM %i content INNER JOIN %i chapter ON chapter.chapter_id = content.chapter_id WHERE content.content_id IN ({$holders}) GROUP BY content.content_id", array_merge( array( $wpdb->prefix . 'ohmylms_content_relationship', $wpdb->prefix . 'ohmylms_chapter_relationship' ), $ids ) ) );
-		// phpcs:enable
-		foreach ( (array) $rows as $row ) {
-			$stats['courses'][ (int) $row->content_id ] = (int) $row->course_id;
-		}
+		$stats['attempts']  = AttemptReports::counts_by_quiz( $ids );
+		$stats['questions'] = Questions::counts( $ids );
+		$stats['courses']   = CourseStructure::first_courses( $ids );
 		if ( $stats['courses'] ) {
 			_prime_post_caches( array_values( array_unique( $stats['courses'] ) ), false, false );
 		}
@@ -1178,9 +1149,7 @@ class QuizController extends RestController {
 	 * @return int
 	 */
 	private function attempt_total( $quiz_id ) {
-		global $wpdb;
-
-		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE quiz_id = %d', $wpdb->prefix . 'ohmylms_quiz_attempts', $quiz_id ) );
+		return AttemptReports::count_for_quiz( $quiz_id );
 	}
 
 	/**
@@ -1444,48 +1413,21 @@ class QuizController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_attempts( $request ) {
-		global $wpdb;
-
 		$quiz_id  = (int) $request['id'];
 		$page     = max( 1, (int) $request['page'] );
 		$per_page = min( 100, max( 1, (int) $request['per_page'] ) );
-		$order    = 'asc' === $request['order'] ? 'ASC' : 'DESC';
-		$columns  = array(
-			'started_at' => 'a.start_date',
-			'score'      => 'a.total',
-			'student'    => 'u.display_name',
+		$filters  = array(
+			'status'     => $request['status'],
+			'student_id' => $request['student_id'],
+			'search'     => $request['search'],
 		);
-		$sort     = $columns[ $request['orderby'] ] . ' ' . $order . ', a.id ' . $order;
 
-		$where = array( 'a.quiz_id = %d' );
-		$args  = array( $quiz_id );
-		if ( 'all' !== $request['status'] ) {
-			$where[] = 'a.status = %s';
-			$args[]  = (string) $request['status'];
-		}
-		if ( ! empty( $request['student_id'] ) ) {
-			$where[] = 'a.student_id = %d';
-			$args[]  = (int) $request['student_id'];
-		}
-		if ( '' !== (string) $request['search'] ) {
-			$like    = '%' . $wpdb->esc_like( (string) $request['search'] ) . '%';
-			$where[] = '( u.display_name LIKE %s OR u.user_email LIKE %s )';
-			$args[]  = $like;
-			$args[]  = $like;
-		}
-		$tables = array( $wpdb->prefix . 'ohmylms_quiz_attempts', $wpdb->users );
-		$clause = implode( ' AND ', $where );
-
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery
-		$total = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i a LEFT JOIN %i u ON u.ID = a.student_id WHERE {$clause}", array_merge( $tables, $args ) ) );
+		$total = AttemptReports::count_attempts( $quiz_id, $filters );
 		$pages = (int) ceil( $total / $per_page );
 		if ( $page > $pages && $total > 0 ) {
 			return new WP_Error( 'ohmylms_attempt_invalid_page', __( 'The page number requested is larger than the number of pages available.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT a.*, u.display_name, u.user_email FROM %i a LEFT JOIN %i u ON u.ID = a.student_id WHERE {$clause} ORDER BY {$sort} LIMIT %d OFFSET %d", array_merge( $tables, $args, array( $per_page, ( $page - 1 ) * $per_page ) ) ), ARRAY_A );
-		// phpcs:enable
-
-		$rows  = is_array( $rows ) ? $rows : array();
+		$rows  = AttemptReports::attempts( $quiz_id, $filters, $request['orderby'], 'asc' === $request['order'] ? 'ASC' : 'DESC', $page, $per_page );
 		$maxes = $this->attempt_max_marks( wp_list_pluck( $rows, 'id' ) );
 		$data  = array();
 		foreach ( $rows as $row ) {
@@ -1512,21 +1454,7 @@ class QuizController extends RestController {
 	 * @return array<int,float>
 	 */
 	private function attempt_max_marks( array $ids ) {
-		global $wpdb;
-
-		$ids = array_values( array_filter( array_map( 'absint', $ids ) ) );
-		if ( ! $ids ) {
-			return array();
-		}
-		$holders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT quiz_attempt_id, SUM(question_marks) AS max_marks FROM %i WHERE quiz_attempt_id IN ({$holders}) GROUP BY quiz_attempt_id", array_merge( array( $wpdb->prefix . 'ohmylms_quiz_attempts_answers' ), $ids ) ) );
-		$out  = array();
-		foreach ( (array) $rows as $row ) {
-			$out[ (int) $row->quiz_attempt_id ] = (float) $row->max_marks;
-		}
-
-		return $out;
+		return AttemptReports::max_marks( array_map( 'absint', $ids ) );
 	}
 
 	/**
@@ -1583,9 +1511,7 @@ class QuizController extends RestController {
 	 * @return array<string,mixed>|WP_Error Joined row.
 	 */
 	private function find_attempt( $quiz_id, $attempt_id ) {
-		global $wpdb;
-
-		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT a.*, u.display_name, u.user_email FROM %i a LEFT JOIN %i u ON u.ID = a.student_id WHERE a.id = %d AND a.quiz_id = %d', $wpdb->prefix . 'ohmylms_quiz_attempts', $wpdb->users, $attempt_id, $quiz_id ), ARRAY_A );
+		$row = AttemptReports::find( $quiz_id, $attempt_id );
 
 		return $row ? $row : new WP_Error( 'ohmylms_attempt_not_found', __( 'Attempt not found for this quiz.', 'ohmylms' ), array( 'status' => 404 ) );
 	}
@@ -1636,6 +1562,12 @@ class QuizController extends RestController {
 				}
 			}
 			$history = array();
+			$current = null;
+			foreach ( (array) ( $question['grade_history'] ?? array() ) as $event ) {
+				if ( empty( $event['superseded_by'] ) ) {
+					$current = $event;
+				}
+			}
 			foreach ( array_slice( (array) ( $question['grade_history'] ?? array() ), -10 ) as $event ) {
 				$reviewer  = ! empty( $event['reviewer_id'] ) ? get_userdata( (int) $event['reviewer_id'] ) : false;
 				$history[] = array(
@@ -1644,21 +1576,24 @@ class QuizController extends RestController {
 					'reviewer_id'   => (int) $event['reviewer_id'],
 					'reviewer_name' => $reviewer ? (string) $reviewer->display_name : '',
 					'reason'        => (string) $event['reason'],
+					'rubric_scores' => $this->rubric_scores( $event ),
 					'created_at'    => $this->iso( (string) $event['created_at'] ),
 				);
 			}
 			$questions[] = array(
-				'question_id' => (int) $question['id'],
-				'position'    => $index + 1,
-				'title'       => $this->plain( (string) ( $question['name'] ?? '' ), 1000 ),
-				'type'        => (string) ( $settings['type'] ?? '' ),
-				'max_marks'   => round( $max, 4 ),
-				'awarded'     => round( (float) ( $question['achive_mark'] ?? 0 ), 4 ),
-				'status'      => 'in-review' === ( $question['status'] ?? '' ) ? 'in-review' : 'graded',
-				'correct'     => array_key_exists( 'correct', $question ) && null !== $question['correct'] ? (bool) $question['correct'] : null,
-				'answer'      => $this->answer_lines( $question['given_answer'] ?? null, (array) ( $question['questions'] ?? array() ) ),
-				'parts'       => $parts ? $parts : null,
-				'history'     => $history,
+				'question_id'   => (int) $question['id'],
+				'position'      => $index + 1,
+				'title'         => $this->plain( (string) ( $question['name'] ?? '' ), 1000 ),
+				'type'          => (string) ( $settings['type'] ?? '' ),
+				'max_marks'     => round( $max, 4 ),
+				'awarded'       => round( (float) ( $question['achive_mark'] ?? 0 ), 4 ),
+				'status'        => 'in-review' === ( $question['status'] ?? '' ) ? 'in-review' : 'graded',
+				'correct'       => array_key_exists( 'correct', $question ) && null !== $question['correct'] ? (bool) $question['correct'] : null,
+				'answer'        => $this->answer_lines( $question['given_answer'] ?? null, (array) ( $question['questions'] ?? array() ) ),
+				'parts'         => $parts ? $parts : null,
+				'rubric'        => $this->rubric_view( $settings ),
+				'rubric_scores' => $this->rubric_scores( $current ),
+				'history'       => $history,
 			);
 		}
 
@@ -1671,6 +1606,52 @@ class QuizController extends RestController {
 				'questions'    => $questions,
 			)
 		);
+	}
+
+	/**
+	 * The marking rubric of a short or long text question as plain text, or null without one.
+	 *
+	 * @param array $settings Settings of the delivered version.
+	 * @return array[]|null
+	 */
+	private function rubric_view( array $settings ) {
+		$criteria = Rubric::criteria( $settings );
+		if ( ! $criteria ) {
+			return null;
+		}
+
+		return array_map(
+			function ( array $criterion ) {
+				return array(
+					'id'          => $criterion['id'],
+					'title'       => $this->plain( $criterion['title'], Rubric::MAX_TITLE ),
+					'description' => $this->plain( $criterion['description'], Rubric::MAX_DESCRIPTION ),
+					'points'      => round( $criterion['points'], 4 ),
+					'levels'      => array_map(
+						function ( array $level ) {
+							return array(
+								'points'      => round( $level['points'], 4 ),
+								'description' => $this->plain( $level['description'], Rubric::MAX_LEVEL_TEXT ),
+							);
+						},
+						$criterion['levels']
+					),
+				);
+			},
+			$criteria
+		);
+	}
+
+	/**
+	 * Points by rubric criterion stored with a grade event, or null when it has none.
+	 *
+	 * @param array|null $event Grade event.
+	 * @return object|null
+	 */
+	private function rubric_scores( $event ) {
+		$scores = GradeEvents::rubric( $event );
+
+		return $scores ? (object) $scores : null;
 	}
 
 	/**
@@ -1726,8 +1707,6 @@ class QuizController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function grade_attempt( $request ) {
-		global $wpdb;
-
 		$params = (array) $request->get_json_params();
 		foreach ( array_keys( $params ) as $key ) {
 			if ( ! in_array( $key, array( 'grades', 'reason' ), true ) ) {
@@ -1747,11 +1726,9 @@ class QuizController extends RestController {
 			return new WP_Error( 'ohmylms_attempt_not_versioned', __( 'Attempts taken before versioned grading cannot be graded here.', 'ohmylms' ), array( 'status' => 409 ) );
 		}
 
-		$max = array();
-		foreach ( (array) $wpdb->get_results( $wpdb->prepare( 'SELECT question_id, question_marks FROM %i WHERE quiz_attempt_id = %d', $wpdb->prefix . 'ohmylms_quiz_attempts_answers', $attempt_id ), ARRAY_A ) as $answer ) {
-			$max[ (int) $answer['question_id'] ] = (float) $answer['question_marks'];
-		}
-		$marks = array();
+		$max     = AttemptReports::question_marks( $attempt_id );
+		$marks   = array();
+		$rubrics = array();
 		foreach ( (array) $request['grades'] as $grade ) {
 			$question_id = (int) $grade['question_id'];
 			if ( isset( $marks[ $question_id ] ) ) {
@@ -1794,13 +1771,17 @@ class QuizController extends RestController {
 				);
 			}
 			$marks[ $question_id ] = $value;
+			if ( isset( $grade['rubric'] ) ) {
+				$rubrics[ $question_id ] = (array) $grade['rubric'];
+			}
 		}
 
 		$events_before = $this->grade_event_count( $attempt_id );
-		$report        = Review::save( $quiz_id, $attempt_id, $marks, (string) $request['reason'] );
+		$report        = Review::save( $quiz_id, $attempt_id, $marks, (string) $request['reason'], $rubrics );
 		if ( is_wp_error( $report ) ) {
-			$status = (int) ( $report->get_error_data()['status'] ?? 500 );
-			return new WP_Error( $report->get_error_code(), $report->get_error_message(), array( 'status' => $status ) );
+			$data           = (array) $report->get_error_data();
+			$data['status'] = (int) ( $data['status'] ?? 500 );
+			return new WP_Error( $report->get_error_code(), $report->get_error_message(), $data );
 		}
 		$fresh = $this->find_attempt( $quiz_id, $attempt_id );
 		if ( is_wp_error( $fresh ) ) {
@@ -1819,9 +1800,7 @@ class QuizController extends RestController {
 	 * @return int
 	 */
 	private function grade_event_count( $attempt_id ) {
-		global $wpdb;
-
-		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE source_type = %s AND source_id = %d', Schema::table( 'grade_events' ), 'quiz', $attempt_id ) );
+		return GradeEvents::count_for( 'quiz', $attempt_id );
 	}
 
 	// Question-authoring routes (`ohmylms/v1/quiz`).
@@ -1842,21 +1821,6 @@ class QuizController extends RestController {
 		}
 
 		return current_user_can( 'edit_post', $chapter_id ) ? true : $this->forbidden( 'ohmylms_quiz_chapter_forbidden', __( 'You cannot add a quiz to this chapter.', 'ohmylms' ) );
-	}
-
-	/**
-	 * Remove one question from this quiz. The question stays in the bank.
-	 *
-	 * @param WP_REST_Request $request Request.
-	 * @return WP_Error|WP_REST_Response
-	 */
-	public function remove_question( $request ) {
-		$result = Usage::remove_from_quiz( (int) $request['id'], (int) $request['question_id'] );
-		if ( is_wp_error( $result ) ) {
-			return $result;
-		}
-
-		return rest_ensure_response( $result + array( 'status' => 'success' ) );
 	}
 
 	/**
@@ -1888,20 +1852,31 @@ class QuizController extends RestController {
 		if ( '' === trim( $content ) ) {
 			return new WP_Error( 'ohmylms_quiz_import_empty', __( 'The file is empty.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
+		$name    = (string) $request['name'];
+		$format  = empty( $request['format'] ) ? 'auto' : (string) $request['format'];
+		$dry_run = rest_sanitize_boolean( $request['dry_run'] );
+		$review  = hash_hmac( 'sha256', wp_json_encode( array( get_current_user_id(), $content, $name, $format ) ), wp_salt( 'nonce' ) );
+		if ( ! $dry_run && is_string( $request['review'] ) && ! hash_equals( $review, $request['review'] ) ) {
+			return new WP_Error( 'ohmylms_quiz_import_review_stale', __( 'This is not the file that was checked. Check it again before importing.', 'ohmylms' ), array( 'status' => 409 ) );
+		}
 		$result = \OhMyLMS\Quiz\Exchange\Importer::run(
 			$content,
 			array(
-				'name'       => (string) $request['name'],
-				'format'     => empty( $request['format'] ) ? 'auto' : (string) $request['format'],
-				'dry_run'    => rest_sanitize_boolean( $request['dry_run'] ),
+				'name'       => $name,
+				'format'     => $format,
+				'dry_run'    => $dry_run,
 				'copy_media' => null === $request['copy_media'] ? true : rest_sanitize_boolean( $request['copy_media'] ),
 			)
 		);
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
+		if ( $result['dry_run'] ) {
+			$result['review'] = $review;
+		}
 		$response = rest_ensure_response( $result + array( 'status' => $result['dry_run'] ? 'ok' : 'success' ) );
 		$response->set_status( $result['dry_run'] ? 200 : 201 );
+		$response->header( 'Cache-Control', 'private, no-store' );
 
 		return $response;
 	}
@@ -1914,8 +1889,14 @@ class QuizController extends RestController {
 	 */
 	public function export_file( $request ) {
 		$result = \OhMyLMS\Quiz\Exchange\Exporter::export( (int) $request['id'] );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		// The file holds every answer key.
+		$response = rest_ensure_response( $result );
+		$response->header( 'Cache-Control', 'private, no-store' );
 
-		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+		return $response;
 	}
 
 	/**
@@ -2119,71 +2100,5 @@ class QuizController extends RestController {
 		}
 
 		return $quiz;
-	}
-
-	/**
-	 * Get the questions of a quiz.
-	 *
-	 * @param WP_REST_Request $request Request.
-	 * @return WP_Error|WP_REST_Response
-	 */
-	public function get_questions( $request ) {
-		$quiz = ohmylms_get_quiz( (int) $request['id'] );
-		if ( ! ( $quiz instanceof Quiz ) ) {
-			return $this->not_found();
-		}
-
-		return rest_ensure_response(
-			array(
-				'status'  => 'success',
-				'message' => __( 'Quiz fetched successfully', 'ohmylms' ),
-				'data'    => $quiz->get_questions(),
-			)
-		);
-	}
-
-	/**
-	 * Replace the questions of a quiz, optionally with quiz fields.
-	 *
-	 * @param WP_REST_Request $request Request.
-	 * @return WP_Error|WP_REST_Response
-	 */
-	public function update_questions( $request ) {
-		$quiz_id = (int) $request['id'];
-		$quiz    = ohmylms_get_quiz( $quiz_id );
-		if ( ! ( $quiz instanceof Quiz ) ) {
-			return $this->not_found();
-		}
-		$all_data       = (array) $request->get_json_params();
-		$questions_data = isset( $all_data['questions'] ) && is_array( $all_data['questions'] ) ? $all_data['questions'] : array();
-		$plans          = DraftWriter::prepare_many( $questions_data, $quiz_id );
-		if ( is_wp_error( $plans ) ) {
-			return $plans;
-		}
-		try {
-			Transaction::run(
-				function () use ( $all_data, $questions_data, $quiz_id ) {
-					if ( isset( $all_data['quiz'] ) && is_array( $all_data['quiz'] ) ) {
-						$this->save_quiz( array( 'id' => $quiz_id ) + $all_data['quiz'] );
-					}
-					$saved = DraftWriter::save_many( $questions_data, $quiz_id );
-					if ( is_wp_error( $saved ) ) {
-						// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Internal message, caught in this method and never output.
-						throw new DataException( $saved->get_error_code(), $saved->get_error_message(), (int) ( $saved->get_error_data()['status'] ?? 400 ), (array) $saved->get_error_data() );
-					}
-				}
-			);
-		} catch ( DataException $e ) {
-			return new WP_Error( $e->getErrorCode(), $e->getMessage(), $e->getErrorData() );
-		} catch ( \Throwable $e ) {
-			return new WP_Error( 'ohmylms_quiz_storage', __( 'The quiz could not be saved. Nothing was changed.', 'ohmylms' ), array( 'status' => 500 ) );
-		}
-
-		return rest_ensure_response(
-			array(
-				'status'  => 'success',
-				'message' => __( 'Contents updated successfully', 'ohmylms' ),
-			)
-		);
 	}
 }

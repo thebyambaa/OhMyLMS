@@ -158,7 +158,7 @@ final class AttemptReport {
 				),
 				'grade_history'            => array_map(
 					static function ( $event ) {
-						return array_intersect_key( $event, array_flip( array( 'id', 'awarded', 'max_marks', 'grader', 'reviewer_id', 'reason', 'created_at', 'superseded_by' ) ) );
+						return array_intersect_key( $event, array_flip( array( 'id', 'awarded', 'max_marks', 'grader', 'reviewer_id', 'reason', 'rubric', 'created_at', 'superseded_by' ) ) );
 					},
 					GradeEvents::history( 'quiz', (int) $attempt_id, (int) $item['id'] )
 				),

@@ -24,8 +24,8 @@ defined( 'ABSPATH' ) || exit();
 			$course    = $item->get_course();
 			$is_course = true;
 			if ( ! $course ) {
-				$id     = $item->get_course_id();
-				$course = ohmylms_get_membership( $id );
+				$item_course_id = $item->get_course_id();
+				$course         = ohmylms_get_membership( $item_course_id );
 				if ( ! $course ) {
 					continue;
 				}

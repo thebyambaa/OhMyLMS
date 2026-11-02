@@ -101,19 +101,28 @@ if ( method_exists( $course, 'get_type' ) && 'cohort-based' === $course->get_typ
 						if ( $days_left > 0 ) {
 							if ( $hours_left > 0 ) {
 								printf( /* translators: %1$d: number; %2$d: number. */
-								esc_html__( 'Enrollment Open – %1$d days %2$d hours left', 'ohmylms' ), $days_left, $hours_left );
+									esc_html__( 'Enrollment Open – %1$d days %2$d hours left', 'ohmylms' ),
+									(int) $days_left,
+									(int) $hours_left
+								);
 							} else {
 								printf( /* translators: %d: number. */
-								esc_html__( 'Enrollment Open – %d days left', 'ohmylms' ), $days_left );
+									esc_html__( 'Enrollment Open – %d days left', 'ohmylms' ),
+									(int) $days_left
+								);
 							}
 						} elseif ( $hours_left > 0 ) {
 								printf( /* translators: %d: number. */
-								esc_html__( 'Enrollment Open – %d hours left', 'ohmylms' ), $hours_left );
+									esc_html__( 'Enrollment Open – %d hours left', 'ohmylms' ),
+									(int) $hours_left
+								);
 						} else {
 							// Less than an hour left.
 							$minutes_left = ceil( $time_left / MINUTE_IN_SECONDS );
 							printf( /* translators: %d: number. */
-							esc_html__( 'Enrollment Open – %d minutes left', 'ohmylms' ), $minutes_left );
+								esc_html__( 'Enrollment Open – %d minutes left', 'ohmylms' ),
+								(int) $minutes_left
+							);
 						}
 						echo '</span>';
 					} elseif ( $enroll_deadline_ts && $enroll_deadline_ts <= $now ) {
@@ -137,7 +146,10 @@ if ( method_exists( $course, 'get_type' ) && 'cohort-based' === $course->get_typ
 								<span>
 									<?php
 									$seats_left > 0 ? printf( /* translators: %1$d: number; %2$d: number. */
-									esc_html__( '%1$d/%2$d seats left', 'ohmylms' ), $seats_left, $capacity ) : printf( esc_html__( 'No seats left', 'ohmylms' ) );
+										esc_html__( '%1$d/%2$d seats left', 'ohmylms' ),
+										(int) $seats_left,
+										(int) $capacity
+									) : printf( esc_html__( 'No seats left', 'ohmylms' ) );
 									?>
 								</span>
 							</span>

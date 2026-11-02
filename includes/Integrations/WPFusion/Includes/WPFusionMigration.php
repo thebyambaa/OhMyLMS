@@ -86,7 +86,7 @@ class WPFusionMigration {
 
 		// Double check if table actually exists in database.
 		$table_name   = $wpdb->prefix . 'ohmylms_integrations';
-		$table_exists = $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) === $table_name;
+		$table_exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table_name ) ) === $table_name;
 
 		// If table exists but option not set, set the option.
 		if ( $table_exists ) {
@@ -184,6 +184,6 @@ class WPFusionMigration {
 	public static function table_exists() {
 		global $wpdb;
 		$table_name = self::get_table_name();
-		return $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) === $table_name;
+		return $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table_name ) ) === $table_name;
 	}
 }

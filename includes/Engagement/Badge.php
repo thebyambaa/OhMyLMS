@@ -136,8 +136,9 @@ class Badge {
 		$table_name = $wpdb->prefix . 'ohmylms_user_achievement';
 
 		// Query to get unique badge IDs for the user.
-		$query = $wpdb->prepare(
-			'
+		$badge_ids = $wpdb->get_col(
+			$wpdb->prepare(
+				'
             SELECT DISTINCT badge_id 
             FROM %i
             WHERE user_id = %d
@@ -146,13 +147,12 @@ class Badge {
                 AND status = %s
             ORDER BY badge_id ASC
             ',
-			$table_name,
-			$user_id,
-			'badge',
-			'active'
+				$table_name,
+				$user_id,
+				'badge',
+				'active'
+			)
 		);
-
-		$badge_ids = $wpdb->get_col( $query );
 
 		// Return empty array if no badges found.
 		if ( empty( $badge_ids ) || ! is_array( $badge_ids ) ) {

@@ -8,6 +8,7 @@
  *
  * @package OhMyLMS
  */
+
 define( 'OHMYLMS_PAYPAL_VERSION', '1.0.0' );
 define( 'OHMYLMS_PAYPAL_MAIN_FILE', __FILE__ );
 define( 'OHMYLMS_PAYPAL_ABSPATH', __DIR__ . '/' );
@@ -24,7 +25,10 @@ define( 'OHMYLMS_PAYPAL_ABSPATH', __DIR__ . '/' );
 add_filter(
 	'ohmylms_payment_gateways',
 	function ( $gateways ) {
-		$gateways[] = GatewayPaypal::class;
+		// The core gateway list already names PayPal; a second entry would build it twice.
+		if ( ! in_array( \OhMyLMS\Gateways\Paypal\GatewayPaypal::class, $gateways, true ) ) {
+			$gateways[] = \OhMyLMS\Gateways\Paypal\GatewayPaypal::class;
+		}
 		return $gateways;
 	}
 );

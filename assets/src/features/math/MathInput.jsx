@@ -18,17 +18,19 @@ import { decodeEntities } from '@wordpress/html-entities';
 import { loadMath, mathEnabled } from './loader.mjs';
 import { equationMarker, equationPattern } from './content.mjs';
 
-export const MathVariables = createContext( [] );
+export const MathVariables = createContext(
+	/** @type {{ name: string }[]} */ ( [] )
+);
 
 /**
  * Controlled author input with a working text fallback.
- * @param {Object}                   props          Field properties.
- * @param {string}                   props.label    Accessible label.
- * @param {string}                   props.value    Original source.
- * @param {(source: string) => void} props.onChange Save source.
- * @param {string}                   props.help     Help text.
- * @param {boolean}                  props.disabled Readonly state.
- * @return {Object} Field.
+ * @param {Object}                   props            Field properties.
+ * @param {string}                   props.label      Accessible label.
+ * @param {string}                   props.value      Original source.
+ * @param {(source: string) => void} props.onChange   Save source.
+ * @param {string}                   [props.help]     Help text.
+ * @param {boolean}                  [props.disabled] Readonly state.
+ * @return {React.ReactElement} Field.
  */
 export function MathInput( {
 	label,
@@ -37,14 +39,19 @@ export function MathInput( {
 	help,
 	disabled = false,
 } ) {
-	const input = useRef( null );
+	const input = useRef( /** @type {HTMLInputElement|null} */ ( null ) );
 	const variables = useContext( MathVariables );
 	useEffect( () => {
 		let disposed = false;
+		/** @type {(() => void)|undefined} */
 		let cleanup;
 		// MathLive belongs to its loading window; keep the text input in Gutenberg
 		// canvas documents rather than moving a custom element across documents.
-		if ( mathEnabled() && input.current.ownerDocument === document ) {
+		if (
+			mathEnabled() &&
+			/** @type {HTMLInputElement} */ ( input.current ).ownerDocument ===
+				document
+		) {
 			loadMath()
 				.then( ( runtime ) => {
 					if ( ! disposed ) {
@@ -59,8 +66,9 @@ export function MathInput( {
 		};
 	}, [] );
 	useEffect( () => {
-		input.current.value = value;
-		input.current.dispatchEvent( new Event( 'change' ) );
+		const field = /** @type {HTMLInputElement} */ ( input.current );
+		field.value = value;
+		field.dispatchEvent( new Event( 'change' ) );
 	}, [ value ] );
 	return (
 		<div className="ohmylms-author-math">
@@ -71,7 +79,11 @@ export function MathInput( {
 				aria-label={ label }
 				defaultValue={ value }
 				readOnly={ disabled }
-				onInput={ ( event ) => onChange( event.target.value ) }
+				onInput={ ( event ) =>
+					onChange(
+						/** @type {HTMLInputElement} */ ( event.target ).value
+					)
+				}
 			/>
 			{ help && <p>{ help }</p> }
 			{ mathEnabled() && ! disabled && variables.length > 0 && (
@@ -96,12 +108,12 @@ export function MathInput( {
 
 /**
  * Insert or replace a marked equation in an existing content string.
- * @param {Object}                   props            Content properties.
- * @param {string}                   props.value      Content.
- * @param {(source: string) => void} props.onChange   Save content.
- * @param {boolean}                  props.html       Whether content is HTML.
- * @param {boolean}                  props.showInsert Whether to show the modal insertion action.
- * @return {Object|null} Toolbar.
+ * @param {Object}                   props              Content properties.
+ * @param {string}                   [props.value]      Content.
+ * @param {(source: string) => void} props.onChange     Save content.
+ * @param {boolean}                  [props.html]       Whether content is HTML.
+ * @param {boolean}                  [props.showInsert] Whether to show the modal insertion action.
+ * @return {React.ReactElement|null} Toolbar.
  */
 export function EquationAction( {
 	value = '',
@@ -110,18 +122,26 @@ export function EquationAction( {
 	showInsert = true,
 } ) {
 	const variables = useContext( MathVariables );
-	const [ editing, setEditing ] = useState( null );
+	const [ editing, setEditing ] = useState(
+		/** @type {{ index: number, 0: string }|null} */ ( null )
+	);
 	const [ latex, setLatex ] = useState( '' );
-	const [ mode, setMode ] = useState( 'inline' );
+	const [ mode, setMode ] = useState(
+		/** @type {'inline'|'display'} */ ( 'inline' )
+	);
 	if ( ! mathEnabled() ) {
 		return null;
 	}
 	const equations = [ ...value.matchAll( equationPattern() ) ];
+	/** @param {RegExpExecArray} [match] Equation to edit; a new one when omitted. */
 	const open = ( match ) => {
 		setEditing( match || { index: value.length, 0: '' } );
 		const source = match?.[ 2 ] || '';
 		setLatex( html ? decodeEntities( source ) : source );
-		setMode( match?.[ 1 ] || 'inline' );
+		// equationPattern() captures only inline or display.
+		setMode(
+			/** @type {'inline'|'display'} */ ( match?.[ 1 ] || 'inline' )
+		);
 	};
 	return (
 		<div className="ohmylms-equation-actions">
@@ -234,8 +254,8 @@ export function EquationAction( {
 
 /**
  * Text content control with the same equation action as the prompt editor.
- * @param {Object} props Existing textarea properties.
- * @return {Object} Control.
+ * @param {import('react').ComponentProps<typeof TextareaControl>} props Existing textarea properties.
+ * @return {React.ReactElement} Control.
  */
 export function EquationTextControl( props ) {
 	return (

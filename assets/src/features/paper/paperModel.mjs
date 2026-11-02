@@ -2,9 +2,97 @@ import { jumble, typedPaper } from './paperTypes.mjs';
 
 /**
  * Printable paper layout: settings, the printed form of each question and page breaks.
- * Pure functions shared by the editor's paper canvas and the print page.
+ * Pure functions of the editor's paper canvas. OhMyLMS\Exams\PaperModel mirrors them for the print page
+ * and the learner's Paper View; tests/fixtures/paper-models.json keeps both equal.
  */
 
+/**
+ * Saved JSON: question settings, option rows and block attributes. The fields depend on the
+ * question type, block and saved version, so they are not typed; every value is converted
+ * (String, Number, Boolean) or checked where it is read.
+ * @typedef {Record<string, any>} SavedFields
+ */
+
+/**
+ * A question as the editor holds it.
+ * @typedef {Object} PaperSourceQuestion
+ * @property {number|string} [id]               Question ID.
+ * @property {SavedFields}   settings           Settings, including the type.
+ * @property {SavedFields[]} [questions]        Option rows.
+ * @property {SavedFields[]} [options]          Option rows, as other screens name them.
+ * @property {boolean}       [public]           Whether the settings are already the learner view.
+ * @property {unknown}       [figure_part_html] Set when part prompts are HTML.
+ */
+
+/**
+ * Normalized paper settings (OhMyLMS\Exams\PaperSettings).
+ * @typedef {Object} PaperSettings
+ * @property {'a4' | 'letter'}  size           Paper size.
+ * @property {number}           margin         Margin in mm.
+ * @property {number}           font_size      Font size in pt.
+ * @property {'sans' | 'serif'} font           Font.
+ * @property {'number' | 'q'}   numbering      Question numbers.
+ * @property {boolean}          show_marks     Whether marks print.
+ * @property {number}           lines_per_mark Answer lines per mark.
+ * @property {boolean}          page_numbers   Whether page numbers print.
+ * @property {boolean}          default_view   Whether the exam opens in paper view.
+ * @property {number}           versions       Paper versions, 1 to 4.
+ */
+
+/**
+ * Fields of every printed question.
+ * @typedef {Object} PaperQuestionBase
+ * @property {string}   type      Question type.
+ * @property {string}   prompt    Statement HTML.
+ * @property {number}   marks     Marks.
+ * @property {string}   layout    Printed layout.
+ * @property {string[]} [answers] Answer key: accepted answers.
+ * @property {string[]} [key]     Answer key lines.
+ */
+
+/**
+ * @typedef {Object} PaperOption
+ * @property {string}  letter    Option letter.
+ * @property {string}  text      Option HTML.
+ * @property {string}  image     Image URL, '' for none.
+ * @property {boolean} [correct] Answer key: whether the option is correct.
+ */
+
+/**
+ * Printed form of one structured part.
+ * @typedef {Object} PaperPartModel
+ * @property {string}                  id        Part ID.
+ * @property {string}                  label     Label without brackets.
+ * @property {string}                  prompt    Prompt.
+ * @property {number}                  marks     Marks.
+ * @property {'lines' | 'answer-line'} layout    Answer space.
+ * @property {number}                  lines     Ruled lines, 0 for an answer line.
+ * @property {string}                  unit      Unit after the answer line.
+ * @property {string[]}                [answers] Answer key: accepted answers.
+ * @property {string}                  [rubric]  Answer key: marking notes.
+ */
+
+/** @typedef {PaperQuestionBase & { layout: 'choice', multiple: boolean, options: PaperOption[] }} PaperChoiceModel */
+/** @typedef {PaperQuestionBase & { layout: 'lines', lines: number }} PaperLinesModel */
+/** @typedef {PaperQuestionBase & { layout: 'answer-line', unit?: string }} PaperAnswerLineModel */
+/** @typedef {PaperQuestionBase & { layout: 'parts', parts: PaperPartModel[] }} PaperPartsModel */
+/** @typedef {PaperQuestionBase & { layout: 'text' | 'unsupported' }} PaperTextModel */
+
+/**
+ * Printed form of a question, by layout.
+ * @typedef {PaperChoiceModel | PaperLinesModel | PaperAnswerLineModel | PaperPartsModel | PaperTextModel | import('./paperTypes.mjs').PaperTypedModel} PaperQuestionModel
+ */
+
+/**
+ * An item of the print page: a question, a block, or a section or columns with their items.
+ * @typedef {Object} PrintItem
+ * @property {string}              kind       question, paper, layout or another block kind.
+ * @property {PaperSourceQuestion} [question] The question of a question item.
+ * @property {unknown}             [span]     Whether the item spans every column.
+ * @property {PrintItem[]}         [items]    Nested items.
+ */
+
+/** @type {Record<'a4' | 'letter', { width: number, height: number }>} */
 export const PAPER_SIZES = {
 	a4: { width: 210, height: 297 },
 	letter: { width: 215.9, height: 279.4 },
@@ -56,6 +144,13 @@ export const PAPER_TYPES = [
 
 const MM_TO_PX = 96 / 25.4;
 
+/**
+ * @param {unknown} value    Saved value.
+ * @param {number}  min      Lowest value.
+ * @param {number}  max      Highest value.
+ * @param {number}  fallback Value when it is not a finite number.
+ * @return {number} Number between min and max.
+ */
 const clamp = ( value, min, max, fallback ) => {
 	const number = Number( value );
 	return Number.isFinite( number )
@@ -63,23 +158,41 @@ const clamp = ( value, min, max, fallback ) => {
 		: fallback;
 };
 
+/**
+ * @template {string} T
+ * @param {unknown} value    Saved value.
+ * @param {T[]}     allowed  Allowed values.
+ * @param {T}       fallback Value when it is not allowed.
+ * @return {T} An allowed value.
+ */
 const pick = ( value, allowed, fallback ) =>
-	allowed.includes( value ) ? value : fallback;
+	/** @type {unknown[]} */ ( allowed ).includes( value )
+		? /** @type {T} */ ( value )
+		: fallback;
 
 /**
  * Normalize saved paper settings. Mirrors OhMyLMS\Exams\PaperSettings::sanitize().
  *
- * @param {Object} raw Saved settings, possibly partial or from an older version.
- * @return {Object} Complete paper settings.
+ * @param {unknown} [raw] Saved settings, possibly partial or from an older version.
+ * @return {PaperSettings} Complete paper settings.
  */
 export function paperSettings( raw = {} ) {
-	const value = raw && typeof raw === 'object' ? raw : {};
+	const value = /** @type {SavedFields} */ (
+		raw && typeof raw === 'object' ? raw : {}
+	);
+	/** @param {'show_marks' | 'page_numbers' | 'default_view'} key */
 	const flag = ( key ) =>
 		value[ key ] === undefined
 			? PAPER_DEFAULTS[ key ]
 			: ! [ false, 0, '0', '' ].includes( value[ key ] );
 	return {
-		size: pick( value.size, Object.keys( PAPER_SIZES ), 'a4' ),
+		size: pick(
+			value.size,
+			/** @type {Array<'a4' | 'letter'>} */ (
+				Object.keys( PAPER_SIZES )
+			),
+			'a4'
+		),
 		margin: Math.round( clamp( value.margin, 10, 30, 20 ) ),
 		font_size: Math.round( clamp( value.font_size, 9, 14, 11 ) ),
 		font: pick( value.font, [ 'sans', 'serif' ], 'sans' ),
@@ -95,7 +208,7 @@ export function paperSettings( raw = {} ) {
 /**
  * Sheet dimensions in CSS pixels at 96 dpi.
  *
- * @param {Object} settings Normalized paper settings.
+ * @param {PaperSettings} settings Normalized paper settings.
  * @return {{width: number, height: number, margin: number}} Sheet metrics.
  */
 export function sheetMetrics( settings ) {
@@ -110,13 +223,14 @@ export function sheetMetrics( settings ) {
 /**
  * Marks a question is worth on paper.
  *
- * @param {Object} question Editor question with settings.
+ * @param {PaperSourceQuestion|null|undefined} question Editor question with settings.
  * @return {number} Marks, 0 when ungraded.
  */
 export function questionMarks( question ) {
+	/** @type {SavedFields} */
 	const settings = question?.settings || {};
 	if ( settings.type === 'structured' ) {
-		return ( settings.parts || [] ).reduce(
+		return /** @type {SavedFields[]} */ ( settings.parts || [] ).reduce(
 			( total, part ) => total + ( Number( part.marks ) || 0 ),
 			0
 		);
@@ -130,8 +244,8 @@ export function questionMarks( question ) {
 /**
  * Printed question label.
  *
- * @param {number} index    Zero-based position among numbered questions.
- * @param {Object} settings Normalized paper settings.
+ * @param {number}        index    Zero-based position among numbered questions.
+ * @param {PaperSettings} settings Normalized paper settings.
  * @return {string} Label such as "3" or "Q3".
  */
 export function questionLabel( index, settings ) {
@@ -141,8 +255,8 @@ export function questionLabel( index, settings ) {
 /**
  * Printed labels for a sequence of question types; statements are not numbered.
  *
- * @param {string[]} types    Question types in document order.
- * @param {Object}   settings Normalized paper settings.
+ * @param {string[]}      types    Question types in document order.
+ * @param {PaperSettings} settings Normalized paper settings.
  * @return {string[]} Labels, empty for statements.
  */
 export function questionLabels( types, settings ) {
@@ -154,6 +268,10 @@ export function questionLabels( types, settings ) {
 
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
+/**
+ * @param {unknown[]} values Saved answers and lists of answers.
+ * @return {string[]} Non-empty answers.
+ */
 const accepted = ( values ) =>
 	values
 		.flat()
@@ -163,14 +281,15 @@ const accepted = ( values ) =>
 /**
  * The printed form of one structured part.
  *
- * @param {Object}  part        Saved part.
- * @param {Object}  settings    Normalized paper settings.
- * @param {boolean} showAnswers Whether to include the answer key.
- * @return {Object} Part model.
+ * @param {SavedFields}   part        Saved part.
+ * @param {PaperSettings} settings    Normalized paper settings.
+ * @param {boolean}       showAnswers Whether to include the answer key.
+ * @return {PaperPartModel} Part model.
  */
 function paperPart( part, settings, showAnswers ) {
 	const marks = Number( part.marks ) || 0;
 	const written = ! [ 'numerical', 'text' ].includes( part.kind );
+	/** @type {PaperPartModel} */
 	const model = {
 		id: String( part.id ?? '' ),
 		// Imported papers store labels with brackets, such as "(a)"; the paper adds its own.
@@ -198,13 +317,13 @@ function paperPart( part, settings, showAnswers ) {
  * The printed form of a question. Answer fields are present only when showAnswers is true,
  * so a student paper never carries the answer key, even hidden.
  *
- * @param {Object}  question            Editor question: settings and options (questions).
- * @param {Object}  options             Rendering options.
- * @param {Object}  options.settings    Normalized paper settings.
- * @param {boolean} options.showAnswers Whether to include the answer key.
- * @param {string}  options.prompt      Statement HTML.
- * @param {string}  options.version     Paper version letter; B to D shuffle choice options.
- * @return {Object} Paper question model.
+ * @param {PaperSourceQuestion} question              Editor question: settings and options (questions).
+ * @param {Object}              [options]             Rendering options.
+ * @param {PaperSettings}       [options.settings]    Normalized paper settings.
+ * @param {boolean}             [options.showAnswers] Whether to include the answer key.
+ * @param {string}              [options.prompt]      Statement HTML.
+ * @param {string}              [options.version]     Paper version letter; B to D shuffle choice options.
+ * @return {PaperQuestionModel} Paper question model.
  */
 export function paperQuestion(
 	question,
@@ -217,6 +336,7 @@ export function paperQuestion(
 ) {
 	const type = question?.settings?.type || '';
 	const marks = questionMarks( question );
+	/** @type {PaperQuestionBase & { multiple?: boolean, options?: PaperOption[], lines?: number, unit?: string, parts?: PaperPartModel[] }} */
 	const model = {
 		type,
 		// A fill-in-the-blank statement holds its answers in braces: print blanks instead.
@@ -228,7 +348,7 @@ export function paperQuestion(
 		layout: 'unsupported',
 	};
 	if ( ! PAPER_TYPES.includes( type ) ) {
-		return model;
+		return /** @type {PaperTextModel} */ ( model );
 	}
 	const seed = questionSeed( question.id, version );
 	const typed = typedPaper( question, model, showAnswers, seed );
@@ -288,13 +408,14 @@ export function paperQuestion(
 		}
 	} else if ( type === 'structured' ) {
 		model.layout = 'parts';
-		model.parts = ( question.settings.parts || [] ).map( ( part ) =>
-			paperPart( part, settings, showAnswers )
-		);
+		model.parts = /** @type {SavedFields[]} */ (
+			question.settings.parts || []
+		).map( ( part ) => paperPart( part, settings, showAnswers ) );
 	} else if ( type === 'statement' ) {
 		model.layout = 'text';
 	}
-	return model;
+	// The branch above set the fields of the layout it chose.
+	return /** @type {PaperQuestionModel} */ ( model );
 }
 
 /**
@@ -317,11 +438,15 @@ export function paperQuestion(
 export function paginate( heights, { height, margin, gap }, breaks = [] ) {
 	const pitch = height + gap;
 	const usable = height - margin * 2;
+	/** @param {number} page */
 	const top = ( page ) => page * pitch + margin;
+	/** @param {number} page */
 	const bottom = ( page ) => page * pitch + height - margin;
 	let y = top( 0 );
 	let last = 0;
+	/** @type {number[]} */
 	const spacers = [];
+	/** @type {boolean[]} */
 	const overflow = [];
 	heights.forEach( ( raw, index ) => {
 		const size = Math.max( 0, Number( raw ) || 0 );
@@ -347,16 +472,18 @@ export function paginate( heights, { height, margin, gap }, breaks = [] ) {
 /**
  * Marks under each section heading: the questions after it, up to the next section.
  *
- * @param {Array<{kind: string, key: string, marks: number}>} entries Sections and questions in
- *                                                                    document order.
+ * @param {Array<{kind: string, key?: string, marks?: number}>} entries Sections and questions in
+ *                                                                      document order.
  * @return {Object<string, number>} Total marks by section key.
  */
 export function sectionTotals( entries ) {
+	/** @type {Object<string, number>} */
 	const totals = {};
 	let current = null;
 	for ( const entry of entries ) {
 		if ( entry.kind === 'section' ) {
-			current = entry.key;
+			// Section entries always carry their block's key.
+			current = /** @type {string} */ ( entry.key );
 			totals[ current ] = 0;
 		} else if ( current !== null ) {
 			totals[ current ] += Number( entry.marks ) || 0;
@@ -368,23 +495,28 @@ export function sectionTotals( entries ) {
 /**
  * Minutes allowed for an exam, from the quiz time limit.
  *
- * @param {Object} limit Time limit: value and type (minutes, hours or days).
+ * @param {{value?: unknown, type?: unknown}|null|undefined} limit Time limit: value and type (minutes, hours or days).
  * @return {number} Minutes, 0 for no limit.
  */
 export function limitMinutes( limit ) {
 	const value = Math.max( 0, Number( limit?.value ) || 0 );
-	const factor = { hours: 60, days: 1440 }[ limit?.type ] || 1;
+	/** @type {Record<string, number>} */
+	const factors = { hours: 60, days: 1440 };
+	const factor = factors[ String( limit?.type ) ] || 1;
 	return Math.round( value * factor );
 }
 
-/** Answer space heights, in lines of 8 mm, and the space styles. */
+/**
+ * Answer space heights, in lines of 8 mm, and the space styles.
+ * @type {Array<'lines'|'grid'|'blank'>}
+ */
 export const ANSWER_SPACE_STYLES = [ 'lines', 'grid', 'blank' ];
 
 /**
  * Normalize answer space attributes.
  *
- * @param {Object} attributes Block attributes.
- * @return {{style: string, lines: number}} Answer space.
+ * @param {SavedFields} [attributes] Block attributes.
+ * @return {{style: 'lines'|'grid'|'blank', lines: number}} Answer space.
  */
 export function answerSpace( attributes = {} ) {
 	return {
@@ -400,8 +532,8 @@ export function answerSpace( attributes = {} ) {
 /**
  * Normalize columns section attributes.
  *
- * @param {Object} attributes Block attributes.
- * @return {{columns: number, flow: string, rule: boolean}} Columns section.
+ * @param {SavedFields} [attributes] Block attributes.
+ * @return {{columns: number, flow: 'grid'|'flow', rule: boolean}} Columns section.
  */
 export function columnsLayout( attributes = {} ) {
 	return {
@@ -419,8 +551,8 @@ export const PAPER_VERSIONS = [ 'A', 'B', 'C', 'D' ];
 /**
  * A version letter the paper offers, else A.
  *
- * @param {string} value    Requested version.
- * @param {Object} settings Normalized paper settings.
+ * @param {unknown}       value    Requested version.
+ * @param {PaperSettings} settings Normalized paper settings.
  * @return {string} Version letter.
  */
 export function paperVersion( value, settings ) {
@@ -433,8 +565,8 @@ export function paperVersion( value, settings ) {
 /**
  * Jumble seed of a question in a paper version. OhMyLMS\Exams\PrintPaper::seed() is identical.
  *
- * @param {number|string} id      Question ID.
- * @param {string}        version Version letter.
+ * @param {number|string|undefined} id        Question ID.
+ * @param {string}                  [version] Version letter.
  * @return {string} Seed.
  */
 export function questionSeed( id, version = 'A' ) {
@@ -446,26 +578,38 @@ export function questionSeed( id, version = 'A' ) {
  * place: headers, sections, statements, page breaks, wide items in columns and other blocks stay
  * where the author put them, and questions never move into another section or column.
  *
- * @param {Array}  items   Print items.
- * @param {string} version Version letter.
- * @return {Array} Items in printed order.
+ * @param {PrintItem[]} items   Print items.
+ * @param {string}      version Version letter.
+ * @return {PrintItem[]} Items in printed order.
  */
 export function versionItems( items, version ) {
 	if ( version === 'A' ) {
 		return items;
 	}
 	let run = 0;
+	/** @param {PrintItem} item */
 	const movable = ( item ) =>
 		item.kind === 'question' &&
 		item.question?.settings?.type !== 'statement' &&
 		! item.span;
+	/**
+	 * @param {PrintItem[]} list
+	 * @return {PrintItem[]} Items in printed order.
+	 */
 	const visit = ( list ) => {
+		/** @type {PrintItem[]} */
 		const out = [];
+		/** @type {PrintItem[]} */
 		let group = [];
 		const flush = () => {
 			if ( group.length > 1 ) {
 				const order = jumble(
-					group.map( ( item ) => String( item.question.id ?? '' ) ),
+					group.map( ( item ) =>
+						String(
+							/** @type {PaperSourceQuestion} */ ( item.question )
+								.id ?? ''
+						)
+					),
 					`${ version }:${ run++ }`,
 					{ avoidIdentity: true }
 				);

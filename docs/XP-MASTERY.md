@@ -22,7 +22,9 @@ XP is a separate ledger from spendable points. It is never spent.
   recorded once per day and can pay an optional bonus of points (needs Bonus Point on).
 * Hooks: `ohmylms_xp_awarded`, `ohmylms_xp_goal_met`.
 * REST: `GET/PUT /ohmylms/v1/engagement/xp` (learner summary, `goal` update);
-  `GET/POST /ohmylms/v1/engagement/settings/xp` (admin).
+  `GET/POST/PATCH /ohmylms/v1/engagement/settings/xp` (admin; contract in
+  [api/gamification.md](api/gamification.md#streak-xp-score-and-mastery-settings)). The new admin app edits XP, the
+  mastery score and the mastery model at `#/gamification?tab=xp`.
 
 ## Mastery score (0–100 per skill)
 
@@ -37,7 +39,7 @@ Derived from the evidence ledger by `Skills\ScoreModel`, so it can be recomputed
 * Medals: bronze 80, silver 90, gold 100 (kept at the peak). Score 80 unlocks the next skill.
 * Existing learners are backfilled lazily the first time their scores are read.
 * Hooks: `ohmylms_skill_score_updated`, `ohmylms_skill_score_milestone`.
-* REST: `GET/POST /ohmylms/v1/engagement/settings/score`.
+* REST: `GET/POST/PATCH /ohmylms/v1/engagement/settings/score`.
 
 ## Mastery model: evidence rules or Khan levels
 

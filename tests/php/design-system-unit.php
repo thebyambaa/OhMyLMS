@@ -26,11 +26,36 @@ function check( $condition, $message ) {
 	++$checks;
 }
 
-// Defaults: a site that never saved the option gets the Khan Academy preset.
+// Defaults: a site that never saved the option gets the WordPress preset; its learner palette is Khan Academy's.
 $d = DS::get();
-check( 'khan' === $d['preset'] && '#1865f2' === $d['colors']['primary'] && 4 === $d['button_radius'] && 'comfortable' === $d['density'], 'fresh sites get the khan preset' );
-check( '#d92916' === $d['colors']['danger'] && '#21242c' === $d['colors']['text'] && '#0b2149' === $d['colors']['heading'], 'khan palette comes from Wonder Blocks' );
-check( 'khan' === DS::sanitize( 'garbage' )['preset'], 'non-array input falls back to khan' );
+check( 'wordpress' === $d['preset'] && '#1865f2' === $d['colors']['primary'] && 4 === $d['button_radius'] && 'comfortable' === $d['density'], 'fresh sites get the wordpress preset' );
+check( '#d92916' === $d['colors']['danger'] && '#21242c' === $d['colors']['text'] && '#0b2149' === $d['colors']['heading'], 'the learner palette comes from Wonder Blocks' );
+check( 'wordpress' === DS::sanitize( 'garbage' )['preset'], 'non-array input falls back to the wordpress preset' );
+check( ! DS::is_branded( $d ), 'the wordpress preset does not restyle admin screens' );
+
+// WordPress preset: admin tokens follow the admin colour scheme; the scheme colours are never stored.
+$khan_values = DS::preset_values( 'khan' );
+check( 'khan' === DS::sanitize( $khan_values )['preset'] && DS::is_branded( DS::sanitize( $khan_values ) ), 'khan stays khan although the wordpress palette is identical' );
+check( 'wordpress' === DS::sanitize( array( 'preset' => 'wordpress' ) )['preset'], 'the wordpress preset is recognised by name' );
+check( 'custom' === DS::sanitize( array( 'preset' => 'wordpress', 'colors' => array( 'primary' => '#123456' ) ) )['preset'], 'editing a colour under wordpress gives custom' );
+foreach ( array( 'modern' => '#3858e9', 'ocean' => '#567958', 'midnight' => '#cf4339', 'fresh' => '#2271b1', 'light' => '#007cba' ) as $scheme => $theme ) {
+	$admin = DS::admin_colors( $scheme );
+	check( $theme === $admin['primary'] && $theme === $admin['info'] && '#c3c4c7' === $admin['border'] && '#f0f0f1' === $admin['background'], "admin colours follow the $scheme scheme" );
+	$scheme_css = DS::css( array( 'preset' => 'wordpress' ), $scheme );
+	check( false !== strpos( $scheme_css, '--oml-primary:' . $theme . ';' ) && false !== strpos( $scheme_css, '--oml-radius-button:2px;' ), "wordpress css uses the $scheme theme colour and WordPress radius" );
+	check( false === strpos( $scheme_css, '--wp-admin-theme-color' ) && false === strpos( $scheme_css, '--wp-components-color-accent' ), "wordpress css leaves the $scheme WordPress variables alone" );
+	foreach ( array( 'success', 'warning', 'danger', 'info' ) as $status ) {
+		$scheme_vars = DS::variables( $admin, 2, 'comfortable' );
+		check( DS::contrast( $scheme_vars[ 'oml-' . $status . '-text' ], $scheme_vars[ 'oml-' . $status . '-soft' ] ) >= 4.5, "status text is readable in the $scheme scheme" );
+	}
+}
+check( '#3858e9' === DS::admin_colors( 'unknown-scheme' )['primary'], 'unknown schemes without registered colours fall back to modern' );
+$GLOBALS['_wp_admin_css_colors'] = array( 'brand' => (object) array( 'colors' => array( '#111111', '#222222', '#AA3300', '#444444' ) ) );
+check( '#aa3300' === DS::admin_colors( 'brand' )['primary'], 'registered custom schemes use their highlight colour' );
+unset( $GLOBALS['_wp_admin_css_colors'] );
+check( 'modern' === DS::admin_scheme(), 'users without a saved scheme get modern, like WordPress' );
+check( false !== strpos( DS::css( $khan_values ), '--wp-admin-theme-color:#1865f2;' ), 'branded presets still recolour the WordPress variables' );
+check( array() === DS::validate( array( 'preset' => 'wordpress' ) ), 'the wordpress preset validates' );
 
 // Presets map back to their name; edits give custom.
 $classic = DS::preset_values( 'classic' );
@@ -40,7 +65,7 @@ $edited = DS::sanitize( array( 'preset' => 'khan', 'colors' => array( 'primary' 
 check( 'custom' === $edited['preset'] && '#aabbcc' === $edited['colors']['primary'], 'an edited value becomes custom and is lower-cased' );
 check( '#112233' === DS::hex( '#123' ) || '#112233' === DS::hex( '#123' ), 'short hex expands' );
 check( '' === DS::hex( 'red' ) && '' === DS::hex( '#12345' ) && '' === DS::hex( array() ) && '' === DS::hex( 'url(x)' ), 'non-hex values are rejected' );
-$bad = DS::sanitize( array( 'colors' => array( 'primary' => 'javascript:alert(1)', 'bogus' => '#ffffff' ), 'density' => 'huge', 'button_radius' => 'x' ) );
+$bad = DS::sanitize( array( 'preset' => 'khan', 'colors' => array( 'primary' => 'javascript:alert(1)', 'bogus' => '#ffffff' ), 'density' => 'huge', 'button_radius' => 'x' ) );
 check( '#1865f2' === $bad['colors']['primary'] && ! isset( $bad['colors']['bogus'] ) && 'comfortable' === $bad['density'] && 4 === $bad['button_radius'], 'invalid fields fall back to the preset' );
 
 // Radius clamping and the pill value.
@@ -118,16 +143,47 @@ check( false === strpos( $learner, '--oml-primary:#aa2200;' ), 'legacy learner o
 check( DS::get()['colors'] === \OhMyLMS\Design\Tokens::frontend_colors(), 'both contexts share all colors' );
 $shared_custom = DS::sanitize( array( 'preset' => 'classic', 'button_radius' => 12, 'density' => 'compact' ) );
 DS::save( $shared_custom );
-$shared_vars = DS::variables( $shared_custom['colors'], 12, 'compact' );
+$shared_vars = DS::variables( $shared_custom['colors'], 12, 'compact', \OhMyLMS\Design\Tokens::font( 'ohmylms_font_family' ) );
 foreach ( $shared_vars as $name => $value ) {
 	check( false !== strpos( \OhMyLMS\Design\Tokens::frontend_oml_vars(), '--' . $name . ':' . $value . ';' ), 'learner uses saved shared token ' . $name );
 }
 DS::save( DS::preset_values( 'khan' ) );
 $admin_names = array_keys( DS::variables( DS::preset_values( 'classic' )['colors'], 4, 'comfortable' ) );
 foreach ( $admin_names as $name ) {
-	check( false !== strpos( $learner, '--' . $name . ':' ), "learner css defines --$name" );
+	// The default learner font is the theme's, which declares no font variable (checked below).
+	if ( 'oml-font-family' !== $name ) {
+		check( false !== strpos( $learner, '--' . $name . ':' ), "learner css defines --$name" );
+	}
 }
 unset( $options['ohmylms_primary_color_scheme'] );
+
+// Fonts: the learner font (or the theme's) and the admin font are separate, allow-listed choices.
+use OhMyLMS\Design\Tokens;
+check( array_merge( array( 'inherit', 'system' ), Tokens::FONTS ) === Tokens::font_choices( 'ohmylms_font_family' ), 'learner fonts: theme, system and the web fonts' );
+check( array_merge( array( 'system' ), Tokens::FONTS ) === Tokens::font_choices( 'ohmylms_admin_font_family' ), 'admin fonts have no theme font' );
+check( 'inherit' === Tokens::font( 'ohmylms_font_family' ) && 'system' === Tokens::font( 'ohmylms_admin_font_family' ), 'defaults: theme font for learners, system font for admin' );
+$theme = Tokens::frontend_css();
+check( false === strpos( $theme, '--oml-font-family:' ), 'theme font declares no --oml-font-family, so learner text inherits the theme font' );
+check( 1 === substr_count( $theme, '--ohmylms-font-family:' ) && false !== strpos( $theme, '--ohmylms-font-family:var(--oml-font-family);' ), 'the legacy font alias follows --oml-font-family' );
+check( false === strpos( $theme, '{font-family:' ), 'theme font adds no font rule of its own' );
+check( false !== strpos( DS::css( $khan_values ), '--oml-font-family:' . Tokens::SYSTEM_STACK . ';' ), 'the admin keeps the system stack while the learner font is the theme font' );
+$options['ohmylms_font_family']       = 'Montserrat';
+$options['ohmylms_admin_font_family'] = 'Inter';
+$chosen                               = Tokens::frontend_css();
+$admin_font_css                       = DS::css( $khan_values );
+check( false !== strpos( $chosen, '--oml-font-family:"Montserrat", ' . Tokens::SYSTEM_STACK . ';' ) && false !== strpos( $chosen, '.ohmylms-quiz{font-family:var(--oml-font-family)}' ), 'a learner font is declared and applied to learner wrappers' );
+check( false !== strpos( $admin_font_css, '--oml-font-family:"Inter", ' . Tokens::SYSTEM_STACK . ';' ) && false === strpos( $admin_font_css, 'Montserrat' ), 'the admin font is its own choice' );
+check( false === strpos( $chosen, 'Inter' ), 'the admin font never reaches learner pages' );
+check( false !== strpos( DS::css( array( 'preset' => 'wordpress' ), 'modern' ), '--oml-font-family:"Inter", ' ), 'the admin font applies under the WordPress preset too' );
+$options['ohmylms_font_family'] = 'system';
+check( false !== strpos( Tokens::frontend_css(), '--oml-font-family:' . Tokens::SYSTEM_STACK . ';' ), 'system font is the system stack on learner pages' );
+$options['ohmylms_font_family']       = '"};body{display:none}';
+$options['ohmylms_admin_font_family'] = 'inherit';
+check( 'inherit' === Tokens::font( 'ohmylms_font_family' ) && false === strpos( Tokens::frontend_css(), 'display:none' ), 'a hostile learner font falls back to the theme font' );
+check( 'system' === Tokens::font( 'ohmylms_admin_font_family' ), 'the admin cannot inherit a theme font' );
+check( Tokens::SYSTEM_STACK === DS::variables( $khan_values['colors'], 4, 'comfortable', 'x;}body{' )['oml-font-family'], 'variables() accepts only allow-listed fonts' );
+check( 'https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap' === Tokens::font_url( 'Open Sans' ) && '' === Tokens::font_url( 'system' ) && '' === Tokens::font_url( 'inherit' ), 'only web fonts have a stylesheet URL' );
+unset( $options['ohmylms_font_family'], $options['ohmylms_admin_font_family'] );
 
 // Dark theme: same token names as light, brand and status colors lightened to read on the dark card.
 $light_names = array_keys( DS::variables( DS::preset_values( 'classic' )['colors'], 4, 'comfortable' ) );

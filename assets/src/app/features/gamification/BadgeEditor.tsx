@@ -1,6 +1,7 @@
 import { Button, Modal, Notice } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
+import { MediaPicker } from '../../components/MediaPicker';
 import {
 	ColorField,
 	NumberField,
@@ -8,8 +9,13 @@ import {
 	TextAreaField,
 	TextField,
 } from './fields';
-import { MediaPicker } from './MediaPicker';
-import { badgeToDraft, newCriterion, validateBadge } from './model';
+import {
+	badgeToDraft,
+	IMAGE_MIME_TYPES,
+	invalidResponse,
+	newCriterion,
+	validateBadge,
+} from './model';
 import type {
 	AwardSource,
 	Badge,
@@ -53,7 +59,6 @@ export function BadgeEditor( {
 } ) {
 	const [ draft, setDraft ] = useState< BadgeDraft >( badgeToDraft( badge ) );
 	const [ errors, setErrors ] = useState< FieldErrors >( {} );
-	const [ picking, setPicking ] = useState( false );
 	const shown = { ...( error?.fieldErrors ?? {} ), ...errors };
 	const metrics = options?.metrics ?? [
 		{ value: 'points' as const, label: __( 'Bonus points', 'ohmylms' ) },
@@ -119,7 +124,7 @@ export function BadgeEditor( {
 					: __( 'Add badge', 'ohmylms' )
 			}
 			onRequestClose={ () => {
-				if ( ! working && ! picking ) {
+				if ( ! working ) {
 					onCancel();
 				}
 			} }
@@ -150,37 +155,32 @@ export function BadgeEditor( {
 					error={ shown.description }
 					onChange={ ( description ) => change( { description } ) }
 				/>
-				<div>
-					{ draft.image_url ? (
-						<img
-							src={ draft.image_url }
-							alt={ __( 'Selected badge image', 'ohmylms' ) }
-							width={ 64 }
-							height={ 64 }
-						/>
-					) : (
-						<p>{ __( 'No image selected.', 'ohmylms' ) }</p>
-					) }
-					<Button
-						variant="secondary"
-						onClick={ () => setPicking( true ) }
-					>
-						{ draft.image_id > 0
-							? __( 'Change image', 'ohmylms' )
-							: __( 'Choose image', 'ohmylms' ) }
-					</Button>{ ' ' }
-					{ draft.image_id > 0 && (
-						<Button
-							variant="tertiary"
-							isDestructive
-							onClick={ () =>
-								change( { image_id: 0, image_url: null } )
-							}
-						>
-							{ __( 'Remove image', 'ohmylms' ) }
-						</Button>
-					) }
-				</div>
+				<MediaPicker
+					label={ __( 'Choose a badge image', 'ohmylms' ) }
+					chooseText={ __( 'Choose image', 'ohmylms' ) }
+					changeText={ __( 'Change image', 'ohmylms' ) }
+					removeText={ __( 'Remove image', 'ohmylms' ) }
+					destructiveRemove
+					description={
+						draft.image_url
+							? undefined
+							: __( 'No image selected.', 'ohmylms' )
+					}
+					previewSize={ 64 }
+					previewAlt={ __( 'Selected badge image', 'ohmylms' ) }
+					value={ { id: draft.image_id, url: draft.image_url } }
+					accept={ IMAGE_MIME_TYPES }
+					invalid={ invalidResponse }
+					onChange={ ( image ) =>
+						change( {
+							image_id: image.id,
+							image_url: image.thumbnail_url,
+						} )
+					}
+					onRemove={ () =>
+						change( { image_id: 0, image_url: null } )
+					}
+				/>
 				<ColorField
 					label={ __( 'Colour', 'ohmylms' ) }
 					pickerLabel={ __( 'Pick a colour', 'ohmylms' ) }
@@ -312,19 +312,6 @@ export function BadgeEditor( {
 					</Button>
 				</p>
 			</form>
-			{ picking && (
-				<MediaPicker
-					title={ __( 'Choose a badge image', 'ohmylms' ) }
-					onClose={ () => setPicking( false ) }
-					onSelect={ ( image ) => {
-						change( {
-							image_id: image.id,
-							image_url: image.thumbnail_url,
-						} );
-						setPicking( false );
-					} }
-				/>
-			) }
 		</Modal>
 	);
 }

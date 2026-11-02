@@ -310,7 +310,7 @@ class ShortCodeMyCourses {
 				dashboardLink.addEventListener('click', function(e) {
 					e.preventDefault();
 					// Redirect to Dashboard page
-					window.location.href = '<?php echo esc_url( $dashboard_url ); ?>';
+					window.location.href = <?php echo wp_json_encode( esc_url_raw( $dashboard_url ) ); ?>;
 				});
 			}
 
@@ -330,7 +330,7 @@ class ShortCodeMyCourses {
 				myProfileLink.addEventListener('click', function(e) {
 					e.preventDefault();
 					// Redirect to My Profile page
-					window.location.href = '<?php echo $my_profile_url; ?>';
+					window.location.href = <?php echo wp_json_encode( esc_url_raw( $my_profile_url ) ); ?>;
 				});
 			}
 		});

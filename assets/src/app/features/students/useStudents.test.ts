@@ -3,7 +3,6 @@ import { ApiError } from '../../lib/api';
 import type { Collection } from '../../lib/api/collection';
 import { listStudents } from './api';
 import { student } from './fixtures';
-import { useOperation } from './useOperation';
 import { useStudents } from './useStudents';
 import type { Student } from './types';
 
@@ -122,60 +121,5 @@ describe( 'useStudents', () => {
 		act( () => view.result.current.reload() );
 		await waitFor( () => expect( view.result.current.error ).toBeNull() );
 		expect( view.result.current.data?.items ).toHaveLength( 1 );
-	} );
-} );
-
-describe( 'useOperation', () => {
-	it( 'rejects a second write while one runs and reports failures', async () => {
-		let finish!: () => void;
-		const view = renderHook( useOperation );
-		let first!: Promise< boolean >;
-		act( () => {
-			first = view.result.current.run(
-				() =>
-					new Promise< void >( ( resolve ) => {
-						finish = resolve;
-					} )
-			);
-		} );
-		expect( view.result.current.busy ).toBe( true );
-		const second = vi.fn();
-		let secondResult = true;
-		await act( async () => {
-			secondResult = await view.result.current.run( second );
-		} );
-		expect( secondResult ).toBe( false );
-		expect( second ).not.toHaveBeenCalled();
-		await act( async () => {
-			finish();
-			await first;
-		} );
-		expect( view.result.current.busy ).toBe( false );
-
-		await act( async () => {
-			await view.result.current.run( () =>
-				Promise.reject(
-					new ApiError( {
-						code: 'ohmylms_student_already_enrolled',
-						status: 409,
-						message: 'Already enrolled',
-					} )
-				)
-			);
-		} );
-		expect( view.result.current.error ).toBe( 'Already enrolled' );
-	} );
-
-	it( 'cancels the running write on unmount', () => {
-		let signal: AbortSignal | undefined;
-		const view = renderHook( useOperation );
-		act( () => {
-			void view.result.current.run( ( received ) => {
-				signal = received;
-				return new Promise< void >( () => undefined );
-			} );
-		} );
-		view.unmount();
-		expect( signal?.aborted ).toBe( true );
 	} );
 } );

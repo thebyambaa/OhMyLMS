@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import { dropdownAnswers, dropdownSettings, renameDropdownChoice } from '../../assets/src/features/question-editor/dropdownModel.mjs';
 import { questionPromptPatch } from '../../assets/src/features/question-editor/questionPrompt.mjs';
 import { interactiveIssues } from '../../assets/src/features/question-editor/interactiveModel.mjs';
-import { describeExpected } from '../../assets/src/features/quiz-reports/model.mjs';
 
 test('renaming correct choices keeps ticks and upgrades old answers compatibly',()=>{
 	const slot = { id:'1', choices:['positive','negative'], answer:'positive' };
@@ -23,7 +22,6 @@ test('per-dropdown points sum automatically and remain coherent when markers cha
 	assert.equal(patch.settings.score.value,3);
 	assert.equal(patch.settings.slots[0].grading,'equal');
 	assert.deepEqual(patch.settings.slots[0].answers,['a','b']);
-	assert.equal(describeExpected({settings:upgraded}),'{1} = a, b, {2} = a, b');
 	const randomized = questionPromptPatch({settings:upgraded},'<p>{{x}} and {1} {2}</p>');
 	assert.deepEqual(randomized.settings.slots.map(slot=>slot.id),['1','2']);
 	assert.equal(randomized.settings.score.value,5);

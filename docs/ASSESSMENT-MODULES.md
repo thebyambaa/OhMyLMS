@@ -9,7 +9,7 @@ Default authoring now runs through `includes/Learning/NativeQuizEditor.php`, `Na
 | Question editor | `assets/src/features/question-editor/` | Question canvas/settings, answer editors, form workspace, preview and custom editor adapter |
 | Question bank | `assets/src/features/question-bank/` | Search, creation dialogs, approval, versions, sharing and skill links |
 
-Quiz and question editors have independent `index.js` interfaces and `components.json` runtime contracts. Each factory accepts `readRuntime` and returns a React component. These bridges use the existing WordPress store; saved payloads, REST routes and grading contracts stay the same. The question canvas retains a legacy quiz-placement removal action through the quiz API.
+The `components.json`/`readRuntime` editor factories and the legacy SDK interfaces below were deleted with the recovered admin at the cutover ([CUTOVER.md](CUTOVER.md)). Quizzes and the Question Bank are now typed app screens (`#/quizzes`, `#/content-hub/question-bank`), and question editors register through the app's extension host ([ARCHITECTURE.md](ARCHITECTURE.md)); saved payloads, REST routes and grading contracts are unchanged.
 
 `window.ohmylms.extensions.quizEditorComponents` and `questionEditorComponents` expose the separate factory interfaces. The existing `quizComponents` interface combines both for compatibility. Old imports under `features/quizzes/`, the moved question-bank files and `extensions/QuestionEditor.jsx` forward to the canonical implementations. Add new code to the canonical modules.
 

@@ -61,6 +61,9 @@ final class CourseSettings {
 	 */
 	public static function get( $course_id ) {
 		$course           = new Course( $course_id );
+		$price_type       = $course->get_price_type();
+		$regular_price    = $course->get_regular_price();
+		$access_type      = $course->get_access_type();
 		$data             = array(
 			'course_id'     => $course_id,
 			'title'         => (string) get_post_field( 'post_title', $course_id ),
@@ -68,10 +71,10 @@ final class CourseSettings {
 			'author_id'     => (int) get_post_field( 'post_author', $course_id ),
 			'image_id'      => (int) get_post_thumbnail_id( $course_id ),
 			'status'        => (string) get_post_status( $course_id ),
-			'price_type'    => (string) ( $course->get_price_type() ?: 'free' ),
-			'regular_price' => (string) ( $course->get_regular_price() ?: '0' ),
+			'price_type'    => (string) ( $price_type ? $price_type : 'free' ),
+			'regular_price' => (string) ( $regular_price ? $regular_price : '0' ),
 			'sale_price'    => (string) $course->get_sale_price(),
-			'access_type'   => (string) ( $course->get_access_type() ?: 'public' ),
+			'access_type'   => (string) ( $access_type ? $access_type : 'public' ),
 			'has_capacity'  => filter_var( $course->get_has_capacity(), FILTER_VALIDATE_BOOLEAN ),
 			'capacity'      => (int) $course->get_capacity(),
 		);

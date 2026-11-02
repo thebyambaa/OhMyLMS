@@ -92,10 +92,11 @@ try {
     gamification_check(in_array('lesson-level', Level::maybe_met_rules($u), true), 'Lesson level has real counts');
     (new \OhMyLMS\Hooks\EngagementHook())->after_point_added($u, 0);
     gamification_check(Level::get_current_level_of_a_user($u)['level_id'] === 'lesson-level' && !Level::get_current_level_of_a_user($users['teacher']), 'Background/teacher level targets correct user');
-    gamification_check(Level::get_next_level_of_a_user($u)['progress_percentage'] === 50.0, 'Next-level progress uses lesson count');
+    $next = Level::get_next_level_of_a_user($u);
+    gamification_check($next['level_id'] === 'next-lesson' && $next['progress_percentage'] === 0 && $next['points_needed'] === 10 && array_column($next['rules'], 'type') === ['points'], 'Next-level progress uses points (levels are points-only)');
     wp_set_current_user($u); $student = new \OhMyLMS\Data\Student($u);
     ob_start(); include OHMYLMS_DIR . '/templates/profile/profile.php'; $profile = ob_get_clean();
-    gamification_check(strpos($profile, 'Completed lessons: 1') !== false && strpos($profile, '--fill-width: 50%') !== false, 'Profile renders lesson progress instead of point-only progress');
+    gamification_check(strpos($profile, 'Bonus points: 0') !== false && strpos($profile, '--fill-width: 0%') !== false && strpos($profile, '10 bonus points until next level') !== false, 'Profile renders point progress towards the next level');
     wp_set_current_user($users['teacher']);
     gamification_check(!Rules::met([], $u) && !Rules::met([['metric' => 'unknown', 'operator' => '>=', 'value' => 0]], $u), 'Empty or unsupported rules fail closed');
     $clock = strtotime('2026-01-15 12:00:00 UTC');

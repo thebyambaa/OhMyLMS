@@ -24,6 +24,7 @@ final class GradeEvents {
 	 * @param array $event source_type, source_id, item_id, student_id, question_id, version_id,
 	 *                     awarded, max_marks, fraction, correct, grader, reviewer_id, reason.
 	 *                     Optional record_evidence defaults to true; false saves a grade without skill effects.
+	 *                     Optional rubric: points by rubric criterion ID of a manual grade.
 	 * @return int event ID
 	 * @throws \RuntimeException When the operation cannot be completed.
 	 */
@@ -52,6 +53,9 @@ final class GradeEvents {
 			'supersedes'  => $previous,
 			'created_at'  => current_time( 'mysql', true ),
 		);
+		if ( isset( $event['rubric'] ) && is_array( $event['rubric'] ) ) {
+			$row['rubric'] = (string) wp_json_encode( (object) $event['rubric'] );
+		}
 		if ( ! $wpdb->insert( $table, $row ) ) {
 			throw new \RuntimeException( 'Grade event write failed' ); }
 		$id = (int) $wpdb->insert_id;
@@ -87,10 +91,11 @@ final class GradeEvents {
 	 */
 	public static function current( $source_type, $source_id, $item_id ) {
 		global $wpdb;
-		return $wpdb->get_row(
+		$row = $wpdb->get_row(
 			$wpdb->prepare( 'SELECT * FROM %i WHERE source_type=%s AND source_id=%d AND item_id=%d AND superseded_by=0 ORDER BY id DESC LIMIT 1', Schema::table( 'grade_events' ), $source_type, $source_id, $item_id ),
 			ARRAY_A
-		) ?: null;
+		);
+		return $row ? $row : null;
 	}
 
 	/** Full history for an item, oldest first.
@@ -108,12 +113,46 @@ final class GradeEvents {
 	}
 
 	/**
+	 * Points by rubric criterion stored with an event, or null when it has none.
+	 *
+	 * @param array|null $event Event row.
+	 * @return array<string,float>|null
+	 */
+	public static function rubric( $event ) {
+		$stored = is_array( $event ) && is_string( $event['rubric'] ?? null ) ? json_decode( $event['rubric'], true ) : null;
+		if ( ! is_array( $stored ) ) {
+			return null;
+		}
+		$scores = array();
+		foreach ( $stored as $id => $points ) {
+			if ( is_numeric( $points ) ) {
+				$scores[ (string) $id ] = round( (float) $points, 4 );
+			}
+		}
+
+		return $scores;
+	}
+
+	/**
+	 * Number of events written for a source (every item, superseded ones included).
+	 *
+	 * @param string $source_type Source type.
+	 * @param int    $source_id   Source identifier.
+	 * @return int
+	 */
+	public static function count_for( $source_type, $source_id ) {
+		global $wpdb;
+		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE source_type = %s AND source_id = %d', Schema::table( 'grade_events' ), $source_type, $source_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh count around a grading write.
+	}
+
+	/**
 	 * Get for Grade events.
 	 *
 	 * @param mixed $id Id.
 	 */
 	public static function get( $id ) {
 		global $wpdb;
-		return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id=%d', Schema::table( 'grade_events' ), (int) $id ), ARRAY_A ) ?: null;
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id=%d', Schema::table( 'grade_events' ), (int) $id ), ARRAY_A );
+		return $row ? $row : null;
 	}
 }

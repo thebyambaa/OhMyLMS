@@ -421,7 +421,8 @@ try {
 	ok( 1 === count( $detail['line_items'] ) && $course === $detail['line_items'][0]['course_id'] && '49.50' === $detail['line_items'][0]['total'], 'detail line item' );
 	ok( '49.50' === $detail['remaining_refundable'] && '0.00' === $detail['total_refunded'] && array() === $detail['refunds'], 'detail refund totals' );
 	ok( array( 'cancelled' ) === $detail['allowed_statuses'], 'completed order may only be cancelled' );
-	ok( array_diff( array_keys( $detail ), array( 'id', 'number', 'status', 'currency', 'total', 'date_created', 'payment_method', 'payment_method_title', 'student_id', 'student_name', 'parent_id', 'subtotal', 'discount_total', 'tax_amount', 'date_paid', 'date_completed', 'transaction_id', 'billing', 'line_items', 'coupon_lines', 'refunds', 'total_refunded', 'remaining_refundable', 'related_orders', 'allowed_statuses' ) ) === array(), 'detail has only documented fields' );
+	ok( array_diff( array_keys( $detail ), array( 'id', 'number', 'status', 'currency', 'total', 'date_created', 'payment_method', 'payment_method_title', 'student_id', 'student_name', 'parent_id', 'subtotal', 'discount_total', 'tax_amount', 'date_paid', 'date_completed', 'transaction_id', 'billing', 'line_items', 'coupon_lines', 'refunds', 'total_refunded', 'remaining_refundable', 'related_orders', 'allowed_statuses', 'points' ) ) === array(), 'detail has only documented fields' );
+	ok( null === $detail['points'], 'a cash order has no points summary' );
 	ok( 'yes' === get_post_meta( $buyer, '_is_open', true ), 'opening an order marks it seen' );
 	ok( 404 === call_api( 'GET', '/orders/999999999' )->get_status(), 'unknown order is 404' );
 	$page = wp_insert_post(

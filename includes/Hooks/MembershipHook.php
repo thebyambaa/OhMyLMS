@@ -373,7 +373,7 @@ class MembershipHook {
 			$membership = null;
 		}
 		$signup_fee  = method_exists( $membership, 'get_sign_up_fee' ) ? floatval( $membership->get_sign_up_fee() ) : 0;
-		$total_price = $price + $signup_fee;
+		$total_price = floatval( $price ) + $signup_fee;
 		return $total_price;
 	}
 

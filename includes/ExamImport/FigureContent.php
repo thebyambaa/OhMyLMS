@@ -18,6 +18,17 @@ defined( 'ABSPATH' ) || exit;
 final class FigureContent {
 
 	/**
+	 * What learners see: the original crop, the accepted reconstruction instead of it (the original
+	 * stays the fallback), or the reconstruction with the original beside it.
+	 */
+	const SELECTIONS = array( 'original', 'jsxgraph', 'both' );
+
+	/** Review states, sources and display choices of a JSXGraph proposal (review drafts only). */
+	const PROPOSAL_STATUSES = array( 'proposed', 'accepted', 'rejected' );
+	const PROPOSAL_ORIGINS  = array( 'generated', 'authored', 'edited' );
+	const PROPOSAL_DISPLAYS = array( 'replace', 'accompany' );
+
+	/**
 	 * Validate a bounded placement list, including unapproved extraction candidates.
 	 *
 	 * @param mixed $figures Placements.
@@ -38,7 +49,7 @@ final class FigureContent {
 			$bounds   = PageRenderer::bounds( $figure['bounds'] ?? null );
 			$part_ids = $figure['part_ids'] ?? array();
 			$asset    = $figure['asset_id'] ?? '';
-			if ( is_wp_error( $bounds ) || ! is_array( $part_ids ) || count( $part_ids ) > 50 || count( array_filter( $part_ids, 'is_string' ) ) !== count( $part_ids ) || array_diff( $part_ids, $parts ) || ! is_string( $asset ) || ( '' !== $asset && ! wp_is_uuid( $asset ) ) || ! in_array( $figure['selected'] ?? 'original', array( 'original', 'jsxgraph' ), true ) ) {
+			if ( is_wp_error( $bounds ) || ! is_array( $part_ids ) || count( $part_ids ) > 50 || count( array_filter( $part_ids, 'is_string' ) ) !== count( $part_ids ) || array_diff( $part_ids, $parts ) || ! is_string( $asset ) || ( '' !== $asset && ! wp_is_uuid( $asset ) ) || ! in_array( $figure['selected'] ?? 'original', self::SELECTIONS, true ) ) {
 				return self::error();
 			}
 			$item = array(
@@ -59,10 +70,58 @@ final class FigureContent {
 				}
 				$item['spec'] = $spec;
 			}
+			if ( 'original' !== $item['selected'] && ! isset( $item['spec'] ) ) {
+				return self::error();
+			}
+			if ( isset( $figure['proposal'] ) ) {
+				$proposal = self::proposal( $figure['proposal'] );
+				if ( is_wp_error( $proposal ) ) {
+					return $proposal;
+				}
+				$item['proposal'] = $proposal;
+			}
 			$ids[ $item['id'] ] = true;
 			$clean[]            = $item;
 		}
 		return $clean;
+	}
+
+	/**
+	 * Validate a JSXGraph proposal: its declarative spec, review status, source and display choice.
+	 *
+	 * @param mixed $proposal Candidate.
+	 * @return array|\WP_Error Canonical proposal.
+	 */
+	public static function proposal( $proposal ) {
+		if ( ! is_array( $proposal ) || array_diff( array_keys( $proposal ), array( 'status', 'origin', 'display', 'spec' ) ) || ! in_array( $proposal['status'] ?? '', self::PROPOSAL_STATUSES, true ) || ! in_array( $proposal['origin'] ?? '', self::PROPOSAL_ORIGINS, true ) || ! in_array( $proposal['display'] ?? 'replace', self::PROPOSAL_DISPLAYS, true ) ) {
+			return self::error();
+		}
+		$spec = FigureSpec::validate( $proposal['spec'] ?? null );
+		if ( is_wp_error( $spec ) ) {
+			return $spec;
+		}
+		return array(
+			'status'  => $proposal['status'],
+			'origin'  => $proposal['origin'],
+			'display' => $proposal['display'] ?? 'replace',
+			'spec'    => $spec,
+		);
+	}
+
+	/**
+	 * Placements as committed to a question: review-only proposal state is left out.
+	 *
+	 * @param array $figures Validated placements.
+	 * @return array
+	 */
+	public static function committed( array $figures ) {
+		return array_map(
+			static function ( $figure ) {
+				unset( $figure['proposal'] );
+				return $figure;
+			},
+			$figures
+		);
 	}
 
 	/**
@@ -86,7 +145,7 @@ final class FigureContent {
 		}
 		foreach ( $figures as $figure ) {
 			$asset = Figures::asset( $figure['asset_id'] );
-			if ( ! $figure['approved'] || '' === trim( $figure['alt'] ) || ! $asset || 'ready' !== $asset['state'] || 'question' !== $asset['document_role'] || is_wp_error( Figures::verified_path( $figure['asset_id'] ) ) || ( 'jsxgraph' === $figure['selected'] && empty( $figure['spec'] ) ) ) {
+			if ( ! $figure['approved'] || '' === trim( $figure['alt'] ) || ! $asset || 'ready' !== $asset['state'] || 'question' !== $asset['document_role'] || is_wp_error( Figures::verified_path( $figure['asset_id'] ) ) || ( 'original' !== $figure['selected'] && empty( $figure['spec'] ) ) ) {
 				return self::error();
 			}
 		}
@@ -116,11 +175,15 @@ final class FigureContent {
 	/**
 	 * Bind review to exact placements, selection, specs and part identities.
 	 *
-	 * @param array $settings Frozen settings.
-	 * @param bool  $create Initialize a persistent review key on explicit author approval.
+	 * The JSON is encoded with a fixed float precision: `serialize_precision` differs between PHP
+	 * configurations (web server and CLI), and an attestation must verify under both.
+	 *
+	 * @param array $settings  Frozen settings.
+	 * @param bool  $create    Initialize a persistent review key on explicit author approval.
+	 * @param int   $precision `serialize_precision` to encode with; -1 (shortest exact) by default.
 	 * @return string Server attestation, never sent to learners.
 	 */
-	private static function signature( array $settings, $create = false ) {
+	private static function signature( array $settings, $create = false, $precision = -1 ) {
 		$key = get_option( '_ohmylms_figure_review_key', '' );
 		if ( ! $key && $create ) {
 			add_option( '_ohmylms_figure_review_key', wp_generate_password( 64, true, true ), '', false );
@@ -129,7 +192,11 @@ final class FigureContent {
 		if ( ! is_string( $key ) || strlen( $key ) < 32 ) {
 			return '';
 		}
-		return hash_hmac( 'sha256', wp_json_encode( array( $settings['figures'] ?? array(), ! empty( $settings['figure_review']['complete'] ), ! empty( $settings['figure_review']['required'] ), array_column( $settings['parts'] ?? array(), 'id' ) ) ), $key );
+		$before = ini_get( 'serialize_precision' );
+		ini_set( 'serialize_precision', (string) $precision ); // phpcs:ignore WordPress.PHP.IniSet.Risky -- Restored below; makes the attestation independent of the PHP configuration.
+		$json = wp_json_encode( array( $settings['figures'] ?? array(), ! empty( $settings['figure_review']['complete'] ), ! empty( $settings['figure_review']['required'] ), array_column( $settings['parts'] ?? array(), 'id' ) ) );
+		ini_set( 'serialize_precision', (string) $before ); // phpcs:ignore WordPress.PHP.IniSet.Risky -- Restore the configured precision.
+		return hash_hmac( 'sha256', (string) $json, $key );
 	}
 
 	/**
@@ -140,8 +207,17 @@ final class FigureContent {
 	 */
 	private static function attested( array $settings ) {
 		$signature = $settings['figure_review']['signature'] ?? '';
-		$expected  = self::signature( $settings );
-		return is_string( $signature ) && 64 === strlen( $signature ) && 64 === strlen( $expected ) && hash_equals( $expected, $signature );
+		if ( ! is_string( $signature ) || 64 !== strlen( $signature ) ) {
+			return false;
+		}
+		// Attestations sealed before the precision was fixed used the server's setting (often 17).
+		foreach ( array( -1, 17 ) as $precision ) {
+			$expected = self::signature( $settings, false, $precision );
+			if ( 64 === strlen( $expected ) && hash_equals( $expected, $signature ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -163,7 +239,7 @@ final class FigureContent {
 			if ( empty( $figure['approved'] ) || ( '' === $part ? ! empty( $figure['part_ids'] ) : ! in_array( $part, $figure['part_ids'] ?? array(), true ) ) ) {
 				continue;
 			}
-			$url   = add_query_arg(
+			$url      = add_query_arg(
 				array(
 					'ohmylms_figure'  => $figure['asset_id'],
 					'figure_version'  => $snapshot->get_version_id(),
@@ -172,10 +248,12 @@ final class FigureContent {
 				),
 				home_url( '/' )
 			);
-			$spec  = 'jsxgraph' === $figure['selected'] ? ( $figure['spec'] ?? null ) : null;
-			$asset = Figures::asset( $figure['asset_id'] );
-			$width = isset( $asset['width_mm'] ) ? '--ohmylms-figure-width:' . (float) $asset['width_mm'] . 'mm' : '';
-			$html .= '<figure class="ohmylms-import-figure" style="' . esc_attr( $width ) . '" data-figure-spec="' . esc_attr( $spec ? wp_json_encode( $spec ) : '' ) . '"><img src="' . esc_url( $url ) . '" alt="' . esc_attr( $figure['alt'] ) . '">';
+			$selected = $figure['selected'] ?? 'original';
+			$spec     = 'original' !== $selected ? ( $figure['spec'] ?? null ) : null;
+			$asset    = Figures::asset( $figure['asset_id'] );
+			$width    = isset( $asset['width_mm'] ) ? '--ohmylms-figure-width:' . (float) $asset['width_mm'] . 'mm' : '';
+			$display  = $spec && 'both' === $selected ? ' data-figure-display="accompany"' : '';
+			$html    .= '<figure class="ohmylms-import-figure" style="' . esc_attr( $width ) . '" data-figure-spec="' . esc_attr( $spec ? wp_json_encode( $spec ) : '' ) . '"' . $display . '><img src="' . esc_url( $url ) . '" alt="' . esc_attr( $figure['alt'] ) . '">';
 			if ( ! empty( $figure['not_to_scale'] ) ) {
 				$html .= '<figcaption>' . esc_html__( 'Not to scale', 'ohmylms' ) . '</figcaption>';
 			}

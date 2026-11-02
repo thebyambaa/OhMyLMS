@@ -1,4 +1,5 @@
 import { useRef, type KeyboardEvent } from 'react';
+import { useAdminPlace } from '../../routing/place';
 
 export interface TabItem {
 	id: string;
@@ -30,6 +31,8 @@ export function Tabs( {
 	onSelect: ( id: string ) => void;
 } ) {
 	const refs = useRef< Record< string, HTMLButtonElement | null > >( {} );
+	// On an admin page the server prints these as tabs or sections already.
+	const place = useAdminPlace();
 
 	function move( event: KeyboardEvent< HTMLButtonElement >, index: number ) {
 		const last = tabs.length - 1;
@@ -60,6 +63,9 @@ export function Tabs( {
 		}
 	}
 
+	if ( place ) {
+		return null;
+	}
 	return (
 		<div role="tablist" aria-label={ label } className="nav-tab-wrapper">
 			{ tabs.map( ( tab, index ) => {
@@ -91,6 +97,25 @@ export function Tabs( {
 
 export function tabId( id: string ): string {
 	return `ohmylms-gamification-tab-${ id }`;
+}
+
+/**
+ * Properties of a panel: a `tabpanel` labelled by its tab button where this file's tab list renders,
+ * and a plain region on the admin pages, where the server prints the sections as links.
+ *
+ * @return Builds the properties of the panel `id` while `selected` is shown.
+ */
+export function useTabPanelProps() {
+	const place = useAdminPlace();
+	return ( id: string, selected: string ) =>
+		place
+			? { id: tabPanelId( id ), hidden: id !== selected }
+			: {
+					role: 'tabpanel',
+					id: tabPanelId( id ),
+					'aria-labelledby': tabId( id ),
+					hidden: id !== selected,
+				};
 }
 
 export function tabPanelId( id: string ): string {

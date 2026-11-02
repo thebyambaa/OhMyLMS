@@ -48,26 +48,18 @@ class CertificateFactory {
 		// Check if input is false and post is set.
 		if ( false === $certificate && isset( $post, $post->ID ) && OHMYLMS_LESSON_CPT === get_post_type( $post->ID ) ) {
 			return absint( $post->ID );
-		}
-
-		// If input is numeric, check if certificate exists.
-		elseif ( is_numeric( $certificate ) ) {
+		} elseif ( is_numeric( $certificate ) ) {
+			// If input is numeric, check if certificate exists.
 			return $this->is_certificate_exist( $certificate ) ? $certificate : false;
-		}
-
-		// If input is an instance of Certificate.
-		elseif ( $certificate instanceof Certificate ) {
+		} elseif ( $certificate instanceof Certificate ) {
+			// If input is an instance of Certificate.
 			$id = $certificate->get_id();
 			return $this->is_certificate_exist( $id ) ? $id : false;
-		}
-
-		// If input contains a valid ID property.
-		elseif ( ! empty( $certificate->ID ) ) {
+		} elseif ( ! empty( $certificate->ID ) ) {
+			// If input contains a valid ID property.
 			return $this->is_certificate_exist( $certificate->ID ) ? $certificate->ID : false;
-		}
-
-		// Otherwise, return false.
-		else {
+		} else {
+			// Otherwise, return false.
 			return false;
 		}
 	}

@@ -69,9 +69,9 @@ if ( $should_show_add_to_cart ) {
 		'<a href="%s" tabindex="0" data-quantity="%s" class="add_to_cart_button enroll-button ohmylms-button" %s>%s%s</a>',
 		esc_url( $course->add_to_cart_url() ),
 		esc_attr( isset( $args['quantity'] ) ? $args['quantity'] : 1 ),
-		isset( $args['attributes'] ) ? ohmylms_implode_html_attributes( $args['attributes'] ) : '',
-		$cart_icon,
-		$btn_text
+		isset( $args['attributes'] ) ? ohmylms_implode_html_attributes( $args['attributes'] ) : '', // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- ohmylms_implode_html_attributes() escapes its output.
+		$cart_icon, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static SVG icon markup.
+		esc_html( $btn_text )
 	);
 }
 // Only show points-based purchase if enrollment is active.

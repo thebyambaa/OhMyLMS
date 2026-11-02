@@ -73,19 +73,16 @@ $class_report_url = add_query_arg( 'hub_class', $teacher_class, TeacherWorkspace
 	) as $class_report_step => $class_report_label ) :
 		?>
 											<?php if ( ( -1 === $class_report_step && $class_report['page'] > 1 ) || ( 1 === $class_report_step && $class_report['more'] ) ) : ?>
-			<a class="oml-hub-pill" href="
 												<?php
-												echo esc_url(
-													add_query_arg(
-														array(
-															'hub_period'   => $class_report['days'],
-															'current_page' => $class_report['page'] + $class_report_step,
-														),
-														$class_report_url
-													)
+												$ohmylms_href = add_query_arg(
+													array(
+														'hub_period'   => $class_report['days'],
+														'current_page' => $class_report['page'] + $class_report_step,
+													),
+													$class_report_url
 												);
 												?>
-											"><?php echo esc_html( $class_report_label ); ?></a>
+			<a class="oml-hub-pill" href="<?php echo esc_url( $ohmylms_href ); ?>"><?php echo esc_html( $class_report_label ); ?></a>
 		<?php endif; ?>
 	<?php endforeach; ?>
 </nav>

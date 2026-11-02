@@ -28,12 +28,12 @@ final class FrontendStyles {
 	public static function groups() {
 		$groups = array( 'core' );
 		$checks = array(
-			'catalog' => array( 'is_ohmylms_archive', 'ohmylms_is_courses_page', 'ohmylms_is_course_list_shortcode', 'ohmylms_is_course_taxonomy', 'ohmylms_is_course_category' ),
-			'course' => array( 'ohmylms_is_single_course_page' ),
-			'lesson' => array( 'ohmylms_is_content_page' ),
-			'checkout' => array( 'is_ohmylms_checkout', 'is_ohmylms_buy_now' ),
-			'thankyou' => array( 'is_ohmylms_order_received_page' ),
-			'account' => array( 'is_ohmylms_dashboard', 'is_ohmylms_profile', 'is_ohmylms_profile_shortcode', 'is_ohmylms_my_courses_shortcode' ),
+			'catalog'    => array( 'is_ohmylms_archive', 'ohmylms_is_courses_page', 'ohmylms_is_course_list_shortcode', 'ohmylms_is_course_taxonomy', 'ohmylms_is_course_category' ),
+			'course'     => array( 'ohmylms_is_single_course_page' ),
+			'lesson'     => array( 'ohmylms_is_content_page' ),
+			'checkout'   => array( 'is_ohmylms_checkout', 'is_ohmylms_buy_now' ),
+			'thankyou'   => array( 'is_ohmylms_order_received_page' ),
+			'account'    => array( 'is_ohmylms_dashboard', 'is_ohmylms_profile', 'is_ohmylms_profile_shortcode', 'is_ohmylms_my_courses_shortcode' ),
 			'membership' => array( 'ohmylms_is_membership_page', 'ohmylms_is_membership_plan_shortcode' ),
 		);
 		foreach ( $checks as $group => $functions ) {
@@ -44,7 +44,7 @@ final class FrontendStyles {
 				}
 			}
 		}
-		/** Integrations can request their layout groups without loading the full compatibility bundle. */
+		/** Integrations can request the page groups their layouts need. */
 		$groups = apply_filters( 'ohmylms_frontend_style_groups', $groups );
 		if ( is_rtl() ) {
 			$groups[] = 'rtl';
@@ -61,7 +61,7 @@ final class FrontendStyles {
 	public static function register( $groups = null ) {
 		Ui::register();
 		$modules = self::modules();
-		$deps = array( Ui::STYLE_HANDLE );
+		$deps    = array( Ui::STYLE_HANDLE );
 		if ( wp_style_is( 'ohmylms-quiz-a11y', 'registered' ) ) {
 			$deps[] = 'ohmylms-quiz-a11y';
 		}

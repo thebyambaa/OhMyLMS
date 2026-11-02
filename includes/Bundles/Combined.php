@@ -33,7 +33,14 @@ final class Combined {
 		usort(
 			$rows,
 			static function ( $left, $right ) {
-				return strcmp( (string) $left['evidence_at'], (string) $right['evidence_at'] ) ?: ( (int) ( $left['id'] ?? 0 ) <=> (int) ( $right['id'] ?? 0 ) ) ?: ( (int) $left['grade_event_id'] <=> (int) $right['grade_event_id'] );
+				$order = strcmp( (string) $left['evidence_at'], (string) $right['evidence_at'] );
+				if ( 0 === $order ) {
+					$order = (int) ( $left['id'] ?? 0 ) <=> (int) ( $right['id'] ?? 0 );
+				}
+				if ( 0 === $order ) {
+					$order = (int) $left['grade_event_id'] <=> (int) $right['grade_event_id'];
+				}
+				return $order;
 			}
 		);
 		$seen_parts     = array();

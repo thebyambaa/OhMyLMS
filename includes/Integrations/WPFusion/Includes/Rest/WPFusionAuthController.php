@@ -10,6 +10,7 @@
 
 namespace OhMyLMS\Integrations\WPFusion\Includes\Rest;
 
+use WP_REST_Controller;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -21,7 +22,7 @@ use OhMyLMS\Integrations\WPFusion\Includes\Api\WPFusionApiClient;
  * @package OhMyLMS\Integrations\WPFusion\Includes\Rest
  * @since 1.0.0
  */
-class WPFusionAuthController {
+class WPFusionAuthController extends WP_REST_Controller {
 	/**
 	 * The single instance of the class.
 	 *
@@ -247,7 +248,7 @@ class WPFusionAuthController {
 			}
 
 			// Get CRM name.
-			$crmName = wp_fusion()->crm->name ?? 'Unknown';
+			$crm_name = wp_fusion()->crm->name ?? 'Unknown';
 
 			return new \WP_REST_Response(
 				array(
@@ -256,9 +257,11 @@ class WPFusionAuthController {
 						'connected' => true,
 						'installed' => true,
 						'enabled'   => true,
-						'crm'       => $crmName,
+						'crm'       => $crm_name,
 						'message'   => sprintf( /* translators: %s: text value. */
-						__( 'Connected to %s via WP Fusion', 'ohmylms' ), $crmName ),
+							__( 'Connected to %s via WP Fusion', 'ohmylms' ),
+							$crm_name
+						),
 					),
 				),
 				200

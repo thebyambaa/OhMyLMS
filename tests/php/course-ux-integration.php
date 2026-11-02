@@ -65,7 +65,7 @@ try {
 				'POST',
 				'courses',
 				array(
-					'name'   => 'Untitled Course',
+					'title'  => 'Untitled Course',
 					'status' => 'draft',
 				)
 			)['id'];
@@ -76,7 +76,7 @@ try {
 				'POST',
 				'courses',
 				array(
-					'name'   => 'Untitled Course',
+					'title'  => 'Untitled Course',
 					'status' => 'draft',
 				)
 			)['id'];
@@ -91,7 +91,7 @@ try {
 				'POST',
 				'courses',
 				array(
-					'name'   => 'Algebra 1',
+					'title'  => 'Algebra 1',
 					'status' => 'draft',
 				)
 			)['id'];
@@ -102,7 +102,7 @@ try {
 				'POST',
 				'courses',
 				array(
-					'name'   => 'Untitled Course',
+					'title'  => 'Untitled Course',
 					'status' => 'draft',
 				)
 			)['id'];

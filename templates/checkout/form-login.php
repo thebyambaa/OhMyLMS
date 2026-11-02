@@ -11,7 +11,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-if ( is_user_logged_in() ) {
+if ( is_user_logged_in() || ! $checkout->is_login_enabled() ) {
 	return;
 }
 

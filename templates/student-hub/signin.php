@@ -33,6 +33,7 @@ $choices = array(
 	wp_print_inline_script_tag( "try{var t=localStorage.getItem('ohmylms-hub-theme');if(t==='system'||t==='dark'||t==='light'){document.currentScript.parentElement.dataset.theme=t;}}catch(e){}" );
 	?>
 	<h2><?php esc_html_e( 'Your learning space', 'ohmylms' ); ?></h2>
+	<?php echo ohmylms_get_language_switcher(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped by OhMyLMS\I18n\Switcher::render(). ?>
 	<nav class="oml-hub-subnav" aria-label="<?php esc_attr_e( 'Choose how you use this site', 'ohmylms' ); ?>">
 		<?php foreach ( $choices as $choice ) : ?>
 			<a class="oml-hub-pill" href="<?php echo esc_url( $choice[2] ); ?>" <?php echo ( $signin_role ? $signin_role : 'learner' ) === $choice[0] ? 'aria-current="page"' : ''; ?>><?php echo esc_html( $choice[1] ); ?></a>

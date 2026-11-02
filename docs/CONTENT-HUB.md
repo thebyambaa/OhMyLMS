@@ -1,5 +1,7 @@
 # Content Hub
 
+For the authoritative product model and current authoring boundaries, see [Learning Architecture](LEARNING-ARCHITECTURE.md). This guide retains feature and compatibility details; recovered-editor screen descriptions are historical.
+
 One place to build learning content: **OhMyLMS → Content Hub** (`#/content-hub`) replaces the separate Courses, Assessments, Skills, Curriculum and Course Bundles submenus. Skills are a core part of OhMyLMS, not an add-on.
 
 A **grade, exam or subject** (for example Grade 2 Math, MATH0580 or Digital SAT) is an ordinary course and is listed in the **Courses** tab. It can have chapters, skills inside those chapters, and lessons, quizzes and assessments attached to a chapter or to chosen skills. There is no fixed chapter-then-lesson order: a skill-based course is finished when its required skills reach their targets. A course built from a syllabus is edited in the syllabus editor (see [SYLLABUS.md](SYLLABUS.md)); every other course is opened in its editor from the Courses tab.
@@ -76,12 +78,13 @@ Program JSON additions (additive, no table changes): an outcome may carry `chapt
 ## Source
 
 - PHP: `includes/Learning/Catalog.php` (catalog, chapters, draft, lists), `includes/Learning/Placements.php` (placement index and course resolution), `includes/Rest/V1/ContentHubController.php`; program rules in `CourseProgram::normalize()`.
-- Admin UI: `assets/src/features/content-hub/` (`hubRoutes.mjs`, `ContentHub.jsx`, `AttachDialog.jsx`, `AttachmentItem.jsx`, `PublishDialog.jsx`, `SkillPicker.jsx`, `LessonsPage.jsx`, `catalogModel.mjs`); the syllabus editor reuses the attach and publish dialogs, `AttachmentItem` and the model. The hub frame and routes are wired in `assets/src/extensions/index.jsx`; pages load lazily from the `content-hub` chunk. The Skills, Question Bank, Curriculum and Course Bundles tabs are SDK admin pages (`HUB_EXTENSION_TABS` in `hubRoutes.mjs`) shown inside the hub frame; they read `HubContext` to lower their heading level. The Courses, Quizzes and Assignments tabs are the application's own list screens (`HUB_APP_ROUTES`), and `HUB_ALIASES` maps the retired `#/assessments*` addresses onto their tabs, and `legacyCatalogTarget` says where the retired `#/content-hub/catalog*` addresses lead. The quiz, assignment, course and lesson editors and reports are listed in `HUB_MENU_ROUTES` so the menu entry stays highlighted. Styles are in `assets/css/admin-ui.css`.
+- Admin UI: the typed app's `assets/src/app/features/content-hub/` (`#/content-hub`, `#/content-hub/skills`); the other hub screens are their own app features (courses, quizzes, exams, question bank, curriculum, bundles). `assets/src/features/content-hub/` keeps the exam, quiz-exchange and import helpers that other entries still import. The recovered hub described next was deleted at the cutover ([CUTOVER.md](CUTOVER.md)): `assets/src/features/content-hub/` (`hubRoutes.mjs`, `ContentHub.jsx`, `AttachDialog.jsx`, `AttachmentItem.jsx`, `PublishDialog.jsx`, `SkillPicker.jsx`, `LessonsPage.jsx`, `catalogModel.mjs`); the syllabus editor reuses the attach and publish dialogs, `AttachmentItem` and the model. The hub frame and routes are wired in `assets/src/extensions/index.jsx`; pages load lazily from the `content-hub` chunk. The Skills, Question Bank, Curriculum and Course Bundles tabs are SDK admin pages (`HUB_EXTENSION_TABS` in `hubRoutes.mjs`) shown inside the hub frame; they read `HubContext` to lower their heading level. The Courses, Quizzes and Assignments tabs are the application's own list screens (`HUB_APP_ROUTES`), and `HUB_ALIASES` maps the retired `#/assessments*` addresses onto their tabs, and `legacyCatalogTarget` says where the retired `#/content-hub/catalog*` addresses lead. The quiz, assignment, course and lesson editors and reports are listed in `HUB_MENU_ROUTES` so the menu entry stays highlighted. Styles are in `assets/css/admin-ui.css`.
 
 ## Validation
 
 ```sh
-node --test tests/js/content-hub.test.mjs tests/js/catalog-model.test.mjs tests/js/attachment-item.test.mjs
+node --test tests/js/content-hub.test.mjs
+npm run test:app
 php tests/php/learning-model-unit.php
 for mode in off skills bank both; do php tests/php/addons-unit.php $mode; done
 ```

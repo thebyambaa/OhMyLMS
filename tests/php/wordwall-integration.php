@@ -90,7 +90,7 @@ try {
 				)
 			);
 			wordwall_check( ! is_wp_error( $written ), 'Text entry could not save: ' . ( is_wp_error( $written ) ? $written->get_error_message() : '' ) );
-			wordwall_check( 200 === wordwall_request( 'question-bank/' . $written['id'] . '/approve', array() )->get_status(), 'Text approval failed.' );
+			wordwall_check( 200 === wordwall_request( 'questions/' . $written['id'] . '/approve', array() )->get_status(), 'Text approval failed.' );
 			wordwall_check( null !== QuestionPlayer::eligible( $written['id'], $admin->ID ), 'Automatic text entry is not player eligible.' );
 			$match = DraftWriter::save(
 				array(
@@ -115,7 +115,7 @@ try {
 				)
 			);
 			wordwall_check( ! is_wp_error( $match ), 'Matching fixture failed.' );
-			wordwall_request( 'question-bank/' . $match['id'] . '/approve', array() );
+			wordwall_request( 'questions/' . $match['id'] . '/approve', array() );
 			$post           = wp_insert_post(
 				array(
 					'post_type'   => 'page',

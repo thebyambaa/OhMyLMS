@@ -741,3 +741,129 @@ body.oml-ds .arco-btn {
 		transition: none;
 	}
 }
+
+/*
+ * Notices and status text that used to be inline styles. Spacing and radius keep the previous
+ * measurement as a fallback; colors come from the shared tokens (stylelint rejects hex here).
+ */
+.ohmylms-verification-notice {
+	border-inline-start: var(--oml-space-1, 4px) solid var(--oml-info);
+	border-radius: var(--oml-radius-control, 8px);
+	font-size: var(--oml-font-size-md, 14px);
+	line-height: var(--oml-line-normal, 1.6);
+	margin-bottom: var(--oml-space-5, 20px);
+	padding-block: var(--oml-space-4, 14px);
+	padding-inline: var(--oml-space-4, 18px);
+}
+
+.ohmylms-verification-notice-success {
+	background: var(--oml-success-soft);
+	border-inline-start-color: var(--oml-success);
+	color: var(--oml-success-text);
+}
+
+.ohmylms-verification-notice-info {
+	background: var(--oml-info-soft);
+	border-inline-start-color: var(--oml-info);
+	color: var(--oml-info);
+}
+
+.ohmylms-verification-notice-warning {
+	background: var(--oml-warning-soft);
+	border-inline-start-color: var(--oml-warning);
+	color: var(--oml-warning-text);
+}
+
+.ohmylms-verification-notice-thankyou {
+	background: var(--oml-primary-soft);
+	border: 1px solid var(--oml-primary);
+	border-radius: var(--oml-radius-card, 10px);
+	color: var(--oml-primary);
+	font-size: var(--oml-font-size-lg, 15px);
+	line-height: var(--oml-line-normal, 1.7);
+	margin: var(--oml-space-5, 24px) 0;
+	padding-block: var(--oml-space-5, 18px);
+	padding-inline: var(--oml-space-5, 22px);
+	text-align: center;
+}
+
+.ohmylms-verification-resend-button {
+	background: var(--oml-primary);
+	border-radius: var(--oml-radius-control, 6px);
+	color: var(--oml-on-primary);
+	display: inline-block;
+	font-weight: var(--oml-weight-strong, 600);
+	padding-block: var(--oml-space-2, 10px);
+	padding-inline: var(--oml-space-5, 24px);
+	text-decoration: none;
+}
+
+.ohmylms-verification-resend,
+.ohmylms-verification-icon {
+	color: var(--oml-primary);
+}
+
+.ohmylms-verification-resend {
+	text-decoration: underline;
+}
+
+.ohmylms-verification-resend-row {
+	margin-top: var(--oml-space-4, 16px);
+}
+
+.ohmylms-buy-now-error,
+.ohmylms-text-danger,
+.ohmylms-settings-error,
+#authorize-net-payment-errors {
+	color: var(--oml-danger);
+}
+
+.ohmylms-text-warning {
+	color: var(--oml-warning-text);
+}
+
+.ohmylms-text-muted {
+	color: var(--oml-muted);
+}
+
+.ohmylms-auth-divider {
+	color: var(--oml-muted);
+	font-size: var(--oml-font-size-sm, 13px);
+	text-align: center;
+}
+
+.ohmylms-settings-description {
+	margin-top: 0;
+}
+
+#ohmylms-view-as-banner {
+	align-items: center;
+	background: var(--oml-view-as-background, var(--oml-heading));
+	bottom: 0;
+	color: var(--oml-view-as-text, var(--oml-on-shade));
+	display: flex;
+	gap: var(--oml-space-4, 16px);
+	inset-inline: 0;
+	padding-block: var(--oml-space-3, 12px);
+	padding-inline: var(--oml-space-5, 24px);
+	position: fixed;
+	z-index: 999999;
+}
+
+.ohmylms-gutenberg-edit-mode {
+	background: var(--oml-edit-background, var(--oml-background));
+	border-inline-start: var(--oml-space-1, 4px) solid var(--oml-edit-info, var(--oml-info));
+	color: var(--oml-edit-text, var(--oml-text));
+	font-size: var(--oml-font-size-xs, 12px);
+	margin-bottom: var(--oml-space-4, 16px);
+	padding-block: var(--oml-space-2, 8px);
+	padding-inline: var(--oml-space-3, 12px);
+}
+
+.ohmylms-color-picker-popup {
+	background: var(--oml-subtle);
+	border: 1px solid var(--oml-border);
+	display: none;
+	position: absolute;
+	z-index: var(--oml-z-dropdown, 100);
+}

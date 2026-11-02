@@ -142,7 +142,7 @@ try {
 				);
 				$q                               = DraftWriter::save( $definition );
 				activities_check( ! is_wp_error( $q ), 'Fixture failed: ' . $name . ( is_wp_error( $q ) ? $q->get_error_message() : '' ) );
-				$request = new WP_REST_Request( 'POST', '/ohmylms/v1/question-bank/' . $q['id'] . '/approve' );
+				$request = new WP_REST_Request( 'POST', '/ohmylms/v1/questions/' . $q['id'] . '/approve' );
 				activities_check( 200 === rest_do_request( $request )->get_status(), 'Approval failed.' );
 				$ids[ $name ] = $q['id'];
 			}
@@ -306,7 +306,7 @@ try {
 					)
 				);
 				activities_check( ! is_wp_error( $q ), 'Maths preset invalid: ' . $kind . ( is_wp_error( $q ) ? $q->get_error_message() : '' ) );
-				$request = new WP_REST_Request( 'POST', '/ohmylms/v1/question-bank/' . $q['id'] . '/approve' );
+				$request = new WP_REST_Request( 'POST', '/ohmylms/v1/questions/' . $q['id'] . '/approve' );
 				activities_check( 200 === rest_do_request( $request )->get_status(), 'Maths approval failed.' );
 				$snapshot = QuestionPlayer::eligible( $q['id'], $admin->ID );
 				foreach ( array( 11, 42, 97 ) as $seed ) {

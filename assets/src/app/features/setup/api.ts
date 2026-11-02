@@ -1,17 +1,9 @@
 import { get, post } from '../../lib/api';
-import {
-	parseCurrencies,
-	parseState,
-	parseStateResponse,
-	parseStepResponse,
-} from './model';
-import type {
-	CurrencyOption,
-	SetupState,
-	StepId,
-	StepInput,
-	StepResponse,
-} from './types';
+import { parseState, parseStateResponse, parseStepResponse } from './model';
+import type { SetupState, StepId, StepInput, StepResponse } from './types';
+
+/** Currencies for the preferences step come from the settings feature (same capability). */
+export { listCurrencies } from '../settings/public';
 
 const BASE = '/ohmylms/v1/setup';
 
@@ -104,19 +96,5 @@ export async function resetSetup(
 ): Promise< SetupState > {
 	return parseStateResponse(
 		await post< unknown >( `${ BASE }/reset`, undefined, { signal } )
-	);
-}
-
-/**
- * List currencies for the preferences step (settings API, same capability).
- *
- * @param signal Cancels the request.
- * @return Currencies.
- */
-export async function listCurrencies(
-	signal?: AbortSignal
-): Promise< CurrencyOption[] > {
-	return parseCurrencies(
-		await get< unknown >( '/ohmylms/v1/settings/currencies', { signal } )
 	);
 }

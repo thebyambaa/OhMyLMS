@@ -17,7 +17,7 @@ test( 'Hangman and spelling preserve private answers and resume word progress', 
 	await page.locator( '#user_pass' ).fill( credentials.password );
 	await page.locator( '#wp-submit' ).click();
 	await page.waitForURL( ( u ) => ! u.pathname.endsWith( 'wp-login.php' ) );
-	await page.goto( '/wp-admin/admin.php?page=ohmylms' );
+	await page.goto( '/wp-admin/admin.php?page=ohmylms-app' );
 	await page.waitForFunction( () => Boolean( window.wp?.apiFetch ) );
 	const fixture = await page.evaluate( async () => {
 		const api = ( path, data ) =>
@@ -35,13 +35,12 @@ test( 'Hangman and spelling preserve private answers and resume word progress', 
 				equivalence: false,
 			},
 		] ) {
-			const q = await api( '/ohmylms/v1/question', {
+			const q = await api( '/ohmylms/v1/questions', {
 				name: 'Word games browser clue',
-				quiz_id: 0,
 				settings: { ...settings, score: { enabled: true, value: 1 } },
-				questions: [],
+				options: [],
 			} );
-			await api( `/ohmylms/v1/question-bank/${ q.id }/approve`, {} );
+			await api( `/ohmylms/v1/questions/${ q.id }/approve`, {} );
 			questions.push( q.id );
 		}
 		const pages = [];
@@ -171,7 +170,7 @@ test( 'Hangman and spelling preserve private answers and resume word progress', 
 		).toHaveCount( 1 );
 		expect( errors ).toEqual( [] );
 	} finally {
-		await page.goto( '/wp-admin/admin.php?page=ohmylms' );
+		await page.goto( '/wp-admin/admin.php?page=ohmylms-app' );
 		await page.waitForFunction( () => Boolean( window.wp?.apiFetch ) );
 		await page.evaluate( async ( { pages, questions } ) => {
 			for ( const p of pages )
@@ -181,7 +180,7 @@ test( 'Hangman and spelling preserve private answers and resume word progress', 
 				} );
 			for ( const id of questions )
 				await wp.apiFetch( {
-					path: `/ohmylms/v1/question/${ id }`,
+					path: `/ohmylms/v1/questions/${ id }`,
 					method: 'DELETE',
 				} );
 		}, fixture );

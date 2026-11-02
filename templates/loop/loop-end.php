@@ -20,19 +20,15 @@ if ( isset( $atts ) && is_array( $atts ) && ! empty( $atts ) ) {
 	$layout_style = get_option( 'ohmylms_archive_page_layout_style', 'grid-style1' );
 }
 
-// Check if we're in a block context by looking for block attributes.
-$is_block_context = isset( $atts ) && is_array( $atts ) && (
-	isset( $atts['layoutStyle'] ) ||
-	isset( $atts['layout_style'] ) ||
-	isset( $atts['postsPerPage'] ) ||
-	isset( $atts['posts_per_page'] )
-);
-
 ?>
 </div>
 <!-- .ohmylms-course-cards end. it start in loop-start.php -->
 
-<?php if ( 'grid' === $layout && ( 'grid-style3' === $layout_style || 'grid-style4' === $layout_style ) ) { ?>
-	</div>
-<!-- .ohmylms-carousel-outer end. it start in loop-start.php -->
-<?php } ?>
+<?php
+if ( \OhMyLMS\Design\Carousel::is_open() ) {
+	// Dots and the end of .ohmylms-carousel-outer, opened in loop-start.php.
+	echo \OhMyLMS\Design\Carousel::close(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped by the helper.
+} elseif ( 'grid' === $layout && ( 'grid-style3' === $layout_style || 'grid-style4' === $layout_style ) ) {
+	// A theme's loop-start.php override opened .ohmylms-carousel-outer itself.
+	echo '</div>';
+}

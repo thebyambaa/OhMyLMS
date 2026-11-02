@@ -10,6 +10,7 @@ namespace OhMyLMS\Learning;
 use OhMyLMS\Curriculum\UnitNumber;
 use OhMyLMS\DataStores\ChapterStore;
 use OhMyLMS\DataStores\CourseStore;
+use OhMyLMS\Utility\Lock;
 use OhMyLMS\Utility\Transaction;
 
 defined( 'ABSPATH' ) || exit;
@@ -24,17 +25,18 @@ final class CourseStructure {
 	 * @return mixed|\WP_Error
 	 */
 	public static function read( $course_id, callable $reader ) {
-		global $wpdb;
-		$key = 'ohmylms_program_' . (int) $course_id;
-		if ( ! $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 3)', $key ) ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Named lock shared with program and native structure writers.
-			return Catalog::error( __( 'Another author is saving this course. Try again.', 'ohmylms' ), 409 );
-		}
-		try {
-			self::flush( $course_id );
-			return UnitSnapshots::authoring( $reader );
-		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $key ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Release the named read lock.
-		}
+		// Named lock shared with program and native structure writers.
+		return Lock::with(
+			'ohmylms_program_' . (int) $course_id,
+			3,
+			static function () use ( $course_id, $reader ) {
+				self::flush( $course_id );
+				return UnitSnapshots::authoring( $reader );
+			},
+			static function () {
+				return Catalog::error( __( 'Another author is saving this course. Try again.', 'ohmylms' ), 409 );
+			}
+		);
 	}
 
 	/**
@@ -47,6 +49,87 @@ final class CourseStructure {
 		global $wpdb;
 		$owners = $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT course_id FROM %i WHERE chapter_id=%d', $wpdb->prefix . 'ohmylms_chapter_relationship', $chapter_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh relationship ownership, checked for each request.
 		return 1 === count( $owners ) ? (int) $owners[0] : 0;
+	}
+
+	/**
+	 * First course of each content item: the lowest course ID among the chapters that contain it.
+	 *
+	 * @param int[] $content_ids Content post IDs.
+	 * @return array<int,int> Content ID => course ID; content outside every course is absent.
+	 */
+	public static function first_courses( array $content_ids ) {
+		global $wpdb;
+		$ids = array_values( array_unique( array_filter( array_map( 'intval', $content_ids ) ) ) );
+		if ( ! $ids ) {
+			return array();
+		}
+		$holders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery -- Placeholders are generated from the id count.
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT content.content_id, MIN(chapter.course_id) AS course_id FROM %i content INNER JOIN %i chapter ON chapter.chapter_id = content.chapter_id WHERE content.content_id IN ({$holders}) GROUP BY content.content_id", array_merge( array( $wpdb->prefix . 'ohmylms_content_relationship', $wpdb->prefix . 'ohmylms_chapter_relationship' ), $ids ) ) );
+		$map  = array();
+		foreach ( (array) $rows as $row ) {
+			$map[ (int) $row->content_id ] = (int) $row->course_id;
+		}
+		return $map;
+	}
+
+	/**
+	 * Content IDs placed in a course through its chapters (at most 5000).
+	 *
+	 * @param int $course_id Course ID.
+	 * @return int[]
+	 */
+	public static function content_ids( $course_id ) {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh relationship read for a list filter.
+		$ids = $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT content.content_id FROM %i content INNER JOIN %i chapter ON chapter.chapter_id = content.chapter_id WHERE chapter.course_id = %d LIMIT 5000', $wpdb->prefix . 'ohmylms_content_relationship', $wpdb->prefix . 'ohmylms_chapter_relationship', $course_id ) );
+		return array_map( 'intval', (array) $ids );
+	}
+
+	/**
+	 * Published content items placed in a course, by title (at most 200).
+	 *
+	 * @param int $course_id Course ID.
+	 * @return array<int,array{id:string,title:string}>
+	 */
+	public static function published_items( $course_id ) {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Bounded outline of one course.
+		return (array) $wpdb->get_results( $wpdb->prepare( "SELECT DISTINCT p.ID AS id,p.post_title AS title FROM %i r JOIN %i c ON c.chapter_id=r.chapter_id JOIN %i p ON p.ID=r.content_id WHERE c.course_id=%d AND p.post_status='publish' ORDER BY p.post_title LIMIT 200", $wpdb->prefix . 'ohmylms_content_relationship', $wpdb->prefix . 'ohmylms_chapter_relationship', $wpdb->posts, $course_id ), ARRAY_A );
+	}
+
+	/**
+	 * Chapters holding a content item with their course, in placement order (at most 50).
+	 *
+	 * @param int $content_id Content post ID.
+	 * @return array<int,array{chapter_id:int,course_id:int}>
+	 */
+	public static function chapter_placements( $content_id ) {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh relationship read for one item.
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT content.chapter_id, chapter.course_id FROM %i content INNER JOIN %i chapter ON chapter.chapter_id = content.chapter_id WHERE content.content_id = %d ORDER BY content.ID ASC LIMIT 50', $wpdb->prefix . 'ohmylms_content_relationship', $wpdb->prefix . 'ohmylms_chapter_relationship', $content_id ) );
+		$out  = array();
+		foreach ( (array) $rows as $row ) {
+			$out[] = array(
+				'chapter_id' => (int) $row->chapter_id,
+				'course_id'  => (int) $row->course_id,
+			);
+		}
+		return $out;
+	}
+
+	/**
+	 * Subquery selecting the content IDs placed in a course through a chapter, for `ID IN (...)` filters.
+	 *
+	 * @param int $course_id Course ID.
+	 * @return array{0:string,1:array} SQL with two `%i` and one `%d` placeholder, and its arguments.
+	 */
+	public static function content_in_course_sql( $course_id ) {
+		global $wpdb;
+		return array(
+			'SELECT content.content_id FROM %i content INNER JOIN %i chapter ON chapter.chapter_id = content.chapter_id WHERE chapter.course_id = %d',
+			array( $wpdb->prefix . 'ohmylms_content_relationship', $wpdb->prefix . 'ohmylms_chapter_relationship', (int) $course_id ),
+		);
 	}
 
 	/**
@@ -368,6 +451,40 @@ final class CourseStructure {
 	}
 
 	/**
+	 * Legacy chapter route: remove a placement and every learner's progress on that content.
+	 * Use `detach()` to keep learner history.
+	 *
+	 * @param int $chapter_id Chapter ID.
+	 * @param int $content_id Content ID.
+	 */
+	public static function remove_with_progress( $chapter_id, $content_id ) {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Placement table has no API.
+		$wpdb->delete(
+			$wpdb->prefix . OHMYLMS_CONTENT_RELATIONSHIP,
+			array(
+				'chapter_id' => $chapter_id,
+				'content_id' => $content_id,
+			),
+			array(
+				'%d',
+				'%d',
+			)
+		);
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Progress table has no API.
+		$wpdb->delete(
+			$wpdb->prefix . 'ohmylms_user_progress',
+			array(
+				'content_id' => $content_id,
+			),
+			array(
+				'%d',
+				'%d',
+			)
+		);
+	}
+
+	/**
 	 * Remove only a native placement, preserving content and learner history.
 	 *
 	 * @param int $chapter_id Unit ID.
@@ -385,5 +502,47 @@ final class CourseStructure {
 			)
 		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Remove a placement, never the reusable post or student progress.
 		return false === $removed ? Catalog::error( __( 'The placement could not be removed.', 'ohmylms' ), 500 ) : true;
+	}
+
+	/**
+	 * Courses holding a content item through a chapter, one entry per chapter placement, unordered.
+	 *
+	 * @param int $content_id Content post ID.
+	 * @return array Course IDs as the database returned them.
+	 */
+	public static function placement_courses( $content_id ) {
+		global $wpdb;
+		return (array) $wpdb->get_col( $wpdb->prepare( 'SELECT ch.course_id FROM %i c INNER JOIN %i ch ON ch.chapter_id = c.chapter_id WHERE c.content_id = %d', $wpdb->prefix . 'ohmylms_content_relationship', $wpdb->prefix . 'ohmylms_chapter_relationship', $content_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Bounded placement read.
+	}
+
+	/**
+	 * Distinct content IDs placed in any of several courses through their chapters, unordered.
+	 *
+	 * @param int[] $course_ids Course IDs; not empty.
+	 * @return int[]
+	 */
+	public static function content_in_courses( array $course_ids ) {
+		global $wpdb;
+		$holders = implode( ',', array_fill( 0, count( $course_ids ), '%d' ) );
+		return array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT c.content_id FROM %i c INNER JOIN %i ch ON ch.chapter_id = c.chapter_id WHERE ch.course_id IN ({$holders})", array_merge( array( $wpdb->prefix . 'ohmylms_content_relationship', $wpdb->prefix . 'ohmylms_chapter_relationship' ), $course_ids ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Placeholders built for the course list.
+	}
+
+	/**
+	 * Remove every chapter placement of a course; the chapters and their content stay.
+	 *
+	 * @param int $course_id Course ID.
+	 */
+	public static function remove_course_chapters( $course_id ) {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Chapter relationship table has no API.
+		$wpdb->delete(
+			$wpdb->prefix . OHMYLMS_CHAPTER_RELATIONSHIP,
+			array(
+				'course_id' => $course_id,
+			),
+			array(
+				'%d',
+			)
+		);
 	}
 }

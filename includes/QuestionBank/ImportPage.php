@@ -9,24 +9,52 @@ namespace OhMyLMS\QuestionBank;
 
 defined( 'ABSPATH' ) || exit;
 
-/** Question review and bulk import page (no submenu entry; imports start in Content Hub > Import). */
+/**
+ * Question review and bulk import: Content Hub > Question bank > Import review
+ * (`admin.php?page=ohmylms-content&tab=question-bank&section=import-review`), a section the server renders
+ * ({@see \OhMyLMS\Admin\AdminNavigation}). It reviews the questions AI assistants added.
+ */
 final class ImportPage {
 
+	/**
+	 * Former page slug; opening `admin.php?page=ohmylms-import-questions` redirects to the section.
+	 */
 	const SLUG      = 'ohmylms-import-questions';
 	const MAX_BYTES = 2097152;
 	const MAX_ROWS  = 1000;
 
-	/** Register the menu entry. */
+	/** Register the redirect of the former page. */
 	public static function init() {
 		add_action( 'admin_menu', array( __CLASS__, 'menu' ), 32 );
 	}
 
 	/**
-	 * Keep the page reachable without a menu entry: importing now lives in Content Hub > Import,
-	 * and this page remains for reviewing questions that AI assistants added.
+	 * Keep the former page registered without a menu entry. Opening it redirects to the section; a form
+	 * posted from an old open tab is still handled here.
 	 */
 	public static function menu() {
-		add_submenu_page( 'options.php', __( 'Review imported questions', 'ohmylms' ), __( 'Review imported questions', 'ohmylms' ), 'edit_posts', self::SLUG, array( __CLASS__, 'render' ) );
+		$hook = add_submenu_page( 'options.php', __( 'Review imported questions', 'ohmylms' ), __( 'Review imported questions', 'ohmylms' ), 'edit_posts', self::SLUG, array( __CLASS__, 'render' ) );
+		if ( $hook ) {
+			add_action( 'load-' . $hook, array( __CLASS__, 'redirect' ) );
+		}
+	}
+
+	/**
+	 * Address of the section.
+	 *
+	 * @return string
+	 */
+	public static function url() {
+		return \OhMyLMS\Admin\AdminNavigation::tab_url( 'content', 'question-bank', 'import-review' );
+	}
+
+	/** Send a visit of the former page to the section. */
+	public static function redirect() {
+		if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'GET' !== $_SERVER['REQUEST_METHOD'] ) {
+			return;
+		}
+		wp_safe_redirect( self::url() );
+		exit;
 	}
 
 	/**

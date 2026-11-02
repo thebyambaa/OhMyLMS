@@ -48,26 +48,18 @@ class AssignmentFactory {
 		// Check if input is false and post is set.
 		if ( false === $assignment && isset( $post, $post->ID ) && OHMYLMS_LESSON_CPT === get_post_type( $post->ID ) ) {
 			return absint( $post->ID );
-		}
-
-		// If input is numeric, check if assignment exists.
-		elseif ( is_numeric( $assignment ) ) {
+		} elseif ( is_numeric( $assignment ) ) {
+			// If input is numeric, check if assignment exists.
 			return $this->is_assignment_exist( $assignment ) ? $assignment : false;
-		}
-
-		// If input is an instance of Assignment.
-		elseif ( $assignment instanceof Assignment ) {
+		} elseif ( $assignment instanceof Assignment ) {
+			// If input is an instance of Assignment.
 			$id = $assignment->get_id();
 			return $this->is_assignment_exist( $id ) ? $id : false;
-		}
-
-		// If input contains a valid ID property.
-		elseif ( ! empty( $assignment->ID ) ) {
+		} elseif ( ! empty( $assignment->ID ) ) {
+			// If input contains a valid ID property.
 			return $this->is_assignment_exist( $assignment->ID ) ? $assignment->ID : false;
-		}
-
-		// Otherwise, return false.
-		else {
+		} else {
+			// Otherwise, return false.
 			return false;
 		}
 	}

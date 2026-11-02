@@ -1,11 +1,12 @@
 import { Button, Modal, Notice } from '@wordpress/components';
-import { useCallback, useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { lazy, Suspense, useCallback, useState } from '@wordpress/element';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useParams } from 'react-router-dom';
 import { useOperation } from '../../hooks/useOperation';
 import { useRequest } from '../../hooks/useRequest';
 import { command, readSyllabus } from './api';
 import { ComparisonDialog } from './ComparisonDialog';
+import { CourseFromSyllabusDialog } from './CourseFromSyllabusDialog';
 import { CsvImportDialog } from './CsvImportDialog';
 import { FieldsDialog } from './FieldsDialog';
 import { GroupList, type EditSelection, type MoveSelection } from './GroupList';
@@ -13,6 +14,13 @@ import { LibraryPicker } from './LibraryPicker';
 import { MappingDialog } from './MappingDialog';
 import { MoveDialog } from './MoveDialog';
 import type { Group, SendCommand, Skill, SyllabusOutline } from './model';
+import { SourceDialog } from './SourceDialog';
+
+const PublicationPanel = lazy( () =>
+	import(
+		/* webpackChunkName: "admin-app-course-structure" */ '../course-structure/public'
+	).then( ( module ) => ( { default: module.PublicationPanel } ) )
+);
 
 export default function SyllabusPage() {
 	const id = Number( useParams().id );
@@ -57,6 +65,20 @@ export function SyllabusWorkspace( { initial }: { initial: SyllabusOutline } ) {
 	const [ importing, setImporting ] = useState( false );
 	const [ comparing, setComparing ] = useState( false );
 	const [ mapping, setMapping ] = useState< Skill | null >( null );
+	const [ deleting, setDeleting ] = useState< Group | null >( null );
+	const [ editingSource, setEditingSource ] = useState( false );
+	const [ generating, setGenerating ] = useState( false );
+	const requirements = data.course
+		? new Map(
+				data.requirements.map( ( requirement ) => [
+					requirement.term_id,
+					requirement,
+				] )
+			)
+		: null;
+	const required = data.requirements.filter(
+		( requirement ) => requirement.required
+	).length;
 	const send: SendCommand = ( name, fields ) =>
 		operation.run(
 			( signal ) => command( data.syllabus.id, name, fields, signal ),
@@ -73,12 +95,36 @@ export function SyllabusWorkspace( { initial }: { initial: SyllabusOutline } ) {
 	);
 	return (
 		<section aria-label={ __( 'Syllabus editor', 'ohmylms' ) }>
-			<h1>{ data.syllabus.name }</h1>
 			<p>
 				<Link to="/content-hub/curriculum">
 					{ __( 'Back to curriculum', 'ohmylms' ) }
 				</Link>
 			</p>
+			<h2>{ data.syllabus.name }</h2>
+			{ ( data.syllabus.code || data.syllabus.version ) && (
+				<p>
+					{ [ data.syllabus.code, data.syllabus.version ]
+						.filter( Boolean )
+						.join( ' · ' ) }
+				</p>
+			) }
+			<Button
+				variant="secondary"
+				disabled={ operation.busy }
+				onClick={ () => {
+					operation.clearError();
+					setEditingSource( true );
+				} }
+			>
+				{ __( 'Source and profile', 'ohmylms' ) }
+			</Button>{ ' ' }
+			<Button
+				variant="primary"
+				disabled={ operation.busy }
+				onClick={ () => setGenerating( true ) }
+			>
+				{ __( 'New course from this syllabus…', 'ohmylms' ) }
+			</Button>
 			{ operation.error && (
 				<Notice status="error" isDismissible={ false }>
 					{ operation.error }
@@ -98,19 +144,88 @@ export function SyllabusWorkspace( { initial }: { initial: SyllabusOutline } ) {
 					{ data.course_error }
 				</Notice>
 			) }
+			<h3>{ __( 'Mirrored syllabus course', 'ohmylms' ) }</h3>
 			<p>
 				{ __(
-					'Syllabus changes update the course draft. They do not publish it to learners.',
+					'The mirrored course follows this syllabus: its groups are units and its skills are outcomes. Syllabus changes update its draft; they do not publish it to learners.',
 					'ohmylms'
 				) }
 			</p>
 			{ data.course && (
-				<p>
-					<Link to={ `/content-hub/courses/${ data.course.id }` }>
-						{ data.course.title } —{ ' ' }
-						{ __( 'Open course structure', 'ohmylms' ) }
-					</Link>
-				</p>
+				<>
+					<p>
+						<Link to={ `/content-hub/courses/${ data.course.id }` }>
+							{ data.course.title } —{ ' ' }
+							{ __( 'Open course structure', 'ohmylms' ) }
+						</Link>
+					</p>
+					<p>
+						{ sprintf(
+							/* translators: 1: required skills, 2: skills in the course. */
+							_n(
+								'%1$d of %2$d skill is required for the course.',
+								'%1$d of %2$d skills are required for the course.',
+								data.requirements.length,
+								'ohmylms'
+							),
+							required,
+							data.requirements.length
+						) }
+					</p>
+					{ ! required && (
+						<Notice status="warning" isDismissible={ false }>
+							{ 'traditional' === data.course.mode
+								? __(
+										'The course cannot be published without a completion requirement. Require a skill below or an activity in the course outline.',
+										'ohmylms'
+									)
+								: __(
+										'The course cannot be published until at least one skill is required.',
+										'ohmylms'
+									) }
+						</Notice>
+					) }
+					<p>
+						{ data.course.published
+							? __(
+									'A learning program of this course is published to learners.',
+									'ohmylms'
+								)
+							: __(
+									'The course is a draft: learners cannot enroll yet.',
+									'ohmylms'
+								) }
+					</p>
+					{ data.course_error && (
+						<p>
+							{ __(
+								'Update the course from the syllabus before publishing it.',
+								'ohmylms'
+							) }
+						</p>
+					) }
+					<Suspense
+						fallback={
+							<p role="status">{ __( 'Loading…', 'ohmylms' ) }</p>
+						}
+					>
+						<PublicationPanel
+							key={ data.course.id }
+							course={ data.course.id }
+							disabled={ operation.busy || !! data.course_error }
+							onPublished={ () =>
+								void operation.run(
+									( signal ) =>
+										readSyllabus(
+											data.syllabus.id,
+											signal
+										),
+									setData
+								)
+							}
+						/>
+					</Suspense>
+				</>
 			) }
 			<Button
 				disabled={ operation.busy }
@@ -118,7 +233,7 @@ export function SyllabusWorkspace( { initial }: { initial: SyllabusOutline } ) {
 			>
 				{ data.course
 					? __( 'Update course from syllabus', 'ohmylms' )
-					: __( 'Create course from syllabus', 'ohmylms' ) }
+					: __( 'Create mirrored syllabus course', 'ohmylms' ) }
 			</Button>
 			<Button
 				disabled={ operation.busy }
@@ -153,7 +268,79 @@ export function SyllabusWorkspace( { initial }: { initial: SyllabusOutline } ) {
 					setRemoving( { group, skill } );
 				} }
 				mapping={ setMapping }
+				remove={ ( group ) => {
+					operation.clearError();
+					setDeleting( group );
+				} }
+				requirements={ requirements }
 			/>
+			{ editingSource && (
+				<SourceDialog
+					data={ data }
+					busy={ operation.busy }
+					error={ operation.error }
+					onClose={ () => setEditingSource( false ) }
+					onSave={ ( fields ) => send( 'edit_source', fields ) }
+				/>
+			) }
+			{ generating && (
+				<CourseFromSyllabusDialog
+					syllabusId={ data.syllabus.id }
+					onClose={ () => setGenerating( false ) }
+				/>
+			) }
+			{ deleting && (
+				<Modal
+					title={ __( 'Delete this skill group?', 'ohmylms' ) }
+					onRequestClose={ () => {
+						if ( ! operation.busy ) {
+							setDeleting( null );
+						}
+					} }
+				>
+					<p>
+						{ deleting.skills.length
+							? sprintf(
+									/* translators: %d: number of skills. */
+									_n(
+										'This group holds %d skill. The skill stays in the skill library with its questions, lessons and learner evidence; only its placement in this syllabus is removed.',
+										'This group holds %d skills. The skills stay in the skill library with their questions, lessons and learner evidence; only their placements in this syllabus are removed.',
+										deleting.skills.length,
+										'ohmylms'
+									),
+									deleting.skills.length
+								)
+							: __( 'This group holds no skills.', 'ohmylms' ) }
+					</p>
+					{ operation.error && (
+						<Notice status="error" isDismissible={ false }>
+							{ operation.error }
+						</Notice>
+					) }
+					<Button
+						disabled={ operation.busy }
+						onClick={ () => setDeleting( null ) }
+					>
+						{ __( 'Keep group', 'ohmylms' ) }
+					</Button>
+					<Button
+						isDestructive
+						disabled={ operation.busy }
+						onClick={ () =>
+							void send( 'delete_group', {
+								group_id: deleting.id,
+								confirm: deleting.skills.length > 0,
+							} ).then( ( saved ) => {
+								if ( saved ) {
+									setDeleting( null );
+								}
+							} )
+						}
+					>
+						{ __( 'Delete group', 'ohmylms' ) }
+					</Button>
+				</Modal>
+			) }
 			{ editor && (
 				<FieldsDialog
 					title={

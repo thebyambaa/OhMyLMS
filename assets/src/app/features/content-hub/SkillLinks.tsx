@@ -8,7 +8,7 @@ import {
 } from '@wordpress/components';
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import { Table } from '../../../ui/Table';
+import { WidefatTable } from '../../components/WidefatTable';
 import { Pagination } from '../../components/Pagination';
 import { normalizeApiError } from '../../lib/api';
 import type { Collection } from '../../lib/api/collection';
@@ -180,7 +180,9 @@ export function SkillLinks( {
 			</div>
 			{ ! error && (
 				<div aria-busy={ loading }>
-					<Table caption={ __( 'Editable content', 'ohmylms' ) }>
+					<WidefatTable
+						caption={ __( 'Editable content', 'ohmylms' ) }
+					>
 						<thead>
 							<tr>
 								<th scope="col">
@@ -214,7 +216,7 @@ export function SkillLinks( {
 								</tr>
 							) ) }
 						</tbody>
-					</Table>
+					</WidefatTable>
 					<Pagination
 						page={ page }
 						pages={ data.totalPages }

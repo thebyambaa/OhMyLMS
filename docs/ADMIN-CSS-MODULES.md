@@ -1,5 +1,9 @@
 # Admin CSS modules
 
+> **Historical.** The legacy admin stylesheet sources (`assets/src/admin-styles/`), their loader, tools and
+> tests were deleted with the recovered admin on 31 October 2026 ([CUTOVER.md](CUTOVER.md),
+> [STYLESHEET-OWNERSHIP.md](STYLESHEET-OWNERSHIP.md)). The typed app's styles are in `assets/src/app/styles/`.
+
 The admin stylesheet is authored in `assets/src/admin-styles/`. Its manifest is
 ordered: later rules retain their original cascade position. Edit these sources,
 then run `npm run build`. Do not edit the generated files in `assets/dist`.

@@ -32,16 +32,13 @@ ok($inventory['questions_with_identity'] >= 1 && isset($inventory['orphan_option
 [$course_id, $quiz_id] = course_with_quiz($admin, ['allow_attempts' => 5, 'passing_grade' => ['enabled' => true, 'value' => 1], 'randomize_questions' => true]);
 $choice = choice_question($quiz_id, 'Original wording', 2);
 $first = VersionPublisher::identity($choice);
-call('PUT', 'question/' . $choice, ['name' => 'Original wording']);
+ok(status_of(edit_question($choice, ['name' => 'Original wording'])) === 200, 'Unchanged save failed');
 ok((int) VersionPublisher::identity($choice)['current_version_id'] === (int) $first['current_version_id'], 'Unchanged save created a version');
-$multi = call('POST', 'question', ['quiz_id' => $quiz_id, 'name' => 'Pick primes', 'settings' => ['type' => 'multiple-choice', 'score' => ['enabled' => true, 'value' => 3], 'randomize' => true],
-    'questions' => [['answer' => '2', 'is_correct' => 1], ['answer' => '3', 'is_correct' => 1], ['answer' => '4', 'is_correct' => 0], ['answer' => '9', 'is_correct' => 0]]])->get_data()['id'];
-remember_post($multi);
-$essay = call('POST', 'question', ['quiz_id' => $quiz_id, 'name' => 'Explain', 'settings' => ['type' => 'short-text', 'score' => ['enabled' => true, 'value' => 4]], 'questions' => [['answer' => 'model answer', 'is_correct' => 1]]])->get_data()['id'];
-remember_post($essay);
-$match = call('POST', 'question', ['quiz_id' => $quiz_id, 'name' => 'Match', 'settings' => ['type' => 'matching', 'score' => ['enabled' => true, 'value' => 1]],
-    'questions' => [['answer' => 'Cat', 'matching_data' => ['label' => 'Meow']], ['answer' => 'Dog', 'matching_data' => ['label' => 'Woof']], ['answer' => 'Cow', 'matching_data' => ['label' => 'Moo']]]])->get_data()['id'];
-remember_post($match);
+$multi = new_question(['quiz_id' => $quiz_id, 'name' => 'Pick primes', 'settings' => ['type' => 'multiple-choice', 'score' => ['enabled' => true, 'value' => 3], 'randomize' => true],
+    'questions' => [['answer' => '2', 'is_correct' => 1], ['answer' => '3', 'is_correct' => 1], ['answer' => '4', 'is_correct' => 0], ['answer' => '9', 'is_correct' => 0]]]);
+$essay = new_question(['quiz_id' => $quiz_id, 'name' => 'Explain', 'settings' => ['type' => 'short-text', 'score' => ['enabled' => true, 'value' => 4]], 'questions' => [['answer' => 'model answer', 'is_correct' => 1]]]);
+$match = new_question(['quiz_id' => $quiz_id, 'name' => 'Match', 'settings' => ['type' => 'matching', 'score' => ['enabled' => true, 'value' => 1]],
+    'questions' => [['answer' => 'Cat', 'matching_data' => ['label' => 'Meow']], ['answer' => 'Dog', 'matching_data' => ['label' => 'Woof']], ['answer' => 'Cow', 'matching_data' => ['label' => 'Moo']]]]);
 
 // ---- A05: frozen delivery ----
 $student = make_user('subscriber');
@@ -69,8 +66,9 @@ ok(strpos($html, 'data-option-id="' . $by_question[$match]['questions'][0]['id']
 // Teacher edits everything after the learner started.
 as_user($admin);
 $choice_options = option_rows($choice);
-call('PUT', 'question/' . $choice, ['name' => 'Edited wording', 'settings' => ['type' => 'single-choice', 'score' => ['enabled' => true, 'value' => 10]],
-    'questions' => [['id' => $choice_options[0]['id'], 'answer' => 'Right', 'is_correct' => 0], ['id' => $choice_options[1]['id'], 'answer' => 'Wrong', 'is_correct' => 1]]]);
+$edited = edit_question($choice, ['name' => 'Edited wording', 'settings' => ['type' => 'single-choice', 'score' => ['enabled' => true, 'value' => 10]],
+    'questions' => [['id' => (int) $choice_options[0]['id'], 'answer' => 'Right', 'is_correct' => 0], ['id' => (int) $choice_options[1]['id'], 'answer' => 'Wrong', 'is_correct' => 1]]]);
+ok(status_of($edited) === 200, 'Teacher edit failed: ' . wp_json_encode($edited->get_data()));
 $wpdb->delete($wpdb->prefix . 'ohmylms_quiz_questions_relationship', ['quiz_id' => $quiz_id, 'question_id' => $multi]);
 ok((int) VersionPublisher::identity($choice)['current_version_id'] !== (int) $first['current_version_id'], 'Edit did not create a new version');
 
@@ -104,7 +102,7 @@ $report = ohmylms_get_quiz($quiz_id)->get_attempt_report($attempt);
 $report_by = array_column($report['questions'], null, 'id');
 ok($report['engine'] === 'versioned' && $report_by[$choice]['name'] === 'Original wording' && (float) $report_by[$choice]['settings']['score']['value'] === 2.0, 'Report uses current content');
 ok(isset($report_by[$multi]) && !$report_by[$choice]['version']['is_current'], 'Report lost a removed question or version flag');
-ok(status_of(call('GET', 'quiz/' . $quiz_id . '/report/' . $attempt)) === 200, 'Report endpoint failed for versioned attempt');
+ok(status_of(call('GET', 'quizzes/' . $quiz_id . '/attempts/' . $attempt)) === 200, 'Attempt endpoint failed for versioned attempt');
 
 // Manual review: grade the essay, then move marks without changing the total.
 $reviewed = Review::save($quiz_id, $attempt, [$essay => 3], 'Good reasoning');
@@ -150,8 +148,7 @@ ok(status_of($response) === 409 && $response->get_data()['code'] === 'quiz_type_
 $wpdb->delete($wpdb->prefix . 'ohmylms_quiz_questions_relationship', ['question_id' => $blocked]);
 
 // LaTeX survives authoring.
-$latex = call('POST', 'question', ['name' => 'Solve \\(\\frac{1}{2}x=3\\)', 'description' => '<p>\\(\\sqrt{x}\\)</p>', 'settings' => ['type' => 'true-false']])->get_data()['id'];
-remember_post($latex);
+$latex = new_question(['name' => 'Solve \\(\\frac{1}{2}x=3\\)', 'description' => '<p>\\(\\sqrt{x}\\)</p>', 'settings' => ['type' => 'true-false'], 'questions' => [['answer' => 'True', 'is_correct' => 1], ['answer' => 'False']]]);
 ok(get_post_field('post_title', $latex) === 'Solve \\(\\frac{1}{2}x=3\\)' && strpos(get_post_field('post_content', $latex), '\\sqrt') !== false, 'LaTeX backslashes were stripped');
 
 // The real student template renders the frozen delivery (no answer keys, tokens only).

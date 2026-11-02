@@ -266,7 +266,11 @@ try {
 	subjects_check( false !== strpos( $html, 'Published unit fixture' ) && false === strpos( $html, 'Hidden draft unit fixture' ), 'Subject outline preview exposes published unit metadata only.' );
 	subjects_check( false === strpos( $html, 'Hidden private fixture' ) && false === strpos( $html, 'Hidden draft fixture' ) && false === strpos( $html, 'Hidden roadmap fixture' ), 'Private and infrastructure course titles never leak into the subject page.' );
 	subjects_check( strpos( $html, 'Zulu course fixture' ) < strpos( $html, 'Alpha course fixture' ), 'Public cards follow the saved subject order.' );
-	subjects_check( 2 === substr_count( $html, '>Start course</a>' ), 'Visitors can start either course through its enrollment overview.' );
+	// Since 7a3c8bd3 visitors are sent to register (or sign in) and reach the enrollment overview through "View course".
+	$signup = apply_filters( 'ohmylms_subject_signup_url', get_option( 'users_can_register' ) ? wp_registration_url() : wp_login_url( get_permalink( $zulu ) ), $zulu );
+	subjects_check( 2 === substr_count( $html, '>Sign up to enroll</a>' ) && false === strpos( $html, '>Start course</a>' ), 'Visitors are offered sign-up for either course.' );
+	subjects_check( ! get_option( 'users_can_register' ) || false !== strpos( $html, 'href="' . esc_url( $signup ) . '">Sign up to enroll</a>' ), 'Sign-up links go to registration.' );
+	subjects_check( 2 === substr_count( $html, '>View course</a>' ) && false !== strpos( $html, 'href="' . esc_url( add_query_arg( 'hub_subject', $subject_id, get_permalink( $zulu ) ) ) . '">View course</a>' ), 'Visitors can open either course through its enrollment overview.' );
 	subjects_check( 401 === subjects_api( 'GET', 'subjects/' . $subject_id . '/courses' )->get_status(), 'Anonymous authoring read denied.' );
 	subjects_check(
 		401 === subjects_api(

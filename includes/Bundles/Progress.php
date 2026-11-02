@@ -120,9 +120,10 @@ final class Progress {
 			return null; }
 		$course_id  = (int) $post->ID;
 		$enrollment = CourseProgram::enrollment( (int) $student, $course_id );
+		$title      = get_the_title( $post );
 		$summary    = array(
 			'id'        => $course_id,
-			'title'     => get_the_title( $post ) ?: '#' . $course_id,
+			'title'     => $title ? $title : '#' . $course_id,
 			'url'       => get_permalink( $post ),
 			'enrolled'  => (bool) $enrollment,
 			'mode'      => 'traditional',
@@ -240,8 +241,7 @@ final class Progress {
 		$states = array();
 		if ( ! $term_ids || ! self::evidence_ready() ) {
 			return $states; }
-		$placeholders = implode( ',', array_fill( 0, count( $term_ids ), '%d' ) );
-		foreach ( $wpdb->get_results( $wpdb->prepare( 'SELECT term_id, level, review_due, evidence_count, independent_correct, families, last_evidence_at FROM ' . AssessmentSchema::table( 'student_skill_state' ) . " WHERE student_id=%d AND term_id IN ($placeholders)", array_merge( array( (int) $student ), $term_ids ) ), ARRAY_A ) as $row ) {
+		foreach ( $wpdb->get_results( $wpdb->prepare( 'SELECT term_id, level, review_due, evidence_count, independent_correct, families, last_evidence_at FROM %i WHERE student_id=%d AND term_id IN (' . implode( ',', array_fill( 0, count( $term_ids ), '%d' ) ) . ')', array_merge( array( AssessmentSchema::table( 'student_skill_state' ), (int) $student ), $term_ids ) ), ARRAY_A ) as $row ) {
 			$states[ (int) $row['term_id'] ] = $row;
 		}
 		return $states;
@@ -285,7 +285,8 @@ final class Progress {
 				}
 			}
 		}
-		return self::$practice[ $key ] = $url;
+		self::$practice[ $key ] = $url;
+		return $url;
 	}
 
 	/** One entry per skill with its level, classification and where it appears.
@@ -405,8 +406,8 @@ final class Progress {
 			}
 		}
 		$pooled_terms = array_values( array_unique( $pooled_terms ) );
-		$placeholders = implode( ',', array_fill( 0, count( $pooled_terms ), '%d' ) );
-		$evidence     = $wpdb->get_results( $wpdb->prepare( 'SELECT id, grade_event_id, term_id, part_id, question_id, awarded, available, independent, first_try, difficulty, family_id, source_type, source_id, evidence_at FROM ' . AssessmentSchema::table( 'skill_evidence' ) . " WHERE student_id=%d AND term_id IN ($placeholders) AND role='primary' AND superseded=0 ORDER BY evidence_at, id", array_merge( array( (int) $student ), $pooled_terms ) ), ARRAY_A ) ?: array();
+		$evidence     = $wpdb->get_results( $wpdb->prepare( 'SELECT id, grade_event_id, term_id, part_id, question_id, awarded, available, independent, first_try, difficulty, family_id, source_type, source_id, evidence_at FROM %i WHERE student_id=%d AND term_id IN (' . implode( ',', array_fill( 0, count( $pooled_terms ), '%d' ) ) . ") AND role='primary' AND superseded=0 ORDER BY evidence_at, id", array_merge( array( AssessmentSchema::table( 'skill_evidence' ), (int) $student ), $pooled_terms ) ), ARRAY_A );
+		$evidence     = $evidence ? $evidence : array();
 		$by_term      = array();
 		foreach ( $evidence as $row ) {
 			$by_term[ (int) $row['term_id'] ][] = $row; }
@@ -535,7 +536,8 @@ final class Progress {
 		uasort(
 			$entries,
 			static function ( $left, $right ) {
-				return array_search( $left['classification'], self::CLASSES, true ) <=> array_search( $right['classification'], self::CLASSES, true ) ?: strcmp( $left['name'], $right['name'] );
+				$order = array_search( $left['classification'], self::CLASSES, true ) <=> array_search( $right['classification'], self::CLASSES, true );
+				return 0 !== $order ? $order : strcmp( $left['name'], $right['name'] );
 			}
 		);
 		foreach ( $members as &$member ) {
@@ -571,7 +573,8 @@ final class Progress {
 		usort(
 			$practice,
 			static function ( $left, $right ) {
-				return self::practice_rank( $left ) <=> self::practice_rank( $right ) ?: strcmp( $left['name'], $right['name'] );
+				$order = self::practice_rank( $left ) <=> self::practice_rank( $right );
+				return 0 !== $order ? $order : strcmp( $left['name'], $right['name'] );
 			}
 		);
 		return array(

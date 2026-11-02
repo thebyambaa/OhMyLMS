@@ -28,7 +28,8 @@ final class SessionReward {
 			return null; }
 		$reward = array();
 		if ( Xp::enabled() ) {
-			$earned       = Xp::for_session( $student, $session['uuid'] ) ?: array(
+			$earned       = Xp::for_session( $student, $session['uuid'] );
+			$earned       = $earned ? $earned : array(
 				'xp'     => 0,
 				'parts'  => array(),
 				'capped' => false,

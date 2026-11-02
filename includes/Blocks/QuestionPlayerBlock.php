@@ -10,17 +10,15 @@ namespace OhMyLMS\Blocks;
 use OhMyLMS\Assessment\Interactive;
 use OhMyLMS\Assessment\Schema;
 use OhMyLMS\Practice\QuestionPlayer;
-use OhMyLMS\QuestionBank\AccessPolicy;
 use OhMyLMS\Skills\Taxonomy;
 
 defined( 'ABSPATH' ) || exit;
 
 /** A saved placement is the authority for selection, grading and skill participation. */
 final class QuestionPlayerBlock {
-	/** Register the block and its REST endpoints. */
+	/** Register the block. Its REST endpoints are {@see Rest\QuestionPlayerController}. */
 	public static function init() {
 		add_action( 'init', array( __CLASS__, 'register' ) );
-		add_action( 'rest_api_init', array( __CLASS__, 'routes' ) );
 		add_action( 'template_redirect', array( __CLASS__, 'prevent_cache' ), 0 );
 	}
 
@@ -183,56 +181,6 @@ final class QuestionPlayerBlock {
 		</section>
 		<?php
 		return ob_get_clean();
-	}
-
-	/** Register author-only metadata search and authenticated player operations. */
-	public static function routes() {
-		register_rest_route(
-			'ohmylms/v1',
-			'/question-player/choices',
-			array(
-				'methods'             => 'GET',
-				'callback'            => array( __CLASS__, 'choices' ),
-				'permission_callback' => static function () {
-					return AccessPolicy::can_author(); },
-				'args'                => array(
-					'kind'    => array(
-						'type'    => 'string',
-						'enum'    => array( 'questions', 'skills' ),
-						'default' => 'questions',
-					),
-					'search'  => array(
-						'type'              => 'string',
-						'sanitize_callback' => 'sanitize_text_field',
-						'default'           => '',
-					),
-					'include' => array(
-						'type'    => 'string',
-						'default' => '',
-					),
-				),
-			)
-		);
-		register_rest_route(
-			'ohmylms/v1',
-			'/question-player/(?P<post_id>\d+)/(?P<key>[a-f0-9]{32})',
-			array(
-				'methods'             => 'POST',
-				'callback'            => array( __CLASS__, 'operate' ),
-				'permission_callback' => 'is_user_logged_in',
-				'args'                => array(
-					'operation' => array(
-						'type'     => 'string',
-						'enum'     => array( 'start', 'resume', 'submit', 'study' ),
-						'required' => true,
-					),
-					'session'   => array(
-						'type'    => 'string',
-						'default' => '',
-					),
-				),
-			)
-		);
 	}
 
 	/**

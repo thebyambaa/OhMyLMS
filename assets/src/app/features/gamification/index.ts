@@ -4,12 +4,16 @@ import type { FeatureDefinition } from '../types';
 
 /**
  * Gamification at `#/gamification`; the tab is the `tab` query parameter (`points`, `levels`,
- * `badges`, `leaderboard`), so the registry needs a single entry.
+ * `badges`, `streaks`, `xp`, `leaderboard`, `rewards`), so the registry needs a single entry.
  */
 export const gamification: FeatureDefinition = {
 	id: 'gamification',
 	title: __( 'Gamification', 'ohmylms' ),
 	path: '/gamification',
+	group: 'engagement',
+	tab: 'gamification',
+	params: { tab: 'section' },
+	extensionRoute: '/gamification/:tab',
 	capability: 'manage_options',
 	component: lazy(
 		() =>

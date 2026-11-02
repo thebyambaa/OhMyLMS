@@ -51,11 +51,11 @@ defined( 'ABSPATH' ) || exit();
 			<?php
 			if ( count( $student_orders->orders ) > 0 ) {
 				foreach ( $student_orders->orders as $student_order ) {
-					$order        = ohmylms_ecommerce_get_order( $student_order );
-					$item_count   = $order->get_item_count() - $order->get_item_count_refunded();
-					$items        = $order->get_items();
-					$purchased_by = get_post_meta( $order->get_id(), '_purchased_by', true );
-					$item         = $items[0] ?? null;
+					$history_order = ohmylms_ecommerce_get_order( $student_order );
+					$item_count    = $history_order->get_item_count() - $history_order->get_item_count_refunded();
+					$items         = $history_order->get_items();
+					$purchased_by  = get_post_meta( $history_order->get_id(), '_purchased_by', true );
+					$item          = $items[0] ?? null;
 					if ( $item ) {
 						$course_id = $item->get_course_id();
 						$course    = ohmylms_get_course( $course_id );
@@ -74,7 +74,7 @@ defined( 'ABSPATH' ) || exit();
 							<div class="table-accordion-handler"></div>
 
 							<div class="dashboard-table-td order-id">
-								#<?php echo esc_html( $order->get_id() ); ?>
+								#<?php echo esc_html( $history_order->get_id() ); ?>
 							</div>
 
 							<div class="dashboard-table-td course-name">
@@ -94,18 +94,18 @@ defined( 'ABSPATH' ) || exit();
 							<div class="dashboard-table-td price">
 								<?php
 								if ( $course ) {
-									echo wp_kses_post( ohmylms_price( $order->get_total() ) );
+									echo wp_kses_post( ohmylms_price( $history_order->get_total() ) );
 								}
 								?>
 							</div>
 
 							<div class="dashboard-table-td date">
-								<time datetime="<?php echo esc_attr( $order->get_date_created()->date( 'c' ) ); ?>"><?php echo esc_html( ohmylms_format_datetime( $order->get_date_created() ) ); ?></time>
+								<time datetime="<?php echo esc_attr( $history_order->get_date_created()->date( 'c' ) ); ?>"><?php echo esc_html( ohmylms_format_datetime( $history_order->get_date_created() ) ); ?></time>
 							</div>
 
 							<div class="dashboard-table-td status">
-								<span class="status-tag <?php echo esc_attr( $order->get_status() ); ?>">
-								<?php echo esc_html( ohmylms_ecommerce_get_order_status_name( $order->get_status() ) ); ?>
+								<span class="status-tag <?php echo esc_attr( $history_order->get_status() ); ?>">
+								<?php echo esc_html( ohmylms_ecommerce_get_order_status_name( $history_order->get_status() ) ); ?>
 								</span>
 							</div>
 
@@ -127,13 +127,13 @@ defined( 'ABSPATH' ) || exit();
 								<div class="dashboard-table-td price" data-title="Price: ">
 									<?php
 									if ( $course ) {
-										echo wp_kses_post( ohmylms_price( $order->get_formatted_order_total() ) );
+										echo wp_kses_post( ohmylms_price( $history_order->get_formatted_order_total() ) );
 									}
 									?>
 								</div>
 
 								<div class="dashboard-table-td date" data-title="Date: ">
-									<time datetime="<?php echo esc_attr( $order->get_date_created()->date( 'c' ) ); ?>"><?php echo esc_html( ohmylms_format_datetime( $order->get_date_created() ) ); ?></time>
+									<time datetime="<?php echo esc_attr( $history_order->get_date_created()->date( 'c' ) ); ?>"><?php echo esc_html( ohmylms_format_datetime( $history_order->get_date_created() ) ); ?></time>
 								</div>
 							</div>
 

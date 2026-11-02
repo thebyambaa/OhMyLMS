@@ -1,16 +1,15 @@
 import { del, get, patch, post } from '../../lib/api';
 import { getCollection } from '../../lib/api/collection';
 import {
-	COURSE_OPTION_LIMIT,
 	buildCouponQuery,
 	buildOrderQuery,
 	parseCoupon,
-	parseCourseOption,
 	parseDeletedId,
 	parseNote,
 	parseNotes,
 	parseOrderDetail,
 	parseOrderSummary,
+	parsePointRefund,
 	parseStatusCounts,
 	positiveId,
 } from './model';
@@ -53,6 +52,27 @@ export async function changeOrderStatus(
 export async function trashOrder( id: number, signal?: AbortSignal ) {
 	return parseDeletedId(
 		await del< unknown >( orderRoute( id ), { signal } )
+	);
+}
+/**
+ * Refund a points order: restores the points once and cancels its enrolments.
+ *
+ * @param id     Order ID.
+ * @param reason Plain-text reason.
+ * @param signal Cancels the request.
+ * @return Points summary and the learner's new balance.
+ */
+export async function refundPoints(
+	id: number,
+	reason: string,
+	signal?: AbortSignal
+) {
+	return parsePointRefund(
+		await post< unknown >(
+			`/ohmylms/v1/point-purchases/${ positiveId( id ) }/refund`,
+			{ reason, confirm: true },
+			{ signal }
+		)
 	);
 }
 export async function listNotes( id: number, signal?: AbortSignal ) {
@@ -103,21 +123,5 @@ export async function deleteCoupon( id: number, signal?: AbortSignal ) {
 	);
 }
 
-/**
- * Course choices for the coupon editor. This reuses the bounded, administrator-only course list of
- * the students API.
- *
- * @param search Title search.
- * @param signal Cancels the request.
- */
-export function listCourses( search: string, signal?: AbortSignal ) {
-	const term = search.trim();
-	return getCollection( '/ohmylms/v1/students/courses', parseCourseOption, {
-		signal,
-		query: {
-			page: 1,
-			per_page: COURSE_OPTION_LIMIT,
-			...( term ? { search: term } : {} ),
-		},
-	} );
-}
+/** Course choices for the coupon editor: the students feature's bounded course list. */
+export { listCourses } from '../students/public';

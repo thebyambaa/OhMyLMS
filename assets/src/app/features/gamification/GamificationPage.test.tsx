@@ -2,6 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { ApiError } from '../../lib/api';
+import { attachment, mockMediaFrame } from '../../test/mediaFrame';
 import * as api from './api';
 import {
 	bronze,
@@ -33,8 +34,11 @@ vi.mock( './api', () => ( {
 	createBadge: vi.fn(),
 	updateBadge: vi.fn(),
 	deleteBadge: vi.fn(),
-	listMedia: vi.fn(),
 } ) );
+
+let media: ReturnType< typeof mockMediaFrame >;
+
+afterEach( () => media.restore() );
 
 const sections = {
 	points,
@@ -46,13 +50,13 @@ const sections = {
 
 beforeEach( () => {
 	vi.clearAllMocks();
+	media = mockMediaFrame();
 	vi.mocked( api.getSection ).mockImplementation( ( async (
 		section: SectionId
 	) => JSON.parse( JSON.stringify( sections[ section ] ) ) ) as never );
 	vi.mocked( api.getOptions ).mockResolvedValue( options );
 	vi.mocked( api.listLevels ).mockResolvedValue( page( [ bronze, silver ] ) );
 	vi.mocked( api.listBadges ).mockResolvedValue( page( [ starter ] ) );
-	vi.mocked( api.listMedia ).mockResolvedValue( page( [ image ] ) );
 } );
 
 function renderPage( tab?: string ) {
@@ -97,7 +101,7 @@ describe( 'GamificationPage', () => {
 		expect( api.listLevels ).not.toHaveBeenCalled();
 		expect(
 			screen.getByRole( 'link', { name: 'Open certificates' } )
-		).toHaveAttribute( 'href', '#/certificates' );
+		).toHaveAttribute( 'href', '/certificates' );
 	} );
 
 	it( 'moves between tabs with the arrow keys and loads a tab when first opened', async () => {
@@ -113,9 +117,7 @@ describe( 'GamificationPage', () => {
 			await screen.findByRole( 'table', { name: 'Levels' } )
 		).toBeVisible();
 		await user.keyboard( '{End}' );
-		expect(
-			screen.getByRole( 'tab', { name: 'Leaderboard and rewards' } )
-		).toHaveFocus();
+		expect( screen.getByRole( 'tab', { name: 'Rewards' } ) ).toHaveFocus();
 		await user.keyboard( '{ArrowRight}' );
 		expect( screen.getByRole( 'tab', { name: 'Points' } ) ).toHaveFocus();
 	} );
@@ -448,12 +450,12 @@ describe( 'GamificationPage', () => {
 			await user.click(
 				within( dialog ).getByRole( 'button', { name: 'Choose image' } )
 			);
-			const picker = await screen.findByRole( 'dialog', {
-				name: 'Choose a badge image',
-			} );
-			await user.click(
-				await within( picker ).findByRole( 'button', {
-					name: /Use image Trophy/,
+			expect( media.last().options.title ).toBe( 'Choose a badge image' );
+			media.last().choose(
+				attachment( {
+					id: image.id,
+					url: image.url,
+					sizes: { thumbnail: { url: image.thumbnail_url } },
 				} )
 			);
 			expect(
@@ -596,7 +598,9 @@ describe( 'GamificationPage', () => {
 			await user.clear( limit );
 			await user.type( limit, '5' );
 			await user.selectOptions(
-				screen.getByRole( 'combobox', { name: 'Rank learners by' } ),
+				await screen.findByRole( 'combobox', {
+					name: 'Rank learners by',
+				} ),
 				'fastest_time'
 			);
 			await user.click(
@@ -618,16 +622,34 @@ describe( 'GamificationPage', () => {
 			} );
 		} );
 
-		it( 'saves rewards on their own', async () => {
+		it( 'no longer carries the rewards', async () => {
+			renderPage( 'leaderboard' );
+			await screen.findByRole( 'form', { name: 'Leaderboard' } );
+			expect(
+				screen.queryByRole( 'form', { name: 'Point rewards' } )
+			).not.toBeInTheDocument();
+			expect( api.getSection ).not.toHaveBeenCalledWith(
+				'rewards',
+				expect.anything()
+			);
+		} );
+	} );
+
+	describe( 'rewards', () => {
+		it( 'opens from ?tab=rewards and saves with the loaded revision', async () => {
 			const user = userEvent.setup();
 			vi.mocked( api.saveSection ).mockResolvedValue( {
 				enabled: true,
 				purchase_with_points: true,
+				revision: 'fedcba9876543210',
 			} as never );
-			renderPage( 'leaderboard' );
+			renderPage( 'rewards' );
+			expect(
+				screen.getByRole( 'tab', { name: 'Rewards' } )
+			).toHaveAttribute( 'aria-selected', 'true' );
 			await user.click(
 				await screen.findByRole( 'checkbox', {
-					name: 'Enable rewards',
+					name: 'Enable point rewards',
 				} )
 			);
 			await user.click(
@@ -635,19 +657,96 @@ describe( 'GamificationPage', () => {
 					name: 'Allow course purchases with bonus points',
 				} )
 			);
-			const rewardsForm = screen.getByRole( 'form', { name: 'Rewards' } );
+			expect(
+				screen.getByRole( 'tab', { name: 'Rewards (unsaved)' } )
+			).toBeVisible();
+			const form = screen.getByRole( 'form', { name: 'Point rewards' } );
 			await user.click(
-				within( rewardsForm ).getByRole( 'button', {
-					name: 'Save changes',
-				} )
+				within( form ).getByRole( 'button', { name: 'Save changes' } )
 			);
 			await waitFor( () =>
 				expect( api.saveSection ).toHaveBeenCalledWith(
 					'rewards',
-					{ enabled: true, purchase_with_points: true },
+					{
+						enabled: true,
+						purchase_with_points: true,
+						revision: '0123456789abcdef',
+					},
 					expect.anything()
 				)
 			);
+			expect(
+				( await screen.findAllByText( 'Settings saved.' ) )[ 0 ]
+			).toBeVisible();
+		} );
+
+		it( 'offers a reload when someone else saved first', async () => {
+			const user = userEvent.setup();
+			vi.mocked( api.saveSection ).mockRejectedValue(
+				new ApiError( {
+					status: 409,
+					code: 'ohmylms_gamification_conflict',
+					message:
+						'These settings were changed by someone else. Reload them before saving.',
+				} )
+			);
+			renderPage( 'rewards' );
+			await user.click(
+				await screen.findByRole( 'checkbox', {
+					name: 'Enable point rewards',
+				} )
+			);
+			await user.click(
+				screen.getByRole( 'button', { name: 'Save changes' } )
+			);
+			const reload = await screen.findByRole( 'button', {
+				name: 'Reload settings',
+			} );
+			const calls = vi
+				.mocked( api.getSection )
+				.mock.calls.filter(
+					( call ) => 'rewards' === call[ 0 ]
+				).length;
+			await user.click( reload );
+			await waitFor( () =>
+				expect(
+					vi
+						.mocked( api.getSection )
+						.mock.calls.filter(
+							( call ) => 'rewards' === call[ 0 ]
+						).length
+				).toBe( calls + 1 )
+			);
+			expect(
+				await screen.findByRole( 'checkbox', {
+					name: 'Enable point rewards',
+				} )
+			).not.toBeChecked();
+		} );
+
+		it( 'warns when learners cannot earn points', async () => {
+			const user = userEvent.setup();
+			vi.mocked( api.getSection ).mockImplementation( ( async (
+				section: SectionId
+			) =>
+				'points' === section
+					? { ...points, enabled: false }
+					: JSON.parse(
+							JSON.stringify( sections[ section ] )
+						) ) as never );
+			renderPage( 'rewards' );
+			await user.click(
+				await screen.findByRole( 'checkbox', {
+					name: 'Enable point rewards',
+				} )
+			);
+			expect(
+				(
+					await screen.findAllByText(
+						/switched off on the Points tab/
+					)
+				)[ 0 ]
+			).toBeVisible();
 		} );
 	} );
 } );

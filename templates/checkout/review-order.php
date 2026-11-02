@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Template for displaying order review.
  *
@@ -67,7 +66,7 @@ $total_savings = 0;
 								 * @param float $course_price The raw price value.
 								 * @param object $_course The course object.
 								 */
-								echo apply_filters( 'ohmylms_checkout_course_price_html', $price_html, $course_price, $_course );
+								echo apply_filters( 'ohmylms_checkout_course_price_html', $price_html, $course_price, $_course ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Price markup from ohmylms_price(); kses would strip its <bdi>.
 							}
 
 							?>
@@ -111,7 +110,7 @@ $total_savings = 0;
 					<?php
 					if ( ! $by_point ) {
 						$cart_subtotal = \OhMyLMS\Commerce\ecommerce()->cart->get_totals_by_key( 'subtotal' );
-						echo apply_filters( 'ohmylms_checkout_cart_subtotal', ohmylms_price( $cart_subtotal ), $cart_subtotal, $_course );
+						echo apply_filters( 'ohmylms_checkout_cart_subtotal', ohmylms_price( $cart_subtotal ), $cart_subtotal, $_course ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Price markup from ohmylms_price(); kses would strip its <bdi>.
 					} else {
 						echo esc_html( $_course->get_purchase_point() ) . ' Pts';
 					}
@@ -152,7 +151,7 @@ $total_savings = 0;
 					<td>
 						<?php
 						$tax_amount = \OhMyLMS\Commerce\ecommerce()->cart->get_totals_by_key( 'tax_amount' );
-						echo apply_filters( 'ohmylms_checkout_order_total', ohmylms_price( $tax_amount ), $tax_amount, $_course );
+						echo apply_filters( 'ohmylms_checkout_order_total', ohmylms_price( $tax_amount ), $tax_amount, $_course ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Price markup from ohmylms_price(); kses would strip its <bdi>.
 						?>
 					</td>
 				</tr>
@@ -162,14 +161,14 @@ $total_savings = 0;
 				<th>
 					<?php esc_html_e( 'Total', 'ohmylms' ); ?>
 					<?php if ( $is_including_tax ) : ?>
-						<span class="total-savings"><?php printf( '( Including tax : %s )', ohmylms_price( \OhMyLMS\Commerce\ecommerce()->cart->get_totals_by_key( 'tax_amount' ) ) ); ?></span>
+						<span class="total-savings"><?php printf( '( Including tax : %s )', ohmylms_price( \OhMyLMS\Commerce\ecommerce()->cart->get_totals_by_key( 'tax_amount' ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Price markup from ohmylms_price(); kses would strip its <bdi>. ?></span>
 					<?php endif; ?>
 				</th>
 				<td>
 					<?php
 					if ( ! $by_point ) {
 						$total = \OhMyLMS\Commerce\ecommerce()->cart->get_totals_by_key( 'total' );
-						echo apply_filters( 'ohmylms_checkout_order_total', ohmylms_price( $total ), $total, $_course );
+						echo apply_filters( 'ohmylms_checkout_order_total', ohmylms_price( $total ), $total, $_course ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Price markup from ohmylms_price(); kses would strip its <bdi>.
 					} else {
 						echo esc_html( $_course->get_purchase_point() ) . ' Pts';
 					}

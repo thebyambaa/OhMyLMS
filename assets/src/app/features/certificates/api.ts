@@ -4,7 +4,6 @@ import {
 	invalidResponse,
 	parseCertificate,
 	parseCourseChoice,
-	parseMedia,
 	parseOptions,
 	parsePreview,
 	positiveId,
@@ -167,33 +166,5 @@ export function listCourses(
 	return getCollection( `${ BASE }/courses`, parseCourseChoice, {
 		signal,
 		query: { search, page, per_page: 10 },
-	} );
-}
-
-/**
- * Browse the media library through the core REST route (images of supported types only).
- *
- * @param search Title search.
- * @param page   Page number, from 1.
- * @param signal Cancels the request.
- * @return Validated images and totals.
- */
-export function listMedia(
-	search: string,
-	page: number,
-	signal?: AbortSignal
-) {
-	return getCollection( '/wp/v2/media', parseMedia, {
-		signal,
-		query: {
-			search,
-			page,
-			per_page: 12,
-			media_type: 'image',
-			mime_type: 'image/jpeg,image/png,image/gif,image/webp',
-			orderby: 'date',
-			order: 'desc',
-			_fields: 'id,source_url,mime_type,title,media_details',
-		},
 	} );
 }

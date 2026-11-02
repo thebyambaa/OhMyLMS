@@ -19,7 +19,6 @@ use OhMyLMS\Data\Student;
 use OhMyLMS\Learning\CompletionPolicy;
 use OhMyLMS\Learning\CourseProgram;
 use OhMyLMS\Learning\LearningPath;
-use OhMyLMS\Learning\ProgramGroups;
 use OhMyLMS\Learning\Schema as LearningSchema;
 use OhMyLMS\Performance\Levels;
 use OhMyLMS\Performance\Snapshot;
@@ -129,8 +128,7 @@ final class CourseOutline {
 			if ( 'practice' === $row['kind'] && array_key_exists( $row['term_id'], $skill_targets ) ) {
 				$row['complete'] = (bool) $skill_targets[ $row['term_id'] ];
 			}
-			$row['group_id'] = (string) ( $item['group_id'] ?? '' );
-			$chapter         = (int) ( $item['chapter_id'] ?? 0 );
+			$chapter = (int) ( $item['chapter_id'] ?? 0 );
 			if ( 0 === $chapter && 'course-challenge' === ( $row['style'] ?? '' ) ) {
 				$course_challenge = $row;
 				continue;
@@ -151,20 +149,13 @@ final class CourseOutline {
 		foreach ( $state ? $program['outcomes'] : array() as $outcome ) {
 			$skills[ (int) $outcome['term_id'] ] = $display[ (int) $outcome['term_id'] ]['key'] ?? 'not-started';
 			$term                                = get_term( $outcome['term_id'], Taxonomy::NAME );
-			$linked_groups                       = array();
-			foreach ( $program['groups'] ?? array() as $group ) {
-				if ( in_array( (int) $outcome['term_id'], ProgramGroups::skill_ids( $program, $group ), true ) ) {
-					$linked_groups[] = $group['id'];
-				}
-			}
-			$lesson_skills[] = array(
-				'term_id'   => (int) $outcome['term_id'],
-				'group_id'  => $outcome['group_id'] ?? '',
-				'group_ids' => $linked_groups,
-				'name'      => $term && ! is_wp_error( $term ) ? $term->name : __( 'Unavailable skill', 'ohmylms' ),
-				'label'     => $display[ (int) $outcome['term_id'] ]['label'] ?? Levels::label( 'not-started' ),
-				'level'     => $display[ (int) $outcome['term_id'] ]['key'] ?? 'not-started',
-				'met'       => ! empty( $outcome['met'] ),
+			$lesson_skills[]                     = array(
+				'term_id'    => (int) $outcome['term_id'],
+				'chapter_id' => (int) ( $outcome['chapter_id'] ?? 0 ),
+				'name'       => $term && ! is_wp_error( $term ) ? $term->name : __( 'Unavailable skill', 'ohmylms' ),
+				'label'      => $display[ (int) $outcome['term_id'] ]['label'] ?? Levels::label( 'not-started' ),
+				'level'      => $display[ (int) $outcome['term_id'] ]['key'] ?? 'not-started',
+				'met'        => ! empty( $outcome['met'] ),
 			);
 		}
 		$units = \OhMyLMS\Learning\StructurePlan::order_units( $units, $program['units'] );
@@ -179,15 +170,10 @@ final class CourseOutline {
 
 			$unit['done']  = count( array_filter( array_column( $unit['items'], 'complete' ) ) );
 			$unit['total'] = count( $unit['items'] );
-			// Lesson groups: 'items' stays the flat list; groups and what sits outside them are extra views of it.
-			$arranged       = ProgramGroups::arrange( array(), $unit['items'], $unit['id'] );
-			$unit['groups'] = $arranged['groups'];
-			foreach ( $unit['groups'] as &$lesson ) {
-				$lesson += LessonJourney::progress( $lesson['items'] );
-			}
-			unset( $lesson );
+			// Lesson groups are flattened into their unit (b0e21ca5); both keys stay for template overrides.
+			$unit['groups']    = array();
 			$unit             += LessonJourney::progress( $unit['items'] );
-			$unit['ungrouped'] = $arranged['ungrouped'];
+			$unit['ungrouped'] = $unit['items'];
 			$unit['test']      = self::first_with_style( $unit['items'], 'unit-test' );
 			$challenge         = $challenge ? $challenge : self::first_with_style( $unit['items'], 'course-challenge' );
 			$done             += $unit['done'];

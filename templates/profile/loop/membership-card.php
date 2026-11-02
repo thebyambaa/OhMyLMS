@@ -4,32 +4,33 @@
  *
  * @package OhMyLMS
  */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
 
 use function OhMyLMS\Commerce\ecommerce;
 // Extract data from membership object.
-$subscription = isset( $memebership->subscription ) ? $memebership->subscription : null;
-$order        = isset( $memebership->order ) ? $memebership->order : null;
-$products     = $memebership->get_products();
-$course_count = count( $products );
-$is_one_time  = $memebership->get_subscription_period() === 'one_time';
-if ( ! $order ) {
+$subscription     = isset( $memebership->subscription ) ? $memebership->subscription : null;
+$membership_order = isset( $memebership->order ) ? $memebership->order : null;
+$products         = $memebership->get_products();
+$course_count     = count( $products );
+$is_one_time      = $memebership->get_subscription_period() === 'one_time';
+if ( ! $membership_order ) {
 	return;
 }
 
 $recurring_amount = 0;
 
 if ( ! $is_one_time ) {
-	$tax_amount       = \OhMyLMS_Tax_Calculator::get_instance()->calculate_tax( $order->get_tax_rate(), array( 'total' => $subscription->get_recurring_amount() ) );
+	$tax_amount       = \OhMyLMS_Tax_Calculator::get_instance()->calculate_tax( $membership_order->get_tax_rate(), array( 'total' => $subscription->get_recurring_amount() ) );
 	$recurring_amount = is_array( $tax_amount ) && isset( $tax_amount['total_with_tax'] ) ? $tax_amount['total_with_tax'] : $subscription->get_recurring_amount();
 }
 
 
 // Safely get status.
-$status         = $subscription ? $subscription->get_status() : '';
-$status_classes = 'ohmylms-membership-status ' . 'ohmylms-status-' . strtolower( $status );
+$subscription_status = $subscription ? $subscription->get_status() : '';
+$status_classes      = 'ohmylms-membership-status ohmylms-status-' . strtolower( $subscription_status );
 
 // Safely get price.
 $price_html = __( 'Not available', 'ohmylms' );
@@ -43,7 +44,7 @@ if ( $is_one_time ) {
 }
 
 // Safely get purchase date.
-$purchase_date = $order ? ohmylms_format_datetime( $order->get_date_created() ) : __( 'Not available', 'ohmylms' );
+$purchase_date = $membership_order ? ohmylms_format_datetime( $membership_order->get_date_created() ) : __( 'Not available', 'ohmylms' );
 
 if ( ! $is_one_time ) {
 
@@ -88,12 +89,13 @@ if ( ! $is_one_time ) {
 }
 
 // Safely get payment method.
-$payment_method = $order && $order->get_payment_method_title() ? $order->get_payment_method_title() : __( 'Not available', 'ohmylms' );
+$payment_method = $membership_order && $membership_order->get_payment_method_title() ? $membership_order->get_payment_method_title() : __( 'Not available', 'ohmylms' );
+$plan_dialog_id = wp_unique_id( 'ohmylms-plan-details-' );
 ?>
-<div class="ohmylms-membership-card ohmylms-dashboard-single-membership">
+<div class="ohmylms-membership-card ohmylms-dashboard-single-membership" data-wp-interactive="ohmylms/account" data-wp-context='{"planOpen":false}'>
 	<div class="ohmylms-membership-card-header">
 		<h3 class="ohmylms-membership-name"><?php echo esc_html( $memebership->get_name() ); ?></h3>
-		<span class="<?php echo esc_attr( $status_classes ); ?>"><?php echo esc_html( ucfirst( $status ) ); ?></span>
+		<span class="<?php echo esc_attr( $status_classes ); ?>"><?php echo esc_html( ucfirst( $subscription_status ) ); ?></span>
 	</div>
 	<div class="ohmylms-membership-card-body">
 		<ul class="ohmylms-membership-details">
@@ -122,15 +124,15 @@ $payment_method = $order && $order->get_payment_method_title() ? $order->get_pay
 		</ul>
 	</div>
 	<div class="ohmylms-membership-card-footer">
-		<a href="#" class="ohmylms-button view-plan" role="button"><?php echo esc_html__( 'View Plan', 'ohmylms' ); ?></a>
+		<a href="#<?php echo esc_attr( $plan_dialog_id ); ?>" class="ohmylms-button view-plan" role="button" aria-haspopup="dialog" aria-controls="<?php echo esc_attr( $plan_dialog_id ); ?>" aria-expanded="false" data-wp-on--click="actions.openPlan" data-wp-bind--aria-expanded="context.planOpen"><?php echo esc_html__( 'View Plan', 'ohmylms' ); ?></a>
 	</div>
 
-	<div class="ohmylms-membership-modal" aria-hidden="true">
+	<div class="ohmylms-membership-modal" id="<?php echo esc_attr( $plan_dialog_id ); ?>" aria-hidden="true" data-wp-style--display="state.planDisplay" data-wp-bind--aria-hidden="!context.planOpen" data-wp-on--click="actions.planBackdrop" data-wp-on-document--keydown="actions.planKey" data-wp-watch="callbacks.planFocus">
 		<div class="ohmylms-membership-modal-wrapper">
-			<div class="ohmylms-membership-modal-inner">
-				<h4 class="membership-modal-title">
+			<div class="ohmylms-membership-modal-inner" role="dialog" aria-modal="true" tabindex="-1" aria-labelledby="<?php echo esc_attr( $plan_dialog_id . '-title' ); ?>">
+				<h4 class="membership-modal-title" id="<?php echo esc_attr( $plan_dialog_id . '-title' ); ?>">
 					<?php echo esc_html__( 'Plan Details', 'ohmylms' ); ?>
-					<a href="#" role="button" class="close-modal">
+					<a href="#" role="button" class="close-modal" aria-label="<?php esc_attr_e( 'Close', 'ohmylms' ); ?>" data-wp-on--click="actions.closePlan">
 						<svg width="14" height="14" fill="none" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg"><path stroke="#A1A1AA" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 1L1 13M1 1l12 12"/></svg>
 					</a>
 				</h4>

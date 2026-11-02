@@ -40,7 +40,8 @@ final class SkillMap {
 	public static function normalize( array $map ) {
 		$clean = array();
 		foreach ( $map as $part => $roles ) {
-			$part       = preg_replace( '/[^a-z0-9_-]/i', '', (string) $part ) ?: 'p1';
+			$part       = preg_replace( '/[^a-z0-9_-]/i', '', (string) $part );
+			$part       = $part ? $part : 'p1';
 			$primary    = (int) ( $roles['primary'] ?? 0 );
 			$supporting = array_values(
 				array_unique(

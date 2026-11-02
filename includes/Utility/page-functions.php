@@ -5,7 +5,6 @@
  * @package OhMyLMS
  */
 
-
 use OhMyLMS\Data\Lesson;
 use OhMyLMS\Data\Quiz;
 

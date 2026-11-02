@@ -33,9 +33,8 @@ final class Access {
 			return false; }
 		if ( ! $explicit_user && self::platform() ) {
 			return true; }
-		$table        = Schema::table( 'school_memberships' );
-		$placeholders = implode( ',', array_fill( 0, count( $roles ), '%s' ) );
-		return (bool) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM $table WHERE school_id=%d AND user_id=%d AND status='active' AND role IN ($placeholders)", array_merge( array( $school, $user ), $roles ) ) );
+		$table = Schema::table( 'school_memberships' );
+		return (bool) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM %i WHERE school_id=%d AND user_id=%d AND status='active' AND role IN (" . implode( ',', array_fill( 0, count( $roles ), '%s' ) ) . ')', array_merge( array( $table, $school, $user ), $roles ) ) );
 	}
 	/**
 	 * Teacher for Access.

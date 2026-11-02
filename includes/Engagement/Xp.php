@@ -308,7 +308,8 @@ final class Xp {
 		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT xp, meta FROM %i WHERE student_id=%d AND event_key=%s', XpSchema::table( 'xp_events' ), (int) $student, 'practice:' . $uuid ), ARRAY_A );
 		if ( ! $row ) {
 			return null; }
-		$meta = json_decode( (string) $row['meta'], true ) ?: array();
+		$meta = json_decode( (string) $row['meta'], true );
+		$meta = $meta ? $meta : array();
 		return array(
 			'xp'     => (int) $row['xp'],
 			'parts'  => (array) ( $meta['parts'] ?? array() ),

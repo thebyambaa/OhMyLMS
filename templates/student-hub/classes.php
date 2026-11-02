@@ -24,7 +24,7 @@ $work_page       = max( 1, absint( get_query_var( 'current_page', 1 ) ) );
 	<div class="oml-hub-card">
 		<h2><?php esc_html_e( 'Accept an invitation', 'ohmylms' ); ?></h2>
 		<p><?php esc_html_e( 'Paste the OhMyLMS invitation link or invitation code you received. Sign in using the email address it was sent to.', 'ohmylms' ); ?></p>
-		<form data-hub-invitation data-endpoint="<?php echo esc_url( rest_url( 'ohmylms/v1/school/accept' ) ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>" data-error="<?php esc_attr_e( 'Could not accept this invitation. Check the link and try again.', 'ohmylms' ); ?>" data-success="<?php esc_attr_e( 'Invitation accepted. Open My classes, or use Switch role at the top to open your new workspace.', 'ohmylms' ); ?>">
+		<form data-hub-invitation data-endpoint="<?php echo esc_url( rest_url( 'ohmylms/v1/account-hub/invitations/accept' ) ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>" data-error="<?php esc_attr_e( 'Could not accept this invitation. Check the link and try again.', 'ohmylms' ); ?>" data-success="<?php esc_attr_e( 'Invitation accepted. Open My classes, or use Switch role at the top to open your new workspace.', 'ohmylms' ); ?>">
 			<label for="hub-invitation"><?php esc_html_e( 'Invitation link or code', 'ohmylms' ); ?></label>
 			<input id="hub-invitation" name="invitation" type="text" value="<?php echo esc_attr( is_string( get_query_var( 'ohmylms_invite' ) ) ? get_query_var( 'ohmylms_invite' ) : '' ); ?>" required autocomplete="off" spellcheck="false">
 			<button type="submit" class="oml-hub-button"><?php esc_html_e( 'Accept invitation', 'ohmylms' ); ?></button>

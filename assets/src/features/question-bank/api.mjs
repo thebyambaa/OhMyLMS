@@ -1,137 +1,272 @@
-const request = ( options ) => window.wp.apiFetch( options );
-const query = ( params ) => {
-	const search = new URLSearchParams();
-	for ( const [ key, value ] of Object.entries( params || {} ) ) {
-		if ( value !== undefined && value !== null && value !== '' ) {
-			search.set( key, String( value ) );
+import { queryString as query, request } from '../rest.mjs';
+
+const QUESTIONS = '/ohmylms/v1/questions';
+
+/**
+ * JSON of the question, version, bank and skill routes. Its fields depend on the question type and
+ * are read by the editors as sent, so they stay untyped.
+ * @typedef {Record<string, any>} RestData
+ */
+/**
+ * @typedef {Object} OptionPayload
+ * @property {string}                                 answer          Answer text.
+ * @property {boolean}                                is_correct      Whether it is correct.
+ * @property {number}                                 order_number    Position.
+ * @property {number}                                 [id]            Saved option ID.
+ * @property {number}                                 [image_id]      Image attachment ID.
+ * @property {string}                                 [image_url]     Image URL.
+ * @property {{ label?: string, image_url?: string }} [matching_data] Matching pair.
+ */
+
+/**
+ * A typed question response with the flat fields the native editors read: bank attributes at the
+ * top level, `skill_map`, `can_edit`, `can_approve`, and `thumbnail_id` on each option.
+ *
+ * @param {RestData} view Summary or editor view from `ohmylms/v1/questions`.
+ * @return {RestData} The view with the flat fields added.
+ */
+export const bankView = ( view ) =>
+	view && typeof view === 'object'
+		? {
+				...view,
+				...( view.bank || {} ),
+				skill_map: view.skills,
+				can_edit: Boolean( view.permissions?.can_edit ),
+				can_approve: Boolean( view.permissions?.can_approve ),
+				...( Array.isArray( view.options )
+					? {
+							options: view.options.map( ( option ) => ( {
+								...option,
+								thumbnail_id: option.image_id || 0,
+							} ) ),
+						}
+					: {} ),
+			}
+		: view;
+
+/**
+ * Answer options in the shape `ohmylms/v1/questions` accepts. Editor-only keys are dropped, and
+ * unsaved options (`temp`) lose their client-side ID.
+ *
+ * @param {RestData[]} [options] Options as the editors hold them.
+ * @return {OptionPayload[]} Options for a write.
+ */
+export const optionsPayload = ( options = [] ) =>
+	options.map( ( option, index ) => {
+		/** @type {OptionPayload} */
+		const row = {
+			answer: String( option.answer ?? '' ),
+			is_correct:
+				option.is_correct === true || Number( option.is_correct ) > 0,
+			order_number: Number.isInteger( Number( option.order_number ) )
+				? Math.max( 0, Number( option.order_number ) )
+				: index + 1,
+		};
+		const id = Number( option.id );
+		if ( ! option.temp && Number.isInteger( id ) && id > 0 ) {
+			row.id = id;
+		}
+		const image = Number( option.image_id || option.thumbnail_id );
+		if ( Number.isInteger( image ) && image > 0 ) {
+			row.image_id = image;
+		} else if ( /^https?:\/\//.test( option.image_url || '' ) ) {
+			row.image_url = option.image_url;
+		}
+		const matching = option.matching_data;
+		if ( matching && typeof matching === 'object' ) {
+			row.matching_data = {
+				...( matching.label !== undefined
+					? { label: String( matching.label ) }
+					: {} ),
+				...( /^https?:\/\//.test( matching.image_url || '' )
+					? { image_url: matching.image_url }
+					: {} ),
+			};
+		}
+		return row;
+	} );
+
+/**
+ * A question write body: `questions` becomes `options`; fields the typed route does not accept
+ * (`status`, `quiz_id`, `id`) are left out.
+ *
+ * @param {RestData} data Fields as the editors build them.
+ * @return {Record<string, unknown>} Body for `POST|PATCH /questions`.
+ */
+export const questionPayload = ( data ) => {
+	/** @type {Record<string, unknown>} */
+	const body = {};
+	for ( const key of [
+		'name',
+		'description',
+		'settings',
+		'skills',
+		'bank',
+		'thumbnail_id',
+		'video_id',
+		'base_modified',
+	] ) {
+		if ( data[ key ] !== undefined ) {
+			body[ key ] = data[ key ];
 		}
 	}
-	const text = search.toString();
-	return text ? `?${ text }` : '';
+	const options = data.options || data.questions;
+	if ( Array.isArray( options ) ) {
+		body.options = optionsPayload( options );
+	}
+	return body;
 };
 
+/**
+ * Visible bank questions (summaries without answer keys).
+ *
+ * @param {Record<string, unknown>}              params Filters: search, type, difficulty, status ('' for every usable
+ *                                                      question), bank, skill, secure, exclude_quiz, page, per_page.
+ * @param {(options: Object) => Promise<Object>} fetch  Transport.
+ * @return {Promise<{items: RestData[]}>} Rows.
+ */
 export const searchBank = ( params, fetch = request ) =>
-	fetch( { path: `/ohmylms/v1/question-bank${ query( params ) }` } );
-export const loadBankQuestion = ( id, fetch = request ) =>
-	fetch( { path: `/ohmylms/v1/question-bank/${ id }` } );
-export const loadVersion = ( versionId, fetch = request ) =>
-	fetch( { path: `/ohmylms/v1/question-bank/versions/${ versionId }` } );
-export const approveQuestion = ( id, versionId, fetch = request ) =>
-	fetch( {
-		path: `/ohmylms/v1/question-bank/${ id }/approve`,
-		method: 'POST',
-		data: versionId ? { version_id: versionId } : {},
-	} );
-export const archiveQuestion = ( id, fetch = request ) =>
-	fetch( {
-		path: `/ohmylms/v1/question-bank/${ id }/archive`,
-		method: 'POST',
-	} );
-export const restoreQuestion = ( id, fetch = request ) =>
-	fetch( {
-		path: `/ohmylms/v1/question-bank/${ id }/restore`,
-		method: 'POST',
-	} );
-export const duplicateQuestion = ( id, quizId, fetch = request ) =>
-	fetch( {
-		path: `/ohmylms/v1/question-bank/${ id }/duplicate`,
-		method: 'POST',
-		data: quizId ? { quiz_id: quizId } : {},
-	} );
-export const saveQuestionAttributes = ( id, data, fetch = request ) =>
-	fetch( { path: `/ohmylms/v1/question/${ id }`, method: 'PUT', data } );
+	Promise.resolve(
+		fetch( {
+			path: `${ QUESTIONS }${ query( {
+				...params,
+				status: params?.status || 'active',
+				secure:
+					params?.secure === undefined || params?.secure === ''
+						? undefined
+						: Boolean( Number( params.secure ) ),
+			} ) }`,
+		} )
+	).then( ( rows ) => ( {
+		items: Array.isArray( rows ) ? rows.map( bankView ) : [],
+	} ) );
 
+/**
+ * @param {number|string}                        id    Question ID.
+ * @param {(options: Object) => Promise<Object>} fetch Transport.
+ * @return {Promise<RestData>} Editor view.
+ */
+export const loadBankQuestion = ( id, fetch = request ) =>
+	Promise.resolve( fetch( { path: `${ QUESTIONS }/${ id }` } ) ).then(
+		bankView
+	);
+/**
+ * @param {number|string}                        id    Question ID.
+ * @param {(options: Object) => Promise<Object>} fetch Transport.
+ * @return {Promise<RestData>} Version history.
+ */
+export const loadVersions = ( id, fetch = request ) =>
+	fetch( { path: `${ QUESTIONS }/${ id }/versions?per_page=100` } );
+/**
+ * @param {number|string}                        id        Question ID.
+ * @param {number|string}                        versionId Version ID.
+ * @param {(options: Object) => Promise<Object>} fetch     Transport.
+ * @return {Promise<RestData>} Version snapshot.
+ */
+export const loadVersion = ( id, versionId, fetch = request ) =>
+	fetch( { path: `${ QUESTIONS }/${ id }/versions/${ versionId }` } );
+/**
+ * @param {number|string}                        id          Question ID.
+ * @param {number|string|null|undefined}         [versionId] Version to approve; the current one when empty.
+ * @param {(options: Object) => Promise<Object>} fetch       Transport.
+ * @return {Promise<RestData>} Editor view.
+ */
+export const approveQuestion = ( id, versionId, fetch = request ) =>
+	Promise.resolve(
+		fetch( {
+			path: `${ QUESTIONS }/${ id }/approve`,
+			method: 'POST',
+			data: versionId ? { version_id: Number( versionId ) } : {},
+		} )
+	).then( bankView );
+/**
+ * @param {number|string}                        id    Question ID.
+ * @param {(options: Object) => Promise<Object>} fetch Transport.
+ * @return {Promise<RestData>} Editor view of the copy.
+ */
+export const duplicateQuestion = ( id, fetch = request ) =>
+	Promise.resolve(
+		fetch( { path: `${ QUESTIONS }/${ id }/duplicate`, method: 'POST' } )
+	).then( bankView );
+/**
+ * Partial update; `data.base_modified` is the `modified` of the last read.
+ *
+ * @param {number}                               id    Question ID.
+ * @param {RestData}                             data  Fields to change.
+ * @param {(options: Object) => Promise<Object>} fetch Transport.
+ * @return {Promise<RestData>} Editor view.
+ */
+export const saveQuestionAttributes = ( id, data, fetch = request ) =>
+	Promise.resolve(
+		fetch( {
+			path: `${ QUESTIONS }/${ id }`,
+			method: 'PATCH',
+			data: questionPayload( data ),
+		} )
+	).then( bankView );
+
+/**
+ * @param {(options: Object) => Promise<Object>} fetch Transport.
+ * @return {Promise<RestData>} Question banks.
+ */
 export const listBanks = ( fetch = request ) =>
 	fetch( { path: '/ohmylms/v1/question-banks' } );
-export const createBank = ( data, fetch = request ) =>
-	fetch( { path: '/ohmylms/v1/question-banks', method: 'POST', data } );
-export const listGrants = ( bankId, fetch = request ) =>
-	fetch( { path: `/ohmylms/v1/question-banks/${ bankId }/grants` } );
-export const grantBank = ( bankId, data, fetch = request ) =>
-	fetch( {
-		path: `/ohmylms/v1/question-banks/${ bankId }/grants`,
-		method: 'POST',
-		data,
-	} );
-export const revokeBank = ( bankId, data, fetch = request ) =>
-	fetch( {
-		path: `/ohmylms/v1/question-banks/${ bankId }/grants`,
-		method: 'DELETE',
-		data,
-	} );
 
-export const addQuestionsToQuiz = (
+/**
+ * Pin a question of a quiz to a version (`0` unpins), checked against the quiz's current revision.
+ *
+ * @param {number}                               quizId     Quiz ID.
+ * @param {number}                               questionId Question ID.
+ * @param {number}                               versionId  Version ID, or 0 to unpin.
+ * @param {(options: Object) => Promise<Object>} fetch      Transport.
+ * @return {Promise<RestData>} The quiz's questions.
+ */
+export const pinQuestion = async (
 	quizId,
-	questionIds,
-	pin = false,
+	questionId,
+	versionId,
 	fetch = request
-) =>
-	fetch( {
-		path: `/ohmylms/v1/quiz/${ quizId }/questions`,
-		method: 'POST',
-		data: { question_ids: questionIds, pin },
+) => {
+	const current = await fetch( {
+		path: `/ohmylms/v1/quizzes/${ quizId }/questions`,
 	} );
-export const pinQuestion = ( quizId, questionId, versionId, fetch = request ) =>
-	fetch( {
-		path: `/ohmylms/v1/quiz/${ quizId }/questions/${ questionId }/pin`,
+	return fetch( {
+		path: `/ohmylms/v1/quizzes/${ quizId }/questions/${ questionId }/pin`,
 		method: 'PUT',
-		data: { version_id: versionId || 0 },
+		data: {
+			version_id: versionId ? Number( versionId ) : null,
+			revision: /** @type {{ revision?: number }|null} */ ( current )
+				?.revision,
+		},
 	} );
-export const publishRevision = ( quizId, fetch = request ) =>
-	fetch( { path: `/ohmylms/v1/quiz/${ quizId }/revisions`, method: 'POST' } );
-export const listRevisions = ( quizId, fetch = request ) =>
-	fetch( { path: `/ohmylms/v1/quiz/${ quizId }/revisions` } );
+};
 
+/**
+ * @param {string}                               [search] Name filter.
+ * @param {(options: Object) => Promise<Object>} fetch    Transport.
+ * @return {Promise<RestData>} Skills (`skills`).
+ */
 export const listSkills = ( search = '', fetch = request ) =>
 	fetch( { path: `/ohmylms/v1/skills${ query( { search } ) }` } );
+/**
+ * @param {Record<string, unknown>}              data  New skill fields.
+ * @param {(options: Object) => Promise<Object>} fetch Transport.
+ * @return {Promise<RestData>} Created skill.
+ */
 export const createSkill = ( data, fetch = request ) =>
 	fetch( { path: '/ohmylms/v1/skills', method: 'POST', data } );
-export const updateSkill = ( id, data, fetch = request ) =>
-	fetch( { path: `/ohmylms/v1/skills/${ id }`, method: 'PUT', data } );
-export const deleteSkill = ( id, force = false, fetch = request ) =>
-	fetch( {
-		path: `/ohmylms/v1/skills/${ id }${ force ? '?force=1' : '' }`,
-		method: 'DELETE',
-	} );
-/**
- * Replace the lessons ('lessons') or courses ('courses') linked to a skill.
- * @param id
- * @param kind
- * @param ids
- * @param fetch
- */
-export const linkSkillPosts = ( id, kind, ids, fetch = request ) =>
-	fetch( {
-		path: `/ohmylms/v1/skills/${ id }/${ kind }`,
-		method: 'PUT',
-		data: { [ kind === 'courses' ? 'course_ids' : 'lesson_ids' ]: ids },
-	} );
-export const saveSkillMap = ( questionId, skillMap, fetch = request ) =>
-	fetch( {
-		path: `/ohmylms/v1/question/${ questionId }/skills`,
-		method: 'PUT',
-		data: { skill_map: skillMap },
-	} );
-/**
- * Lessons or courses the author may link: by search text, or titles for known IDs.
- * @param type
- * @param search
- * @param fetch
- */
-export const searchLinkTargets = ( type, search, fetch = request ) =>
-	fetch( {
-		path: `/ohmylms/v1/skills/link-targets${ query( { type, search } ) }`,
-	} );
-export const linkTargetTitles = ( type, ids, fetch = request ) =>
-	ids.length
-		? fetch( {
-				path: `/ohmylms/v1/skills/link-targets${ query( { type, include: ids.join( ',' ) } ) }`,
-			} )
-		: Promise.resolve( [] );
 /**
  * Create a question directly in the bank (not placed in any quiz).
- * @param payload
- * @param fetch
+ *
+ * @param {RestData}                             payload Fields as the editors build them.
+ * @param {(options: Object) => Promise<Object>} fetch   Transport.
+ * @return {Promise<RestData>} Editor view of the new question.
  */
 export const createBankQuestion = ( payload, fetch = request ) =>
-	fetch( { path: '/ohmylms/v1/question', method: 'POST', data: payload } );
+	Promise.resolve(
+		fetch( {
+			path: QUESTIONS,
+			method: 'POST',
+			data: questionPayload( payload ),
+		} )
+	).then( bankView );

@@ -2,6 +2,7 @@
 namespace OhMyLMS\Commerce\Gateways\QPay;
 
 use OhMyLMS\Commerce\Abstracts\PaymentGateway;
+use OhMyLMS\Commerce\Gateways\QPay\Rest\CallbackController;
 use function OhMyLMS\Commerce\ecommerce;
 
 defined( 'ABSPATH' ) || exit;
@@ -43,7 +44,7 @@ class GatewayQPay extends PaymentGateway {
 				add_action( $prefix . 'ohmylms_qpay_check_payment', array( $this, 'ajax_check_payment' ) );
 				add_action( $prefix . 'ohmylms_qpay_resume', array( $this, 'ajax_resume' ) );
 			}
-			add_action( 'rest_api_init', array( $this, 'register_callback_route' ) );
+			add_action( 'rest_api_init', array( new CallbackController( $this ), 'register_routes' ) );
 			add_action( 'update_option_ohmylms_qpay_settings', array( QPayAPI::class, 'settings_changed' ), 10, 2 );
 		}
 	}
@@ -302,7 +303,9 @@ class GatewayQPay extends PaymentGateway {
 							'sender_invoice_no'     => (string) $order_id,
 							'invoice_receiver_code' => 'terminal',
 							'invoice_description'   => sprintf( /* translators: %s: text value. */
-							__( 'Order #%s', 'ohmylms' ), $order_id ),
+								__( 'Order #%s', 'ohmylms' ),
+								$order_id
+							),
 							'amount'                => (float) $order->get_total(),
 							'callback_url'          => add_query_arg(
 								array(
@@ -372,7 +375,7 @@ class GatewayQPay extends PaymentGateway {
 		check_ajax_referer( 'ohmylms_qpay_check_payment_nonce', 'nonce' );
 		$id    = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
 		$order = ohmylms_ecommerce_get_order( $id );
-		$token = isset( $_POST['payment_token'] ) && is_string( $_POST['payment_token'] ) ? wp_unslash( $_POST['payment_token'] ) : '';
+		$token = isset( $_POST['payment_token'] ) && is_string( $_POST['payment_token'] ) ? wp_unslash( $_POST['payment_token'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Secret compared exactly with hash_equals(); sanitizing could alter it.
 		if ( ! $this->can_read_order( $order, $token ) ) {
 			wp_send_json_error( array( 'message' => __( 'You cannot access this payment.', 'ohmylms' ) ), 403 );
 		}
@@ -438,21 +441,6 @@ class GatewayQPay extends PaymentGateway {
 	}
 
 	/**
-	 * Register callback route for Gateway qpay.
-	 */
-	public function register_callback_route() {
-		register_rest_route(
-			'ohmylms/v1',
-			'/qpay/callback',
-			array(
-				'methods'             => 'GET',
-				'callback'            => array( $this, 'handle_callback' ),
-				'permission_callback' => '__return_true',
-			)
-		);
-	}
-
-	/**
 	 * Handle callback for Gateway qpay.
 	 *
 	 * @param mixed $request REST request.
@@ -480,7 +468,7 @@ class GatewayQPay extends PaymentGateway {
 			return; }
 		$base = 'packages/e-commerce/assets/';
 		wp_enqueue_style( 'ohmylms-qpay-checkout', plugins_url( $base . 'css/qpay-checkout.css', OHMYLMS_FILE ), array(), filemtime( OHMYLMS_DIR . '/' . $base . 'css/qpay-checkout.css' ) );
-		wp_enqueue_script( 'ohmylms-qpay-checkout', plugins_url( $base . 'js/qpay-checkout.js', OHMYLMS_FILE ), array( 'jquery', 'ohmylms-checkout' ), filemtime( OHMYLMS_DIR . '/' . $base . 'js/qpay-checkout.js' ), true );
+		wp_enqueue_script( 'ohmylms-qpay-checkout', plugins_url( $base . 'js/qpay-checkout.js', OHMYLMS_FILE ), array( 'ohmylms-checkout' ), filemtime( OHMYLMS_DIR . '/' . $base . 'js/qpay-checkout.js' ), true );
 		wp_localize_script(
 			'ohmylms-qpay-checkout',
 			'ohmylms_qpay_params',

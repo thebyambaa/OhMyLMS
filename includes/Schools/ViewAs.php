@@ -48,39 +48,6 @@ final class ViewAs {
 		);
 	}
 	/**
-	 * Register for View as.
-	 */
-	public static function register() {
-		foreach ( array(
-			'options' => 'GET',
-			'default' => 'GET',
-			'start'   => 'POST',
-			'return'  => 'POST',
-		) as $action => $method ) {
-			register_rest_route(
-				'ohmylms/v1',
-				'/school/view-as/' . $action,
-				array(
-					'methods'             => $method,
-					'permission_callback' => function ( $r ) use ( $action ) {
-						if ( ! is_user_logged_in() || ! wp_verify_nonce( $r->get_header( 'X-WP-Nonce' ), 'wp_rest' ) ) {
-							return new \WP_Error( 'view_as_auth', 'Refresh the page and sign in again.', array( 'status' => 403 ) ); }
-						return ( 'return' === $action ? (bool) self::session() : current_user_can( 'manage_options' ) ) ? true : new \WP_Error( 'view_as_forbidden', 'Only an administrator can switch accounts.', array( 'status' => 403 ) );
-					},
-					'callback'            => function ( $r ) use ( $action ) {
-						try {
-							$response = rest_ensure_response( self::$action( $r ) );
-							$response->header( 'Cache-Control', 'private, no-store' );
-							return $response;
-						} catch ( \Throwable $e ) {
-							return new \WP_Error( 'view_as_error', $e->getMessage(), array( 'status' => in_array( $e->getCode(), array( 400, 403 ), true ) ? $e->getCode() : 400 ) );
-						}
-					},
-				)
-			);
-		}
-	}
-	/**
 	 * Candidates for View as.
 	 *
 	 * @param mixed  $role Role.
@@ -106,12 +73,18 @@ final class ViewAs {
 		if ( $class ) {
 			Service::need( in_array( $role, array( 'student', 'instructor' ), true ) && Service::row( 'classes', $class ), 'Class not available.' );
 			$m               = Schema::table( 'class_memberships' );
-			$args['include'] = $wpdb->get_col( $wpdb->prepare( 'SELECT user_id FROM %i WHERE class_id=%d AND role=%s AND status=\'active\'', $m, $class, 'instructor' === $role ? 'teacher' : 'student' ) ) ?: array( 0 );
+			$members         = $wpdb->get_col( $wpdb->prepare( 'SELECT user_id FROM %i WHERE class_id=%d AND role=%s AND status=\'active\'', $m, $class, 'instructor' === $role ? 'teacher' : 'student' ) );
+			$args['include'] = $members ? $members : array( 0 );
 		} elseif ( $course ) {
 			$post = get_post( $course );
 			Service::need( in_array( $role, array( 'student', 'instructor' ), true ) && $post && OHMYLMS_COURSE_CPT === $post->post_type, 'Course not available.' );
-			$m               = Schema::table( 'user_enrollment' );
-			$args['include'] = 'instructor' === $role ? array( (int) $post->post_author ) : ( $wpdb->get_col( $wpdb->prepare( 'SELECT user_id FROM %i WHERE course_id=%d AND status=\'enrolled\'', $m, $course ) ) ?: array( 0 ) );
+			$m = Schema::table( 'user_enrollment' );
+			if ( 'instructor' === $role ) {
+				$args['include'] = array( (int) $post->post_author );
+			} else {
+				$enrolled        = $wpdb->get_col( $wpdb->prepare( 'SELECT user_id FROM %i WHERE course_id=%d AND status=\'enrolled\'', $m, $course ) );
+				$args['include'] = $enrolled ? $enrolled : array( 0 );
+			}
 		} else {
 			$roles = array(
 				'student'    => array( 'subscriber', 'ohmylms_student' ),
@@ -135,7 +108,8 @@ final class ViewAs {
 				$m   = Schema::table( 'guardian_links' );
 				$ids = array_merge( $ids, $wpdb->get_col( $wpdb->prepare( 'SELECT guardian_user_id FROM %i WHERE status=\'active\'', $m ) ) );
 			}
-			$args['include'] = array_unique( array_map( 'intval', $ids ) ) ?: array( 0 );
+			$ids             = array_unique( array_map( 'intval', $ids ) );
+			$args['include'] = $ids ? $ids : array( 0 );
 		}
 		if ( $only ) {
 			$args['include'] = in_array( $only, array_map( 'intval', $args['include'] ), true ) ? array( $only ) : array( 0 ); }
@@ -233,7 +207,7 @@ final class ViewAs {
 		$role = sanitize_key( $r['role'] );
 		// Revalidate membership independently of the person picker's response.
 		$valid = $user && self::candidates( $role, absint( $r['class_id'] ), absint( $r['course_id'] ), '', 1, $user );
-		Access::require_access( $valid && $user !== get_current_user_id() && current_user_can( 'edit_user', $user ) );
+		Access::require_access( $valid && get_current_user_id() !== $user && current_user_can( 'edit_user', $user ) );
 		$actor    = get_current_user_id();
 		$original = wp_get_session_token();
 		Access::require_access( $original && \WP_Session_Tokens::get_instance( $actor )->verify( $original ) );
@@ -273,7 +247,7 @@ final class ViewAs {
 				if ( 0 < $profile ) {
 					$url = get_permalink( $profile ); }
 			}
-			if ( ! $r['course_id'] && ! ( 'student' === $role && ! $r['class_id'] && $url !== Views::portal_url() ) ) {
+			if ( ! $r['course_id'] && ! ( 'student' === $role && ! $r['class_id'] && Views::portal_url() !== $url ) ) {
 				$url = add_query_arg( 'view', 'parent' === $role ? 'parent-dashboard' : ( 'student' === $role ? 'student-assignments' : 'teacher-dashboard' ), $url ); }
 				// Preview lands in the hub workspace for the viewed role; the old portal is not used.
 			if ( empty( $r['course_id'] ) && class_exists( '\OhMyLMS\Student\Hub' ) && \OhMyLMS\Student\Hub::base_url() ) {
@@ -300,13 +274,22 @@ final class ViewAs {
 	 * Session for View as.
 	 */
 	public static function session() {
-		$token = $_COOKIE[ self::cookie_name() ] ?? '';
-		if ( ! is_string( $token ) || ! preg_match( '/^[a-zA-Z0-9]{64}$/', $token ) ) {
+		$token = self::token();
+		if ( '' === $token ) {
 			return false; }
 		$record = get_transient( self::key( $token ) );
-		if ( ! $record || (int) $record['target'] !== get_current_user_id() || ! hash_equals( $record['target_session'], wp_get_session_token() ) ) {
+		if ( ! $record || get_current_user_id() !== (int) $record['target'] || ! hash_equals( $record['target_session'], wp_get_session_token() ) ) {
 			return false; }
 		return $record;
+	}
+	/**
+	 * The View as cookie token, or an empty string when it is missing or malformed.
+	 *
+	 * @return string
+	 */
+	private static function token() {
+		$token = $_COOKIE[ self::cookie_name() ] ?? ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Secret token; accepted only when it exactly matches the pattern below.
+		return is_string( $token ) && preg_match( '/^[a-zA-Z0-9]{64}$/', $token ) ? $token : '';
 	}
 	/**
 	 * Protect session for View as.
@@ -318,17 +301,22 @@ final class ViewAs {
 			define( 'DONOTCACHEPAGE', true ); }
 		nocache_headers();
 	}
+	/**
+	 * Return from View as to the original administrator session.
+	 *
+	 * @param mixed $r R.
+	 */
 	public static function return( $r ) {
 		$record = self::session();
 		Access::require_access( $record && user_can( $record['actor'], 'manage_options' ) && \WP_Session_Tokens::get_instance( $record['actor'] )->verify( $record['original'] ) );
 		wp_clear_auth_cookie();
 		wp_set_auth_cookie( $record['actor'], false, is_ssl(), $record['original'] );
 		\WP_Session_Tokens::get_instance( $record['target'] )->destroy( $record['target_session'] );
-		delete_transient( self::key( $_COOKIE[ self::cookie_name() ] ) );
+		delete_transient( self::key( self::token() ) );
 		self::cookie( '', time() - HOUR_IN_SECONDS );
 		wp_set_current_user( $record['actor'] );
 		Service::audit( 0, 'view_as_returned', $record['target'] );
-		return array( 'url' => admin_url( 'admin.php?page=' . OHMYLMS_SLUG ) . '#/accounthub' );
+		return array( 'url' => \OhMyLMS\Admin\LegacyRoutes::app_url( '/account-hub' ) );
 	}
 	/**
 	 * Banner for View as.
@@ -336,12 +324,23 @@ final class ViewAs {
 	public static function banner() {
 		if ( ! self::session() ) {
 			return; }
+		if ( class_exists( \OhMyLMS\Design\Ui::class ) ) {
+			\OhMyLMS\Design\Ui::enqueue();
+		}
+		// Previous bar colours are the fallback when design tokens are missing. Hex stays out of
+		// oml-ui.css because stylelint rejects it there, including inside var() fallbacks.
+		echo '<style>#ohmylms-view-as-banner{--oml-view-as-background:var(--oml-heading,#14213d);--oml-view-as-text:var(--oml-on-shade,#fff)}</style>';
 		$config = array(
 			'url'   => rest_url( 'ohmylms/v1/school/view-as/return' ),
 			'nonce' => wp_create_nonce( 'wp_rest' ),
 		);
-		echo '<div id="ohmylms-view-as-banner" style="position:fixed;bottom:0;left:0;right:0;z-index:999999;background:#14213d;color:white;padding:12px 24px;display:flex;align-items:center;gap:16px">' . esc_html( sprintf( /* translators: %s: text value. */
-		__( 'Viewing and acting as %s', 'ohmylms' ), wp_get_current_user()->display_name ) ) . ' <button type="button">' . esc_html__( 'Return to admin', 'ohmylms' ) . '</button><span role="alert"></span></div>';
+		echo '<div id="ohmylms-view-as-banner">' . esc_html(
+			sprintf(
+				/* translators: %s: text value. */
+				__( 'Viewing and acting as %s', 'ohmylms' ),
+				wp_get_current_user()->display_name
+			)
+		) . ' <button type="button">' . esc_html__( 'Return to admin', 'ohmylms' ) . '</button><span role="alert"></span></div>';
 		echo '<script>(function(c){const b=document.getElementById("ohmylms-view-as-banner"),x=b.querySelector("button");x.onclick=async function(){x.disabled=true;try{const r=await fetch(c.url,{method:"POST",credentials:"same-origin",headers:{"X-WP-Nonce":c.nonce}}),d=await r.json();if(!r.ok)throw Error(d.message);location.href=d.url;}catch(e){b.querySelector("span").textContent=e.message;x.disabled=false;}};})(' . wp_json_encode( $config, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ) . ');</script>';
 	}
 }

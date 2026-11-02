@@ -1,5 +1,9 @@
 # Student and registration source — 2026-09-24
 
+> **Historical.** The converted student components and adapters described here were deleted with the recovered
+> admin on 31 October 2026 ([CUTOVER.md](CUTOVER.md)); the signup fields are now the `admin-app-registration`
+> entry ([ARCHITECTURE.md](ARCHITECTURE.md)).
+
 The opt-in source build loads four student components from `assets/src/features/students/`: StudentList, StudentNameCell, StudentReport and CourseStudents. StudentList has authored JSX, with request state in `useStudents.js` and REST contracts in `api.mjs`. The remaining components contain reconstructed JSX and retain shared runtime dependencies recorded in `components.json`. They are editable, but are not fully independent of the recovered application.
 
 `tools/student-adapters.mjs` verifies and replaces all four original component bindings. Do not rerun the extraction tool over authored changes.

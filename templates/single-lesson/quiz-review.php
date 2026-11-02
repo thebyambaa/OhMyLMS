@@ -58,7 +58,7 @@ $attempt_results = array(
 $latest_id       = $attempts ? (int) $attempts[0]['quiz_attempt_id'] : 0;
 $stamp           = static function ( $row ) {
 	$time = ! empty( $row['start_date'] ) ? strtotime( $row['start_date'] ) : 0;
-	return $time ? date( 'M j, Y g:i a', $time ) : '';
+	return $time ? gmdate( 'M j, Y g:i a', $time ) : '';
 };
 ?>
 <section class="ohmylms-answer-review" id="<?php echo esc_attr( $anchor ); ?>" aria-labelledby="<?php echo esc_attr( $anchor ); ?>-title">
@@ -255,6 +255,26 @@ $stamp           = static function ( $row ) {
 								<?php else : ?>
 									<li><?php echo esc_html( $line ); ?></li>
 								<?php endif; ?>
+							<?php endforeach; ?>
+						</ul>
+					</div>
+				<?php endif; ?>
+
+				<?php if ( ! empty( $entry['rubric'] ) ) : ?>
+					<div class="ohmylms-answer-review-rubric">
+						<h3><?php esc_html_e( 'How it was marked', 'ohmylms' ); ?></h3>
+						<ul>
+							<?php foreach ( $entry['rubric'] as $criterion ) : ?>
+								<li>
+									<strong><?php echo esc_html( $criterion['title'] ); ?></strong>:
+									<?php
+									/* translators: 1: points awarded, 2: points available */
+									echo esc_html( sprintf( __( '%1$s / %2$s', 'ohmylms' ), Scoring::display( $criterion['awarded'] ), Scoring::display( $criterion['max'] ) ) );
+									if ( '' !== $criterion['level'] ) {
+										echo ' — ' . esc_html( $criterion['level'] );
+									}
+									?>
+								</li>
 							<?php endforeach; ?>
 						</ul>
 					</div>

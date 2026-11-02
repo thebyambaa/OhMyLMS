@@ -135,7 +135,18 @@ export interface GradeEvent {
 	reviewer_id: number;
 	reviewer_name: string;
 	reason: string;
+	/** Points by rubric criterion id saved with this grade; `null` when it was not graded with the rubric. */
+	rubric_scores: Record< string, number > | null;
 	created_at: string;
+}
+
+/** A criterion of the marking rubric of a short or long text question (plain text). */
+export interface RubricCriterion {
+	id: string;
+	title: string;
+	description: string;
+	points: number;
+	levels: { points: number; description: string }[];
 }
 
 /** A question of an attempt with the learner's answer and marks. */
@@ -150,8 +161,15 @@ export interface AttemptQuestion {
 	correct: boolean | null;
 	answer: string[];
 	parts: AttemptPart[] | null;
+	/** Rubric of the delivered version; `null` when it has none. */
+	rubric: RubricCriterion[] | null;
+	/** Points by criterion id saved with the current grade; `null` without a saved breakdown. */
+	rubric_scores: Record< string, number > | null;
 	history: GradeEvent[];
 }
+
+/** Points the grader chose per rubric criterion, as text, by criterion id. */
+export type RubricScores = Record< string, string >;
 
 /** An attempt with its questions. */
 export interface AttemptDetail extends Attempt {
@@ -173,12 +191,16 @@ export type Marks = number | Record< string, number >;
 export interface GradeInput {
 	question_id: number;
 	marks: Marks;
+	/** Points by rubric criterion id; the marks must be the rubric score scaled to the question. */
+	rubric?: Record< string, number >;
 }
 
 /** What the grader typed for a question. */
 export interface QuestionDraft {
 	total: string;
 	parts: Record< string, string >;
+	/** Points chosen per rubric criterion. */
+	rubric?: RubricScores;
 }
 
 /** Drafts by question id. */
@@ -188,4 +210,150 @@ export type Drafts = Record< number, QuestionDraft >;
 export interface AttemptFilters {
 	status: 'all' | AttemptStatus;
 	search: string;
+}
+
+/** Lifecycle of a question in a quiz; `unavailable` means trashed or deleted. */
+export type SlotStatus = 'draft' | 'approved' | 'archived' | 'unavailable';
+
+/** Which version learners get: the pin, the current content, the approved version, or none. */
+export type DeliverySource = 'pinned' | 'current' | 'approved' | 'unavailable';
+
+/** One question placed in a quiz. Never carries settings, options or answer keys. */
+export interface QuizQuestionSlot {
+	question_id: number;
+	position: number;
+	/** Empty when the user may neither edit nor use the question. */
+	name: string;
+	type: string;
+	type_label: string;
+	/** Marks learners can earn: the override when set, otherwise the points of the delivered version. */
+	marks: number;
+	/** Points of the delivered version. */
+	question_marks: number;
+	/** Marks set for this question in this quiz, or `null` to use its points. */
+	marks_override: number | null;
+	section: string;
+	status: SlotStatus;
+	/** Latest version number; 0 before the first version. */
+	version: number;
+	current_version_id: number;
+	approved_version_id: number;
+	/** 0 when not pinned. */
+	pinned_version_id: number;
+	pinned_version_no: number;
+	delivery: {
+		source: DeliverySource;
+		version_id: number;
+		version_no: number;
+	};
+	usage: { quizzes: number; responses: number };
+	permissions: { can_edit: boolean; can_use: boolean };
+	modified: string;
+}
+
+/** A random pool that draws approved questions of a skill at each attempt. */
+export interface QuizPool {
+	id: string;
+	title: string;
+	skill: { id: number; name: string };
+	count: number;
+	marks: number;
+	difficulty: string;
+	bank_id: number;
+	include_secure: boolean;
+}
+
+/** A section of the quiz paper: a title over some of its questions, optionally on a new page. */
+export interface QuizSection {
+	title: string;
+	question_ids: number[];
+	new_page: boolean;
+}
+
+/** A pool as `PUT /quizzes/{id}/questions/pools` accepts it. */
+export interface QuizPoolInput {
+	title: string;
+	skill_id: number;
+	count: number;
+	marks: number;
+	difficulty: string;
+	bank_id: number;
+	include_secure: boolean;
+}
+
+/** `GET /quizzes/{id}/questions` and the answer to every write. */
+export interface QuizQuestions {
+	quiz_id: number;
+	/** Token of the list as loaded; writes send it back and a changed list answers 409. */
+	revision: string;
+	questions: QuizQuestionSlot[];
+	/** Sections in paper order; questions in no section come first. */
+	sections: QuizSection[];
+	pools: QuizPool[];
+	totals: {
+		questions: number;
+		fixed_marks: number;
+		pool_questions: number;
+		pool_marks: number;
+		total_marks: number;
+	};
+}
+
+/** The answer to creating a question in a quiz. */
+export interface QuizQuestionCreated extends QuizQuestions {
+	created_id: number;
+}
+
+/** A pin request: the version the quiz uses now, a version id, or `null` to unpin. */
+export type PinChoice = 'current' | number | null;
+
+/** A row of `GET /reports/quizzes`: aggregate attempt figures, never student data. */
+export interface QuizReportRow {
+	id: number;
+	title: string;
+	status: 'publish' | 'draft';
+	course: CourseRef | null;
+	attempts: number;
+	learners: number;
+	in_progress: number;
+	to_grade: number;
+	completed: number;
+	/** Mean marks of completed attempts; null without completed attempts. */
+	average_score: number | null;
+	/** Pass mark in marks; 0 when the quiz has none. */
+	passing_score: number;
+	/** Completed attempts at or above the pass mark; null without a pass mark. */
+	passed: number | null;
+	/** Percentage of completed attempts that passed; null without a pass mark or completed attempts. */
+	pass_rate: number | null;
+	last_submitted_at: string | null;
+	can_edit: boolean;
+	can_grade: boolean;
+}
+
+/** `GET /reports/quizzes/summary`: totals over the filtered quizzes. */
+export interface QuizReportSummary {
+	quizzes: number;
+	attempts: number;
+	learners: number;
+	to_grade: number;
+	completed: number;
+}
+
+/** Which quizzes the report lists by attempt activity. */
+export type ReportActivity = 'all' | 'attempted' | 'to_grade';
+
+/** Sort fields of the report. */
+export type ReportOrderBy =
+	'last_submitted' | 'attempts' | 'to_grade' | 'title' | 'created_at';
+
+/** Report filters, paging and sort, as kept in the address. */
+export interface QuizReportQuery {
+	page: number;
+	search: string;
+	course: number;
+	status: 'all' | 'publish' | 'draft';
+	activity: ReportActivity;
+	orderby: ReportOrderBy;
+	order: 'asc' | 'desc';
 }

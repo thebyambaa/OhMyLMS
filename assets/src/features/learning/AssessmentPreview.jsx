@@ -11,14 +11,16 @@ import { Button, Modal, Notice, Spinner } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { saveQuizForPreview } from './quizPreview.mjs';
 
-const PreviewContext = createContext( null );
+const PreviewContext = createContext(
+	/** @type {{ open: () => Promise<void> }|null} */ ( null )
+);
 
 /**
  * Host one student player for all preview buttons in the assessment editor.
  *
- * @param {Object}  props          Component properties.
- * @param {Element} props.children Editor controls.
- * @return {Element} Controls and the shared preview dialog.
+ * @param {Object}          props          Component properties.
+ * @param {React.ReactNode} props.children Editor controls.
+ * @return {React.ReactElement} Controls and the shared preview dialog.
  */
 export function AssessmentPreviewProvider( { children } ) {
 	const [ opened, setOpened ] = useState( false );
@@ -48,7 +50,11 @@ export function AssessmentPreviewProvider( { children } ) {
 			}
 			if ( current === request.current ) {
 				setSession( ( value ) => value + 1 );
-				setSource( window.ohmylmsNativeLesson.previewUrl );
+				setSource(
+					/** @type {NonNullable<Window['ohmylmsNativeLesson']>} */ (
+						window.ohmylmsNativeLesson
+					).previewUrl
+				);
 			}
 		} catch {
 			if ( current === request.current ) {
@@ -110,9 +116,9 @@ export function AssessmentPreviewProvider( { children } ) {
 							className="ohmylms-assessment-preview-frame"
 							onLoad={ ( event ) => {
 								try {
-									const location =
+									const location = /** @type {Window} */ (
 										event.currentTarget.contentWindow
-											.location;
+									).location;
 									if (
 										location.pathname.endsWith(
 											'/wp-admin/post.php'
@@ -135,7 +141,7 @@ export function AssessmentPreviewProvider( { children } ) {
 /**
  * Open the shared student preview after pending question edits are complete.
  *
- * @return {Element} Preview button.
+ * @return {React.ReactElement} Preview button.
  */
 export function AssessmentPreviewButton() {
 	const preview = useContext( PreviewContext );

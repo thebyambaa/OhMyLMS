@@ -52,7 +52,8 @@ class DesignSystemController extends RestController {
 	}
 
 	/**
-	 * The current settings, the presets and the contrast verdict for the primary color.
+	 * The current settings, the presets, the contrast verdict for the primary color and the colors admin
+	 * screens use under the WordPress preset (the requesting user's admin colour scheme).
 	 *
 	 * @param array|null $settings Settings to describe; the saved ones when null.
 	 * @return \WP_REST_Response
@@ -60,6 +61,7 @@ class DesignSystemController extends RestController {
 	private function snapshot( $settings = null ) {
 		$settings = $settings ?? DesignSystem::get();
 		$primary  = $settings['colors']['primary'];
+		$scheme   = DesignSystem::admin_scheme();
 		return rest_ensure_response(
 			array_merge(
 				$settings,
@@ -67,6 +69,8 @@ class DesignSystemController extends RestController {
 					'on_primary'     => DesignSystem::text_on( $primary ),
 					'primary_passes' => DesignSystem::passes_aa( $primary ),
 					'white_passes'   => DesignSystem::white_passes_aa( $primary ),
+					'admin_scheme'   => $scheme,
+					'admin_colors'   => DesignSystem::admin_colors( $scheme ),
 					'presets'        => array_map(
 						static function ( $name ) {
 							return array_merge( DesignSystem::preset_values( $name ), array( 'label' => DesignSystem::PRESETS[ $name ]['label'] ) );
@@ -111,7 +115,7 @@ class DesignSystemController extends RestController {
 	}
 
 	/**
-	 * Go back to the Khan Academy defaults.
+	 * Go back to the default (WordPress) preset.
 	 *
 	 * @return \WP_REST_Response
 	 */

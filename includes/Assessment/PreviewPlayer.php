@@ -65,7 +65,7 @@ final class PreviewPlayer {
 		if ( 'gutenberg' === $editor ) {
 			return (string) get_edit_post_link( $id, 'raw' );
 		}
-		return admin_url( 'admin.php?page=ohmylms#/quiz-edit/' . absint( $id ) );
+		return \OhMyLMS\Admin\LegacyRoutes::app_url( '/quizzes/' . absint( $id ) );
 	}
 	/**
 	 * Render for Preview player.
@@ -75,14 +75,14 @@ final class PreviewPlayer {
 			return;
 		}
 		$id = absint( $_GET['ohmylms_quiz_preview'] );
-		if ( get_post_type( $id ) !== OHMYLMS_QUIZ_CPT || ! AccessPolicy::can_edit_quiz( $id ) || ! wp_verify_nonce( (string) ( $_GET['_wpnonce'] ?? '' ), 'ohmylms_quiz_preview_' . $id ) ) {
+		if ( get_post_type( $id ) !== OHMYLMS_QUIZ_CPT || ! AccessPolicy::can_edit_quiz( $id ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ?? '' ) ), 'ohmylms_quiz_preview_' . $id ) ) {
 			wp_die( esc_html__( 'You cannot preview this quiz.', 'ohmylms' ), '', array( 'response' => 403 ) );
 		}
 		nocache_headers();
 		$quiz    = ohmylms_get_quiz( $id );
 		$session = sanitize_key( wp_unslash( is_string( $_POST['preview_session'] ?? null ) ? $_POST['preview_session'] : '' ) );
 		$saved   = $session ? get_transient( 'ohmylms_quiz_preview_' . $session ) : false;
-		if ( $session && ( ! $saved || $saved['user'] !== get_current_user_id() || $saved['quiz'] !== $id ) ) {
+		if ( $session && ( ! $saved || get_current_user_id() !== $saved['user'] || $saved['quiz'] !== $id ) ) {
 			wp_die( esc_html__( 'Preview expired. Open Preview again from the editor.', 'ohmylms' ), '', array( 'response' => 403 ) );
 		}
 		if ( ! $saved ) {
@@ -116,18 +116,18 @@ final class PreviewPlayer {
 		}
 		$result = null;
 		$items  = array();
-		if ( ( $_POST['action'] ?? '' ) === 'ohmylms-quiz-preview-exit' ) {
+		if ( isset( $_POST['action'] ) && 'ohmylms-quiz-preview-exit' === $_POST['action'] ) {
 			wp_safe_redirect( self::editor_url( $id, $saved['editor'] ?? '' ) );
 			exit;
 		}
-		if ( ( $_POST['action'] ?? '' ) === 'ohmylms-quiz-preview-submit' ) {
+		if ( isset( $_POST['action'] ) && 'ohmylms-quiz-preview-submit' === $_POST['action'] ) {
 			$result  = array(
 				'earned'  => 0,
 				'total'   => 0,
 				'pending' => 0,
 				'errors'  => array(),
 			);
-			$answers = wp_unslash( $_POST['attempt'][0]['quiz_question'] ?? array() );
+			$answers = wp_unslash( $_POST['attempt'][0]['quiz_question'] ?? array() ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Answers are graded raw; each question type validates its own answer shape.
 			if ( ! is_array( $answers ) ) {
 				$answers = array();
 			}
@@ -171,7 +171,7 @@ final class PreviewPlayer {
 			shuffle( $definitions );
 			$questions[] = $snapshot->student_view( $ids, array(), array( 'definitions' => $definitions ), array(), 'preview:' . $session );
 		}
-		$GLOBALS['post'] = get_post( $id );
+		$GLOBALS['post'] = get_post( $id ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- The preview page renders the quiz as the current post.
 		setup_postdata( $GLOBALS['post'] );
 		$preview = array(
 			'questions' => $questions,

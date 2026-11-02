@@ -11,6 +11,9 @@ use OhMyLMS\Utility\ScormHelper;
 
 defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- The DOMDocument classes define these property names.
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Messages are plain text returned as REST error data.
+
 /**
  * Class ScormImporter
  *
@@ -780,7 +783,7 @@ class ScormImporter {
 				__( 'Content file not found for lesson: %s', 'ohmylms' ),
 				$item['title']
 			);
-			$lesson_type_info                  = array( 'type' => 'text' );
+			$lesson_type_info = array( 'type' => 'text' );
 		}
 
 		$lesson_id = wp_insert_post(

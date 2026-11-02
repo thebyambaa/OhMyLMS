@@ -8,6 +8,7 @@
 
 namespace OhMyLMS\Integrations\GoogleMeet\Includes\Rest;
 
+use WP_REST_Controller;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -15,7 +16,7 @@ use WP_REST_Server;
 /**
  * Plugin google meet settings controller implementation.
  */
-class GoogleMeetSettingsController {
+class GoogleMeetSettingsController extends WP_REST_Controller {
 	/**
 	 * Instance.
 	 *
@@ -435,7 +436,7 @@ class GoogleMeetSettingsController {
 		$start    = $request->get_param( 'start' );
 		$end      = $request->get_param( 'end' );
 		$desc     = $request->get_param( 'description' );
-		$timezone = $request->get_param( 'timezone' ) ?: 'UTC';
+		$timezone = $request->get_param( 'timezone' ) ? $request->get_param( 'timezone' ) : 'UTC';
 
 		$event_data = array(
 			'summary'        => $title,
@@ -520,7 +521,7 @@ class GoogleMeetSettingsController {
 		) as $param => $field ) {
 			if ( $request->get_param( $param ) ) {
 				if ( in_array( $param, array( 'start', 'end' ), true ) ) {
-					$timezone       = $request->get_param( 'timezone' ) ?: 'UTC';
+					$timezone       = $request->get_param( 'timezone' ) ? $request->get_param( 'timezone' ) : 'UTC';
 					$data[ $field ] = array(
 						'dateTime' => $request->get_param( $param ),
 						'timeZone' => $timezone,

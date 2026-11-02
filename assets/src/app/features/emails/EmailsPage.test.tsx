@@ -66,17 +66,18 @@ describe( 'emails feature', () => {
 		expect( api.listEmails ).not.toHaveBeenCalled();
 	} );
 
-	it( 'opens from the navigation for administrators', async () => {
+	it( 'opens as the Engagement > Emails tab for administrators', async () => {
 		renderShell( [ emails ], {
 			route: '/emails',
 			capabilities: { manage_options: true },
 		} );
 		expect(
-			await screen.findByRole( 'link', { name: 'Emails' } )
-		).toBeInTheDocument();
-		expect(
 			await screen.findByRole( 'table', { name: 'System emails' } )
 		).toBeInTheDocument();
+		expect( emails ).toMatchObject( {
+			group: 'engagement',
+			tab: 'emails',
+		} );
 	} );
 } );
 
@@ -101,7 +102,9 @@ describe( 'email list', () => {
 		} );
 		expect( first ).toBeChecked();
 		expect( second ).not.toBeChecked();
-		expect( screen.getByText( '2 emails found.' ) ).toBeInTheDocument();
+		expect(
+			screen.getAllByText( '2 emails found.' )[ 0 ]
+		).toBeInTheDocument();
 	} );
 
 	it( 'switches an email on with the keyboard, optimistically', async () => {
@@ -157,11 +160,11 @@ describe( 'email list', () => {
 		page();
 		await screen.findByRole( 'table', { name: 'System emails' } );
 		await user.type(
-			screen.getByRole( 'textbox', { name: 'Search emails' } ),
+			screen.getByRole( 'searchbox', { name: 'Search emails' } ),
 			'quiz'
 		);
 		await user.selectOptions(
-			screen.getByRole( 'combobox', { name: 'Sent to' } ),
+			await screen.findByRole( 'combobox', { name: 'Sent to' } ),
 			'student'
 		);
 		await user.click( screen.getByRole( 'button', { name: 'Search' } ) );
@@ -274,6 +277,49 @@ describe( 'email editor', () => {
 		expect(
 			screen.getByRole( 'button', { name: 'Save changes' } )
 		).toHaveAttribute( 'aria-disabled', 'true' );
+	} );
+
+	it( 'resets a customized field to its default and saves the reset as null', async () => {
+		const user = userEvent.setup();
+		vi.mocked( api.saveEmail ).mockResolvedValue( {
+			...quizGraded,
+			subject: quizGraded.defaults.subject,
+			customized: { ...quizGraded.customized, subject: false },
+		} );
+		await openEditor();
+		expect(
+			screen.queryByRole( 'button', {
+				name: 'Reset to default: Heading',
+			} )
+		).not.toBeInTheDocument();
+		await user.click(
+			screen.getByRole( 'button', { name: 'Reset to default: Subject' } )
+		);
+		expect( screen.getByLabelText( 'Subject' ) ).toHaveValue(
+			quizGraded.defaults.subject
+		);
+		expect(
+			screen.queryByRole( 'button', {
+				name: 'Reset to default: Subject',
+			} )
+		).not.toBeInTheDocument();
+		await user.type( screen.getByLabelText( 'Heading' ), '!' );
+		expect(
+			screen.getByRole( 'button', { name: 'Reset to default: Heading' } )
+		).toBeInTheDocument();
+		await user.click(
+			screen.getByRole( 'button', { name: 'Save changes' } )
+		);
+		await waitFor( () =>
+			expect( api.saveEmail ).toHaveBeenCalledWith(
+				'student_quiz_graded',
+				{ subject: null, heading: `${ quizGraded.heading }!` }
+			)
+		);
+		expect( await notice( 'Email saved.' ) ).toBeInTheDocument();
+		expect( screen.getByLabelText( 'Subject' ) ).toHaveValue(
+			quizGraded.defaults.subject
+		);
 	} );
 
 	it( 'shows inline errors, moves focus to the first one and sends nothing', async () => {

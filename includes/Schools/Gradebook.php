@@ -6,60 +6,12 @@
  */
 namespace OhMyLMS\Schools;
 
+use OhMyLMS\Student\Enrollments;
+
 defined( 'ABSPATH' ) || exit;
 
 /** Course gradebooks group real enrollments without creating shared user accounts. */
 final class Gradebook {
-	/**
-	 * Register for Gradebook.
-	 */
-	public static function register() {
-		foreach ( array(
-			''                           => 'GET',
-			'/classes'                   => 'GET,POST',
-			'/classes/(?P<class_id>\d+)' => 'POST,DELETE',
-			'/grades'                    => 'POST,DELETE',
-		) as $suffix => $methods ) {
-			register_rest_route(
-				'ohmylms/v1',
-				'/courses/(?P<course_id>\d+)/gradebook' . $suffix,
-				array(
-					'methods'             => $methods,
-					'permission_callback' => function ( $r ) {
-						return current_user_can( 'manage_options' ) && wp_verify_nonce( $r->get_header( 'X-WP-Nonce' ), 'wp_rest' ) ? true : new \WP_Error( 'gradebook_forbidden', 'Only an administrator can manage this gradebook.', array( 'status' => 403 ) );
-					},
-					'callback'            => array( self::class, 'dispatch' ),
-				)
-			);
-		}
-	}
-	/**
-	 * Dispatch for Gradebook.
-	 *
-	 * @param mixed $r R.
-	 */
-	public static function dispatch( $r ) {
-		try {
-			$course = absint( $r['course_id'] );
-			$post   = get_post( $course );
-			Service::need( $post && OHMYLMS_COURSE_CPT === $post->post_type && 'trash' !== $post->post_status, 'Course not found.' );
-			$route  = $r->get_route();
-			$method = $r->get_method();
-			if ( substr( $route, -7 ) === '/grades' ) {
-				$data = self::grade( $course, $r, 'DELETE' === $method ); } elseif ( $r['class_id'] ) {
-				$data = 'DELETE' === $method ? self::detach( $course, absint( $r['class_id'] ) ) : self::attach( $course, absint( $r['class_id'] ), rest_sanitize_boolean( $r['enroll'] ) ); } elseif ( substr( $route, -8 ) === '/classes' ) {
-					$data = 'GET' === $method ? self::classes( $course ) : self::attach( $course, absint( $r['class'] ), rest_sanitize_boolean( $r['enroll'] ) ); } else {
-					$data = self::read( $course ); }
-					$response = rest_ensure_response( $data );
-					$response->header( 'Cache-Control', 'private, no-store' );
-					return $response;
-		} catch ( \Throwable $e ) {
-			$status = in_array( $e->getCode(), array( 400, 403, 404, 409 ), true ) ? $e->getCode() : 500;
-			if ( 500 === $status ) {
-				error_log( '[OhMyLMS gradebook] ' . $e->getMessage() ); }
-			return new \WP_Error( 'gradebook_error', 500 === $status ? 'Unable to update the gradebook. Please try again.' : $e->getMessage(), array( 'status' => $status ) );
-		}
-	}
 	/**
 	 * Roster for Gradebook.
 	 *
@@ -72,10 +24,12 @@ final class Gradebook {
 		if ( (int) $c['school_id'] ) {
 			$school = Service::row( 'schools', (int) $c['school_id'] );
 			Service::need( $school && 'active' === $school['status'], 'The school is archived.' ); }
-		$m     = Schema::table( 'class_memberships' );
-		$s     = Schema::table( 'school_memberships' );
-		$scope = (int) $c['school_id'] ? $wpdb->prepare( ' AND EXISTS (SELECT 1 FROM %i s WHERE s.school_id=%d AND s.user_id=m.user_id AND s.role=\'student\' AND s.status=\'active\')', $s, $c['school_id'] ) : '';
-		return array_map( 'intval', $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT m.user_id FROM $m m JOIN {$wpdb->users} u ON u.ID=m.user_id WHERE m.class_id=%d AND m.role='student' AND m.status='active' $scope", $class ) ) );
+		$m = Schema::table( 'class_memberships' );
+		$s = Schema::table( 'school_memberships' );
+		if ( (int) $c['school_id'] ) {
+			return array_map( 'intval', $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT m.user_id FROM %i m JOIN {$wpdb->users} u ON u.ID=m.user_id WHERE m.class_id=%d AND m.role='student' AND m.status='active' AND EXISTS (SELECT 1 FROM %i s WHERE s.school_id=%d AND s.user_id=m.user_id AND s.role='student' AND s.status='active')", $m, $class, $s, $c['school_id'] ) ) );
+		}
+		return array_map( 'intval', $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT m.user_id FROM %i m JOIN {$wpdb->users} u ON u.ID=m.user_id WHERE m.class_id=%d AND m.role='student' AND m.status='active'", $m, $class ) ) );
 	}
 	/**
 	 * Classes for Gradebook.
@@ -124,16 +78,23 @@ final class Gradebook {
 					$existing = $wpdb->get_row( $wpdb->prepare( 'SELECT id,status FROM %i WHERE course_id=%d AND user_id=%d ORDER BY (status=\'enrolled\') DESC,id DESC LIMIT 1', $enrollments, $course, $user ), ARRAY_A );
 					// A class sync must never restore a blocked/cancelled enrollment.
 					if ( ! $existing && $enroll && get_user_meta( $user, '_ohmylms_banned_student', true ) !== 'yes' ) {
-						Service::insert(
-							'user_enrollment',
+						$created = Enrollments::create(
 							array(
 								'course_id'  => $course,
 								'user_id'    => $user,
 								'status'     => 'enrolled',
 								'progress'   => 'running',
 								'start_date' => current_time( 'mysql' ),
+							),
+							array(
+								'source'      => 'roster',
+								'source_type' => 'class',
+								'source_ref'  => $class,
+								'class_id'    => $class,
 							)
 						);
+						if ( false === $created ) {
+							throw new \RuntimeException( 'Unable to save this record. It may already exist.', 409 ); }
 						$new[]    = $user;
 						$existing = array( 'status' => 'enrolled' );
 					}
@@ -222,7 +183,7 @@ final class Gradebook {
 	 *
 	 * @param mixed $quiz_id Quiz identifier.
 	 */
-	private static function quiz_max( $quiz_id ) {
+	public static function quiz_max( $quiz_id ) {
 		if ( class_exists( \OhMyLMS\Assessment\Engine::class ) && \OhMyLMS\Assessment\Schema::ready() && \OhMyLMS\Assessment\Engine::versioned() ) {
 			$revision = \OhMyLMS\Assessment\RevisionPublisher::latest( $quiz_id );
 			if ( $revision ) {
@@ -238,12 +199,11 @@ final class Gradebook {
 	public static function read( $course ) {
 		global $wpdb;
 		$items = self::items( $course );
-		$e     = Schema::table( 'user_enrollment' );
-		$users = $wpdb->get_results( $wpdb->prepare( 'SELECT DISTINCT u.ID AS id,u.display_name AS name,u.user_email AS email FROM %i e JOIN %i u ON u.ID=e.user_id WHERE e.course_id=%d AND e.status IN (\'enrolled\',\'banned\') ORDER BY u.display_name,u.ID', $e, $wpdb->users, $course ), ARRAY_A );
+		$users = Enrollments::listed_students( $course );
 		$q     = Schema::table( 'quiz_attempts' );
 		$a     = Schema::table( 'quiz_attempts_answers' );
 		// quiz_attempts.total stores earned points, not the maximum possible points.
-		$quizzes     = $wpdb->get_results( $wpdb->prepare( 'SELECT q.id,q.student_id AS user_id,q.quiz_id AS content_id,q.status,SUM(a.question_marks) AS max,COALESCE(SUM(a.achive_mark),0) AS score FROM %i q LEFT JOIN %i a ON a.quiz_attempt_id=q.id WHERE q.course_id=%d GROUP BY q.id,q.student_id,q.quiz_id,q.status ORDER BY q.id DESC', $q, $a, $course ), ARRAY_A );
+		$quizzes     = \OhMyLMS\Gradebook\ExamRelease::hold( $wpdb->get_results( $wpdb->prepare( 'SELECT q.id,q.student_id AS user_id,q.quiz_id AS content_id,q.status,SUM(a.question_marks) AS max,COALESCE(SUM(a.achive_mark),0) AS score FROM %i q LEFT JOIN %i a ON a.quiz_attempt_id=q.id WHERE q.course_id=%d GROUP BY q.id,q.student_id,q.quiz_id,q.status ORDER BY q.id DESC', $q, $a, $course ), ARRAY_A ) );
 		$a           = Schema::table( 'assignment_attempts' );
 		$assignments = $wpdb->get_results( $wpdb->prepare( 'SELECT id,user_id,assignment_id AS content_id,status,score FROM %i WHERE course_id=%d ORDER BY id DESC', $a, $course ), ARRAY_A );
 		$o           = Schema::table( 'gradebook_overrides' );
@@ -365,8 +325,7 @@ final class Gradebook {
 		global $wpdb;
 		$user    = absint( $r['user_id'] );
 		$content = absint( $r['content_id'] );
-		$e       = Schema::table( 'user_enrollment' );
-		Access::require_access( $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE course_id=%d AND user_id=%d AND status IN (\'enrolled\',\'banned\')', $e, $course, $user ) ) );
+		Access::require_access( Enrollments::is_listed( $user, $course ) );
 		$items = array_values(
 			array_filter(
 				self::items( $course ),
@@ -376,6 +335,9 @@ final class Gradebook {
 			)
 		);
 		Service::need( $items, 'This assessment does not belong to the course.' );
+		if ( \OhMyLMS\Gradebook\Schema::ready() ) {
+			return self::grade_with_history( $course, $content, $user, $r, $reset );
+		}
 		$table = Schema::table( 'gradebook_overrides' );
 		$key   = array(
 			'course_id'  => $course,
@@ -404,5 +366,42 @@ final class Gradebook {
 				throw new \RuntimeException( 'Unable to save this grade.' ); }
 			Service::audit( 0, $reset ? 'gradebook_grade_reset' : 'gradebook_grade_saved', $content );
 			return array( 'success' => true );
+	}
+
+	/**
+	 * Save or reset a grade through the gradebook's override service, so the change gets a history row and
+	 * shows in the new gradebook. This route keeps its last-write-wins behaviour (it sends the version it
+	 * reads) and its optional note (a fixed reason when empty).
+	 *
+	 * @param int   $course  Course.
+	 * @param int   $content Item.
+	 * @param int   $user    Learner.
+	 * @param mixed $r      Request.
+	 * @param bool  $reset   Remove the manual grade.
+	 * @return array
+	 * @throws \RuntimeException When the change is refused.
+	 */
+	private static function grade_with_history( $course, $content, $user, $r, $reset ) {
+		global $wpdb;
+		$version = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT version FROM %i WHERE course_id=%d AND content_id=%d AND user_id=%d', \OhMyLMS\Gradebook\Schema::table( 'gradebook_cells' ), $course, $content, $user ) );
+		$note    = mb_substr( sanitize_textarea_field( $r['note'] ?? '' ), 0, 500 );
+		$result  = \OhMyLMS\Gradebook\Overrides::apply(
+			$course,
+			$content,
+			$user,
+			array(
+				'action'           => $reset ? 'revert' : 'override',
+				'score'            => $r['score'],
+				'reason'           => '' !== trim( $note ) ? $note : __( 'Changed in the class gradebook.', 'ohmylms' ),
+				'expected_version' => $version,
+			),
+			get_current_user_id()
+		);
+		if ( is_wp_error( $result ) && ! ( $reset && 'ohmylms_gradebook_nothing_to_revert' === $result->get_error_code() ) ) {
+			$status = (int) ( $result->get_error_data()['status'] ?? 500 );
+			throw new \RuntimeException( $result->get_error_message(), 422 === $status ? 400 : $status ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Returned as REST error data.
+		}
+		Service::audit( 0, $reset ? 'gradebook_grade_reset' : 'gradebook_grade_saved', $content );
+		return array( 'success' => true );
 	}
 }

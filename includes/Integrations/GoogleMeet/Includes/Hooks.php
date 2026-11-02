@@ -184,7 +184,7 @@ class Hooks {
 		$start    = $request->get_param( 'date' );
 		$end      = $request->get_param( 'endDate' );
 		$desc     = $request->get_param( 'agenda' );
-		$timezone = $request->get_param( 'timezone' ) ?: 'UTC';
+		$timezone = $request->get_param( 'timezone' ) ? $request->get_param( 'timezone' ) : 'UTC';
 
 		$event_data = array(
 			'summary'        => $title,
@@ -339,7 +339,7 @@ class Hooks {
 		$start    = sanitize_text_field( $request->get_param( 'date' ) );
 		$end      = sanitize_text_field( $request->get_param( 'endDate' ) );
 		$desc     = sanitize_textarea_field( $request->get_param( 'agenda' ) );
-		$timezone = sanitize_text_field( $request->get_param( 'timezone' ) ?: 'UTC' );
+		$timezone = sanitize_text_field( $request->get_param( 'timezone' ) ? $request->get_param( 'timezone' ) : 'UTC' );
 
 		// Prepare event payload.
 		$event_data = array(
@@ -465,7 +465,7 @@ class Hooks {
 
 			if ( empty( $creds['client_id'] ) || empty( $creds['client_secret'] ) ) {
 				// Redirect back with error.
-				wp_safe_redirect( admin_url( 'admin.php?page=ohmylms#/integrations?auth=error&message=missing_credentials' ) );
+				wp_safe_redirect( \OhMyLMS\Admin\LegacyRoutes::app_url( '/integrations?auth=error&message=missing_credentials' ) );
 				exit;
 			}
 
@@ -484,7 +484,7 @@ class Hooks {
 
 			if ( is_wp_error( $response ) ) {
 				// Redirect back with error.
-				wp_safe_redirect( admin_url( 'admin.php?page=ohmylms#/integrations?auth=error&message=oauth_failed' ) );
+				wp_safe_redirect( \OhMyLMS\Admin\LegacyRoutes::app_url( '/integrations?auth=error&message=oauth_failed' ) );
 				exit;
 			}
 
@@ -501,11 +501,11 @@ class Hooks {
 				);
 
 				// Redirect back to integrations page with success.
-				wp_safe_redirect( admin_url( 'admin.php?page=ohmylms#/integrations?auth=success' ) );
+				wp_safe_redirect( \OhMyLMS\Admin\LegacyRoutes::app_url( '/integrations?auth=success' ) );
 				exit;
 			} else {
 				// Redirect back with error.
-				wp_safe_redirect( admin_url( 'admin.php?page=ohmylms#/integrations?auth=error&message=no_access_token' ) );
+				wp_safe_redirect( \OhMyLMS\Admin\LegacyRoutes::app_url( '/integrations?auth=error&message=no_access_token' ) );
 				exit;
 			}
 		}

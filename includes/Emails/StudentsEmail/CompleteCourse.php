@@ -3,6 +3,7 @@
 namespace OhMyLMS\Emails\StudentsEmail;
 
 use OhMyLMS\Emails\Emails;
+use OhMyLMS\I18n\RecipientLocale;
 use function OhMyLMS\Commerce\ecommerce;
 
 /**
@@ -75,7 +76,25 @@ class CompleteCourse {
 			return;
 		}
 
-		$course = ohmylms_get_course( $course_id );
+		RecipientLocale::run(
+			$user,
+			function () use ( $student_id, $course_id, $name, $to ) {
+				$this->send( $student_id, $course_id, $name, $to );
+			}
+		);
+	}
+
+	/**
+	 * Compose and send the email, in the learner's language.
+	 *
+	 * @param mixed  $student_id Student identifier.
+	 * @param mixed  $course_id  Course identifier.
+	 * @param string $name       Learner's display name.
+	 * @param string $to         Learner's address.
+	 */
+	private function send( $student_id, $course_id, $name, $to ) {
+		$settings = Emails::get_template_settings( 'student_course_completed', $this->default_settings() );
+		$course   = ohmylms_get_course( $course_id );
 
 		global $wpdb;
 		$table_name  = $wpdb->prefix . 'ohmylms_user_enrollment';

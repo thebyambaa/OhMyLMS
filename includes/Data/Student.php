@@ -17,7 +17,6 @@ use OhMyLMS\DataStores\DataStores;
  *
  * @since 1.0.0
  */
-
 class Student extends Data {
 
 	/**
@@ -313,9 +312,8 @@ class Student extends Data {
 					}
 				}
 			}
-		}
-		// Handle old format: separate arrays for labels and URLs.
-		elseif ( is_array( $social_links ) && is_array( $urls ) ) {
+		} elseif ( is_array( $social_links ) && is_array( $urls ) ) {
+			// Handle old format: separate arrays for labels and URLs.
 			$count = min( count( $social_links ), count( $urls ) );
 
 			for ( $i = 0; $i < $count; $i++ ) {
@@ -846,7 +844,8 @@ class Student extends Data {
 	 */
 	public function get_cover_image( $context = 'view' ) {
 		$cover_image = $this->get_prop( 'cover_image', $context );
-		if ( empty( $cover_image ) ) {
+		// The store saves the `edit` value: storing the placeholder would make has_cover_image() true.
+		if ( empty( $cover_image ) && 'edit' !== $context ) {
 			$cover_image = OHMYLMS_URL . '/assets/images/student-cover-image-placeholder.jpeg';
 		}
 		return $cover_image;

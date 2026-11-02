@@ -58,21 +58,32 @@ namespace {
         public function prepare($query, ...$args) { return [$query, $args]; }
         public function get_col($query) {
             if (is_array($query)) {
+                // Tables are %i identifiers: the table is the first argument and the role the last.
                 [$sql, $args] = $query;
-                if (str_contains($sql, 'class_memberships')) { return $args[1] === 'teacher' ? [3] : [2]; }
-                if (str_contains($sql, 'user_enrollment')) { return [2]; }
-                if (str_contains($sql, 'school_memberships')) { return []; }
+                check(str_starts_with($sql, 'SELECT ') && str_contains($sql, ' FROM %i '), 'Table not passed as a prepared identifier');
+                if ($args[0] === 'class_memberships') { return end($args) === 'teacher' ? [3] : [2]; }
+                if ($args[0] === 'user_enrollment') { return [2]; }
+                if ($args[0] === 'school_memberships') { return []; }
             }
             return [4];
         }
     };
     require __DIR__ . '/../../includes/Schools/Access.php';
     require __DIR__ . '/../../includes/Schools/ViewAs.php';
+    class WP_REST_Controller {}
+    require __DIR__ . '/../../includes/Schools/Rest/ViewAsController.php';
+    function __($text, $domain = null) { return $text; }
+    function apply_filters($hook, $value, ...$args) { return $value; }
+    require __DIR__ . '/../../includes/Gradebook/Access.php';
+    require __DIR__ . '/../../includes/Dashboard/Access.php';
+    require __DIR__ . '/../../includes/Admin/AppPage.php';
+    require __DIR__ . '/../../includes/Admin/AdminNavigation.php';
+    require __DIR__ . '/../../includes/Admin/LegacyRoutes.php';
     use OhMyLMS\Schools\ViewAs;
     function check($value, $message) { if (!$value) { throw new \RuntimeException($message); } }
     function denied($call, $message) { try { $call(); } catch (\RuntimeException $e) { check(in_array($e->getCode(), [400, 403]), $message); return; } throw new \RuntimeException($message); }
     $request = new class { public $nonce = 'valid'; public function get_header($key) { return $this->nonce; } };
-    ViewAs::register();
+    (new \OhMyLMS\Schools\Rest\ViewAsController())->register_routes();
     check($routes['/school/view-as/start']['permission_callback']($request) === true, 'Admin start rejected');
     $request->nonce = 'invalid'; check($routes['/school/view-as/start']['permission_callback']($request) instanceof WP_Error, 'Missing nonce accepted'); $request->nonce = 'valid';
     check(array_column(ViewAs::candidates('student', 10), 'id') === [2], 'Class students scope wrong');
@@ -96,7 +107,8 @@ namespace {
     unset(WP_Session_Tokens::$tokens[1]['admin-session']);
     denied(fn() => ViewAs::return([]), 'Revoked admin session restored');
     WP_Session_Tokens::$tokens[1]['admin-session'] = true;
-    ViewAs::return([]);
+    $returned = ViewAs::return([]);
+    check($returned === ['url' => 'https://example.test/wp-admin/admin.php?page=ohmylms-accounts&tab=schools'], 'Return does not open Account Hub: ' . json_encode($returned));
     check($current === 1 && $auth === [1, 'admin-session'] && $clears === 2, 'Original admin session not restored');
     check(!WP_Session_Tokens::get_instance(2)->verify('target-session') && !$transients, 'Target session or return token survived return');
     check($audit === [[1, 'view_as_started', 2], [1, 'view_as_returned', 2]], 'Switch audit attribution incorrect');

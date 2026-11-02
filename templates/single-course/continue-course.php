@@ -1,5 +1,4 @@
 <?php
-
 /**
  * The template for displaying single course sidebar's pricebox
  *

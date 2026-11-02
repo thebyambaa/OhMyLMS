@@ -2,8 +2,8 @@
  * Intersect built-in authoring controls with the installed server manifest.
  * Include trusted extension editors, preserving existing type identifiers.
  *
- * @param {Array} builtins Built-in ID/label pairs.
- * @return {Array} Available select options.
+ * @param {ReadonlyArray<readonly string[]>} builtins Built-in ID/label pairs.
+ * @return {{value: string, label: string}[]} Available select options.
  */
 export function nativeQuestionTypes( builtins ) {
 	const manifest =
@@ -11,20 +11,23 @@ export function nativeQuestionTypes( builtins ) {
 			? null
 			: window.ohmylmsNativeLesson?.questionTypes ||
 				window.ohmylmsExtensionManifest?.question;
+	/** @type {{ id: string, label: string }[]} */
 	const entries =
 		typeof window === 'undefined'
 			? []
 			: window.ohmylms?.extensions?.list?.( 'question-editor' ) || [];
-	const labels = new Map( [
-		...builtins,
-		...Object.entries( manifest || {} )
-			.filter(
-				( [ , definition ] ) =>
-					definition.editor?.format === 'ohmylms-options'
-			)
-			.map( ( [ id, definition ] ) => [ id, definition.label ] ),
-		...entries.map( ( entry ) => [ entry.id, entry.label ] ),
-	] );
+	const labels = new Map(
+		/** @type {[string, string][]} */ ( [
+			...builtins,
+			...Object.entries( manifest || {} )
+				.filter(
+					( [ , definition ] ) =>
+						definition.editor?.format === 'ohmylms-options'
+				)
+				.map( ( [ id, definition ] ) => [ id, definition.label ] ),
+			...entries.map( ( entry ) => [ entry.id, entry.label ] ),
+		] )
+	);
 	return [ ...labels ]
 		.filter( ( [ id ] ) => ! manifest || manifest[ id ] )
 		.map( ( [ value, label ] ) => ( {

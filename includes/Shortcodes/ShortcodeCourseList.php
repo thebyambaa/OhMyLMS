@@ -255,10 +255,13 @@ class ShortcodeCourseList {
 			\OhMyLMS\Curriculum\Placement::ids_from_list( $atts['bundle'], 'bundle' )
 		);
 
+		// Search, filters, sort and load-more pages from the URL (includes/Extensions/Catalog.php).
+		$args = \OhMyLMS\Extensions\Catalog::list_query_args( $args, $atts );
+
 		// Set up global query for template.
 		global $wp_query;
 		$original_query = $wp_query;
-		$wp_query       = new WP_Query( $args );
+		$wp_query       = new WP_Query( $args ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- The archive template reads the global query; restored below.
 
 		ob_start();
 
@@ -284,10 +287,10 @@ class ShortcodeCourseList {
 		}
 
 		// Restore original query.
-		$wp_query = $original_query;
+		$wp_query = $original_query; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Restores the original global query.
 		wp_reset_postdata();
 
-		echo ob_get_clean();
+		echo ob_get_clean(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Buffered template output, escaped by the templates.
 	}
 
 	/**
@@ -305,7 +308,7 @@ class ShortcodeCourseList {
 		$css = self::generate_custom_css( $ohmylms_course_list_attributes );
 
 		if ( ! empty( $css ) ) {
-			echo '<style type="text/css" id="ohmylms-course-list-custom-styles">' . $css . '</style>';
+			echo '<style type="text/css" id="ohmylms-course-list-custom-styles">' . $css . '</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CSS values escaped in generate_custom_css().
 		}
 	}
 

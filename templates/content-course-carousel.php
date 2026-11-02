@@ -21,12 +21,14 @@ global $category;
 
 ?>
 
-<div class="ohmylms-course-carousel-wrapper">
+<?php // A new key per curriculum item makes the catalogue router mount fresh carousels, which measure their slides. ?>
+<div class="ohmylms-course-carousel-wrapper" data-wp-key="<?php echo esc_attr( 'rows-' . ( $category ? $category : 'all' ) ); ?>">
 	<?php
 	foreach ( $data as $row ) {
 
 		// Validate required row fields.
-		if ( empty( $row['row_heading'] ) || empty( $row['row_display_criteria'] ) ) {
+		// Rows also come from shortcode attributes, so the criteria names a fixed set of functions.
+		if ( empty( $row['row_heading'] ) || empty( $row['row_display_criteria'] ) || ! in_array( $row['row_display_criteria'], \OhMyLMS\Settings\DesignSettings::ROW_CRITERIA, true ) ) {
 			continue;
 		}
 
@@ -39,6 +41,7 @@ global $category;
 
 		echo '<div class="ohmylms-course-carousel-single">';
 			echo '<h3 class="course-carousel-title">' . esc_html( $row['row_heading'] ) . '</h3>';
+			\OhMyLMS\Design\Carousel::label( $row['row_heading'] );
 
 		if ( 'all' === $row['row_display_criteria'] ) {
 			$args = array(
@@ -91,6 +94,7 @@ global $category;
 			}
 		}
 
+		\OhMyLMS\Design\Carousel::label( '' );
 		echo '</div>';
 	}
 	?>

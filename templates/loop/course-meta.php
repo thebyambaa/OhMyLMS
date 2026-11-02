@@ -30,8 +30,9 @@ $level        = $course->get_level();
 					$total = $course->get_total_enrolled_users();
 					printf(
 						esc_html( /* translators: %d: number. */
-						_n( '%d Student', '%d Students', $total, 'ohmylms' ) ),
-						$total
+							_n( '%d Student', '%d Students', $total, 'ohmylms' )
+						),
+						(int) $total
 					);
 				?>
 			</span>
@@ -73,14 +74,7 @@ $level        = $course->get_level();
 				<span class="rating">
 					<span class="average-rating"><?php echo esc_html( $average ); ?></span>
 				<?php
-					printf(
-						'(%s)',
-						sprintf(
-							esc_html( /* translators: %d: number. */
-							_n( '%d', '%d', $rating_count, 'ohmylms' ) ),
-							$rating_count
-						)
-					);
+					printf( '(%d)', (int) $rating_count );
 				?>
 				</span>
 			</span>
@@ -91,7 +85,7 @@ $level        = $course->get_level();
 
 			<span class="total-ratings">
 				<?php
-				echo '(' . $rating_count . ( 1 == $rating_count ? esc_html__( ' Rating', 'ohmylms' ) : esc_html__( ' Ratings', 'ohmylms' ) ) . ')';
+				echo '(' . esc_html( $rating_count ) . ( 1 == $rating_count ? esc_html__( ' Rating', 'ohmylms' ) : esc_html__( ' Ratings', 'ohmylms' ) ) . ')';
 				?>
 			</span>            
 		</li>

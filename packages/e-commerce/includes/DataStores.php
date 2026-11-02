@@ -29,7 +29,7 @@ class DataStores {
 	/**
 	 * Contains the instance of the DataStore that we want to work with
 	 *
-	 * @var
+	 * @var object
 	 * @since 1.0.0
 	 */
 	public $instance;
@@ -74,14 +74,14 @@ class DataStores {
 		$this->object_type = $object_type;
 
 		if ( ! array_key_exists( $object_type, $this->stores ) ) {
-			throw new \Exception( __( 'Invalid data store.', 'ohmylms' ) );
+			throw new \Exception( esc_html__( 'Invalid data store.', 'ohmylms' ) );
 		}
 
 		if ( array_key_exists( $object_type, $this->stores ) ) {
 			$store          = $this->stores[ $object_type ];
 			$this->instance = new $store();
 		} else {
-			throw new \Exception( __( 'Invalid data store.', 'ohmylms' ) );
+			throw new \Exception( esc_html__( 'Invalid data store.', 'ohmylms' ) );
 		}
 	}
 

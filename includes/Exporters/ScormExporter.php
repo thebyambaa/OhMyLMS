@@ -11,6 +11,8 @@ use OhMyLMS\Utility\ScormHelper;
 
 defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Messages are plain text returned as REST error data.
+
 /**
  * Class ScormExporter
  *
@@ -162,13 +164,13 @@ class ScormExporter {
 		$last = strtolower( $size[ strlen( $size ) - 1 ] );
 		$size = (int) $size;
 
-		switch ( $last ) {
-			case 'g':
-				$size *= 1024;
-			case 'm':
-				$size *= 1024;
-			case 'k':
-				$size *= 1024;
+		$multipliers = array(
+			'g' => 1024 * 1024 * 1024,
+			'm' => 1024 * 1024,
+			'k' => 1024,
+		);
+		if ( isset( $multipliers[ $last ] ) ) {
+			$size *= $multipliers[ $last ];
 		}
 
 		return $size;
@@ -209,7 +211,7 @@ class ScormExporter {
 		} catch ( \Exception $e ) {
 			ScormHelper::log( 'SCORM export failed', 'error', array( 'error' => $e->getMessage() ) );
 			$this->cleanup();
-			wp_die( esc_html__( 'SCORM Export Error: ', 'ohmylms' ) . $e->getMessage() );
+			wp_die( esc_html__( 'SCORM Export Error: ', 'ohmylms' ) . esc_html( $e->getMessage() ) );
 		}
 	}
 
@@ -231,7 +233,7 @@ class ScormExporter {
 	 * @throws \Exception When the operation cannot be completed.*/
 	private function generate_manifest() {
 		$xml               = new \DOMDocument( '1.0', 'UTF-8' );
-		$xml->formatOutput = true;
+		$xml->formatOutput = true; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- DOMDocument property.
 
 		if ( '1.2' === $this->scorm_version ) {
 			$manifest = $this->generate_scorm_12_manifest( $xml );
@@ -550,8 +552,12 @@ class ScormExporter {
 		$course_post = get_post( $course_id );
 
 		if ( ! $course_post || OHMYLMS_COURSE_CPT !== $course_post->post_type ) {
-			throw new \Exception( sprintf( /* translators: %d: number. */
-			__( 'Invalid course ID: %d', 'ohmylms' ), $course_id ) );
+			throw new \Exception(
+				sprintf( /* translators: %d: number. */
+					__( 'Invalid course ID: %d', 'ohmylms' ),
+					$course_id
+				)
+			);
 		}
 
 		// Create course directory.
@@ -752,18 +758,19 @@ class ScormExporter {
 		$html = '<div class="scorm-quiz">';
 
 		// Fetch questions.
-		$questions_query = $wpdb->prepare(
-			'
+		$questions = $wpdb->get_results(
+			$wpdb->prepare(
+				'
             SELECT * 
             FROM %i
             WHERE quiz_id = %d 
             ORDER BY order_number ASC
         ',
-			$wpdb->prefix . 'ohmylms_quiz_questions_relationship',
-			$quiz_id
+				$wpdb->prefix . 'ohmylms_quiz_questions_relationship',
+				$quiz_id
+			),
+			ARRAY_A
 		);
-
-		$questions = $wpdb->get_results( $questions_query, ARRAY_A );
 
 		foreach ( $questions as $index => $question ) {
 			$question_post = get_post( $question['question_id'] );
@@ -804,18 +811,19 @@ class ScormExporter {
 		global $wpdb;
 
 		// Fetch answers.
-		$answers_query = $wpdb->prepare(
-			'
+		$answers = $wpdb->get_results(
+			$wpdb->prepare(
+				'
             SELECT * 
             FROM %i
             WHERE question_id = %d 
             ORDER BY order_number ASC
         ',
-			$wpdb->prefix . 'ohmylms_question_answers',
-			$question_id
+				$wpdb->prefix . 'ohmylms_question_answers',
+				$question_id
+			),
+			ARRAY_A
 		);
-
-		$answers = $wpdb->get_results( $answers_query, ARRAY_A );
 
 		if ( empty( $answers ) ) {
 			return '<p class="no-answers"><em>' . __( 'No answers available', 'ohmylms' ) . '</em></p>';
@@ -1119,17 +1127,18 @@ class ScormExporter {
 	private function get_answer_meta( $answer_id ) {
 		global $wpdb;
 
-		$meta_query = $wpdb->prepare(
-			'
+		$meta_results = $wpdb->get_results(
+			$wpdb->prepare(
+				'
             SELECT meta_key, meta_value 
             FROM %i
             WHERE answer_id = %d
         ',
-			$wpdb->prefix . 'ohmylms_question_answermeta',
-			$answer_id
+				$wpdb->prefix . 'ohmylms_question_answermeta',
+				$answer_id
+			),
+			ARRAY_A
 		);
-
-		$meta_results = $wpdb->get_results( $meta_query, ARRAY_A );
 
 		$meta = array();
 		foreach ( $meta_results as $meta_entry ) {
@@ -1332,35 +1341,37 @@ class ScormExporter {
 		$chapters = array();
 
 		// Fetch chapters.
-		$chapter_query = $wpdb->prepare(
-			'
+		$chapter_results = $wpdb->get_results(
+			$wpdb->prepare(
+				'
             SELECT * 
             FROM %i
             WHERE course_id = %d 
             ORDER BY order_number ASC
         ',
-			$wpdb->prefix . 'ohmylms_chapter_relationship',
-			$course_id
+				$wpdb->prefix . 'ohmylms_chapter_relationship',
+				$course_id
+			),
+			ARRAY_A
 		);
-
-		$chapter_results = $wpdb->get_results( $chapter_query, ARRAY_A );
 
 		foreach ( $chapter_results as $chapter ) {
 			$chapter_id = $chapter['chapter_id'];
 
 			// Fetch contents for each chapter.
-			$content_query = $wpdb->prepare(
-				'
+			$content_results = $wpdb->get_results(
+				$wpdb->prepare(
+					'
                 SELECT * 
                 FROM %i
                 WHERE chapter_id = %d 
                 ORDER BY order_number ASC
             ',
-				$wpdb->prefix . 'ohmylms_content_relationship',
-				$chapter_id
+					$wpdb->prefix . 'ohmylms_content_relationship',
+					$chapter_id
+				),
+				ARRAY_A
 			);
-
-			$content_results = $wpdb->get_results( $content_query, ARRAY_A );
 
 			$chapters[] = array(
 				'chapter_id' => $chapter_id,

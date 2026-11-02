@@ -186,7 +186,7 @@ class PracticeController extends RestController {
 		if ( is_user_logged_in() ) {
 			return new WP_Error( 'ohmylms_guest_unneeded', __( 'You are logged in; no guest session is needed.', 'ohmylms' ), array( 'status' => 409 ) ); }
 		// Light abuse protection: a handful of guest sessions per address per hour.
-		$key   = 'ohmylms_guest_' . md5( (string) ( $_SERVER['REMOTE_ADDR'] ?? '' ) );
+		$key   = 'ohmylms_guest_' . md5( sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? '' ) ) );
 		$count = (int) get_transient( $key );
 		if ( $count >= 20 ) {
 			return new WP_Error( 'ohmylms_guest_limit', __( 'Too many guest sessions. Please try again later.', 'ohmylms' ), array( 'status' => 429 ) ); }

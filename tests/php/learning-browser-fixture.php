@@ -21,15 +21,15 @@ $call = static function ($method, $path, $data = []) {
 if ($action === 'setup') {
     $state = ['tag' => $tag, 'posts' => [], 'previous_integrations' => get_option('ohmylms_integrations')];
     $create = static function ($path, $data) use ($call, &$state) { $id = (int) $call('POST', $path, $data)['id']; $state['posts'][] = $id; return $id; };
-    $state['original_course'] = $create('courses', ['name' => 'Original fractions course ' . $tag, 'status' => 'publish']);
-    $state['course'] = $create('courses', ['name' => 'Blended fractions ' . $tag, 'status' => 'publish']);
+    $state['original_course'] = $create('courses', ['title' => 'Original fractions course ' . $tag, 'status' => 'publish']);
+    $state['course'] = $create('courses', ['title' => 'Blended fractions ' . $tag, 'status' => 'publish']);
     foreach ([$state['original_course'], $state['course']] as $course) { $state['posts'][] = (int) ohmylms_get_course($course)->get_chapters()[0]['id']; }
     $state['lesson'] = $create('lessons', ['name' => 'Equivalent fractions shared lesson ' . $tag, 'type' => 'text', 'description' => '<p>Two fractions are equivalent when they describe the same amount.</p><p>For example, one half is equal to two quarters.</p>', 'status' => 'publish']);
     $wpdb->insert($wpdb->prefix . 'ohmylms_content_relationship', ['chapter_id' => ohmylms_get_course($state['original_course'])->get_chapters()[0]['id'], 'content_id' => $state['lesson'], 'content_type' => 'text', 'order_number' => 0]);
     $state['skill'] = (int) $call('POST', 'skills', ['name' => 'Recognize equivalent fractions ' . $tag, 'code' => 'FRA-EQ'])['id'];
     foreach (range(1, 4) as $i) {
-        $q = $create('question', ['name' => 'Equivalent fractions ' . $i, 'settings' => ['type' => 'single-choice', 'score' => ['enabled' => true, 'value' => 1]], 'questions' => [['answer' => 'Same value', 'is_correct' => 1], ['answer' => 'Different value']], 'skills' => ['p1' => ['primary' => $state['skill'], 'supporting' => []]], 'bank' => ['family_id' => 'browser-learning-' . $i]]);
-        $call('POST', 'question-bank/' . $q . '/approve');
+        $q = $create('questions', ['name' => 'Equivalent fractions ' . $i, 'settings' => ['type' => 'single-choice', 'score' => ['enabled' => true, 'value' => 1]], 'options' => [['answer' => 'Same value', 'is_correct' => true], ['answer' => 'Different value']], 'skills' => ['p1' => ['primary' => $state['skill'], 'supporting' => []]], 'bank' => ['family_id' => 'browser-learning-' . $i]]);
+        $call('POST', 'questions/' . $q . '/approve');
     }
     $state['login'] = 'learning-browser-' . $tag; $state['password'] = wp_generate_password(24, false, false);
     $state['student'] = wp_create_user($state['login'], $state['password'], $state['login'] . '@example.invalid');

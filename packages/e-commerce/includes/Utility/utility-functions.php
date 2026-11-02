@@ -5,8 +5,6 @@
  * @package OhMyLMS
  */
 
-
-
 if ( ! function_exists( 'ecommerce_form_field' ) ) {
 
 	/**
@@ -15,7 +13,7 @@ if ( ! function_exists( 'ecommerce_form_field' ) ) {
 	 * @param string     $key The key for the field.
 	 * @param array      $args The arguments for the field.
 	 * @param mixed|null $value The value of the field. Default is null.
-	 * @return string The HTML for the form field.
+	 * @return void Outputs the HTML for the form field.
 	 *
 	 * @since 1.0.0
 	 */
@@ -113,6 +111,6 @@ if ( ! function_exists( 'ecommerce_form_field' ) ) {
 			$container_id    = esc_attr( $args['id'] ) . '_field';
 			$field           = sprintf( $field_container, $container_class, $container_id, $field_html );
 		}
-		echo $field;
+		echo $field; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Each value is escaped as the markup is built above.
 	}
 }

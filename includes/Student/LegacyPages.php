@@ -275,16 +275,13 @@ final class LegacyPages {
 			// School staff use the school workspace, never the WordPress dashboard.
 			return SchoolWorkspace::available() ? SchoolWorkspace::url( 'school-overview', '', ! empty( $query['school'] ) ? absint( $query['school'] ) : 0 ) : '';
 		}
-		$args = array( 'page' => 'ohmylms-schools' );
-		foreach ( array( 'school', 'class' ) as $key ) {
-			if ( ! empty( $query[ $key ] ) ) {
-				$args[ $key ] = absint( $query[ $key ] );
-			}
-		}
-		if ( ! empty( $query['tab'] ) && in_array( $query['tab'], array( 'students', 'teachers', 'parents', 'users', 'classes', 'schools' ), true ) ) {
-			$args['tab'] = $query['tab'];
-		}
-		return add_query_arg( $args, admin_url( 'admin.php' ) );
+		return \OhMyLMS\Schools\Views::management_target(
+			array(
+				'school' => ! empty( $query['school'] ) ? absint( $query['school'] ) : 0,
+				'class'  => ! empty( $query['class'] ) ? absint( $query['class'] ) : 0,
+				'tab'    => isset( $query['tab'] ) && is_string( $query['tab'] ) ? $query['tab'] : 'schools',
+			)
+		);
 	}
 
 	/** Redirect the retired parent, student and school portal views for eligible signed-in users; GET only. */

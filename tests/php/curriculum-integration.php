@@ -33,12 +33,15 @@ $previous_integrations = get_option('ohmylms_integrations', []);
 $admin = get_user_by('login', $config['username'])->ID;
 $tag = wp_generate_password(5, false, false);
 function ok($condition, $message) { global $checks; if (!$condition) { throw new RuntimeException($message); } $checks++; }
-function api($method, $path, $body = [], $query = []) {
+function api($method, $path, $body = [], $query = [], $revision = null) {
     $request = new WP_REST_Request($method, '/ohmylms/v1/' . $path);
     if ($query) { $request->set_query_params($query); }
     if ($body) { $request->set_header('Content-Type', 'application/json'); $request->set_body(wp_json_encode($body)); }
+    if (null !== $revision) { $request->set_header('X-OhMyLMS-Structure-Revision', $revision); }
     return rest_do_request($request);
 }
+/** The course structure read token that learning program writes must send. */
+function structure_revision($course) { return (string) api('GET', "courses/$course/learning")->get_data()['structure_revision']; }
 function code($response) { return $response->get_data()['code'] ?? ''; }
 function created($path, $body) {
     global $posts;
@@ -81,7 +84,7 @@ function evidence($student, $term, $event, $correct, $question, $family, $when, 
 }
 function states($student) {
     global $wpdb;
-    return $wpdb->get_results($wpdb->prepare('SELECT term_id, level, review_due, evidence_count, independent_correct, families, score FROM ' . AssessmentSchema::table('student_skill_state') . ' WHERE student_id=%d ORDER BY term_id', $student), ARRAY_A);
+    return $wpdb->get_results($wpdb->prepare('SELECT term_id, level, review_due, evidence_count, independent_correct, families, mastery FROM ' . AssessmentSchema::table('student_skill_state') . ' WHERE student_id=%d ORDER BY term_id', $student), ARRAY_A);
 }
 function view($bundle_id, $student) { return Progress::for_bundle(Bundles::get($bundle_id), $student); }
 /** The course store memoizes content counts per request; a single-process test must reset them after changing content. */
@@ -181,10 +184,10 @@ try {
     ok(!is_wp_error(Items::move($grade9, $national, null)), 'Lock was not released');
 
     // ---- Content fixtures ----
-    $igcse_english = created('courses', ['name' => 'IGCSE English prep ' . $tag, 'status' => 'publish']);
-    $sat_prep = created('courses', ['name' => 'Digital SAT prep ' . $tag, 'status' => 'publish']);
-    $other_english = created('courses', ['name' => 'Other English course ' . $tag, 'status' => 'publish']);
-    $draft_course = created('courses', ['name' => 'Draft course ' . $tag, 'status' => 'draft']);
+    $igcse_english = created('courses', ['title' => 'IGCSE English prep ' . $tag, 'status' => 'publish']);
+    $sat_prep = created('courses', ['title' => 'Digital SAT prep ' . $tag, 'status' => 'publish']);
+    $other_english = created('courses', ['title' => 'Other English course ' . $tag, 'status' => 'publish']);
+    $draft_course = created('courses', ['title' => 'Draft course ' . $tag, 'status' => 'draft']);
     $exam = created('quiz', ['name' => 'Mock exam ' . $tag, 'status' => 'publish']);
     $skill_a = skill('Linear equations (syllabus A)'); $skill_b = skill('Linear equations (syllabus B)');
     $bank = Banks::create('Curriculum bank ' . $tag); $banks[] = (int) $bank['id'];
@@ -364,8 +367,8 @@ try {
     ok(array_filter(Bundles::describe_members($second_bundle), static function ($m) use ($draft_course) { return $m['id'] === $draft_course && $m['status'] === 'draft'; }) !== [], 'Administrators should still see unpublished members');
     // Managed course: dimensions from its learning program; viewing never awards completion.
     $managed_lesson = created('lessons', ['name' => 'Managed lesson ' . $tag, 'description' => '<p>x</p>', 'type' => 'text', 'status' => 'publish']);
-    $managed = created('courses', ['name' => 'Managed course ' . $tag, 'status' => 'publish']);
-    $published = api('POST', "courses/$managed/learning/publish", ['mode' => 'traditional', 'recognize_prior' => true, 'evidence_days' => 0, 'bank_ids' => [], 'outcomes' => [], 'items' => [['id' => wp_generate_uuid4(), 'type' => 'lesson', 'content_id' => $managed_lesson, 'chapter_id' => 0, 'required' => true, 'pass_percent' => 80]], 'apply_existing' => false]);
+    $managed = created('courses', ['title' => 'Managed course ' . $tag, 'status' => 'publish']);
+    $published = api('POST', "courses/$managed/learning/publish", ['mode' => 'traditional', 'recognize_prior' => true, 'evidence_days' => 0, 'bank_ids' => [], 'outcomes' => [], 'items' => [['id' => wp_generate_uuid4(), 'type' => 'lesson', 'content_id' => $managed_lesson, 'chapter_id' => 0, 'required' => true, 'pass_percent' => 80]], 'apply_existing' => false], [], structure_revision($managed));
     ok($published->get_status() === 200, 'Learning program publish failed: ' . wp_json_encode($published->get_data()));
     $managed_eid = enroll($student, $managed);
     api('PUT', "bundles/$second_bundle/items", ['items' => [['type' => 'course', 'id' => $managed], ['type' => 'course', 'id' => $igcse_english]]]);
@@ -393,8 +396,8 @@ try {
     // Practice exists for the weak skill and the untouched skill (public catalog practice).
     foreach ([$weak, $untouched] as $term) {
         for ($i = 0; $i < 3; $i++) {
-            $q = created('question', ['name' => 'Practice ' . $term . '-' . $i, 'settings' => ['type' => 'single-choice', 'hint' => 'h', 'score' => ['enabled' => true, 'value' => 1]], 'questions' => [['answer' => 'Right', 'is_correct' => 1], ['answer' => 'Wrong']], 'skills' => ['p1' => ['primary' => $term, 'supporting' => []]], 'bank' => ['family_id' => 'cf-' . $term . '-' . $i]]);
-            ok(api('POST', 'question-bank/' . $q . '/approve')->get_status() === 200, 'Approve failed');
+            $q = created('questions', ['name' => 'Practice ' . $term . '-' . $i, 'settings' => ['type' => 'single-choice', 'hint' => 'h', 'score' => ['enabled' => true, 'value' => 1]], 'options' => [['answer' => 'Right', 'is_correct' => true], ['answer' => 'Wrong']], 'skills' => ['p1' => ['primary' => $term, 'supporting' => []]], 'bank' => ['family_id' => 'cf-' . $term . '-' . $i]]);
+            ok(api('POST', 'questions/' . $q . '/approve')->get_status() === 200, 'Approve failed');
         }
         ok(api('PUT', 'skills/' . $term, ['public_practice' => true])->get_status() === 200, 'Public practice flag failed');
     }
@@ -493,11 +496,11 @@ try {
     // Shared evidence must not complete a course that counts only its own evidence (recognize_prior off): course Z requires skill B, not the shared one. Programs that recognise prior learning get credit back (tests/php/learning-integration.php).
     $z_lesson = created('lessons', ['name' => 'Z lesson ' . $tag, 'description' => '<p>x</p>', 'type' => 'text', 'status' => 'publish']);
     for ($i = 0; $i < 3; $i++) {
-        $q = created('question', ['name' => 'Z question ' . $i, 'settings' => ['type' => 'single-choice', 'hint' => 'h', 'score' => ['enabled' => true, 'value' => 1]], 'questions' => [['answer' => 'Right', 'is_correct' => 1], ['answer' => 'Wrong']], 'skills' => ['p1' => ['primary' => $skill_b, 'supporting' => []]], 'bank' => ['family_id' => 'z-family-' . $i]]);
-        api('POST', 'question-bank/' . $q . '/approve');
+        $q = created('questions', ['name' => 'Z question ' . $i, 'settings' => ['type' => 'single-choice', 'hint' => 'h', 'score' => ['enabled' => true, 'value' => 1]], 'options' => [['answer' => 'Right', 'is_correct' => true], ['answer' => 'Wrong']], 'skills' => ['p1' => ['primary' => $skill_b, 'supporting' => []]], 'bank' => ['family_id' => 'z-family-' . $i]]);
+        api('POST', 'questions/' . $q . '/approve');
     }
-    $course_z = created('courses', ['name' => 'Course Z ' . $tag, 'status' => 'publish']);
-    $z_published = api('POST', "courses/$course_z/learning/publish", ['mode' => 'skill-based', 'recognize_prior' => false, 'evidence_days' => 0, 'bank_ids' => [], 'outcomes' => [['term_id' => $skill_b, 'target' => 'proficient', 'required' => true]], 'items' => [['id' => wp_generate_uuid4(), 'type' => 'lesson', 'content_id' => $z_lesson, 'chapter_id' => 0, 'required' => false, 'pass_percent' => 80]], 'apply_existing' => false]);
+    $course_z = created('courses', ['title' => 'Course Z ' . $tag, 'status' => 'publish']);
+    $z_published = api('POST', "courses/$course_z/learning/publish", ['mode' => 'skill-based', 'recognize_prior' => false, 'evidence_days' => 0, 'bank_ids' => [], 'outcomes' => [['term_id' => $skill_b, 'target' => 'proficient', 'required' => true]], 'items' => [['id' => wp_generate_uuid4(), 'type' => 'lesson', 'content_id' => $z_lesson, 'chapter_id' => 0, 'required' => false, 'pass_percent' => 80]], 'apply_existing' => false], [], structure_revision($course_z));
     ok($z_published->get_status() === 200, 'Course Z publish failed: ' . wp_json_encode($z_published->get_data()));
     $z_eid = enroll($student, $course_z);
     $z_status = CompletionPolicy::status($student, $course_z);
@@ -528,7 +531,7 @@ try {
     wp_set_current_user($admin);
 
     // ---- Cleanup hooks: deleted content leaves no dangling references ----
-    $doomed_course = created('courses', ['name' => 'Doomed course ' . $tag, 'status' => 'publish']);
+    $doomed_course = created('courses', ['title' => 'Doomed course ' . $tag, 'status' => 'publish']);
     $doomed_skill = skill('Doomed skill');
     api('POST', "curriculum/items/$words/links", ['object_type' => 'course', 'object_id' => $doomed_course]);
     api('POST', "curriculum/items/$words/links", ['object_type' => 'skill', 'object_id' => $doomed_skill]);

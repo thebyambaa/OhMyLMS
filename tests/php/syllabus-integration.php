@@ -306,6 +306,8 @@ try {
     ok(api('PUT', "curriculum/items/$learn/syllabus/course/skills", ['skills' => 'all'])->get_status() === 400, 'the skills to change must be a list');
     $not_ready = Catalog::publish($course);
     ok(is_wp_error($not_ready) && strpos(implode(' ', (array) ($not_ready->get_error_data()['errors'] ?? [])), 'approved questions') !== false, 'a required skill without approved questions keeps the course from being published');
+    $report = $catalog()['readiness'];
+    ok($report['ready'] === false && in_array($square, array_column(array_filter($report['skills'], static function ($entry) { return !$entry['ready']; }), 'term_id'), true) && !in_array($notation, array_column($report['skills'], 'term_id'), true), 'the readiness report names the required skill that still needs questions, and only required skills');
 
     // Order follows the groups; a skill moved between groups changes chapter.
     api('POST', "curriculum/items/$learn/syllabus/groups/$gb/move", ['item_id' => $unit, 'position' => 0]);
@@ -327,7 +329,7 @@ try {
     $equations = $chapter_named('C2.1 · Equations');
     ok($equations > 0 && $codes_in($equations) === ['C2.1.1', 'C2.1.2'] && $imported->get_data()['course']['id'] === $course, 'an import adds its groups as chapters and its skills as outcomes');
     $summary = outline($learn)['course'];
-    ok($summary['chapters'] === 3 && $summary['skills'] === 3 && $summary['published'] === false && $summary['edit'] === "#/course-edit/$course/settings" && !isset($summary['catalog']), 'the outline summarises the course and points at its editor, not at a catalog page');
+    ok($summary['chapters'] === 3 && $summary['skills'] === 3 && $summary['published'] === false && $summary['edit'] === "#/content-hub/curriculum/syllabus/$learn?view=settings" && !isset($summary['catalog']), 'the outline summarises the course and points at its editor, not at a catalog page');
 
     // A syllabus course may hold every skill of its syllabus, an ordinary course only 200.
     $many = []; for ($n = 1; $n <= 205; $n++) { $many[] = ['line' => 10 + $n, 'content' => '3 Many', 'group_code' => 'M1', 'group' => 'Many skills', 'skill_code' => 'M1.' . $n, 'skill' => "Many skill $n $tag"]; }

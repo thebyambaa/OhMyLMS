@@ -10,6 +10,7 @@
  */
 namespace OhMyLMS\Curriculum;
 
+use OhMyLMS\Utility\Lock;
 use OhMyLMS\Utility\Transaction;
 
 defined( 'ABSPATH' ) || exit;
@@ -185,7 +186,7 @@ final class CourseLinks {
 			return new \WP_Error( 'ohmylms_course_links_unavailable', __( 'Course links are not installed yet.', 'ohmylms' ), array( 'status' => 503 ) ); }
 		$table = Schema::table( 'course_links' );
 		$lock  = self::LOCK . '-' . md5( $wpdb->prefix );
-		if ( (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) !== '1' ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Named lock; never cached.
+		if ( ! Lock::acquire( $lock, 5 ) ) {
 			return new \WP_Error( 'ohmylms_course_link_busy', __( 'Another change is being saved. Try again in a moment.', 'ohmylms' ), array( 'status' => 409 ) ); }
 		try {
 			$rejected = Transaction::run(
@@ -221,7 +222,7 @@ final class CourseLinks {
 		} catch ( \Throwable $error ) {
 			return new \WP_Error( 'ohmylms_course_link_failed', __( 'Could not save the course links.', 'ohmylms' ), array( 'status' => 500 ) );
 		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Releases the named lock.
+			Lock::release( $lock );
 		}
 		return self::get( $course_id );
 	}

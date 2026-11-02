@@ -224,7 +224,19 @@
 					margin: 0;
 
 					&::before {
-						content: url(data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgNCA0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxjaXJjbGUgY3g9IjIiIGN5PSIyLjAwNSIgcj0iMiIgZmlsbD0iIzUyNTI1QiIvPjwvc3ZnPg==);
+						content: "";
+						background-color: var(--oml-muted, #52525b);
+						--icon-mask: url(data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgNCA0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxjaXJjbGUgY3g9IjIiIGN5PSIyLjAwNSIgcj0iMiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==);
+						mask-image: var(--icon-mask);
+						mask-repeat: no-repeat;
+						mask-position: center;
+						mask-size: contain;
+						mask-mode: alpha;
+						-webkit-mask-image: var(--icon-mask);
+						-webkit-mask-repeat: no-repeat;
+						-webkit-mask-position: center;
+						-webkit-mask-size: contain;
+						aspect-ratio: #{'4 / 4'};
 						position: absolute;
 						left: -8px;
 						top: -1px;
@@ -283,7 +295,19 @@
 				position: relative;
 
 				&::before {
-					content: url(data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgMTggMTgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbD0iIzM1QkQ0QyIgZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNOS4wMDQuMjU1YTguNzUxIDguNzUxIDAgMDEwIDE3LjUgOC43NTEgOC43NTEgMCAwMTAtMTcuNXpNNy4xODcgMTEuODQ4TDUuMDQ1IDkuNzAzYS45NC45NCAwIDAxMC0xLjMyNS45NDEuOTQxIDAgMDExLjMyNSAwbDEuNTEgMS41MTEgMy43NTgtMy43NTdhLjk0Ljk0IDAgMDExLjMyNSAwIC45NC45NCAwIDAxMCAxLjMyNmwtNC40MiA0LjQyYS45NC45NCAwIDAxLTEuMzU2LS4wM3oiIGNsaXAtcnVsZT0iZXZlbm9kZCIvPjwvc3ZnPg==);
+					content: "";
+					background-color: var(--oml-success, #35bd4c);
+					--icon-mask: url(data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgMTggMTgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbD0iI2ZmZiIgZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNOS4wMDQuMjU1YTguNzUxIDguNzUxIDAgMDEwIDE3LjUgOC43NTEgOC43NTEgMCAwMTAtMTcuNXpNNy4xODcgMTEuODQ4TDUuMDQ1IDkuNzAzYS45NC45NCAwIDAxMC0xLjMyNS45NDEuOTQxIDAgMDExLjMyNSAwbDEuNTEgMS41MTEgMy43NTgtMy43NTdhLjk0Ljk0IDAgMDExLjMyNSAwIC45NC45NCAwIDAxMCAxLjMyNmwtNC40MiA0LjQyYS45NC45NCAwIDAxLTEuMzU2LS4wM3oiIGNsaXAtcnVsZT0iZXZlbm9kZCIvPjwvc3ZnPg==);
+					mask-image: var(--icon-mask);
+					mask-repeat: no-repeat;
+					mask-position: center;
+					mask-size: contain;
+					mask-mode: alpha;
+					-webkit-mask-image: var(--icon-mask);
+					-webkit-mask-repeat: no-repeat;
+					-webkit-mask-position: center;
+					-webkit-mask-size: contain;
+					aspect-ratio: #{'18 / 18'};
 					width: 18px;
 					display: block;
 					position: absolute;

@@ -53,7 +53,7 @@ $class = (int) $wpdb->insert_id;
 foreach ([[$student, 'student'], [$teacher, 'teacher']] as [$user, $role]) {
     $wpdb->insert(SchoolSchema::table('class_memberships'), ['class_id' => $class, 'user_id' => $user, 'role' => $role, 'status' => 'active', 'joined_at' => $now]);
 }
-$wpdb->insert($t('student_skill_state'), ['student_id' => $student, 'term_id' => $skill, 'level' => 'proficient', 'evidence_count' => 4, 'independent_correct' => 3, 'families' => 2, 'score' => 0.75, 'last_evidence_at' => $now, 'updated_at' => $now]);
+$wpdb->insert($t('student_skill_state'), ['student_id' => $student, 'term_id' => $skill, 'level' => 'proficient', 'evidence_count' => 4, 'independent_correct' => 3, 'families' => 2, 'accuracy' => 0.75, 'last_evidence_at' => $now, 'updated_at' => $now]);
 $path = 'reports/skills/students/' . $student;
 try {
     as_user($guardian);
@@ -90,7 +90,7 @@ remember_post($attachment);
 $question = choice_question($quiz_id, 'Pictured question', 2);
 set_post_thumbnail($question, $attachment);
 $body_url = trailingslashit($uploads['url']) . basename($file);
-call('PUT', 'question/' . $question, ['description' => '<p>See <img src="' . $body_url . '" alt=""></p>']);
+ok(status_of(edit_question($question, ['description' => '<p>See <img src="' . $body_url . '" alt=""></p>'])) === 200, 'Body image edit failed');
 $first = VersionPublisher::capture($question);
 $snapshot = VersionPublisher::snapshot((int) $first['id']);
 $frozen = $snapshot->frozen();
@@ -149,7 +149,7 @@ ok(array_column($exam_preview['questions'], 'page') === [1, 1, 2], 'Preview lost
 
 // ---- Gradebook maximum without attempts follows the published revision ----
 ok(abs(\OhMyLMS\Schools\Gradebook::items($exam_course)[0]['max'] - 3.0) < 1e-9, 'Gradebook max is not the revision total');
-call('PUT', 'question/' . $q3, ['settings' => ['type' => 'single-choice', 'score' => ['enabled' => true, 'value' => 5]]]);
+ok(status_of(edit_question($q3, ['settings' => ['type' => 'single-choice', 'score' => ['enabled' => true, 'value' => 5]]])) === 200, 'Marks edit failed');
 ok((float) ohmylms_get_quiz($exam)->get_total_marks() === 7.0, 'Live total did not change');
 ok(abs(\OhMyLMS\Schools\Gradebook::items($exam_course)[0]['max'] - 3.0) < 1e-9, 'Unpublished edit changed the gradebook max');
 RevisionPublisher::publish($exam);
@@ -158,52 +158,52 @@ ok(abs(\OhMyLMS\Schools\Gradebook::items($exam_course)[0]['max'] - 7.0) < 1e-9, 
 // ---- New question written directly in the bank (no quiz) ----
 $writer = make_user('author');
 as_user($writer);
-$created = call('POST', 'question', ['name' => 'Bank-only fraction', 'description' => '\(\frac{1}{2}\) of 8?',
+$created = create_question(['name' => 'Bank-only fraction', 'description' => '\(\frac{1}{2}\) of 8?',
     'settings' => ['type' => 'single-choice', 'required' => false, 'score' => ['enabled' => true, 'value' => 2]],
     'questions' => [['answer' => '4', 'is_correct' => 1, 'order_number' => 1], ['answer' => '2', 'is_correct' => 0, 'order_number' => 2]]]);
 ok(status_of($created) === 201, 'Bank-only question not created: ' . wp_json_encode($created->get_data()));
 $bank_only = remember_post($created->get_data()['id']);
 ok(!$wpdb->get_var($wpdb->prepare("SELECT id FROM {$wpdb->prefix}ohmylms_quiz_questions_relationship WHERE question_id=%d", $bank_only)), 'Bank-only question was placed in a quiz');
 ok(strpos(get_post_field('post_content', $bank_only), '\frac{1}{2}') !== false, 'LaTeX lost on bank-only question');
-$listed = call('GET', 'question-bank', [], ['search' => 'Bank-only fraction'])->get_data();
-ok(in_array($bank_only, array_map('intval', array_column($listed['items'], 'id')), true), 'Bank-only question missing from the bank');
-ok(status_of(call('POST', 'question-bank/' . $bank_only . '/approve')) === 200, 'Bank-only question could not be approved');
-$structured = call('POST', 'question', ['name' => 'Bank-only parts', 'settings' => ['type' => 'structured', 'score' => ['enabled' => true, 'value' => 3],
+$listed = call('GET', 'questions', [], ['search' => 'Bank-only fraction'])->get_data();
+ok(in_array($bank_only, array_map('intval', array_column($listed, 'id')), true), 'Bank-only question missing from the bank');
+ok(status_of(call('POST', 'questions/' . $bank_only . '/approve')) === 200, 'Bank-only question could not be approved');
+$structured = create_question(['name' => 'Bank-only parts', 'settings' => ['type' => 'structured', 'score' => ['enabled' => true, 'value' => 3],
     'parts' => [['id' => 'a', 'kind' => 'numerical', 'marks' => 1, 'answer' => 4], ['id' => 'b', 'kind' => 'written', 'marks' => 2]]], 'questions' => []]);
 ok(status_of($structured) === 201, 'Bank-only structured question not created: ' . wp_json_encode($structured->get_data()));
 remember_post($structured->get_data()['id']);
-ok(status_of(call('POST', 'question', ['name' => 'Bad numerical', 'settings' => ['type' => 'numerical', 'answer' => 'x', 'score' => ['enabled' => true, 'value' => 1]], 'questions' => []])) === 400, 'Invalid bank-only question accepted');
+ok(status_of(create_question(['name' => 'Bad numerical', 'settings' => ['type' => 'numerical', 'answer' => 'x', 'score' => ['enabled' => true, 'value' => 1]], 'questions' => []])) === 400, 'Invalid bank-only question accepted');
 as_user(make_user('subscriber'));
-ok(status_of(call('POST', 'question', ['name' => 'Learner question', 'settings' => ['type' => 'long-text'], 'questions' => []])) === 403, 'A learner created a bank question');
+ok(status_of(create_question(['name' => 'Learner question', 'settings' => ['type' => 'long-text'], 'questions' => []])) === 403, 'A learner created a bank question');
 as_user($admin);
 
 // ---- Design tokens: settings become CSS variables; bad values fall back ----
+use OhMyLMS\Design\DesignSystem;
 use OhMyLMS\Design\Tokens;
-$saved_design = [];
+$saved_design = [DesignSystem::OPTION => get_option(DesignSystem::OPTION, null)];
 foreach (array_keys(Tokens::DEFAULTS) as $key) { $saved_design[$key] = get_option($key, null); }
 try {
     ok(Tokens::mix('#6e42d3', '#000000', 0) === '#6e42d3' && Tokens::mix('#000000', '#ffffff', 0.5) === '#808080' && Tokens::rgb('#2563eb') === '37, 99, 235', 'Color math');
-    update_option('ohmylms_admin_primary_color', '#2563EB');
-    update_option('ohmylms_admin_font_family', 'Noto Sans');
-    $admin_css = Tokens::admin_css();
-    ok(strpos($admin_css, '--wp-admin-theme-color:#2563eb;') !== false && strpos($admin_css, '--primary-6:37, 99, 235;') !== false && strpos($admin_css, '"Noto Sans"') !== false && strpos($admin_css, ':not(.dashicons)') !== false, 'Admin tokens not built from settings');
+    // Admin colors come from the design system settings; the old admin color options are read through them.
+    update_option(DesignSystem::OPTION, ['preset' => 'custom', 'colors' => ['primary' => '#2563EB']]);
+    $admin_css = DesignSystem::css();
+    ok(strpos($admin_css, '--wp-admin-theme-color:#2563eb;') !== false && strpos($admin_css, '--primary-6:37, 99, 235;') !== false && Tokens::color('ohmylms_admin_primary_color') === '#2563eb', 'Admin tokens not built from settings');
     ok(Tokens::font_url('Noto Sans') === 'https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap' && Tokens::font_url('system') === '', 'Font URL');
-    update_option('ohmylms_admin_primary_color', 'red;}body{display:none');
-    update_option('ohmylms_admin_font_family', 'Comic"; x');
-    $admin_css = Tokens::admin_css();
-    ok(strpos($admin_css, '--wp-admin-theme-color:#6e42d3;') !== false && strpos($admin_css, 'display:none') === false && strpos($admin_css, 'Comic') === false, 'Invalid design values were not rejected');
-    update_option('ohmylms_primary_color_scheme', '#F80');
+    update_option(DesignSystem::OPTION, ['preset' => 'classic', 'colors' => ['primary' => 'red;}body{display:none']]);
+    $admin_css = DesignSystem::css();
+    ok(strpos($admin_css, '--wp-admin-theme-color:#6e42d3;') !== false && strpos($admin_css, 'display:none') === false, 'Invalid design values were not rejected');
+    update_option(DesignSystem::OPTION, ['preset' => 'custom', 'colors' => ['primary' => '#F80']]);
     update_option('ohmylms_font_family', 'inherit');
     $front = Tokens::frontend_css();
-    ok(strpos($front, '--ohmylms-primary-color:#ff8800;') !== false && strpos($front, '--ohmylms-font-family') === false && strpos($front, 'font-family:var') === false, 'Theme font should leave the variable undefined');
+    ok(strpos($front, '--ohmylms-primary-color:#ff8800;') !== false || strpos($front, '--oml-primary:#ff8800;') !== false, 'Learner primary color not applied: ' . substr($front, 0, 300));
+    ok(substr_count($front, '--ohmylms-font-family:') === 1 && strpos($front, '--ohmylms-font-family:var(--oml-font-family);') !== false, 'Theme font should add no font of its own');
     update_option('ohmylms_font_family', 'Montserrat');
-    ok(strpos(Tokens::frontend_css(), '--ohmylms-font-family:"Montserrat"') !== false, 'Learner font not applied');
-    // The Design settings group saves the new keys.
-    $request = new WP_REST_Request('POST', '/ohmylms/v1/settings/design');
-    $request->set_header('Content-Type', 'application/json');
-    $request->set_body(wp_json_encode(['ohmylms_admin_muted_color' => '#123456', 'ohmylms_font_family' => 'Inter']));
-    $response = rest_do_request($request);
-    ok($response->get_status() === 200 && get_option('ohmylms_admin_muted_color') === '#123456' && get_option('ohmylms_font_family') === 'Inter', 'Design settings did not save the new keys: ' . wp_json_encode($response->get_data()));
+    ok(strpos(Tokens::frontend_css(), '--oml-font-family:"Montserrat"') !== false, 'Learner font not applied');
+    // The design system route (which replaced the legacy Design settings group) saves the palette; bad colors store nothing.
+    $response = call('POST', 'design-system', ['preset' => 'custom', 'colors' => ['muted' => '#123456']]);
+    ok($response->get_status() === 200 && Tokens::color('ohmylms_admin_muted_color') === '#123456', 'Design system did not save the palette: ' . wp_json_encode($response->get_data()));
+    $refused = call('POST', 'design-system', ['colors' => ['muted' => 'red;}']]);
+    ok($refused->get_status() === 400 && Tokens::color('ohmylms_admin_muted_color') === '#123456', 'An invalid design color was stored: ' . wp_json_encode($refused->get_data()));
 } finally {
     foreach ($saved_design as $key => $value) { $value === null ? delete_option($key) : update_option($key, $value); }
 }

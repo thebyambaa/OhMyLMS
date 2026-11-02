@@ -1,8 +1,12 @@
+/** @typedef {import('./editorTypes').Data} Data */
+
 /**
  * Reorder without mutating the store's option objects.
- * @param options
- * @param from
- * @param to
+ * @template {Data} T
+ * @param {T[]}    options
+ * @param {number} from
+ * @param {number} to
+ * @return {T[]} Options.
  */
 export function moveOption( options, from, to ) {
 	if (

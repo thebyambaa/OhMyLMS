@@ -8,7 +8,6 @@
 namespace OhMyLMS\Student;
 
 use OhMyLMS\Learning\CompletionPolicy;
-use OhMyLMS\Learning\ProgramGroups;
 use OhMyLMS\Learning\PracticeAccessPolicy;
 use OhMyLMS\Performance\Levels;
 use OhMyLMS\Practice\Presentation;
@@ -18,11 +17,14 @@ defined( 'ABSPATH' ) || exit;
 /** Reads evaluated state; never awards mastery or selects questions outside the runner. */
 final class PracticeGuidance {
 	/**
-	 * Build guidance only for the current enrolled learner's published lesson/skill.
+	 * Build guidance only for the current enrolled learner's published skill.
+	 *
+	 * Lessons are block lesson items inside a unit since b0e21ca5, so guidance follows the skill's
+	 * unit in the flattened outline order.
 	 *
 	 * @param int    $course_id Course ID.
-	 * @param string $lesson_id Optional lesson UUID.
-	 * @param int    $skill_id Practice entry skill, used to resolve its lesson.
+	 * @param string $lesson_id Ignored; lesson groups no longer exist. Kept for the REST `lesson` argument.
+	 * @param int    $skill_id Practice entry skill.
 	 * @return array|\WP_Error
 	 */
 	public static function get( $course_id, $lesson_id = '', $skill_id = 0 ) {
@@ -31,43 +33,42 @@ final class PracticeGuidance {
 			return $state;
 		}
 		$outline = CourseOutline::get( $course_id, get_current_user_id() );
-		if ( is_wp_error( $outline ) || ! $outline['enrolled'] || $outline['locked'] || ! is_string( $lesson_id ) ) {
+		if ( is_wp_error( $outline ) || ! $outline['enrolled'] || $outline['locked'] ) {
 			return new \WP_Error( 'ohmylms_practice_guidance_denied', __( 'This practice guidance is not available.', 'ohmylms' ), array( 'status' => 403 ) );
 		}
-		$outcomes      = $state['program']['outcomes'];
-		$groups        = array_column( $state['program']['groups'] ?? array(), null, 'id' );
-		$lesson_skills = isset( $groups[ $lesson_id ] ) ? ProgramGroups::skill_ids( $state['program'], $groups[ $lesson_id ] ) : array();
-		if ( $skill_id ) {
-			$matches = array_values(
-				array_filter(
-					$outcomes,
-					static function ( $row ) use ( $skill_id ) {
-						return (int) $row['term_id'] === (int) $skill_id;
-					}
-				)
-			);
-			if ( ! $matches || ( $lesson_id && ! in_array( (int) $skill_id, $lesson_skills, true ) ) ) {
-				return new \WP_Error( 'ohmylms_practice_guidance_skill', __( 'This skill is not in your lesson.', 'ohmylms' ), array( 'status' => 403 ) );
-			}
-			$lesson_id     = $lesson_id ? $lesson_id : ( $matches[0]['group_id'] ?? '' );
-			$lesson_skills = isset( $groups[ $lesson_id ] ) ? ProgramGroups::skill_ids( $state['program'], $groups[ $lesson_id ] ) : array();
+		if ( ! $skill_id ) {
+			return new \WP_Error( 'ohmylms_practice_guidance_lesson', __( 'Choose a skill.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
-		$lesson = $lesson_id ? LessonJourney::find( $outline, $lesson_id ) : null;
-		if ( is_wp_error( $lesson ) || ( ! $lesson && ! $skill_id ) ) {
-			return is_wp_error( $lesson ) ? $lesson : new \WP_Error( 'ohmylms_practice_guidance_lesson', __( 'Choose a lesson or skill.', 'ohmylms' ), array( 'status' => 400 ) );
-		}
-		$labels = array_column( $outline['skills'], null, 'term_id' );
-		$skills = array();
-		foreach ( $outcomes as $outcome ) {
-			if ( $lesson_id ? ! in_array( (int) $outcome['term_id'], $lesson_skills, true ) : (int) $outcome['term_id'] !== (int) $skill_id ) {
-				continue;
+		$outcome = null;
+		foreach ( $state['program']['outcomes'] as $row ) {
+			if ( (int) $row['term_id'] === (int) $skill_id ) {
+				$outcome = $row;
+				break;
 			}
-			$id       = (int) $outcome['term_id'];
-			$allowed  = \OhMyLMS\Assessment\Engine::practice() && ! is_wp_error( PracticeAccessPolicy::check( array( 'student_id' => get_current_user_id() ), $id, $course_id ) );
-			$count    = $allowed ? Presentation::available( $id, $course_id, 10 ) : 0;
-			$met      = ! empty( $outcome['met'] );
-			$due      = ! empty( $outcome['state']['review_due'] );
-			$skills[] = array(
+		}
+		if ( ! $outcome ) {
+			return new \WP_Error( 'ohmylms_practice_guidance_skill', __( 'This skill is not in your course.', 'ohmylms' ), array( 'status' => 403 ) );
+		}
+		// The practice activity places the skill in a unit; an outcome without one keeps its own unit.
+		$unit_id = (int) ( $outcome['chapter_id'] ?? 0 );
+		$current = array();
+		foreach ( $outline['units'] as $unit ) {
+			foreach ( $unit['items'] as $item ) {
+				if ( 'practice' === $item['kind'] && (int) $item['term_id'] === (int) $skill_id ) {
+					$unit_id = (int) $unit['id'];
+					$current = $item;
+					break 2;
+				}
+			}
+		}
+		$labels   = array_column( $outline['skills'], null, 'term_id' );
+		$id       = (int) $outcome['term_id'];
+		$allowed  = \OhMyLMS\Assessment\Engine::practice() && ! is_wp_error( PracticeAccessPolicy::check( array( 'student_id' => get_current_user_id() ), $id, $course_id ) );
+		$count    = $allowed ? Presentation::available( $id, $course_id, 10 ) : 0;
+		$met      = ! empty( $outcome['met'] );
+		$due      = ! empty( $outcome['state']['review_due'] );
+		$skills   = array(
+			array(
 				'term_id'       => $id,
 				'name'          => $outcome['name'],
 				'label'         => $labels[ $id ]['label'] ?? Levels::label( 'not-started' ),
@@ -78,46 +79,35 @@ final class PracticeGuidance {
 				'session_limit' => $count,
 				'practice_url'  => $count ? $outcome['practice_url'] : '',
 				'need'          => $met ? ( $due ? 'review' : 'met' ) : 'gap',
+			),
+		);
+		$primary  = self::recommend( $skills );
+		$next     = null;
+		$continue = ! $primary && empty( $state['pending'] ) ? LessonJourney::continue_from( $outline, $unit_id, $current ) : null;
+		if ( $continue && $continue['same_unit'] ) {
+			$next = array(
+				/* translators: %s: next activity name. */
+				'label' => sprintf( __( 'Continue unit: %s', 'ohmylms' ), $continue['item']['name'] ),
+				'url'   => $continue['item']['url'],
 			);
-		}
-		$primary = self::recommend( $skills );
-		$next    = null;
-		if ( ! $primary && empty( $state['pending'] ) ) {
-			if ( $lesson && $lesson['next'] ) {
-				$next = array(
-					/* translators: %s: next activity name. */
-					'label' => sprintf( __( 'Continue lesson: %s', 'ohmylms' ), $lesson['next']['name'] ),
-					'url'   => $lesson['next']['url'],
-				);
-			} else {
-				$passed = ! $lesson;
-				foreach ( $outline['units'] as $unit ) {
-					foreach ( $unit['groups'] ?? array() as $candidate ) {
-						if ( $candidate['id'] === $lesson_id ) {
-							$passed = true;
-							continue;
-						}
-						if ( $passed && array_filter(
-							$candidate['items'],
-							static function ( $item ) {
-								return ! empty( $item['available'] ) && empty( $item['complete'] ); }
-						) ) {
-							$next = array(
-								/* translators: %s: next lesson name. */
-								'label' => sprintf( __( 'Next lesson: %s', 'ohmylms' ), $candidate['title'] ),
-								'url'   => LessonJourney::url( $course_id, $candidate['id'] ),
-							);
-							break 2;
-						}
-					}
-				}
-			}
+		} elseif ( $continue && $continue['unit'] ) {
+			$next = array(
+				/* translators: %s: next unit name. */
+				'label' => sprintf( __( 'Next unit: %s', 'ohmylms' ), $continue['unit']['title'] ),
+				'url'   => $continue['item']['url'],
+			);
+		} elseif ( $continue ) {
+			$next = array(
+				/* translators: %s: next activity name, such as the course challenge. */
+				'label' => sprintf( __( 'Continue course: %s', 'ohmylms' ), $continue['item']['name'] ),
+				'url'   => $continue['item']['url'],
+			);
 		}
 		return array(
 			'course_id'      => (int) $course_id,
-			'lesson_id'      => $lesson_id,
+			'lesson_id'      => '',
 			'skill_id'       => (int) $skill_id,
-			'lesson_url'     => $lesson ? $lesson['url'] : PlayerContext::overview_url( $course_id ),
+			'lesson_url'     => PlayerContext::overview_url( $course_id ) . LessonJourney::unit_anchor( $outline, $unit_id ),
 			'skills'         => $skills,
 			'recommended'    => $primary,
 			'next'           => $next,

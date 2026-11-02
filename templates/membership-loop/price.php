@@ -38,7 +38,7 @@ $save_calculation        = $regular_price ? number_format( ( ( floatval( $regula
 		echo wp_kses_post( $formatted_price );
 
 
-		echo '<small>' . '/' . esc_html( $period ) . '</small>';
+		echo '<small>/' . esc_html( $period ) . '</small>';
 
 		// Append sign-up fee if greater than zero, with shorter wording and small font.
 	if ( floatval( $signup_fee ) > 0 ) {

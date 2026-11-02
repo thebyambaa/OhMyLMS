@@ -11,12 +11,11 @@ import { __ } from '@wordpress/i18n';
 import { useOperation } from '../../hooks/useOperation';
 import { useRequest } from '../../hooks/useRequest';
 import {
-	readMappings,
-	removeMapping,
-	saveMapping,
-	sharedSkills,
-	type Mapping,
-} from './api';
+	removeSkillMapping,
+	saveSkillMapping,
+	searchSharedSkills,
+} from '../curriculum/public';
+import { readMappings, type Mapping } from './api';
 import type { Skill } from './model';
 
 export function MappingDialog( {
@@ -35,7 +34,7 @@ export function MappingDialog( {
 	const [ search, setSearch ] = useState( '' );
 	const [ page, setPage ] = useState( 1 );
 	const targetsLoad = useCallback(
-		( signal: AbortSignal ) => sharedSkills( search, page, signal ),
+		( signal: AbortSignal ) => searchSharedSkills( search, page, signal ),
 		[ search, page ]
 	);
 	const targets = useRequest( targetsLoad );
@@ -68,7 +67,7 @@ export function MappingDialog( {
 			);
 			await operation.run(
 				( signal ) =>
-					saveMapping(
+					saveSkillMapping(
 						skill.term_id,
 						target.id,
 						relation,
@@ -86,7 +85,13 @@ export function MappingDialog( {
 		} else {
 			const mapping = confirm;
 			await operation.run(
-				( signal ) => removeMapping( skill.term_id, mapping, signal ),
+				( signal ) =>
+					removeSkillMapping(
+						skill.term_id,
+						mapping.shared_id,
+						mapping.revision,
+						signal
+					),
 				() => {
 					setConfirm( null );
 					setTarget( null );

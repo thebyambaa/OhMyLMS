@@ -33,8 +33,8 @@ if ( empty( $post_ids ) ) {
 		<?php echo esc_html__( 'Subscription Details', 'ohmylms' ); ?>
 	</h2>
 	<?php
-	foreach ( $post_ids as $post_id ) {
-		$subscription = ohmylms_ecommerce_get_subscription( $post_id );
+	foreach ( $post_ids as $subscription_post_id ) {
+		$subscription = ohmylms_ecommerce_get_subscription( $subscription_post_id );
 		if ( ! isset( $subscription ) || ! $subscription instanceof \OhMyLMS\Commerce\Data\Subscription ) {
 			continue;
 		}
@@ -108,7 +108,7 @@ if ( empty( $post_ids ) ) {
 				</tr>
 				<tr class="subscription-started">
 					<td><?php echo esc_html__( 'Started', 'ohmylms' ); ?></td>
-					<td><?php echo date_i18n( 'F j, Y', strtotime( $subscription->get_schedule_start_date() ) ); ?></td>
+					<td><?php echo esc_html( date_i18n( 'F j, Y', strtotime( $subscription->get_schedule_start_date() ) ) ); ?></td>
 				</tr>
 				<?php if ( $renewal_date ) : ?>
 					<tr class="subscription-next-payment">

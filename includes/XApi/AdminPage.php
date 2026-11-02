@@ -53,7 +53,7 @@ final class AdminPage {
 	 * @return string
 	 */
 	private static function url( $notice = '' ) {
-		$url = admin_url( 'admin.php?page=ohmylms#/settings/xapi-settings' );
+		$url = \OhMyLMS\Admin\LegacyRoutes::app_url( '/settings?tab=xapi' );
 
 		return '' === $notice ? $url : add_query_arg( 'xapi_notice', $notice, $url );
 	}

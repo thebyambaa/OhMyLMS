@@ -8,17 +8,32 @@
 		return;
 	}
 	var dispatch = wp.data.dispatch( wp.commands.store );
-	var base = window.location.pathname.replace( /[^/]*$/, '' ) + 'admin.php?page=' + config.page;
+	var base =
+		window.location.pathname.replace( /[^/]*$/, '' ) + 'admin.php?page=';
 
-	function open( route, close ) {
-		var onApp =
+	// A command opens its address. On the same OhMyLMS page and tab the app's router opens the route
+	// from the hash without a reload; add-on commands with their own page get `#<route>` on it.
+	function open( command, close ) {
+		var query = new URLSearchParams( window.location.search );
+		var here =
 			window.location.pathname.slice( -9 ) === 'admin.php' &&
-			new URLSearchParams( window.location.search ).get( 'page' ) === config.page;
-		if ( onApp ) {
-			// The admin app routes on the hash, so changing it opens the screen without a reload.
-			window.location.hash = '#' + route;
+			query.get( 'page' ) === command.page;
+		if ( ! command.url ) {
+			if ( here ) {
+				window.location.hash = '#' + command.route;
+			} else {
+				window.location.assign(
+					base + command.page + '#' + command.route
+				);
+			}
+		} else if (
+			here &&
+			( query.get( 'tab' ) || '' ) === ( command.tab || '' ) &&
+			document.getElementById( 'ohmylms-app-root' )
+		) {
+			window.location.hash = '#' + command.route;
 		} else {
-			window.location.assign( base + '#' + route );
+			window.location.assign( command.url );
 		}
 		close();
 	}
@@ -27,9 +42,14 @@
 		dispatch.registerCommand( {
 			name: command.name,
 			label: command.label,
-			searchLabel: [ command.label ].concat( command.keywords || [] ).join( ' ' ),
+			searchLabel: [ command.label ]
+				.concat( command.keywords || [] )
+				.join( ' ' ),
 			callback: function ( args ) {
-				open( command.route, args.close );
+				open(
+					Object.assign( { page: config.page }, command ),
+					args.close
+				);
 			},
 		} );
 	} );

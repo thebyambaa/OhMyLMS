@@ -1,19 +1,28 @@
-/** @jsx createElement */
 import { createElement, useState } from '@wordpress/element';
 import { select, useDispatch, useSelect } from '@wordpress/data';
 import { PluginDocumentSettingPanel } from '@wordpress/editor';
 import { Button, Notice, TextareaControl } from '@wordpress/components';
-import apiFetch from '@wordpress/api-fetch';
 import { __ } from '@wordpress/i18n';
+import { publishExam, saveExamInstructions } from './api.mjs';
 import { registerProfilePanel } from './ProfilePanel';
+
+/**
+ * Exam record the exam profile passes to its panel.
+ *
+ * @typedef {Object} ExamProfileData
+ * @property {number} id             Exam ID.
+ * @property {string} [status]       Post status.
+ * @property {string} [url]          Exam player URL.
+ * @property {string} [instructions] Learner instructions.
+ */
 
 /**
  * Exam controls in the quiz editor: learner instructions and publication. The questions, sections,
  * time limit and marks are the quiz's own, so they are edited with the quiz tools beside this panel.
  *
- * @param {Object} root0      Component properties.
- * @param {Object} root0.data Exam id, status, player URL and instructions from the exam profile.
- * @return {Element|null} Panel, or nothing when this quiz has no exam record.
+ * @param {Object}                         root0      Component properties.
+ * @param {ExamProfileData|null|undefined} root0.data Exam id, status, player URL and instructions from the exam profile.
+ * @return {React.ReactElement|null} Panel, or nothing when this quiz has no exam record.
  */
 export function NativeExamPanel( { data: exam } ) {
 	const [ instructions, setInstructions ] = useState(
@@ -23,7 +32,9 @@ export function NativeExamPanel( { data: exam } ) {
 	const [ busy, setBusy ] = useState( false );
 	const [ notice, setNotice ] = useState( '' );
 	const [ error, setError ] = useState( '' );
-	const [ warnings, setWarnings ] = useState( [] );
+	const [ warnings, setWarnings ] = useState(
+		/** @type {string[]} */ ( [] )
+	);
 	const { dirty, locked } = useSelect( ( getStore ) => {
 		const editor = getStore( 'core/editor' );
 		return {
@@ -36,6 +47,10 @@ export function NativeExamPanel( { data: exam } ) {
 		return null;
 	}
 	const published = status === 'publish';
+	/**
+	 * @param {() => Promise<unknown>} action Work; `false` means it stopped without a result.
+	 * @param {string}                 done   Notice after it succeeds.
+	 */
 	const run = async ( action, done ) => {
 		setBusy( true );
 		setError( '' );
@@ -46,7 +61,7 @@ export function NativeExamPanel( { data: exam } ) {
 			}
 		} catch ( failure ) {
 			setError(
-				failure.message ||
+				/** @type {{ message?: string }} */ ( failure ).message ||
 					__(
 						'The operation failed. Nothing was published.',
 						'ohmylms'
@@ -68,28 +83,25 @@ export function NativeExamPanel( { data: exam } ) {
 				);
 			}
 		}
-		await apiFetch( {
-			path: `/ohmylms/v1/exams/${ exam.id }/settings`,
-			method: 'POST',
-			data: { instructions },
-		} );
+		await saveExamInstructions( exam.id, instructions );
 	};
 	// Publishing makes the exam's questions exam-only, so practice sets and inline checks that use them
 	// stop working. The server says so first; confirming sends the publish again.
+	/** @param {boolean} confirm Accept that practice uses stop working. */
 	const publish = ( confirm ) =>
 		run(
 			async () => {
 				await saveAll();
 				try {
-					await apiFetch( {
-						path: `/ohmylms/v1/exams/${ exam.id }/publish`,
-						method: 'POST',
-						data: { confirm_overlap: confirm },
-					} );
+					await publishExam( exam.id, confirm );
 				} catch ( failure ) {
-					if ( failure.code === 'exam_overlap' ) {
+					const restError =
+						/** @type {{ code?: string, message: string, data?: { warnings?: string[] } }} */ (
+							failure
+						);
+					if ( restError.code === 'exam_overlap' ) {
 						setWarnings(
-							failure.data?.warnings || [ failure.message ]
+							restError.data?.warnings || [ restError.message ]
 						);
 						return false;
 					}

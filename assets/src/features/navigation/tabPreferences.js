@@ -1,13 +1,37 @@
 import apiFetch from '@wordpress/api-fetch';
 import { normalizeLayout } from './tabLayout.mjs';
 
+/** @typedef {import('./tabLayout.mjs').TabLayout} TabLayout */
+
+/**
+ * @typedef {Object} TabPreferencesState
+ * @property {TabLayout}                    layout Current layout.
+ * @property {'saved' | 'saving' | 'error'} status Save status.
+ */
+
+/**
+ * @typedef {Object} TabPreferencesStore
+ * @property {() => TabPreferencesState}                                          read      Current state.
+ * @property {( layout: TabLayout ) => void}                                      save      Save a layout.
+ * @property {( nextIds: string[] ) => void}                                      include   Add tab ids.
+ * @property {( listener: ( state: TabPreferencesState ) => void ) => () => void} subscribe Listen; returns the unsubscriber.
+ */
+
 // Shared across hash-route remounts. Serialize writes so an older request cannot overwrite a newer drag.
+/** @type {Map<string, TabPreferencesStore>} */
 const stores = new Map();
 let writeQueue = Promise.resolve();
+/**
+ * @param {string}   scope Preference scope.
+ * @param {string[]} ids   Tab ids.
+ * @return {TabPreferencesStore} The shared store of the scope.
+ */
 export function tabPreferences( scope, ids ) {
 	if ( ! stores.has( scope ) ) {
 		let knownIds = ids;
+		/** @type {Set<( state: TabPreferencesState ) => void>} */
 		const listeners = new Set();
+		/** @type {TabPreferencesState} */
 		let state = {
 			layout: normalizeLayout(
 				window.ohmylmsTabPreferences?.[ scope ],
@@ -18,6 +42,7 @@ export function tabPreferences( scope, ids ) {
 		let revision = 0;
 		const emit = () =>
 			listeners.forEach( ( listener ) => listener( state ) );
+		/** @param {TabLayout} layout */
 		const save = ( layout ) => {
 			const current = ++revision;
 			state = {
@@ -62,6 +87,7 @@ export function tabPreferences( scope, ids ) {
 			},
 		} );
 	}
-	stores.get( scope ).include( ids );
-	return stores.get( scope );
+	const store = /** @type {TabPreferencesStore} */ ( stores.get( scope ) );
+	store.include( ids );
+	return store;
 }

@@ -93,7 +93,10 @@ class OrderHooks extends HookHandler {
 		if ( ! empty( $order_items ) ) {
 			// Delete order item meta.
 			$wpdb->query(
-				"DELETE FROM {$wpdb->prefix}ohmylms_order_itemmeta WHERE order_item_id IN (" . implode( ',', array_map( 'absint', $order_items ) ) . ')'
+				$wpdb->prepare(
+					'DELETE FROM %i WHERE order_item_id IN (' . implode( ',', array_fill( 0, count( $order_items ), '%d' ) ) . ')',
+					array_merge( array( $wpdb->prefix . 'ohmylms_order_itemmeta' ), array_map( 'absint', $order_items ) )
+				)
 			);
 
 			// Delete order items.
@@ -142,13 +145,13 @@ class OrderHooks extends HookHandler {
 		$enroll_data = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE order_id = %d AND status = %s', $table_name, $order->get_id(), 'pending' ), ARRAY_A );
 		if ( ! empty( $enroll_data ) ) {
 			foreach ( $enroll_data as $enroll ) {
-				$rows = $wpdb->update(
-					$table_name,
+				$rows = \OhMyLMS\Student\Enrollments::update(
 					array( 'status' => 'enrolled' ),
 					array(
-						'id'     => $enroll['id'],
+						'id'     => (int) $enroll['id'],
 						'status' => 'pending',
 					),
+					null,
 					array( '%s' ),
 					array( '%d', '%s' )
 				);

@@ -1,5 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { ApiError } from '../../lib/api';
 import { renderShell } from '../../test/render';
 import * as api from './api';
@@ -37,9 +38,55 @@ const forbidden = () =>
 const notice = ( text: string | RegExp ) =>
 	screen.findByText( text, { selector: '.components-notice__content' } );
 
+function Search() {
+	return <output data-testid="search">{ useLocation().search }</output>;
+}
+
+const renderPage = ( route = '/integrations' ) =>
+	render(
+		<MemoryRouter initialEntries={ [ route ] }>
+			<IntegrationsPage />
+			<Search />
+		</MemoryRouter>
+	);
+
+describe( 'IntegrationsPage OAuth result', () => {
+	it( 'shows the Google Meet connection result and clears it from the address', async () => {
+		const user = userEvent.setup();
+		renderPage( '/integrations?auth=success&tab=x' );
+		expect(
+			await notice( 'Google Meet is connected.' )
+		).toBeInTheDocument();
+		await user.click( screen.getByRole( 'button', { name: 'Close' } ) );
+		expect(
+			screen.queryByText( 'Google Meet is connected.', {
+				selector: '.components-notice__content',
+			} )
+		).not.toBeInTheDocument();
+		expect( screen.getByTestId( 'search' ) ).toHaveTextContent( '?tab=x' );
+	} );
+	it( 'explains a failed connection', async () => {
+		renderPage( '/integrations?auth=error&message=missing_credentials' );
+		expect(
+			await notice(
+				'Google Meet could not be connected. Save the Google Meet client ID and client secret, then connect again.'
+			)
+		).toBeInTheDocument();
+	} );
+	it( 'shows nothing without an OAuth result', async () => {
+		renderPage();
+		await screen.findByRole( 'table' );
+		expect(
+			screen.queryByText( /Google Meet/, {
+				selector: '.components-notice__content',
+			} )
+		).not.toBeInTheDocument();
+	} );
+} );
+
 describe( 'IntegrationsPage list', () => {
 	it( 'shows loading, then a named table with switches and server reasons', async () => {
-		render( <IntegrationsPage /> );
+		renderPage();
 		expect( screen.getAllByRole( 'status' )[ 0 ] ).toHaveTextContent(
 			'Loading integrations'
 		);
@@ -70,43 +117,60 @@ describe( 'IntegrationsPage list', () => {
 	} );
 	it( 'filters by search text and category and offers a way back', async () => {
 		const user = userEvent.setup();
-		render( <IntegrationsPage /> );
+		renderPage();
 		await screen.findByRole( 'table' );
 		await user.type(
 			screen.getByRole( 'searchbox', { name: 'Search integrations' } ),
 			'zoo'
 		);
 		expect(
-			screen.getByText( '1 integration shown.' )
-		).toBeInTheDocument();
-		expect( screen.queryByText( 'Gamification' ) ).not.toBeInTheDocument();
+			screen.getAllByText( '1 integration shown.' )[ 0 ]
+		).toHaveClass( 'displaying-num' );
+		expect(
+			screen.queryByRole( 'checkbox', { name: 'Enable Gamification' } )
+		).not.toBeInTheDocument();
 		await user.selectOptions(
 			screen.getByRole( 'combobox', { name: 'Category' } ),
 			'crm'
 		);
 		expect(
-			screen.getByText( 'No integrations match your filters.' )
+			screen.getByText( /No integrations match your filters\./ )
 		).toBeInTheDocument();
 		await user.click(
 			screen.getByRole( 'button', { name: 'Clear filters' } )
 		);
 		expect(
-			screen.getByText( '3 integrations shown.' )
+			screen.getAllByText( '3 integrations shown.' )[ 0 ]
 		).toBeInTheDocument();
+	} );
+	it( 'lists enabled and disabled integrations as views, as the Plugins screen does', async () => {
+		const user = userEvent.setup();
+		renderPage();
+		await screen.findByRole( 'table', { name: 'Integrations' } );
+		await user.click( screen.getByRole( 'link', { name: /^Enabled/ } ) );
+		expect(
+			screen.getByRole( 'checkbox', { name: 'Enable Gamification' } )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'checkbox', { name: 'Enable Zoom' } )
+		).not.toBeInTheDocument();
+		expect( screen.getByTestId( 'search' ) ).toHaveTextContent(
+			'status=enabled'
+		);
 	} );
 	it( 'shows a retry for server errors but not for permission errors', async () => {
 		const user = userEvent.setup();
 		vi.mocked( api.listIntegrations ).mockRejectedValueOnce(
 			new Error( 'Request failed' )
 		);
-		render( <IntegrationsPage /> );
+		renderPage();
 		await notice( /Request failed/ );
 		await user.click( screen.getByRole( 'button', { name: 'Try again' } ) );
 		await screen.findByRole( 'table' );
 	} );
 	it( 'does not offer a retry when access is denied', async () => {
 		vi.mocked( api.listIntegrations ).mockRejectedValue( forbidden() );
-		render( <IntegrationsPage /> );
+		renderPage();
 		await notice( /not allowed/ );
 		expect(
 			screen.queryByRole( 'button', { name: 'Try again' } )
@@ -132,7 +196,7 @@ describe( 'IntegrationsPage switches', () => {
 					finish = resolve;
 				} )
 		);
-		render( <IntegrationsPage /> );
+		renderPage();
 		const toggle = await screen.findByRole( 'checkbox', {
 			name: 'Enable Zoom',
 		} );
@@ -167,7 +231,7 @@ describe( 'IntegrationsPage switches', () => {
 			enabled: false,
 			requires_reload: true,
 		} );
-		render( <IntegrationsPage /> );
+		renderPage();
 		await user.click(
 			await screen.findByRole( 'checkbox', {
 				name: 'Enable Gamification',
@@ -184,7 +248,7 @@ describe( 'IntegrationsPage switches', () => {
 	it( 'keeps the previous state and shows the server message when a switch fails', async () => {
 		const user = userEvent.setup();
 		vi.mocked( api.setIntegrationEnabled ).mockRejectedValue( forbidden() );
-		render( <IntegrationsPage /> );
+		renderPage();
 		await user.click(
 			await screen.findByRole( 'checkbox', { name: 'Enable Zoom' } )
 		);
@@ -207,7 +271,7 @@ describe( 'IntegrationsPage switches', () => {
 				return new Promise( () => undefined );
 			}
 		);
-		const view = render( <IntegrationsPage /> );
+		const view = renderPage();
 		await user.click(
 			await screen.findByRole( 'checkbox', { name: 'Enable Zoom' } )
 		);
@@ -218,7 +282,7 @@ describe( 'IntegrationsPage switches', () => {
 
 describe( 'IntegrationsPage settings dialog', () => {
 	async function openSettings( user: ReturnType< typeof userEvent.setup > ) {
-		render( <IntegrationsPage /> );
+		renderPage();
 		await user.click(
 			await screen.findByRole( 'button', { name: 'Settings for Zoom' } )
 		);
@@ -365,7 +429,7 @@ describe( 'IntegrationsPage settings dialog', () => {
 		vi.mocked( api.getIntegrationSettings ).mockRejectedValue(
 			forbidden()
 		);
-		render( <IntegrationsPage /> );
+		renderPage();
 		await user.click(
 			await screen.findByRole( 'button', { name: 'Settings for Zoom' } )
 		);

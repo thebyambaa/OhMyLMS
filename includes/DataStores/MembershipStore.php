@@ -280,9 +280,8 @@ class MembershipStore extends DataStore {
 
 		// Prepare the query.
 		$table_name = $wpdb->prefix . 'ohmylms_user_membership';
-		$query      = $wpdb->prepare( 'SELECT membership_id FROM %i WHERE user_id = %d AND `status` = %s AND membership_id = %d', $table_name, $user_id, 'enrolled', $membership->get_id() );
 		// Execute the query and return the result.
-		$result = $wpdb->get_row( $query, ARRAY_A );
+		$result = $wpdb->get_row( $wpdb->prepare( 'SELECT membership_id FROM %i WHERE user_id = %d AND `status` = %s AND membership_id = %d', $table_name, $user_id, 'enrolled', $membership->get_id() ), ARRAY_A );
 		return ! empty( $result ) ? true : false;
 	}
 
@@ -298,11 +297,8 @@ class MembershipStore extends DataStore {
 		// Table name.
 		$table_name = $wpdb->prefix . 'ohmylms_user_membership';
 
-		// Prepare the query to count rows.
-		$query = $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE `status` = %s AND membership_id = %d', $table_name, 'enrolled', $membership->get_id() );
-
-		// Execute the query and return the count.
-		$count = $wpdb->get_var( $query );
+		// Count the rows.
+		$count = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE `status` = %s AND membership_id = %d', $table_name, 'enrolled', $membership->get_id() ) );
 		return (int) $count;
 	}
 
@@ -362,20 +358,18 @@ class MembershipStore extends DataStore {
 	public function cancel_enrollment( &$membership, $student_id, $order_id ) {
 		global $wpdb;
 		$user_id          = $student_id;
-		$enrollment_table = $wpdb->prefix . 'ohmylms_user_enrollment';
 		$membership_table = $wpdb->prefix . 'ohmylms_user_membership';
 		$products         = $membership->get_products();
 
 		if ( ! empty( $products ) ) {
 			foreach ( $products as $product ) {
-				$wpdb->update(
-					$enrollment_table,
+				\OhMyLMS\Student\Enrollments::update(
 					array(
 						'status' => 'cancelled',
 					),
 					array(
-						'user_id'  => $user_id,
-						'order_id' => $order_id,
+						'user_id'  => (int) $user_id,
+						'order_id' => (int) $order_id,
 					)
 				);
 			}

@@ -2,15 +2,15 @@ import { createElement, useEffect, useRef, useState } from '@wordpress/element';
 import { useDispatch, useSelect } from '@wordpress/data';
 import { Spinner } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import apiFetch from '@wordpress/api-fetch';
+import { previewQuestion } from './api.mjs';
 
 /**
  * Exact student rendering of an unselected, unsaved question in an isolated frame.
  *
- * @param {Object} props          Properties.
- * @param {Object} props.question Current question, including unsaved edits.
- * @param {string} props.clientId Native block ID.
- * @return {Element} Student document with an editing action over it.
+ * @param {Object}                                     props          Properties.
+ * @param {import('./choiceAutosave.mjs').ChoiceDraft} props.question Current question, including unsaved edits.
+ * @param {string}                                     props.clientId Native block ID.
+ * @return {React.ReactElement} Student document with an editing action over it.
  */
 export function QuestionBlockPreview( { question, clientId } ) {
 	const { selectBlock } = useDispatch( 'core/block-editor' );
@@ -18,6 +18,10 @@ export function QuestionBlockPreview( { question, clientId } ) {
 		( store ) => {
 			const editor = store( 'core/editor' );
 			const quiz = editor.getEditedPostAttribute( 'ohmylms_quiz' ) || {};
+			/**
+			 * @param {import('@wordpress/blocks').BlockInstance[]} blocks Blocks.
+			 * @return {string[]} Client IDs of the question blocks among them.
+			 */
 			const collect = ( blocks ) =>
 				blocks.flatMap( ( block ) => [
 					...( [
@@ -41,22 +45,22 @@ export function QuestionBlockPreview( { question, clientId } ) {
 	);
 	const source = JSON.stringify( { ...documentSettings, question } );
 	const seed = useRef( Math.floor( Math.random() * 2147483647 ) );
-	const [ preview, setPreview ] = useState( null );
+	const [ preview, setPreview ] = useState(
+		/** @type {string|null} */ ( null )
+	);
 	const [ error, setError ] = useState( '' );
 	const [ height, setHeight ] = useState( 160 );
-	const observer = useRef( null );
+	const observer = useRef( /** @type {ResizeObserver|null} */ ( null ) );
 	useEffect( () => {
 		let active = true;
 		const controller = new AbortController();
 		setPreview( null );
 		setError( '' );
 		const timer = setTimeout( () => {
-			apiFetch( {
-				path: '/ohmylms/v1/question-preview',
-				method: 'POST',
-				signal: controller.signal,
-				data: { ...JSON.parse( source ), seed: seed.current },
-			} )
+			previewQuestion(
+				{ ...JSON.parse( source ), seed: seed.current },
+				controller.signal
+			)
 				.then( ( result ) => active && setPreview( result.url ) )
 				.catch(
 					( cause ) =>
@@ -77,6 +81,7 @@ export function QuestionBlockPreview( { question, clientId } ) {
 		};
 	}, [ source ] );
 	useEffect( () => () => observer.current?.disconnect(), [] );
+	/** @param {import('react').SyntheticEvent<HTMLIFrameElement>} event Frame load. */
 	const resize = ( event ) => {
 		observer.current?.disconnect();
 		const frame = event.currentTarget;

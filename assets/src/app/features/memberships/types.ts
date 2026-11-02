@@ -43,7 +43,11 @@ export interface MembershipDetail extends Membership {
 	excluded_course_ids: number[];
 	excluded_courses: CourseRef[];
 	curriculum_item_ids: number[];
+	extension_settings: ExtensionSettings;
 }
+
+/** Values of extensions registered for memberships, keyed by extension ID (its namespace). */
+export type ExtensionSettings = Record< string, Record< string, unknown > >;
 
 /** The writable fields of a plan, exactly as the REST API accepts them. */
 export interface MembershipInput {
@@ -61,6 +65,8 @@ export interface MembershipInput {
 	course_ids: number[];
 	excluded_course_ids: number[];
 	curriculum_item_ids: number[];
+	/** Only the namespaces to change; the server keeps the others. */
+	extension_settings?: ExtensionSettings;
 }
 
 /** A labelled choice. */
@@ -88,6 +94,8 @@ export interface MembershipOptions {
 		max_price: number;
 		max_name: number;
 	};
+	/** IDs of extensions whose membership settings the server accepts. */
+	extension_settings: string[];
 }
 
 /** A plan member (read only). */
@@ -119,6 +127,8 @@ export interface FormState {
 	excluded_courses: CourseRef[];
 	/** Kept as loaded and sent back unchanged; the editor does not change curriculum rules. */
 	curriculum_item_ids: number[];
+	/** Edited by the registered `membership-settings` extensions. */
+	extension_settings: ExtensionSettings;
 }
 
 /** Field errors keyed by field name. */

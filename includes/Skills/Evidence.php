@@ -11,6 +11,7 @@ use OhMyLMS\Performance\Settings;
 use OhMyLMS\Performance\Snapshot;
 use OhMyLMS\QuestionBank\SkillMap;
 use OhMyLMS\QuestionBank\VersionPublisher;
+use OhMyLMS\Utility\Lock;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -37,7 +38,7 @@ final class Evidence {
 		if ( ! Schema::ready() ) {
 			return 0; }
 		$lock = self::LOCK . '-' . md5( $wpdb->prefix );
-		if ( (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', $lock ) ) !== '1' ) {
+		if ( ! Lock::acquire( $lock, 0 ) ) {
 			return 0; }
 		$done = 0;
 		try {
@@ -61,7 +62,7 @@ final class Evidence {
 				}
 			}
 		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+			Lock::release( $lock );
 		}
 		return $done;
 	}
@@ -98,8 +99,9 @@ final class Evidence {
 		$version = VersionPublisher::version( (int) $event['version_id'] );
 		if ( ! $version ) {
 			return 'skipped'; }
-		$parts = array();
-		foreach ( ( json_decode( $version['parts'], true ) ?: array(
+		$parts   = array();
+		$decoded = json_decode( $version['parts'], true );
+		foreach ( ( $decoded ? $decoded : array(
 			array(
 				'id'       => 'p1',
 				'fraction' => 1,
@@ -107,10 +109,13 @@ final class Evidence {
 		) ) as $part ) {
 			$parts[ (string) ( $part['id'] ?? 'p1' ) ] = max( 0, (float) ( $part['fraction'] ?? 1 ) );
 		}
-		$part_total  = array_sum( $parts ) ?: 1;
-		$is_template = \OhMyLMS\Assessment\Template::has( json_decode( (string) $version['settings'], true ) ?: array() );
+		$part_total  = array_sum( $parts );
+		$part_total  = $part_total ? $part_total : 1;
+		$settings    = json_decode( (string) $version['settings'], true );
+		$is_template = \OhMyLMS\Assessment\Template::has( $settings ? $settings : array() );
 		$context     = self::context( $event );
-		$identity    = VersionPublisher::identity( (int) $event['question_id'], false ) ?: array();
+		$identity    = VersionPublisher::identity( (int) $event['question_id'], false );
+		$identity    = $identity ? $identity : array();
 		foreach ( SkillMap::for_version( (int) $event['version_id'] ) as $mapping ) {
 			$part = (string) $mapping['part_id'];
 			// Part-level events attribute only to their own part; whole-question events are split by part weight.
@@ -225,8 +230,8 @@ final class Evidence {
 		global $wpdb;
 		if ( ! $event_ids ) {
 			return; }
-		$ids = implode( ',', array_map( 'intval', $event_ids ) );
-		$wpdb->query( 'UPDATE ' . Schema::table( 'evidence_outbox' ) . " SET status='pending' WHERE status='waiting' AND grade_event_id IN ($ids)" );
+		$ids = array_map( 'intval', $event_ids );
+		$wpdb->query( $wpdb->prepare( "UPDATE %i SET status='pending' WHERE status='waiting' AND grade_event_id IN (" . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')', array_merge( array( Schema::table( 'evidence_outbox' ) ), $ids ) ) );
 	}
 
 	/**
@@ -279,5 +284,25 @@ final class Evidence {
 	 */
 	public static function summary( $student_id ) {
 		return Snapshot::skills( (int) $student_id );
+	}
+
+	/**
+	 * A learner's most recent evidence rows, newest first (at most 200).
+	 *
+	 * @param int $student_id Learner.
+	 * @return array[]
+	 */
+	public static function recent( $student_id ) {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh evidence for the teacher's report.
+		return $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT e.term_id, e.part_id, e.role, e.awarded, e.available, e.independent, e.first_try, e.difficulty, e.source_type, e.source_id, e.question_id, e.version_id, e.evidence_at, e.superseded
+             FROM %i e WHERE e.student_id=%d ORDER BY e.evidence_at DESC, e.id DESC LIMIT 200',
+				Schema::table( 'skill_evidence' ),
+				$student_id
+			),
+			ARRAY_A
+		);
 	}
 }

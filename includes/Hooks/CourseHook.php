@@ -22,7 +22,6 @@ class CourseHook {
 	/**
 	 * Get course data.
 	 *
-	 *
 	 * @param mixed $data Input data.
 	 * @param mixed $course Course.
 	 * @return mixed

@@ -425,7 +425,7 @@ class ProfileGutenbergBlock {
 			foreach ( $wrapper_attributes as $key => $value ) {
 				$wrapper_attrs_string .= ' ' . $key . '="' . esc_attr( $value ) . '"';
 			}
-			echo '<div' . $wrapper_attrs_string . '>';
+			echo '<div' . $wrapper_attrs_string . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Attribute values escaped above.
 		}
 
 		// Add proper wrapper classes for consistency with frontend.
@@ -438,7 +438,7 @@ class ProfileGutenbergBlock {
 
 		// Add preview notice in editor mode.
 		if ( $is_editor ) {
-			echo '<div class="ohmylms-gutenberg-edit-mode" style="background: #f0f0f1; padding: 8px 12px; margin-bottom: 16px; border-left: 4px solid #2271b1; font-size: 12px; color: #3c434a;">';
+			echo '<div class="ohmylms-gutenberg-edit-mode">';
 			echo '<small>' . esc_html__( 'Gutenberg Preview Mode: This is how the student profile will appear to logged-in users.', 'ohmylms' ) . '</small>';
 			echo '</div>';
 		}

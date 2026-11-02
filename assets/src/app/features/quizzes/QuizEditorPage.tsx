@@ -10,10 +10,10 @@ import {
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Link, useParams } from 'react-router-dom';
-import { useBootstrap } from '../../bootstrap/BootstrapContext';
 import { normalizeApiError } from '../../lib/api';
 import { updateQuiz } from './api';
 import {
+	formatMarks,
 	formFromQuiz,
 	isDirty,
 	isValid,
@@ -21,8 +21,9 @@ import {
 	toInput,
 	validateForm,
 } from './model';
+import { QuizQuestions } from './QuizQuestions';
 import { useQuizEditor } from './useQuizEditor';
-import { useUnsavedChangesGuard } from './useUnsavedChangesGuard';
+import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
 import type { QuizForm, QuizFormErrors } from './types';
 
 function routeId( value: string | undefined ): number | null {
@@ -38,13 +39,13 @@ function FieldError( { id, message }: { id: string; message?: string } ) {
 }
 
 /**
- * Quiz settings editor (`#/quizzes/<id>`): title, status, introduction, time limit, passing score,
- * attempts, randomisation, answer review, layout, feedback and availability. Questions are edited in
- * the question screens. Edits survive failed saves, a quiz changed by someone else is reported before it
- * is overwritten, and leaving with unsaved changes asks first.
+ * Quiz editor (`#/quizzes/<id>`): title, status, introduction, time limit, passing score, attempts,
+ * randomisation, answer review, layout, feedback and availability, and the Questions section (add from
+ * the question bank, create, reorder, pin and remove). Edits survive failed saves, a quiz changed by
+ * someone else is reported before it is overwritten, and leaving with unsaved changes (settings or a
+ * question draft) asks first.
  */
 export default function QuizEditorPage() {
-	const { adminUrl } = useBootstrap();
 	const params = useParams();
 	const id = routeId( params.id );
 	const editor = useQuizEditor( id );
@@ -55,10 +56,13 @@ export default function QuizEditorPage() {
 	const [ message, setMessage ] = useState< string | null >( null );
 	const [ failure, setFailure ] = useState< string | null >( null );
 	const [ conflict, setConflict ] = useState( false );
+	const [ questionDraft, setQuestionDraft ] = useState( false );
+	const [ totalMarks, setTotalMarks ] = useState< number | null >( null );
+	const [ asideOpen, setAsideOpen ] = useState( true );
 	const summary = useRef< HTMLDivElement >( null );
 	const operation = useRef< AbortController | null >( null );
 	const dirty = Boolean( form && saved && isDirty( form, saved ) );
-	const guard = useUnsavedChangesGuard( dirty );
+	const guard = useUnsavedChangesGuard( dirty || questionDraft );
 	const quiz = editor.quiz;
 
 	useEffect( () => () => operation.current?.abort(), [] );
@@ -190,44 +194,74 @@ export default function QuizEditorPage() {
 
 	return (
 		<>
-			<p>
+			<p className="oml-editor-breadcrumb">
 				<Link to="/quizzes">
 					{ __( 'Back to quizzes', 'ohmylms' ) }
 				</Link>
 			</p>
-			<h2>
-				{ sprintf(
-					/* translators: %s: quiz title. */
-					__( 'Quiz settings: %s', 'ohmylms' ),
-					saved.title
-				) }
-			</h2>
-			<p>
-				{ quiz.can_grade && (
-					<>
-						<Link to={ `/quizzes/${ quiz.id }/attempts` }>
+			<div className="oml-editor-header">
+				<div className="oml-editor-header-title">
+					<h2>
+						{ sprintf(
+							/* translators: %s: quiz title. */
+							__( 'Quiz settings: %s', 'ohmylms' ),
+							saved.title
+						) }
+					</h2>
+					<span
+						className={ `oml-editor-status oml-editor-status-${ quiz.status }` }
+					>
+						{ 'publish' === quiz.status
+							? __( 'Published', 'ohmylms' )
+							: quiz.status }
+					</span>
+					{ totalMarks !== null && totalMarks !== undefined && (
+						<span className="oml-editor-saved">
+							{ sprintf(
+								/* translators: %s: marks. */
+								__( '%s marks', 'ohmylms' ),
+								String( totalMarks )
+							) }
+						</span>
+					) }
+				</div>
+				<div className="oml-editor-header-actions">
+					{ dirty && (
+						<span className="oml-editor-saved" role="status">
+							{ __( 'You have unsaved changes.', 'ohmylms' ) }
+						</span>
+					) }
+					{ quiz.can_grade && (
+						<Link
+							className="components-button is-tertiary"
+							to={ `/quizzes/${ quiz.id }/attempts` }
+						>
 							{ sprintf(
 								/* translators: %d: number of attempts. */
 								__( 'Attempts (%d)', 'ohmylms' ),
 								quiz.attempt_count
 							) }
-						</Link>{ ' ' }
-					</>
-				) }
-				<a
-					href={ `${ adminUrl }admin.php?page=ohmylms#/quiz-edit/${ quiz.id }` }
-				>
-					{ __( 'Edit questions', 'ohmylms' ) }
-				</a>
-				{ quiz.native_editor_url && (
-					<>
-						{ ' ' }
-						<a href={ quiz.native_editor_url }>
+						</Link>
+					) }
+					{ quiz.native_editor_url && (
+						<a
+							className="components-button is-tertiary"
+							href={ quiz.native_editor_url }
+						>
 							{ __( 'Open in the block editor', 'ohmylms' ) }
 						</a>
-					</>
-				) }
-			</p>
+					) }
+					<Button
+						variant="tertiary"
+						aria-expanded={ asideOpen }
+						onClick={ () => setAsideOpen( ! asideOpen ) }
+					>
+						{ asideOpen
+							? __( 'Hide settings', 'ohmylms' )
+							: __( 'Show settings', 'ohmylms' ) }
+					</Button>
+				</div>
+			</div>
 			{ 'trash' === quiz.status && (
 				<Notice status="warning" isDismissible={ false }>
 					{ __(
@@ -235,11 +269,6 @@ export default function QuizEditorPage() {
 						'ohmylms'
 					) }
 				</Notice>
-			) }
-			{ dirty && (
-				<p role="status">
-					{ __( 'You have unsaved changes.', 'ohmylms' ) }
-				</p>
 			) }
 			{ message && (
 				<Notice status="success" onRemove={ () => setMessage( null ) }>
@@ -267,272 +296,358 @@ export default function QuizEditorPage() {
 					</Notice>
 				) }
 			</div>
-			<form
-				aria-label={ __( 'Quiz settings', 'ohmylms' ) }
-				noValidate
-				onSubmit={ ( event ) => {
-					event.preventDefault();
-					void save();
-				} }
+			<div
+				className={ `oml-editor oml-editor-grid${ asideOpen ? '' : ' is-aside-closed' }` }
 			>
-				<fieldset disabled={ busy || readOnly }>
-					<legend>{ __( 'Details', 'ohmylms' ) }</legend>
-					<TextControl
-						label={ __( 'Title', 'ohmylms' ) }
-						value={ form.title }
-						maxLength={ 200 }
-						required
-						aria-invalid={ invalid( 'title' ) }
-						aria-describedby={ described( 'title' ) }
-						onChange={ ( next ) => update( 'title', next ) }
+				<div className="oml-editor-main">
+					<QuizQuestions
+						quizId={ quiz.id }
+						readOnly={ readOnly }
+						onDirtyChange={ setQuestionDraft }
+						onTotalChange={ setTotalMarks }
 					/>
-					<FieldError
-						id="oml-quiz-title-error"
-						message={ errors.title }
-					/>
-					<SelectControl
-						label={ __( 'Status', 'ohmylms' ) }
-						value={ form.status }
-						options={ [
-							{ value: 'draft', label: __( 'Draft', 'ohmylms' ) },
-							{
-								value: 'publish',
-								label: __( 'Published', 'ohmylms' ),
-							},
-						] }
-						onChange={ ( next ) =>
-							update(
-								'status',
-								'publish' === next ? 'publish' : 'draft'
-							)
-						}
-					/>
-					<TextareaControl
-						label={ __( 'Introduction', 'ohmylms' ) }
-						value={ form.description }
-						rows={ 4 }
-						onChange={ ( next ) => update( 'description', next ) }
-					/>
-				</fieldset>
+				</div>
+				{ asideOpen && (
+					<aside
+						className="oml-editor-aside"
+						aria-label={ __( 'Quiz settings', 'ohmylms' ) }
+					>
+						<form
+							className="oml-editor-form"
+							aria-label={ __( 'Quiz settings', 'ohmylms' ) }
+							noValidate
+							onSubmit={ ( event ) => {
+								event.preventDefault();
+								void save();
+							} }
+						>
+							<fieldset disabled={ busy || readOnly }>
+								<legend>{ __( 'Details', 'ohmylms' ) }</legend>
+								<TextControl
+									label={ __( 'Title', 'ohmylms' ) }
+									value={ form.title }
+									maxLength={ 200 }
+									required
+									aria-invalid={ invalid( 'title' ) }
+									aria-describedby={ described( 'title' ) }
+									onChange={ ( next ) =>
+										update( 'title', next )
+									}
+								/>
+								<FieldError
+									id="oml-quiz-title-error"
+									message={ errors.title }
+								/>
+								<SelectControl
+									label={ __( 'Status', 'ohmylms' ) }
+									value={ form.status }
+									options={ [
+										{
+											value: 'draft',
+											label: __( 'Draft', 'ohmylms' ),
+										},
+										{
+											value: 'publish',
+											label: __( 'Published', 'ohmylms' ),
+										},
+									] }
+									onChange={ ( next ) =>
+										update(
+											'status',
+											'publish' === next
+												? 'publish'
+												: 'draft'
+										)
+									}
+								/>
+								<TextareaControl
+									label={ __( 'Introduction', 'ohmylms' ) }
+									value={ form.description }
+									rows={ 4 }
+									onChange={ ( next ) =>
+										update( 'description', next )
+									}
+								/>
+							</fieldset>
 
-				<fieldset disabled={ busy || readOnly }>
-					<legend>{ __( 'Attempts and scoring', 'ohmylms' ) }</legend>
-					<TextControl
-						label={ __( 'Time limit (minutes)', 'ohmylms' ) }
-						value={ form.time_limit_minutes }
-						inputMode="numeric"
-						help={ __( '0 means no time limit.', 'ohmylms' ) }
-						aria-invalid={ invalid( 'time_limit_minutes' ) }
-						aria-describedby={ described( 'time_limit_minutes' ) }
-						onChange={ ( next ) =>
-							update( 'time_limit_minutes', next )
-						}
-					/>
-					<FieldError
-						id="oml-quiz-time_limit_minutes-error"
-						message={ errors.time_limit_minutes }
-					/>
-					<TextControl
-						label={ __( 'Passing score', 'ohmylms' ) }
-						value={ form.passing_score }
-						inputMode="decimal"
-						help={ sprintf(
-							/* translators: %s: total marks of the quiz. */
-							__(
-								'Marks a learner needs to pass, 0 to 100 (0 means no pass mark). The quiz is worth %s marks in total.',
-								'ohmylms'
-							),
-							String( quiz.total_marks )
-						) }
-						aria-invalid={ invalid( 'passing_score' ) }
-						aria-describedby={ described( 'passing_score' ) }
-						onChange={ ( next ) => update( 'passing_score', next ) }
-					/>
-					<FieldError
-						id="oml-quiz-passing_score-error"
-						message={ errors.passing_score }
-					/>
-					<TextControl
-						label={ __( 'Attempts allowed', 'ohmylms' ) }
-						value={ form.attempts_allowed }
-						inputMode="numeric"
-						help={ __(
-							'Attempts each learner may take. 0 uses the default of one attempt.',
-							'ohmylms'
-						) }
-						aria-invalid={ invalid( 'attempts_allowed' ) }
-						aria-describedby={ described( 'attempts_allowed' ) }
-						onChange={ ( next ) =>
-							update( 'attempts_allowed', next )
-						}
-					/>
-					<FieldError
-						id="oml-quiz-attempts_allowed-error"
-						message={ errors.attempts_allowed }
-					/>
-				</fieldset>
+							<fieldset disabled={ busy || readOnly }>
+								<legend>
+									{ __( 'Attempts and scoring', 'ohmylms' ) }
+								</legend>
+								<TextControl
+									label={ __(
+										'Time limit (minutes)',
+										'ohmylms'
+									) }
+									value={ form.time_limit_minutes }
+									inputMode="numeric"
+									help={ __(
+										'0 means no time limit.',
+										'ohmylms'
+									) }
+									aria-invalid={ invalid(
+										'time_limit_minutes'
+									) }
+									aria-describedby={ described(
+										'time_limit_minutes'
+									) }
+									onChange={ ( next ) =>
+										update( 'time_limit_minutes', next )
+									}
+								/>
+								<FieldError
+									id="oml-quiz-time_limit_minutes-error"
+									message={ errors.time_limit_minutes }
+								/>
+								<TextControl
+									label={ __( 'Passing score', 'ohmylms' ) }
+									value={ form.passing_score }
+									inputMode="decimal"
+									help={ sprintf(
+										/* translators: %s: total marks of the quiz. */
+										__(
+											'Marks a learner needs to pass, 0 to 100 (0 means no pass mark). The quiz is worth %s marks in total.',
+											'ohmylms'
+										),
+										formatMarks(
+											totalMarks ?? quiz.total_marks
+										)
+									) }
+									aria-invalid={ invalid( 'passing_score' ) }
+									aria-describedby={ described(
+										'passing_score'
+									) }
+									onChange={ ( next ) =>
+										update( 'passing_score', next )
+									}
+								/>
+								<FieldError
+									id="oml-quiz-passing_score-error"
+									message={ errors.passing_score }
+								/>
+								<TextControl
+									label={ __(
+										'Attempts allowed',
+										'ohmylms'
+									) }
+									value={ form.attempts_allowed }
+									inputMode="numeric"
+									help={ __(
+										'Attempts each learner may take. 0 uses the default of one attempt.',
+										'ohmylms'
+									) }
+									aria-invalid={ invalid(
+										'attempts_allowed'
+									) }
+									aria-describedby={ described(
+										'attempts_allowed'
+									) }
+									onChange={ ( next ) =>
+										update( 'attempts_allowed', next )
+									}
+								/>
+								<FieldError
+									id="oml-quiz-attempts_allowed-error"
+									message={ errors.attempts_allowed }
+								/>
+							</fieldset>
 
-				<fieldset disabled={ busy || readOnly }>
-					<legend>{ __( 'Delivery', 'ohmylms' ) }</legend>
-					<CheckboxControl
-						label={ __( 'Randomise question order', 'ohmylms' ) }
-						checked={ form.randomize_questions }
-						onChange={ ( next ) =>
-							update( 'randomize_questions', next )
-						}
-					/>
-					<SelectControl
-						label={ __( 'Question layout', 'ohmylms' ) }
-						value={ form.layout }
-						options={ [
-							{
-								value: 'one_question_per_page',
-								label: __( 'One question per page', 'ohmylms' ),
-							},
-							{
-								value: 'all_questions_in_one_page',
-								label: __(
-									'All questions on one page',
-									'ohmylms'
-								),
-							},
-							{
-								value: 'number_of_questions_per_page',
-								label: __(
-									'A set number of questions per page',
-									'ohmylms'
-								),
-							},
-						] }
-						onChange={ ( next ) => {
-							const found = [
-								'one_question_per_page',
-								'all_questions_in_one_page',
-								'number_of_questions_per_page',
-							].find( ( value ) => value === next );
-							if ( found ) {
-								update(
-									'layout',
-									found as QuizForm[ 'layout' ]
-								);
-							}
-						} }
-					/>
-					<TextControl
-						label={ __( 'Questions per page', 'ohmylms' ) }
-						value={ form.questions_per_page }
-						inputMode="numeric"
-						disabled={
-							'number_of_questions_per_page' !== form.layout
-						}
-						help={ __(
-							'Used when the layout is a set number of questions per page.',
-							'ohmylms'
-						) }
-						aria-invalid={ invalid( 'questions_per_page' ) }
-						aria-describedby={ described( 'questions_per_page' ) }
-						onChange={ ( next ) =>
-							update( 'questions_per_page', next )
-						}
-					/>
-					<FieldError
-						id="oml-quiz-questions_per_page-error"
-						message={ errors.questions_per_page }
-					/>
-				</fieldset>
+							<fieldset disabled={ busy || readOnly }>
+								<legend>{ __( 'Delivery', 'ohmylms' ) }</legend>
+								<CheckboxControl
+									label={ __(
+										'Randomise question order',
+										'ohmylms'
+									) }
+									checked={ form.randomize_questions }
+									onChange={ ( next ) =>
+										update( 'randomize_questions', next )
+									}
+								/>
+								<SelectControl
+									label={ __( 'Question layout', 'ohmylms' ) }
+									value={ form.layout }
+									options={ [
+										{
+											value: 'one_question_per_page',
+											label: __(
+												'One question per page',
+												'ohmylms'
+											),
+										},
+										{
+											value: 'all_questions_in_one_page',
+											label: __(
+												'All questions on one page',
+												'ohmylms'
+											),
+										},
+										{
+											value: 'number_of_questions_per_page',
+											label: __(
+												'A set number of questions per page',
+												'ohmylms'
+											),
+										},
+									] }
+									onChange={ ( next ) => {
+										const found = [
+											'one_question_per_page',
+											'all_questions_in_one_page',
+											'number_of_questions_per_page',
+										].find( ( value ) => value === next );
+										if ( found ) {
+											update(
+												'layout',
+												found as QuizForm[ 'layout' ]
+											);
+										}
+									} }
+								/>
+								<TextControl
+									label={ __(
+										'Questions per page',
+										'ohmylms'
+									) }
+									value={ form.questions_per_page }
+									inputMode="numeric"
+									disabled={
+										'number_of_questions_per_page' !==
+										form.layout
+									}
+									help={ __(
+										'Used when the layout is a set number of questions per page.',
+										'ohmylms'
+									) }
+									aria-invalid={ invalid(
+										'questions_per_page'
+									) }
+									aria-describedby={ described(
+										'questions_per_page'
+									) }
+									onChange={ ( next ) =>
+										update( 'questions_per_page', next )
+									}
+								/>
+								<FieldError
+									id="oml-quiz-questions_per_page-error"
+									message={ errors.questions_per_page }
+								/>
+							</fieldset>
 
-				<fieldset disabled={ busy || readOnly }>
-					<legend>
-						{ __( 'Feedback and availability', 'ohmylms' ) }
-					</legend>
-					<SelectControl
-						label={ __( 'Release results', 'ohmylms' ) }
-						value={ form.feedback_mode }
-						options={ [
-							{
-								value: 'immediate',
-								label: __( 'Immediately', 'ohmylms' ),
-							},
-							{
-								value: 'after_close',
-								label: __( 'After the quiz closes', 'ohmylms' ),
-							},
-							{
-								value: 'manual',
-								label: __( 'When I release them', 'ohmylms' ),
-							},
-						] }
-						onChange={ ( next ) => {
-							const found = [
-								'immediate',
-								'after_close',
-								'manual',
-							].find( ( value ) => value === next );
-							if ( found ) {
-								update(
-									'feedback_mode',
-									found as QuizForm[ 'feedback_mode' ]
-								);
-							}
-						} }
-					/>
-					<CheckboxControl
-						label={ __(
-							'Show correct answers on the results page',
-							'ohmylms'
-						) }
-						checked={ form.show_correct_answers }
-						onChange={ ( next ) =>
-							update( 'show_correct_answers', next )
-						}
-					/>
-					<TextControl
-						label={ __( 'Opens', 'ohmylms' ) }
-						type="datetime-local"
-						value={ form.available_from }
-						help={ __(
-							'Leave empty to open immediately. Times use your browser time zone.',
-							'ohmylms'
-						) }
-						aria-invalid={ invalid( 'available_from' ) }
-						aria-describedby={ described( 'available_from' ) }
-						onChange={ ( next ) =>
-							update( 'available_from', next )
-						}
-					/>
-					<FieldError
-						id="oml-quiz-available_from-error"
-						message={ errors.available_from }
-					/>
-					<TextControl
-						label={ __( 'Closes', 'ohmylms' ) }
-						type="datetime-local"
-						value={ form.available_until }
-						help={ __(
-							'Leave empty to never close. A learner who starts late still ends at this time.',
-							'ohmylms'
-						) }
-						aria-invalid={ invalid( 'available_until' ) }
-						aria-describedby={ described( 'available_until' ) }
-						onChange={ ( next ) =>
-							update( 'available_until', next )
-						}
-					/>
-					<FieldError
-						id="oml-quiz-available_until-error"
-						message={ errors.available_until }
-					/>
-				</fieldset>
+							<fieldset disabled={ busy || readOnly }>
+								<legend>
+									{ __(
+										'Feedback and availability',
+										'ohmylms'
+									) }
+								</legend>
+								<SelectControl
+									label={ __( 'Release results', 'ohmylms' ) }
+									value={ form.feedback_mode }
+									options={ [
+										{
+											value: 'immediate',
+											label: __(
+												'Immediately',
+												'ohmylms'
+											),
+										},
+										{
+											value: 'after_close',
+											label: __(
+												'After the quiz closes',
+												'ohmylms'
+											),
+										},
+										{
+											value: 'manual',
+											label: __(
+												'When I release them',
+												'ohmylms'
+											),
+										},
+									] }
+									onChange={ ( next ) => {
+										const found = [
+											'immediate',
+											'after_close',
+											'manual',
+										].find( ( value ) => value === next );
+										if ( found ) {
+											update(
+												'feedback_mode',
+												found as QuizForm[ 'feedback_mode' ]
+											);
+										}
+									} }
+								/>
+								<CheckboxControl
+									label={ __(
+										'Show correct answers on the results page',
+										'ohmylms'
+									) }
+									checked={ form.show_correct_answers }
+									onChange={ ( next ) =>
+										update( 'show_correct_answers', next )
+									}
+								/>
+								<TextControl
+									label={ __( 'Opens', 'ohmylms' ) }
+									type="datetime-local"
+									value={ form.available_from }
+									help={ __(
+										'Leave empty to open immediately. Times use your browser time zone.',
+										'ohmylms'
+									) }
+									aria-invalid={ invalid( 'available_from' ) }
+									aria-describedby={ described(
+										'available_from'
+									) }
+									onChange={ ( next ) =>
+										update( 'available_from', next )
+									}
+								/>
+								<FieldError
+									id="oml-quiz-available_from-error"
+									message={ errors.available_from }
+								/>
+								<TextControl
+									label={ __( 'Closes', 'ohmylms' ) }
+									type="datetime-local"
+									value={ form.available_until }
+									help={ __(
+										'Leave empty to never close. A learner who starts late still ends at this time.',
+										'ohmylms'
+									) }
+									aria-invalid={ invalid(
+										'available_until'
+									) }
+									aria-describedby={ described(
+										'available_until'
+									) }
+									onChange={ ( next ) =>
+										update( 'available_until', next )
+									}
+								/>
+								<FieldError
+									id="oml-quiz-available_until-error"
+									message={ errors.available_until }
+								/>
+							</fieldset>
 
-				<Button
-					type="submit"
-					variant="primary"
-					disabled={ busy || readOnly }
-					isBusy={ busy }
-				>
-					{ __( 'Save quiz', 'ohmylms' ) }
-				</Button>
-			</form>
+							<Button
+								type="submit"
+								variant="primary"
+								disabled={ busy || readOnly }
+								isBusy={ busy }
+							>
+								{ __( 'Save quiz', 'ohmylms' ) }
+							</Button>
+						</form>
+					</aside>
+				) }
+			</div>
 
 			{ guard.pendingPath && (
 				<Modal

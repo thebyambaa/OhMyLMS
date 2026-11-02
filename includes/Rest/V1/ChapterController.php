@@ -13,6 +13,7 @@ use OhMyLMS\Data\Course;
 use OhMyLMS\Data\Lesson;
 use OhMyLMS\Data\Quiz;
 use OhMyLMS\DataException;
+use OhMyLMS\Learning\CourseStructure;
 use WP_Query;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -438,32 +439,7 @@ class ChapterController extends RestController {
 			return;
 		}
 
-		global $wpdb;
-		$table_name = $wpdb->prefix . OHMYLMS_CONTENT_RELATIONSHIP;
-
-		$wpdb->delete(
-			$table_name,
-			array(
-				'chapter_id' => $chapter_id,
-				'content_id' => $content_id,
-			),
-			array(
-				'%d',
-				'%d',
-			)
-		);
-
-		$table_name = $wpdb->prefix . 'ohmylms_user_progress';
-		$wpdb->delete(
-			$table_name,
-			array(
-				'content_id' => $content_id,
-			),
-			array(
-				'%d',
-				'%d',
-			)
-		);
+		CourseStructure::remove_with_progress( $chapter_id, $content_id );
 
 		$response = array(
 			'id'      => $chapter_id,

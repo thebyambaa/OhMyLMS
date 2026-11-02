@@ -1,14 +1,36 @@
 const { __, sprintf } = window.wp.i18n;
 
 /**
+ * @typedef {Object} WordState
+ * @property {string}             session      Session UUID.
+ * @property {string}             activityMode `hangman` or spelling.
+ * @property {string}             status       `complete` when the run is over.
+ * @property {number}             round        Current round.
+ * @property {number}             total        Rounds.
+ * @property {string}             clue         Clue.
+ * @property {number}             mistakes     Mistakes used.
+ * @property {number}             limit        Maximum mistakes.
+ * @property {Array<string|null>} letters      Word slots, null while hidden (hangman).
+ * @property {string[]}           guessed      Letters tried (hangman).
+ * @property {boolean}            done         The round is over.
+ * @property {boolean}            [solved]     The word was found.
+ * @property {string}             [answer]     Revealed answer, set whenever `done` is true.
+ */
+
+/**
  * Render server-owned Hangman or spelling state.
  *
  * @param {HTMLElement}                              stage   Player region.
- * @param {Object}                                   data    Public progress, without hidden answers.
+ * @param {WordState}                                data    Public progress, without hidden answers.
  * @param {(command: string, value: string) => void} act     Submit an action.
  * @param {() => void}                               restart Start a new run.
  */
 export function renderWord( stage, data, act, restart ) {
+	/**
+	 * @param {string} tag  Tag name.
+	 * @param {string} text Text content.
+	 * @return {HTMLElement} Element.
+	 */
 	const element = ( tag, text ) => {
 		const node = document.createElement( tag );
 		node.textContent = text;
@@ -124,15 +146,17 @@ export function renderWord( stage, data, act, restart ) {
 						'Answer: %s',
 						'ohmylms'
 					),
-					data.answer
+					/** @type {string} */ ( data.answer )
 				)
 			)
 		);
-		const button = element(
-			'button',
-			data.status === 'complete'
-				? __( 'Play again', 'ohmylms' )
-				: __( 'Next word', 'ohmylms' )
+		const button = /** @type {HTMLButtonElement} */ (
+			element(
+				'button',
+				data.status === 'complete'
+					? __( 'Play again', 'ohmylms' )
+					: __( 'Next word', 'ohmylms' )
+			)
 		);
 		button.type = 'button';
 		button.addEventListener(
@@ -158,7 +182,9 @@ export function renderWord( stage, data, act, restart ) {
 	input.setAttribute( 'autocapitalize', 'off' );
 	input.setAttribute( 'autocorrect', 'off' );
 	label.append( input );
-	const submit = element( 'button', __( 'Check', 'ohmylms' ) );
+	const submit = /** @type {HTMLButtonElement} */ (
+		element( 'button', __( 'Check', 'ohmylms' ) )
+	);
 	submit.type = 'submit';
 	form.append( label, submit );
 	form.addEventListener( 'submit', async ( event ) => {

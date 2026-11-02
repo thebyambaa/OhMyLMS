@@ -218,7 +218,7 @@ class CourseStore extends DataStore {
 
 		$result = wp_update_post( wp_slash( array_merge( array( 'ID' => $course->get_id() ), $post_data ) ), true );
 		if ( is_wp_error( $result ) ) {
-			throw new \RuntimeException( $result->get_error_message() );
+			throw new \RuntimeException( $result->get_error_message() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Plain-text message; whoever displays it escapes it.
 		}
 		$course->set_slug( get_post_field( 'post_name', $result ) );
 		$this->update_post_meta( $course );
@@ -754,9 +754,12 @@ class CourseStore extends DataStore {
 
 
 	/**
-	 * Check course access for Course store.
+	 * Whether the current user has an `enrolled` enrolment in the course.
+	 *
+	 * Roles are not consulted on purpose; see `Course::has_access()`.
 	 *
 	 * @param mixed $course Course.
+	 * @return bool
 	 */
 	public function check_course_access( $course ) {
 		// Get the current user ID.
@@ -773,10 +776,9 @@ class CourseStore extends DataStore {
 
 		// Prepare the query.
 		$table_name = $wpdb->prefix . 'ohmylms_user_enrollment';
-		$query      = $wpdb->prepare( 'SELECT course_id FROM %i WHERE user_id = %d AND course_id = %d AND status = %s', $table_name, $user_id, $course_id, 'enrolled' );
 
 		// Execute the query and return the result.
-		$result     = $wpdb->get_row( $query, ARRAY_A );
+		$result     = $wpdb->get_row( $wpdb->prepare( 'SELECT course_id FROM %i WHERE user_id = %d AND course_id = %d AND status = %s', $table_name, $user_id, $course_id, 'enrolled' ), ARRAY_A );
 		$has_access = ! empty( $result ) ? true : false;
 
 		// Cache the result.
@@ -799,9 +801,8 @@ class CourseStore extends DataStore {
 
 		// Prepare the query.
 		$table_name = $wpdb->prefix . 'ohmylms_certificate_relationship';
-		$query      = $wpdb->prepare( 'SELECT certificate_id FROM %i WHERE course_id = %d', $table_name, $course->get_id() );
 		// Execute the query and return the result.
-		$result = $wpdb->get_row( $query, ARRAY_A );
+		$result = $wpdb->get_row( $wpdb->prepare( 'SELECT certificate_id FROM %i WHERE course_id = %d', $table_name, $course->get_id() ), ARRAY_A );
 		if ( ! empty( $result ) ) {
 			$certificate = ohmylms_get_certificate( $result['certificate_id'] );
 			return $certificate;
@@ -934,9 +935,7 @@ class CourseStore extends DataStore {
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'ohmylms_user_enrollment';
 
-		$query = $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE course_id = %d AND status = %s', $table_name, $course->get_id(), 'enrolled' );
-
-		$count = $wpdb->get_var( $query );
+		$count = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE course_id = %d AND status = %s', $table_name, $course->get_id(), 'enrolled' ) );
 
 		return $count ? intval( $count ) : 0;
 	}
@@ -997,20 +996,21 @@ class CourseStore extends DataStore {
 		}
 
 		// Main query.
-		$enrollment_query = $wpdb->prepare(
-			"SELECT
-				ue.user_id AS student_id,
-				ue.start_date,
-				ue.end_date,
-				ue.progress,
-				ue.status
-			FROM {$wpdb->prefix}ohmylms_user_enrollment ue
-			WHERE ue.course_id = %d AND ue.status = %s" . $where_date_filter,
-			$course->get_id(),
-			'enrolled'
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT
+					ue.user_id AS student_id,
+					ue.start_date,
+					ue.end_date,
+					ue.progress,
+					ue.status
+				FROM {$wpdb->prefix}ohmylms_user_enrollment ue
+				WHERE ue.course_id = %d AND ue.status = %s" . $where_date_filter, // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- The date filter is prepared above.
+				$course->get_id(),
+				'enrolled'
+			),
+			ARRAY_A
 		);
-
-		$results = $wpdb->get_results( $enrollment_query, ARRAY_A );
 
 		if ( empty( $results ) ) {
 			return array();
@@ -1057,8 +1057,9 @@ class CourseStore extends DataStore {
 				foreach ( $contents as $index => &$item ) {
 					if ( in_array( $item['type'], array( 'assignment', 'quiz' ) ) && ! $student_obj->maybe_completed( $item['id'] ) ) {
 						// Check next contents for completion.
-						$skipped = false;
-						for ( $j = $index + 1; $j < count( $contents ); $j++ ) {
+						$skipped       = false;
+						$content_count = count( $contents );
+						for ( $j = $index + 1; $j < $content_count; $j++ ) {
 							if ( $student_obj->maybe_completed( $contents[ $j ]['id'] ) ) {
 								$skipped = true;
 								break;
@@ -1112,9 +1113,9 @@ class CourseStore extends DataStore {
 						return strcasecmp( $a['name'], $b['name'] );
 
 					case 'start_date':
-						$timeA = strtotime( $a['start_date'] );
-						$timeB = strtotime( $b['start_date'] );
-						return $timeA <=> $timeB;
+						$time_a = strtotime( $a['start_date'] );
+						$time_b = strtotime( $b['start_date'] );
+						return $time_a <=> $time_b;
 
 					default:
 						// Default: by completion rate DESC, then duration ASC.
@@ -1207,9 +1208,9 @@ class CourseStore extends DataStore {
 			}
 			$cohorts[] = array(
 				'id'                  => (int) $row['id'],
-				'start_date'          => ! empty( $row['start_date'] ) ? date( 'Y-m-d\TH:i:s', strtotime( $row['start_date'] ) ) : '',
-				'end_date'            => ! empty( $row['end_date'] ) ? date( 'Y-m-d\TH:i:s', strtotime( $row['end_date'] ) ) : '',
-				'enrollment_deadline' => ! empty( $row['enrollment_end'] ) ? date( 'Y-m-d\TH:i:s', strtotime( $row['enrollment_end'] ) ) : '',
+				'start_date'          => ! empty( $row['start_date'] ) ? gmdate( 'Y-m-d\TH:i:s', strtotime( $row['start_date'] ) ) : '',
+				'end_date'            => ! empty( $row['end_date'] ) ? gmdate( 'Y-m-d\TH:i:s', strtotime( $row['end_date'] ) ) : '',
+				'enrollment_deadline' => ! empty( $row['enrollment_end'] ) ? gmdate( 'Y-m-d\TH:i:s', strtotime( $row['enrollment_end'] ) ) : '',
 				'has_capacity'        => ! empty( $row['has_capacity'] ) ? true : false,
 				'capacity'            => $capacity,
 			);

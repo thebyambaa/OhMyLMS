@@ -1,4 +1,4 @@
-import { Table } from '../../../ui/Table';
+import { WidefatTable } from '../../components/WidefatTable';
 import {
 	Button,
 	Modal,
@@ -12,7 +12,8 @@ import { Link } from 'react-router-dom';
 import { Pagination } from '../../components/Pagination';
 import { enroll, setBlocked, unenroll } from './api';
 import { enrollmentStatus, formatDate, validateEnrollment } from './model';
-import { useOperation } from './useOperation';
+import { reportPath } from './report';
+import { useOperation } from '../../hooks/useOperation';
 import { useCourseOptions, useEnrollments, useStudent } from './useStudents';
 import type { Enrollment, ProgressFilter } from './types';
 
@@ -135,6 +136,10 @@ export function StudentProfile( { studentId }: { studentId: number } ) {
 	const back = (
 		<p>
 			<Link to="/students">{ __( 'All students', 'ohmylms' ) }</Link>
+			{ ' · ' }
+			<Link to={ reportPath( studentId ) }>
+				{ __( 'Quiz, assignment and skill report', 'ohmylms' ) }
+			</Link>
 		</p>
 	);
 	if ( profile.error && ! student ) {
@@ -385,12 +390,11 @@ export function StudentProfile( { studentId }: { studentId: number } ) {
 								enrollments.data?.total ?? 0
 							) }
 						</p>
-						<Table
+						<WidefatTable
 							caption={ __(
 								'Enrolments and progress',
 								'ohmylms'
 							) }
-							striped
 						>
 							<thead>
 								<tr>
@@ -468,7 +472,7 @@ export function StudentProfile( { studentId }: { studentId: number } ) {
 									</tr>
 								) ) }
 							</tbody>
-						</Table>
+						</WidefatTable>
 						<Pagination
 							page={ enrollments.query.page }
 							pages={ enrollments.data?.totalPages ?? 1 }

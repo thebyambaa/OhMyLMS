@@ -1,4 +1,11 @@
 const { test, expect } = require('@playwright/test');
+const fs = require('node:fs');
+const path = require('node:path');
+
+// SmartScore is the separate ohmylms-smartscore add-on; the fixture renders its practice template when it is installed.
+const smartScore = path.resolve(process.env.OHMYLMS_SMARTSCORE_DIR || path.join(__dirname, '../../../ohmylms-smartscore'));
+const smartScoreMissing = !fs.existsSync(path.join(smartScore, 'templates/practice.php'));
+const smartScoreReason = `Needs the ohmylms-smartscore add-on (templates/practice.php) at ${smartScore}; set OHMYLMS_SMARTSCORE_DIR.`;
 
 test('public question registry supports validators, duplicate guards, unregister and mount cleanup', async ({ page }) => {
   await page.goto('/fixture?types=custom-type');
@@ -26,7 +33,8 @@ test('public question registry supports validators, duplicate guards, unregister
 test('real quiz template: required answers, navigation, custom type, native POST and extension event', async ({ page }) => {
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await page.goto('/fixture?types=single-choice,custom-type');
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  // The step button reads Skip until the question has an answer; a required question still blocks it.
+  await page.getByRole('button', { name: 'Skip', exact: true }).click();
   await expect(page.locator('.question-1 .required-question')).toBeVisible();
   await expect(page.locator('.question-2')).toBeHidden();
   await page.locator('.question-1 input[type=radio]').first().check();
@@ -89,6 +97,7 @@ test('matching and reorder support keyboard input without crossing question inst
 });
 
 test('SmartScore mounts the shared matching renderer for fetched question HTML', async ({ page, request }) => {
+  test.skip(smartScoreMissing, smartScoreReason);
   const response = await request.get('/fixture?layout=all_questions_in_one_page&types=matching');
   const html = await response.text();
   const questionHtml = await page.evaluate(html => new DOMParser().parseFromString(html, 'text/html').querySelector('.quiz-matching-options').outerHTML, html);
@@ -116,6 +125,7 @@ test('disclosure keyboard controls and queued reward presentation use the stores
 });
 
 test('SmartScore isolates two instances, shows feedback and recovers expired tokens', async ({ page }) => {
+  test.skip(smartScoreMissing, smartScoreReason);
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   const requests = {}; let answers = 0;
   await page.route('**/api/practice/*/next', async route => {
@@ -143,6 +153,7 @@ test('SmartScore isolates two instances, shows feedback and recovers expired tok
 });
 
 test('SmartScore blocks duplicate requests and presents a mastery milestone', async ({ page }) => {
+  test.skip(smartScoreMissing, smartScoreReason);
   let answers = 0;
   await page.route('**/api/practice/*/next', route => route.fulfill({ json: {
     token: 'mastery-token', questionId: 101, questionType: 'custom-type', state: { score: 95 },

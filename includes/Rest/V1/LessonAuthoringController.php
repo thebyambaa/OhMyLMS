@@ -8,6 +8,7 @@ namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Learning\Catalog;
 use OhMyLMS\Learning\LessonAuthoring;
+use OhMyLMS\Learning\LessonObjectiveLinks;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -70,6 +71,94 @@ class LessonAuthoringController extends \WP_REST_Controller {
 				'callback'            => array( $this, 'publish' ),
 			)
 		);
+		register_rest_route(
+			'ohmylms/v1',
+			'/authoring/lessons/(?P<id>\d+)/objectives',
+			array(
+				array(
+					'methods'             => 'GET',
+					'permission_callback' => array( $this, 'permission' ),
+					'callback'            => array( $this, 'get_objectives' ),
+				),
+				array(
+					'methods'             => 'PUT',
+					'permission_callback' => array( $this, 'permission' ),
+					'callback'            => array( $this, 'update_objectives' ),
+				),
+			)
+		);
+		register_rest_route(
+			'ohmylms/v1',
+			'/authoring/lessons/(?P<id>\d+)/objective-options',
+			array(
+				'methods'             => 'GET',
+				'permission_callback' => array( $this, 'permission' ),
+				'callback'            => array( $this, 'objective_options' ),
+				'args'                => array(
+					'type'        => array(
+						'type'     => 'string',
+						'enum'     => array( 'syllabuses', 'objectives', 'skills' ),
+						'required' => true,
+					),
+					'syllabus_id' => array(
+						'type'    => 'integer',
+						'minimum' => 0,
+						'default' => 0,
+					),
+					'search'      => array(
+						'type'              => 'string',
+						'maxLength'         => 100,
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'page'        => array(
+						'type'    => 'integer',
+						'minimum' => 1,
+						'maximum' => 10000,
+						'default' => 1,
+					),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Linked skills, objective mappings and the placing courses' objectives.
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return mixed
+	 */
+	public function get_objectives( $request ) {
+		$result = LessonObjectiveLinks::read( (int) $request['id'] );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		$response = rest_ensure_response( $result );
+		$response->header( 'Cache-Control', 'private, no-store' );
+		return $response;
+	}
+
+	/**
+	 * Replace skills and mappings under the read revision.
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return mixed
+	 */
+	public function update_objectives( $request ) {
+		return LessonObjectiveLinks::save( (int) $request['id'], $request->get_json_params() );
+	}
+
+	/**
+	 * Picker choices for skills and syllabus objectives.
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return mixed
+	 */
+	public function objective_options( $request ) {
+		if ( 'objectives' === $request['type'] && (int) $request['syllabus_id'] < 1 ) {
+			return Catalog::error( __( 'Choose a syllabus.', 'ohmylms' ) );
+		}
+		return LessonObjectiveLinks::options( (string) $request['type'], (int) $request['syllabus_id'], (string) $request['search'], (int) $request['page'] );
 	}
 
 	/**

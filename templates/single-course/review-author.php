@@ -8,6 +8,7 @@
  * @version 1.0.0
  * @global \OhMyLMS\Data\Student $student
  */
+
 defined( 'ABSPATH' ) || exit;
 
 global $comment;

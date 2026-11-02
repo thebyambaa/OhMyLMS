@@ -140,7 +140,7 @@ final class Pools {
 					sprintf(
 					/* translators: 1: pool title or skill, 2: questions needed, 3: questions available */
 						__( 'The random pool "%1$s" needs %2$d approved questions from different families, but only %3$d are available. Approve more questions for this skill, relax the filters, or lower the count.', 'ohmylms' ),
-						$rule['title'] ?: ( $skill && ! is_wp_error( $skill ) ? $skill->name : '#' . $rule['term_id'] ),
+						$rule['title'] ? $rule['title'] : ( $skill && ! is_wp_error( $skill ) ? $skill->name : '#' . $rule['term_id'] ),
 						(int) $rule['count'],
 						count( $available )
 					),
@@ -213,9 +213,10 @@ final class Pools {
 	 */
 	public static function candidates( array $rule ) {
 		global $wpdb;
-		$terms = array_merge( array( (int) $rule['term_id'] ), array_map( 'intval', get_term_children( (int) $rule['term_id'], Taxonomy::NAME ) ?: array() ) );
-		$where = array( 'q.approved_version_id>0', "p.post_status NOT IN ('trash', %s)", 's.term_id IN (' . implode( ',', array_fill( 0, count( $terms ), '%d' ) ) . ')' );
-		$args  = array_merge( array( Usage::ARCHIVED ), $terms );
+		$children = get_term_children( (int) $rule['term_id'], Taxonomy::NAME );
+		$terms    = array_merge( array( (int) $rule['term_id'] ), array_map( 'intval', $children ? $children : array() ) );
+		$where    = array( 'q.approved_version_id>0', "p.post_status NOT IN ('trash', %s)", 's.term_id IN (' . implode( ',', array_fill( 0, count( $terms ), '%d' ) ) . ')' );
+		$args     = array_merge( array( Usage::ARCHIVED ), $terms );
 		if ( ! empty( $rule['difficulty'] ) ) {
 			$where[] = 'q.difficulty=%s';
 			$args[]  = $rule['difficulty']; }
@@ -226,12 +227,12 @@ final class Pools {
 			$where[] = 'q.secure=0'; }
 		return $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT DISTINCT q.question_id, q.approved_version_id AS version_id, q.family_id
-             FROM ' . Schema::table( 'qb_questions' ) . ' q
-             JOIN ' . Schema::table( 'qb_version_skills' ) . " s ON s.version_id=q.approved_version_id AND s.role='primary'
+				"SELECT DISTINCT q.question_id, q.approved_version_id AS version_id, q.family_id
+             FROM %i q
+             JOIN %i s ON s.version_id=q.approved_version_id AND s.role='primary'
              JOIN {$wpdb->posts} p ON p.ID=q.question_id
-             WHERE " . implode( ' AND ', $where ) . ' ORDER BY q.question_id',
-				$args
+             WHERE " . implode( ' AND ', $where ) . ' ORDER BY q.question_id', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Fixed WHERE fragments that use placeholders.
+				array_merge( array( Schema::table( 'qb_questions' ), Schema::table( 'qb_version_skills' ) ), $args )
 			),
 			ARRAY_A
 		);

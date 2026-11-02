@@ -60,22 +60,6 @@ class AssessmentController extends RestController {
 				),
 			)
 		);
-		register_rest_route(
-			$this->namespace,
-			'/quiz/(?P<id>[\d]+)/pools',
-			array(
-				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'pools' ),
-					'permission_callback' => array( $this, 'quiz_permission' ),
-				),
-				array(
-					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'save_pools' ),
-					'permission_callback' => array( $this, 'quiz_permission' ),
-				),
-			)
-		);
 		// A quiz, unit test or course challenge that draws questions for a list of skills.
 		register_rest_route(
 			$this->namespace,
@@ -188,25 +172,6 @@ class AssessmentController extends RestController {
 	}
 
 	/**
-	 * Pools for Assessment controller.
-	 *
-	 * @param WP_REST_Request $request REST request.
-	 */
-	public function pools( WP_REST_Request $request ) {
-		return rest_ensure_response( array( 'pools' => \OhMyLMS\Assessment\Pools::rules( (int) $request['id'] ) ) );
-	}
-
-	/**
-	 * Save pools for Assessment controller.
-	 *
-	 * @param WP_REST_Request $request REST request.
-	 */
-	public function save_pools( WP_REST_Request $request ) {
-		$saved = \OhMyLMS\Assessment\Pools::save( (int) $request['id'], (array) ( $request['pools'] ?? array() ) );
-		return is_wp_error( $saved ) ? $saved : rest_ensure_response( array( 'pools' => $saved ) );
-	}
-
-	/**
 	 * Migration status for Assessment controller.
 	 */
 	public function migration_status() {
@@ -225,7 +190,7 @@ class AssessmentController extends RestController {
 	 * @param WP_REST_Request $request REST request.
 	 */
 	public function migration_run( WP_REST_Request $request ) {
-		$state = $request['retry'] ? Migration::retry_failed() : Migration::run_all( (int) ( $request['batches'] ?: 20 ) );
+		$state = $request['retry'] ? Migration::retry_failed() : Migration::run_all( (int) ( $request['batches'] ? $request['batches'] : 20 ) );
 		return rest_ensure_response(
 			array(
 				'state'     => $state,
@@ -240,12 +205,7 @@ class AssessmentController extends RestController {
 	 * @param WP_REST_Request $request REST request.
 	 */
 	public function revisions( WP_REST_Request $request ) {
-		global $wpdb;
-		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT id, revision_no, kind, total_marks, status, created_by, created_at FROM %i WHERE quiz_id=%d ORDER BY revision_no DESC', Schema::table( 'quiz_revisions' ), (int) $request['id'] ), ARRAY_A );
-		foreach ( $rows as &$row ) {
-			$row['attempts'] = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE revision_id=%d', Schema::table( 'attempt_context' ), (int) $row['id'] ) );
-		}
-		return rest_ensure_response( array( 'revisions' => $rows ) );
+		return rest_ensure_response( array( 'revisions' => RevisionPublisher::history( (int) $request['id'] ) ) );
 	}
 
 	/** Validate the quiz and publish its current content as a revision.
@@ -258,7 +218,7 @@ class AssessmentController extends RestController {
 				static function () use ( $request ) {
 					$revision = RevisionPublisher::publish( (int) $request['id'] );
 					if ( is_wp_error( $revision ) ) {
-						throw new \OhMyLMS\Assessment\ErrorException( $revision ); }
+						throw new \OhMyLMS\Assessment\ErrorException( $revision ); } // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Carries a WP_Error out of the transaction; never output.
 					return $revision;
 				}
 			);

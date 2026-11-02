@@ -144,7 +144,7 @@ final class Directory {
 		status_header( 200 );
 		$html = self::render( $id, $preview );
 		get_header();
-		echo $html; // All values escaped in render().
+		echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- All values escaped in render().
 		get_footer();
 		exit;
 	}
@@ -233,7 +233,7 @@ final class Directory {
 						// Catalog practice retains its existing bank/public-practice access policy.
 						$practice = \OhMyLMS\Practice\Frontend::practice( array( 'skill' => $skill_id ) );
 						if ( $practice ) {
-							echo $practice; } else {
+							echo $practice; } else { // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Practice\Frontend::practice() returns escaped markup.
 							echo '<h2>' . esc_html( $selected['name'] ) . '</h2><p>' . esc_html__( 'Practice is not available yet.', 'ohmylms' ) . '</p>'; }
 							?>
 						</section>
@@ -250,11 +250,11 @@ final class Directory {
 						<p class="om-results" data-skill-results aria-live="polite" data-label="<?php esc_attr_e( 'skills shown', 'ohmylms' ); ?>"><?php echo esc_html( $data['count'] ); ?> <?php esc_html_e( 'skills shown', 'ohmylms' ); ?></p>
 						<div class="om-topic-grid">
 						<?php foreach ( $data['topics'] as $topic ) { ?>
-							<section class="om-topic" data-topic><h2><?php echo self::icon( $topic['icon'] ); ?><?php echo esc_html( $topic['name'] ); ?></h2>
+							<section class="om-topic" data-topic><h2><?php echo wp_kses_post( self::icon( $topic['icon'] ) ); ?><?php echo esc_html( $topic['name'] ); ?></h2>
 								<?php
 								foreach ( $topic['groups'] as $group ) {
 									?>
-									<div class="om-skill-group" data-skill-group><h3><?php echo self::icon( $group['icon'], 'book-alt' ); ?><?php echo esc_html( $group['name'] ); ?></h3><ol>
+									<div class="om-skill-group" data-skill-group><h3><?php echo wp_kses_post( self::icon( $group['icon'], 'book-alt' ) ); ?><?php echo esc_html( $group['name'] ); ?></h3><ol>
 									<?php
 									foreach ( $group['skills'] as $skill ) {
 										?>

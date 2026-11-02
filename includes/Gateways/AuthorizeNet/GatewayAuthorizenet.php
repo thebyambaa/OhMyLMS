@@ -294,7 +294,7 @@ class GatewayAuthorizenet extends PaymentGateway {
 					<input type="text" id="anet-cvv" class="authorize-net-field" autocomplete="cc-csc" placeholder="123" />
 				</div>
 			</fieldset>
-			<div id="authorize-net-payment-errors" role="alert" style="color: red;"></div>
+			<div id="authorize-net-payment-errors" class="ohmylms-text-danger" role="alert"></div>
 			<input type="hidden" name="authorize_net_opaque_data_value" id="authorize_net_opaque_data_value" />
 			<input type="hidden" name="authorize_net_opaque_data_descriptor" id="authorize_net_opaque_data_descriptor" />
 		</div>
@@ -368,8 +368,8 @@ class GatewayAuthorizenet extends PaymentGateway {
 		}
 
 		// Get opaque data from POST.
-		$opaque_data_descriptor = isset( $_POST['authorize_net_opaque_data_descriptor'] ) ? sanitize_text_field( wp_unslash( $_POST['authorize_net_opaque_data_descriptor'] )) : '';
-		$opaque_data_value      = isset( $_POST['authorize_net_opaque_data_value'] ) ? sanitize_text_field( wp_unslash( $_POST['authorize_net_opaque_data_value'] )) : '';
+		$opaque_data_descriptor = isset( $_POST['authorize_net_opaque_data_descriptor'] ) ? sanitize_text_field( wp_unslash( $_POST['authorize_net_opaque_data_descriptor'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Runs inside Checkout::process_checkout(); Ajax::checkout() verifies the nonce.
+		$opaque_data_value      = isset( $_POST['authorize_net_opaque_data_value'] ) ? sanitize_text_field( wp_unslash( $_POST['authorize_net_opaque_data_value'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Runs inside Checkout::process_checkout(); Ajax::checkout() verifies the nonce.
 
 		// Validate that opaque data exists.
 		if ( empty( $opaque_data_descriptor ) || empty( $opaque_data_value ) ) {
@@ -642,7 +642,7 @@ class GatewayAuthorizenet extends PaymentGateway {
 			);
 		}
 
-		$nonce = isset( $_POST['security'] ) ? sanitize_text_field( wp_unslash( $_POST['security'] )) : '';
+		$nonce = isset( $_POST['security'] ) ? sanitize_text_field( wp_unslash( $_POST['security'] ) ) : '';
 		if ( ! wp_verify_nonce( $nonce, 'ohmylms_authorize_checkout_nonce' ) ) {
 			return array(
 				'result'  => 'failure',
@@ -650,8 +650,8 @@ class GatewayAuthorizenet extends PaymentGateway {
 			);
 		}
 
-		$opaque_data_descriptor = isset( $_POST['authorize_net_opaque_data_descriptor'] ) ? sanitize_text_field( wp_unslash( $_POST['authorize_net_opaque_data_descriptor'] )) : '';
-		$opaque_data_value      = isset( $_POST['authorize_net_opaque_data_value'] ) ? sanitize_text_field( wp_unslash( $_POST['authorize_net_opaque_data_value'] )) : '';
+		$opaque_data_descriptor = isset( $_POST['authorize_net_opaque_data_descriptor'] ) ? sanitize_text_field( wp_unslash( $_POST['authorize_net_opaque_data_descriptor'] ) ) : '';
+		$opaque_data_value      = isset( $_POST['authorize_net_opaque_data_value'] ) ? sanitize_text_field( wp_unslash( $_POST['authorize_net_opaque_data_value'] ) ) : '';
 
 		if ( empty( $opaque_data_descriptor ) || empty( $opaque_data_value ) ) {
 			return array(
@@ -777,7 +777,7 @@ class GatewayAuthorizenet extends PaymentGateway {
 					'length' => '1', // e.g., 1.
 					'unit'   => 'months', // e.g., 'days' or 'months'.
 				),
-				'startDate'        => date( 'Y-m-d' ), // Today, or specific start date from plan.
+				'startDate'        => gmdate( 'Y-m-d' ), // Today, or specific start date from plan.
 				'totalOccurrences' => '9999',         // For ongoing until cancelled. Or a specific number.
 				// 'trialOccurrences' => 0, // Optional: if trial period applies
 				// 'trialAmount' => 0.00,   // Optional: if trial period applies.

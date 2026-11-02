@@ -1,4 +1,3 @@
-/** @jsx createElement */
 import { createElement } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
@@ -7,19 +6,24 @@ import { __, _n, sprintf } from '@wordpress/i18n';
  * key colour on the same figure.
  */
 
+/** @typedef {import('./paperVisual.mjs').ScaleFigure} ScaleFigure */
+/** @typedef {import('./paperVisual.mjs').VisualFigureModel} VisualFigureModel */
+
 const KEY = '#b32d2e';
+/** @param {unknown} value */
 const label = ( value ) => String( Number( Number( value ).toFixed( 4 ) ) );
 
 /**
  * Horizontal number line with ticks and labels.
  *
- * @param {Object} props        Properties.
- * @param {Object} props.figure Figure model.
- * @return {Element} Number line.
+ * @param {Object}      props        Properties.
+ * @param {ScaleFigure} props.figure Figure model.
+ * @return {React.ReactElement} Number line.
  */
 function NumberLine( { figure } ) {
 	const { min, max, ticks } = figure;
 	const span = max - min || 1;
+	/** @param {number} value */
 	const x = ( value ) => 12 + ( ( value - min ) / span ) * 276;
 	const hasTarget = Number.isFinite( figure.target );
 	return (
@@ -59,9 +63,13 @@ function NumberLine( { figure } ) {
 			} ) }
 			{ hasTarget && (
 				<g fill={ KEY }>
-					<circle cx={ x( figure.target ) } cy="24" r="3.5" />
+					<circle
+						cx={ x( /** @type {number} */ ( figure.target ) ) }
+						cy="24"
+						r="3.5"
+					/>
 					<text
-						x={ x( figure.target ) }
+						x={ x( /** @type {number} */ ( figure.target ) ) }
 						y="11"
 						textAnchor="middle"
 						fontSize="8"
@@ -77,13 +85,14 @@ function NumberLine( { figure } ) {
 /**
  * Measuring jug with a scale, filled to the target in the answer key.
  *
- * @param {Object} props        Properties.
- * @param {Object} props.figure Figure model.
- * @return {Element} Jug.
+ * @param {Object}      props        Properties.
+ * @param {ScaleFigure} props.figure Figure model.
+ * @return {React.ReactElement} Jug.
  */
 function Jug( { figure } ) {
 	const { min, max, ticks, unit } = figure;
 	const span = max - min || 1;
+	/** @param {number} value */
 	const y = ( value ) => 196 - ( ( value - min ) / span ) * 170;
 	const hasTarget = Number.isFinite( figure.target );
 	return (
@@ -95,9 +104,11 @@ function Jug( { figure } ) {
 			{ hasTarget && (
 				<rect
 					x="56"
-					y={ y( figure.target ) }
+					y={ y( /** @type {number} */ ( figure.target ) ) }
 					width="60"
-					height={ 196 - y( figure.target ) }
+					height={
+						196 - y( /** @type {number} */ ( figure.target ) )
+					}
 					fill="#f5c4c4"
 					stroke={ KEY }
 				/>
@@ -153,18 +164,20 @@ function Jug( { figure } ) {
 /**
  * Bar, grid or circle divided into equal parts; the key shades the answer.
  *
- * @param {Object} props        Properties.
- * @param {Object} props.figure Figure model.
- * @return {Element} Model.
+ * @param {Object}                                  props        Properties.
+ * @param {import('./paperVisual.mjs').ShadeFigure} props.figure Figure model.
+ * @return {React.ReactElement} Model.
  */
 function ShadeModel( { figure } ) {
 	const { parts, shape } = figure;
 	const shaded = figure.shaded ?? 0;
+	/** @param {number} index */
 	const fill = ( index ) => ( index < shaded ? '#f5c4c4' : 'none' );
 	if ( shape === 'circle' ) {
 		const sectors = Array.from( { length: parts }, ( _, index ) => {
 			const start = ( index / parts ) * 2 * Math.PI - Math.PI / 2;
 			const end = ( ( index + 1 ) / parts ) * 2 * Math.PI - Math.PI / 2;
+			/** @param {number} angle */
 			const point = ( angle ) =>
 				`${ 60 + 55 * Math.cos( angle ) } ${ 60 + 55 * Math.sin( angle ) }`;
 			return parts === 1 ? (
@@ -228,12 +241,19 @@ function ShadeModel( { figure } ) {
 /**
  * Clock face without hands; the key draws them. A digital box is added when the question shows one.
  *
- * @param {Object} props        Properties.
- * @param {Object} props.figure Figure model.
- * @return {Element} Clock.
+ * @param {Object}                                  props        Properties.
+ * @param {import('./paperVisual.mjs').ClockFigure} props.figure Figure model.
+ * @return {React.ReactElement} Clock.
  */
 function Clock( { figure } ) {
 	const hasTime = Number.isFinite( figure.hour );
+	// The key sets the hour and minute together.
+	const keyHour = /** @type {number} */ ( figure.hour );
+	const keyMinute = /** @type {number} */ ( figure.minute );
+	/**
+	 * @param {number} angle  Degrees clockwise from 12.
+	 * @param {number} length Hand length.
+	 */
 	const hand = ( angle, length ) => {
 		const radians = ( angle - 90 ) * ( Math.PI / 180 );
 		return {
@@ -293,8 +313,7 @@ function Clock( { figure } ) {
 							x1="60"
 							y1="60"
 							{ ...hand(
-								( ( figure.hour % 12 ) + figure.minute / 60 ) *
-									30,
+								( ( keyHour % 12 ) + keyMinute / 60 ) * 30,
 								26
 							) }
 							strokeWidth="3"
@@ -302,7 +321,7 @@ function Clock( { figure } ) {
 						<line
 							x1="60"
 							y1="60"
-							{ ...hand( figure.minute * 6, 42 ) }
+							{ ...hand( keyMinute * 6, 42 ) }
 							strokeWidth="1.8"
 						/>
 					</g>
@@ -328,11 +347,12 @@ function Clock( { figure } ) {
 /**
  * Place value table to write how many blocks of each place.
  *
- * @param {Object} props        Properties.
- * @param {Object} props.figure Figure model.
- * @return {Element} Table.
+ * @param {Object}                                   props        Properties.
+ * @param {import('./paperVisual.mjs').BlocksFigure} props.figure Figure model.
+ * @return {React.ReactElement} Table.
  */
 function PlaceValue( { figure } ) {
+	/** @type {Record<string, string>} */
 	const names = {
 		thousands: __( 'Thousands', 'ohmylms' ),
 		hundreds: __( 'Hundreds', 'ohmylms' ),
@@ -362,9 +382,9 @@ function PlaceValue( { figure } ) {
 /**
  * Notes and coins with a box for how many of each, and the total.
  *
- * @param {Object} props        Properties.
- * @param {Object} props.figure Figure model.
- * @return {Element} Money.
+ * @param {Object}                                  props        Properties.
+ * @param {import('./paperVisual.mjs').MoneyFigure} props.figure Figure model.
+ * @return {React.ReactElement} Money.
  */
 function Money( { figure } ) {
 	return (
@@ -387,9 +407,9 @@ function Money( { figure } ) {
 /**
  * Bar chart axes with categories; the key draws the bars.
  *
- * @param {Object} props        Properties.
- * @param {Object} props.figure Figure model.
- * @return {Element} Chart.
+ * @param {Object}                                  props        Properties.
+ * @param {import('./paperVisual.mjs').ChartFigure} props.figure Figure model.
+ * @return {React.ReactElement} Chart.
  */
 function Chart( { figure } ) {
 	const { categories, max, ticks } = figure;
@@ -397,6 +417,7 @@ function Chart( { figure } ) {
 	const bottom = 150;
 	const left = 36;
 	const right = 292;
+	/** @param {number} value */
 	const y = ( value ) => bottom - ( value / max ) * ( bottom - top );
 	const width = ( right - left ) / Math.max( 1, categories.length );
 	return (
@@ -502,9 +523,9 @@ function Chart( { figure } ) {
 /**
  * Squared grid to draw on.
  *
- * @param {Object} props        Properties.
- * @param {Object} props.figure Figure model.
- * @return {Element} Grid.
+ * @param {Object}                                 props        Properties.
+ * @param {import('./paperVisual.mjs').GridFigure} props.figure Figure model.
+ * @return {React.ReactElement} Grid.
  */
 function Grid( { figure } ) {
 	const { rows, cols } = figure;
@@ -544,41 +565,43 @@ function Grid( { figure } ) {
 /**
  * Answer key lines of a figure.
  *
- * @param {Object} props        Properties.
- * @param {Object} props.figure Figure model.
- * @return {Element|null} Key.
+ * @param {Object}                                                                      props        Properties.
+ * @param {{key?: string[], constraints?: import('./paperVisual.mjs').GridConstraints}} props.figure Figure model.
+ * @return {React.ReactElement|null} Key.
  */
 function FigureKey( { figure } ) {
 	let lines = figure.key || [];
 	if ( figure.constraints ) {
 		const c = figure.constraints;
-		lines = [
-			c.area !== null &&
-				sprintf(
-					/* translators: %d: area in grid squares. */
-					_n(
-						'Area: %d square',
-						'Area: %d squares',
-						c.area,
-						'ohmylms'
+		lines = /** @type {string[]} */ (
+			[
+				c.area !== null &&
+					sprintf(
+						/* translators: %d: area in grid squares. */
+						_n(
+							'Area: %d square',
+							'Area: %d squares',
+							c.area,
+							'ohmylms'
+						),
+						c.area
 					),
-					c.area
-				),
-			c.perimeter !== null &&
-				sprintf(
-					/* translators: %d: perimeter in grid units. */
-					_n(
-						'Perimeter: %d unit',
-						'Perimeter: %d units',
-						c.perimeter,
-						'ohmylms'
+				c.perimeter !== null &&
+					sprintf(
+						/* translators: %d: perimeter in grid units. */
+						_n(
+							'Perimeter: %d unit',
+							'Perimeter: %d units',
+							c.perimeter,
+							'ohmylms'
+						),
+						c.perimeter
 					),
-					c.perimeter
-				),
-			c.rectangle && __( 'The shape is a rectangle.', 'ohmylms' ),
-			c.connected &&
-				__( 'The squares form one connected shape.', 'ohmylms' ),
-		].filter( Boolean );
+				c.rectangle && __( 'The shape is a rectangle.', 'ohmylms' ),
+				c.connected &&
+					__( 'The squares form one connected shape.', 'ohmylms' ),
+			].filter( Boolean )
+		);
 	}
 	if ( ! lines.length ) {
 		return null;
@@ -608,9 +631,9 @@ function FigureKey( { figure } ) {
 /**
  * The printed figure of a visual question, with its key when the model has one.
  *
- * @param {Object} props        Properties.
- * @param {Object} props.figure Figure model from paperVisual.mjs.
- * @return {Element|null} Figure.
+ * @param {Object}                 props          Properties.
+ * @param {VisualFigureModel|null} [props.figure] Figure model from paperVisual.mjs.
+ * @return {React.ReactElement|null} Figure.
  */
 export function VisualFigure( { figure } ) {
 	if ( ! figure ) {
@@ -628,7 +651,14 @@ export function VisualFigure( { figure } ) {
 	}[ figure.figure ];
 	return (
 		<div className="ohmylms-print-visual">
-			{ drawing && createElement( drawing, { figure } ) }
+			{ drawing &&
+				createElement(
+					// Each drawing is looked up by the figure type it draws.
+					/** @type {import('react').ComponentType<{figure: VisualFigureModel}>} */ (
+						drawing
+					),
+					{ figure }
+				) }
 			{ figure.figure === 'make-amount' && (
 				<div className="ohmylms-print-answer-line">
 					{ __( 'Total:', 'ohmylms' ) }

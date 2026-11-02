@@ -2,9 +2,19 @@
 import { isUngradedType } from './extendedModel.mjs';
 import { createElement } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import { RichContentControl } from '../math/RichContentControl';
+import { RichContentControl } from '../math/public.mjs';
 import { TextControl, ToggleControl } from '@wordpress/components';
 
+/** @typedef {import('./editorTypes').Data} Data */
+/** @typedef {import('./editorTypes').OnPatch} OnPatch */
+
+/**
+ * @param {Object}  root0
+ * @param {Data}    root0.question
+ * @param {OnPatch} root0.onChange
+ * @param {boolean} [root0.hideRequired]
+ * @param {boolean} [root0.hideRandomize]
+ */
 export function QuestionOptionsBar( {
 	question,
 	onChange,
@@ -12,7 +22,7 @@ export function QuestionOptionsBar( {
 	hideRandomize = false,
 } ) {
 	const settings = question.settings || {};
-	const set = ( patch ) =>
+	const set = ( /** @type {Data} */ patch ) =>
 		onChange( { settings: { ...settings, ...patch } } );
 	return (
 		<div
@@ -61,19 +71,15 @@ export function QuestionOptionsBar( {
 					compact
 					html={ false }
 					label={ __( 'Hint', 'ohmylms' ) }
-					rows={ 2 }
 					value={ settings.hint || '' }
 					onChange={ ( hint ) => set( { hint } ) }
-					__nextHasNoMarginBottom
 				/>
 				<RichContentControl
 					compact
 					html={ false }
 					label={ __( 'Explanation', 'ohmylms' ) }
-					rows={ 2 }
 					value={ settings.explanation || '' }
 					onChange={ ( explanation ) => set( { explanation } ) }
-					__nextHasNoMarginBottom
 				/>
 			</div>
 		</div>

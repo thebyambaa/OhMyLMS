@@ -1,30 +1,32 @@
-import { Table } from '../../../ui/Table';
-import {
-	Button,
-	Modal,
-	Notice,
-	SelectControl,
-	TextControl,
-} from '@wordpress/components';
-import { useState } from '@wordpress/element';
+import { ListTable } from '../../../ui/ListTable';
+import { Button, Modal, Notice } from '@wordpress/components';
+import { useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
-import { Pagination } from '../../components/Pagination';
+import { statusViews } from '../../components/listViews';
+import {
+	PageTitleAction,
+	PageTitleActions,
+} from '../../layout/PageTitleActions';
 import { createCoupon, deleteCoupon, updateCoupon } from './api';
 import { CouponEditor } from './CouponEditor';
 import { useCoupons } from './hooks';
 import { discountLabel, formatDate } from './model';
-import { useOperation } from './useOperation';
+import { useOperation } from '../../hooks/useOperation';
 import type { Coupon, CouponPayload } from './types';
 
 interface EditorState {
 	coupon: Coupon | null;
 }
 
+const couponStatus = ( value: string ) =>
+	'publish' === value || 'draft' === value ? value : 'any';
+
 /** Coupon list with create, edit and confirmed deletion. */
 export default function CouponsPage() {
 	const list = useCoupons();
 	const operation = useOperation();
-	const [ text, setText ] = useState( '' );
+	const [ text, setText ] = useState( list.query.search );
+	useEffect( () => setText( list.query.search ), [ list.query.search ] );
 	const [ editor, setEditor ] = useState< EditorState | null >( null );
 	const [ removing, setRemoving ] = useState< Coupon | null >( null );
 	const [ saved, setSaved ] = useState< string | null >( null );
@@ -72,65 +74,22 @@ export default function CouponsPage() {
 
 	return (
 		<>
-			<h2>{ __( 'Coupons', 'ohmylms' ) }</h2>
+			<PageTitleActions>
+				<PageTitleAction onClick={ () => open( { coupon: null } ) }>
+					{ __( 'Add coupon', 'ohmylms' ) }
+				</PageTitleAction>
+			</PageTitleActions>
 			<p>
 				{ __(
 					'Discount codes customers enter at checkout. Past orders keep the code they used.',
 					'ohmylms'
 				) }
 			</p>
-			<p>
-				<Button
-					variant="primary"
-					onClick={ () => open( { coupon: null } ) }
-				>
-					{ __( 'Add coupon', 'ohmylms' ) }
-				</Button>
-			</p>
 			{ saved && (
 				<Notice status="success" onRemove={ () => setSaved( null ) }>
 					{ saved }
 				</Notice>
 			) }
-			<form
-				role="search"
-				aria-label={ __( 'Search coupons', 'ohmylms' ) }
-				onSubmit={ ( event ) => {
-					event.preventDefault();
-					list.setFilters( { search: text } );
-				} }
-			>
-				<TextControl
-					label={ __( 'Search coupons', 'ohmylms' ) }
-					help={ __( 'Code, label or description.', 'ohmylms' ) }
-					value={ text }
-					onChange={ setText }
-				/>
-				<Button
-					type="submit"
-					variant="secondary"
-					disabled={ list.loading }
-				>
-					{ __( 'Search', 'ohmylms' ) }
-				</Button>
-			</form>
-			<SelectControl
-				label={ __( 'Status', 'ohmylms' ) }
-				value={ list.query.status }
-				options={ [
-					{ value: 'any', label: __( 'All', 'ohmylms' ) },
-					{ value: 'publish', label: __( 'Active', 'ohmylms' ) },
-					{ value: 'draft', label: __( 'Disabled', 'ohmylms' ) },
-				] }
-				onChange={ ( value ) =>
-					list.setFilters( {
-						status:
-							'publish' === value || 'draft' === value
-								? value
-								: 'any',
-					} )
-				}
-			/>
 			{ list.error && (
 				<Notice status="error" isDismissible={ false }>
 					{ list.error.message }{ ' ' }
@@ -142,112 +101,139 @@ export default function CouponsPage() {
 			{ list.loading && (
 				<p role="status">{ __( 'Loading coupons…', 'ohmylms' ) }</p>
 			) }
-			{ ! list.loading &&
-				! list.error &&
-				( items.length ? (
-					<>
-						<p role="status">
-							{ sprintf(
-								/* translators: %d: total coupon count. */
-								_n(
-									'%d coupon found.',
-									'%d coupons found.',
-									total,
-									'ohmylms'
-								),
-								total
-							) }
-						</p>
-						<Table caption={ __( 'Coupons', 'ohmylms' ) } striped>
-							<thead>
-								<tr>
-									{ [
-										__( 'Code', 'ohmylms' ),
-										__( 'Discount', 'ohmylms' ),
-										__( 'Status', 'ohmylms' ),
-										__( 'Usage', 'ohmylms' ),
-										__( 'Expires', 'ohmylms' ),
-										__( 'Actions', 'ohmylms' ),
-									].map( ( title ) => (
-										<th key={ title } scope="col">
-											{ title }
-										</th>
-									) ) }
-								</tr>
-							</thead>
-							<tbody>
-								{ items.map( ( item ) => (
-									<tr key={ item.id }>
-										<th scope="row">{ item.code }</th>
-										<td>{ discountLabel( item ) }</td>
-										<td>
-											{ 'publish' === item.status
-												? __( 'Active', 'ohmylms' )
-												: __( 'Disabled', 'ohmylms' ) }
-										</td>
-										<td>
-											{ null === item.usage_limit
-												? String( item.usage_count )
-												: sprintf(
-														/* translators: 1: times used, 2: usage limit. */
-														__(
-															'%1$d of %2$d',
-															'ohmylms'
-														),
-														item.usage_count,
-														item.usage_limit
-													) }
-										</td>
-										<td>
-											{ formatDate( item.date_expires ) ||
-												__( 'Never', 'ohmylms' ) }
-										</td>
-										<td>
-											<Button
-												variant="link"
-												onClick={ () =>
-													open( { coupon: item } )
-												}
-											>
-												{ sprintf(
-													/* translators: %s: coupon code. */
-													__( 'Edit %s', 'ohmylms' ),
-													item.code
-												) }
-											</Button>{ ' ' }
-											<Button
-												variant="link"
-												isDestructive
-												onClick={ () => {
-													operation.clearError();
-													setSaved( null );
-													setRemoving( item );
-												} }
-											>
-												{ sprintf(
-													/* translators: %s: coupon code. */
-													__(
-														'Delete %s',
-														'ohmylms'
-													),
-													item.code
-												) }
-											</Button>
-										</td>
-									</tr>
-								) ) }
-							</tbody>
-						</Table>
-						<Pagination
-							page={ list.query.page }
-							pages={ list.data?.totalPages ?? 1 }
-							busy={ list.loading }
-							onChange={ list.setPage }
-						/>
-					</>
-				) : (
-					<p>{ __( 'No coupons found.', 'ohmylms' ) }</p>
-				) ) }
+			{ ! list.loading && ! list.error && (
+				<ListTable
+					caption={ __( 'Coupons', 'ohmylms' ) }
+					heading={ __( 'Coupons list', 'ohmylms' ) }
+					formLabel={ __( 'Search coupons', 'ohmylms' ) }
+					rows={ items }
+					rowKey={ ( item ) => item.id }
+					emptyMessage={ __( 'No coupons found.', 'ohmylms' ) }
+					views={ statusViews(
+						[
+							{ value: 'any', label: __( 'All', 'ohmylms' ) },
+							{
+								value: 'publish',
+								label: __( 'Active', 'ohmylms' ),
+							},
+							{
+								value: 'draft',
+								label: __( 'Disabled', 'ohmylms' ),
+							},
+						],
+						list.query.status,
+						total,
+						( value ) =>
+							list.setFilters( {
+								status: couponStatus( value ),
+							} ),
+						( value ) =>
+							list.filtersHref( {
+								status: couponStatus( value ),
+							} )
+					) }
+					search={ {
+						label: __( 'Search coupons', 'ohmylms' ),
+						submitLabel: __( 'Search', 'ohmylms' ),
+						placeholder: __(
+							'Code, label or description',
+							'ohmylms'
+						),
+						value: text,
+						onChange: setText,
+						onSubmit: () => list.setFilters( { search: text } ),
+					} }
+					pagination={ {
+						page: list.query.page,
+						totalPages: list.data?.totalPages ?? 1,
+						totalItems: total,
+						itemsLabel: sprintf(
+							/* translators: %d: total coupon count. */
+							_n(
+								'%d coupon found.',
+								'%d coupons found.',
+								total,
+								'ohmylms'
+							),
+							total
+						),
+						onChange: list.setPage,
+						href: list.pageHref,
+					} }
+					columns={ [
+						{
+							id: 'code',
+							label: __( 'Code', 'ohmylms' ),
+							primary: true,
+							render: ( item ) => (
+								<strong className="row-title">
+									{ item.code }
+								</strong>
+							),
+						},
+						{
+							id: 'discount',
+							label: __( 'Discount', 'ohmylms' ),
+							render: ( item ) => discountLabel( item ),
+						},
+						{
+							id: 'status',
+							label: __( 'Status', 'ohmylms' ),
+							render: ( item ) =>
+								'publish' === item.status
+									? __( 'Active', 'ohmylms' )
+									: __( 'Disabled', 'ohmylms' ),
+						},
+						{
+							id: 'usage',
+							label: __( 'Usage', 'ohmylms' ),
+							render: ( item ) =>
+								null === item.usage_limit
+									? String( item.usage_count )
+									: sprintf(
+											/* translators: 1: times used, 2: usage limit. */
+											__( '%1$d of %2$d', 'ohmylms' ),
+											item.usage_count,
+											item.usage_limit
+										),
+						},
+						{
+							id: 'expires',
+							label: __( 'Expires', 'ohmylms' ),
+							render: ( item ) =>
+								formatDate( item.date_expires ) ||
+								__( 'Never', 'ohmylms' ),
+						},
+					] }
+					rowActions={ ( item ) => [
+						{
+							key: 'edit',
+							label: __( 'Edit', 'ohmylms' ),
+							ariaLabel: sprintf(
+								/* translators: %s: coupon code. */
+								__( 'Edit %s', 'ohmylms' ),
+								item.code
+							),
+							onClick: () => open( { coupon: item } ),
+						},
+						{
+							key: 'delete',
+							label: __( 'Delete', 'ohmylms' ),
+							ariaLabel: sprintf(
+								/* translators: %s: coupon code. */
+								__( 'Delete %s', 'ohmylms' ),
+								item.code
+							),
+							destructive: true,
+							onClick: () => {
+								operation.clearError();
+								setSaved( null );
+								setRemoving( item );
+							},
+						},
+					] }
+				/>
+			) }
 			{ editor && (
 				<CouponEditor
 					coupon={ editor.coupon }

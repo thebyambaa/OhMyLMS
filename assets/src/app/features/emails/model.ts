@@ -3,6 +3,7 @@ import { ApiError } from '../../lib/api';
 import type {
 	ButtonPosition,
 	DraftField,
+	EmailDefaults,
 	EmailDraft,
 	EmailInput,
 	EmailPreview,
@@ -12,7 +13,12 @@ import type {
 	RecipientType,
 	SettingsField,
 	TestResult,
+	TextField,
 } from './types';
+import { createValidators } from '../../lib/validation';
+
+const { text } = createValidators( invalidResponse );
+export const { record } = createValidators( invalidResponse );
 
 /** Limits shared with `EmailManager` in PHP. */
 export const LIMITS = {
@@ -33,6 +39,17 @@ export const BUTTON_POSITIONS: readonly ButtonPosition[] = [
 	'center',
 	'right',
 ];
+
+/** Fields that have a default text; mirrors `EmailManager::TEXT_FIELDS`. */
+export const TEXT_FIELDS = [
+	'subject',
+	'heading',
+	'additional_content',
+	'button_text',
+	'button_link',
+	'footer_text',
+	'course_suggestion_text',
+] as const satisfies readonly TextField[];
 
 /** Fields that can contain merge tags. */
 export const TAG_FIELDS = [
@@ -66,20 +83,6 @@ export function invalidResponse(): ApiError {
 	} );
 }
 
-export function record( value: unknown ): Record< string, unknown > {
-	if ( ! value || 'object' !== typeof value || Array.isArray( value ) ) {
-		throw invalidResponse();
-	}
-	return value as Record< string, unknown >;
-}
-
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
-}
-
 function list( value: unknown ): unknown[] {
 	if ( ! Array.isArray( value ) ) {
 		throw invalidResponse();
@@ -98,6 +101,35 @@ export function emailId( value: unknown ): string {
 		throw invalidResponse();
 	}
 	return value;
+}
+
+function parseDefaults( value: unknown ): EmailDefaults {
+	const item = record( value );
+	const suggestion = item.course_suggestion_text;
+	if ( null !== suggestion && 'string' !== typeof suggestion ) {
+		throw invalidResponse();
+	}
+	return {
+		subject: text( item.subject ),
+		heading: text( item.heading ),
+		additional_content: text( item.additional_content ),
+		button_text: text( item.button_text ),
+		button_link: text( item.button_link ),
+		footer_text: text( item.footer_text ),
+		course_suggestion_text: suggestion,
+	};
+}
+
+function parseCustomized( value: unknown ): Record< TextField, boolean > {
+	const item = record( value );
+	const flags = {} as Record< TextField, boolean >;
+	for ( const field of TEXT_FIELDS ) {
+		if ( 'boolean' !== typeof item[ field ] ) {
+			throw invalidResponse();
+		}
+		flags[ field ] = item[ field ];
+	}
+	return flags;
 }
 
 function parseTag( value: unknown ): MergeTag {
@@ -143,6 +175,8 @@ export function parseEmail( value: unknown ): EmailTemplate {
 		course_suggestion_text: suggestion,
 		recipient_email: list( item.recipient_email ).map( text ),
 		tags: list( item.tags ).map( parseTag ),
+		defaults: parseDefaults( item.defaults ),
+		customized: parseCustomized( item.customized ),
 	};
 }
 
@@ -272,21 +306,56 @@ export function changedFields(
 	} );
 }
 
+export function isTextField( field: DraftField ): field is TextField {
+	return ( TEXT_FIELDS as readonly DraftField[] ).includes( field );
+}
+
+/**
+ * Whether a draft field holds the email's default text (the server stores nothing for it then, and
+ * sends it translated into each recipient's language).
+ *
+ * @param draft Current form state.
+ * @param email Saved email (its defaults are in the administrator's language).
+ * @param field Field to check.
+ * @return False for fields without a default, such as the recipients.
+ */
+export function isDefaultText(
+	draft: EmailDraft,
+	email: EmailTemplate,
+	field: DraftField
+): boolean {
+	if ( ! isTextField( field ) ) {
+		return false;
+	}
+	const fallback = email.defaults[ field ];
+	return null !== fallback && draft[ field ] === fallback;
+}
+
 /**
  * Request body for the given draft fields. Single-line fields are trimmed; recipients become a list.
+ * With `email`, a field that was customized and now holds the default again is sent as `null`, which
+ * removes the saved text.
  *
  * @param draft  Current form state.
  * @param fields Fields to send.
+ * @param email  Saved email, when the body is for saving.
  * @return Body for the update, preview or test route.
  */
 export function toInput(
 	draft: EmailDraft,
-	fields: readonly DraftField[]
+	fields: readonly DraftField[],
+	email?: EmailTemplate
 ): EmailInput {
-	const input: Record< string, string | string[] > = {};
+	const input: Record< string, string | string[] | null > = {};
 	for ( const field of fields ) {
 		if ( 'recipient_email' === field ) {
 			input[ field ] = parseRecipients( draft[ field ] );
+		} else if (
+			email &&
+			email.customized[ field ] &&
+			isDefaultText( draft, email, field )
+		) {
+			input[ field ] = null;
 		} else if (
 			'subject' === field ||
 			'heading' === field ||

@@ -34,7 +34,7 @@ as_user($admin);
 $bad = call('POST', 'engagement/settings/xp', ['enable' => true, 'lesson' => -5]);
 ok(status_of($bad) === 400, 'Negative XP accepted');
 $bad = call('POST', 'engagement/settings/xp', ['enable' => true, 'goals' => [10, 20], 'default_goal' => 15]);
-ok(status_of($bad) === 400, 'A default goal outside the goal list accepted');
+ok(status_of($bad) === 422 && $bad->get_data()['code'] === 'ohmylms_xp_default_goal', 'A default goal outside the goal list accepted: ' . wp_json_encode($bad->get_data()));
 $bad = call('POST', 'engagement/settings/xp', ['enable' => 'yes']);
 ok(status_of($bad) === 400, 'A non-boolean switch accepted');
 $bad = call('POST', 'engagement/settings/score', ['enable' => true, 'bands' => [['gain' => 1, 'loss' => 1]]]);
@@ -53,12 +53,12 @@ as_user($admin);
 $created = call('POST', 'skills', ['name' => "XP skill $run", 'public_practice' => true])->get_data();
 $fixture['terms'][] = [$created['id'], Taxonomy::NAME];
 $skill = (int) $created['id'];
-$question = call('POST', 'question', ['name' => 'Product', 'description' => 'What is {{a}} × {{b}}? ' . $run, 'settings' => ['type' => 'numerical', 'answer' => 0, 'tolerance' => 0, 'score' => ['enabled' => true, 'value' => 1],
+$question = create_question(['name' => 'Product', 'description' => 'What is {{a}} × {{b}}? ' . $run, 'settings' => ['type' => 'numerical', 'answer' => 0, 'tolerance' => 0, 'score' => ['enabled' => true, 'value' => 1],
     'template' => ['variables' => [['name' => 'a', 'type' => 'int', 'min' => 3, 'max' => 12], ['name' => 'b', 'type' => 'int', 'min' => 2, 'max' => 9]], 'constraints' => ['a>b'], 'set' => [['path' => 'answer', 'expr' => 'a*b']]]],
     'skills' => ['p1' => ['primary' => $skill]], 'bank' => ['family_id' => "xp-$run"]]);
 ok(status_of($question) === 201, 'Template question failed: ' . wp_json_encode($question->get_data()));
 $qid = remember_post($question->get_data()['id']);
-ok(status_of(call('POST', 'question-bank/' . $qid . '/approve')) === 200, 'Approve failed');
+ok(status_of(call('POST', 'questions/' . $qid . '/approve')) === 200, 'Approve failed');
 
 $student = make_user('subscriber');
 as_user($student);

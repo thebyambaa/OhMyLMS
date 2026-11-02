@@ -352,6 +352,6 @@ abstract class Data {
 	 * @since 1.0.0
 	 */
 	protected function error( $code, $message, $http_status_code = 400, $data = array() ) {
-		throw new DataException( $code, $message, $http_status_code, $data );
+		throw new DataException( $code, $message, $http_status_code, $data ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Callers convert it to REST error data.
 	}
 }

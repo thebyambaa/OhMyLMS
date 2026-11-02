@@ -28,21 +28,20 @@ foreach (['A', 'B', 'C'] as $letter) {
     $skills[$letter] = (int) call('POST', 'skills', ['name' => "Check skill $letter $run", 'public_practice' => true])->get_data()['id'];
     $fixture['terms'][] = [$skills[$letter], Taxonomy::NAME];
     for ($n = 1; $n <= 3; $n++) {
-        $response = call('POST', 'question', ['name' => "$letter$n $run", 'description' => "Pick $letter$n $run",
+        $response = create_question(['name' => "$letter$n $run", 'description' => "Pick $letter$n $run",
             'settings' => ['type' => 'single-choice', 'score' => ['enabled' => true, 'value' => 1]],
             'questions' => [['answer' => 'Right', 'is_correct' => 1, 'order_number' => 1], ['answer' => 'Wrong', 'is_correct' => 0, 'order_number' => 2]],
             'skills' => ['p1' => ['primary' => $skills[$letter]]], 'bank' => ['family_id' => "$letter$n-$run"]]);
         ok(status_of($response) === 201, "Creating question $letter$n failed: " . wp_json_encode($response->get_data()));
         $id = remember_post($response->get_data()['id']);
-        ok(status_of(call('POST', 'question-bank/' . $id . '/approve')) === 200, "Approving $letter$n failed");
+        ok(status_of(call('POST', 'questions/' . $id . '/approve')) === 200, "Approving $letter$n failed");
     }
 }
 $empty = (int) call('POST', 'skills', ['name' => "Check skill empty $run", 'public_practice' => true])->get_data()['id'];
 $fixture['terms'][] = [$empty, Taxonomy::NAME];
 
 // ---- A unit with the assessment placed in it ----
-$course = call('POST', 'courses', ['name' => 'Skill check course', 'status' => 'publish']);
-$course_id = remember_post($course->get_data()['id']);
+$course_id = new_course('Skill check course');
 $chapter = remember_post(wp_insert_post(['post_type' => 'ohmylms-chapter', 'post_title' => 'Skill check unit', 'post_status' => 'publish']));
 $wpdb->insert($wpdb->prefix . 'ohmylms_chapter_relationship', ['course_id' => $course_id, 'chapter_id' => $chapter, 'order_number' => 0]);
 
@@ -186,10 +185,10 @@ foreach ([['single-choice', "M1 $run"], ['numerical', "M2 $run"]] as [$type, $na
         'skills' => ['p1' => ['primary' => $mixed]], 'bank' => ['family_id' => "$type-$run"]];
     if ($type === 'single-choice') { $payload['questions'] = [['answer' => 'Right', 'is_correct' => 1, 'order_number' => 1], ['answer' => 'Wrong', 'is_correct' => 0, 'order_number' => 2]]; }
     else { $payload['settings'] += ['answer' => 7, 'tolerance' => 0]; }
-    $response = call('POST', 'question', $payload);
+    $response = create_question($payload);
     ok(status_of($response) === 201, "Creating the $type question failed: " . wp_json_encode($response->get_data()));
     $id = remember_post($response->get_data()['id']);
-    ok(status_of(call('POST', 'question-bank/' . $id . '/approve')) === 200, "Approving the $type question failed");
+    ok(status_of(call('POST', 'questions/' . $id . '/approve')) === 200, "Approving the $type question failed");
 }
 $types_quiz = call('POST', 'skill-assessments', ['title' => "Types $run", 'skills' => [$mixed], 'per_skill' => 2, 'publish' => true, 'chapter_id' => $chapter]);
 ok(status_of($types_quiz) === 201, 'The mixed-type assessment was not created: ' . wp_json_encode($types_quiz->get_data()));

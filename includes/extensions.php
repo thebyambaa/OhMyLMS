@@ -69,7 +69,15 @@ function ohmylms_render_slot( $name, array $context = array() ) {
  */
 function ohmylms_enqueue_interactivity_module( $id ) {
 	\OhMyLMS\Extensions\Interactivity::enqueue( $id ); }
+/**
+ * The learner language switcher (English / Монгол) as HTML, for themes; empty when it is turned off.
+ *
+ * @param array $args `variant` (`inline` or `compact`) and `label`.
+ */
+function ohmylms_get_language_switcher( array $args = array() ) {
+	return \OhMyLMS\I18n\Switcher::render( $args ); }
 add_action( 'init', array( 'OhMyLMS\\Extensions\\Bootstrap', 'init' ), 5 );
+\OhMyLMS\I18n\InterfaceLanguage::init();
 \OhMyLMS\Extensions\SourceAssets::init();
 \OhMyLMS\Extensions\Interactivity::init();
 \OhMyLMS\Extensions\Settings::init();
@@ -78,8 +86,6 @@ add_action( 'init', array( 'OhMyLMS\\Extensions\\Bootstrap', 'init' ), 5 );
 \OhMyLMS\Extensions\Authoring::init();
 \OhMyLMS\Schools\Bootstrap::init();
 \OhMyLMS\Extensions\Addons::init();
-\OhMyLMS\Extensions\Slots::init();
-\OhMyLMS\Extensions\Authoring::init();
 \OhMyLMS\Assessment\Bootstrap::init();
 \OhMyLMS\Assessment\Profiles::init();
 \OhMyLMS\Admin\Commands::init();
@@ -87,7 +93,6 @@ add_action( 'init', array( 'OhMyLMS\\Extensions\\Bootstrap', 'init' ), 5 );
 \OhMyLMS\Exams\Library::init();
 \OhMyLMS\Exams\PrintPaper::init();
 \OhMyLMS\Exams\PaperBlocks::init();
-\OhMyLMS\QuestionBank\Organisation::init();
 \OhMyLMS\XApi\Bootstrap::init();
 \OhMyLMS\Assessment\MathLive::init();
 \OhMyLMS\Engagement\StreakHooks::init();
@@ -108,8 +113,10 @@ add_action( 'init', array( 'OhMyLMS\\Extensions\\Bootstrap', 'init' ), 5 );
 \OhMyLMS\Design\DesignSystem::init();
 \OhMyLMS\Admin\AppPage::init();
 \OhMyLMS\Assets\AdminAppAssets::init();
+\OhMyLMS\Dashboard\Bootstrap::init();
 \OhMyLMS\Schools\Bootstrap::init();
 \OhMyLMS\Family\Bootstrap::init();
+\OhMyLMS\Certificates\Bootstrap::init();
 add_action( 'plugins_loaded', array( 'OhMyLMS\\Extensions\\Modules', 'load' ) );
 /** The Quiz Player for a quiz, as HTML: the same player the block and [ohmylms_quiz] show, for themes and templates.
  *

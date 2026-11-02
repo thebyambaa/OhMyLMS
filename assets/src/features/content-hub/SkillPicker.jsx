@@ -9,14 +9,28 @@ import {
 	Spinner,
 	TextControl,
 } from '@wordpress/components';
-import { createSkill } from '../question-bank/api.mjs';
+import { createSkill } from '../question-bank/public.mjs';
 import { searchTargets, loadCatalog } from './api.mjs';
-import { loadTree, loadSyllabus } from '../curriculum/api.mjs';
+import { loadTree, loadSyllabus } from '../curriculum/public.mjs';
 import {
 	loadSkillCurriculum,
 	skillCurriculumTree,
 } from './skillCurriculum.mjs';
 
+/**
+ * @typedef {Object} PickedSkill
+ * @property {number} id          Skill term ID.
+ * @property {string} [name]      Skill name.
+ * @property {string} [code]      Skill code.
+ * @property {number} [questions] Questions using the skill.
+ */
+
+/** @typedef {import('./skillCurriculum.mjs').SkillCurriculum} SkillCurriculum */
+/** @typedef {import('./skillCurriculum.mjs').SkillBranch} SkillBranch */
+
+/**
+ * @param {{code?: string, name?: string}} skill
+ */
 const label = ( skill ) =>
 	`${ skill.code ? `${ skill.code } · ` : '' }${ skill.name }`;
 
@@ -25,13 +39,13 @@ const label = ( skill ) =>
  * reference: nothing is copied, and the same skill can sit in many courses and lessons.
  *
  * `initial` skills start checked. With `courseId`, skills the course already has are left out.
- * @param root0
- * @param root0.title
- * @param root0.confirmLabel
- * @param root0.initial
- * @param root0.courseId
- * @param root0.onConfirm
- * @param root0.onClose
+ * @param {Object}                          root0
+ * @param {string}                          [root0.title]
+ * @param {string}                          [root0.confirmLabel]
+ * @param {PickedSkill[]}                   [root0.initial]
+ * @param {number}                          [root0.courseId]
+ * @param {(skills: PickedSkill[]) => void} root0.onConfirm
+ * @param {() => void}                      root0.onClose
  */
 export function SkillPicker( {
 	title,
@@ -42,7 +56,9 @@ export function SkillPicker( {
 	onClose,
 } ) {
 	const [ search, setSearch ] = useState( '' );
-	const [ results, setResults ] = useState( null );
+	const [ results, setResults ] = useState(
+		/** @type {PickedSkill[]|null} */ ( null )
+	);
 	const [ page, setPage ] = useState( 1 );
 	const [ pages, setPages ] = useState( 1 );
 	const [ more, setMore ] = useState( false );
@@ -53,8 +69,12 @@ export function SkillPicker( {
 	const [ error, setError ] = useState( '' );
 	const [ busy, setBusy ] = useState( false );
 	const latest = useRef( 0 );
-	const [ curriculum, setCurriculum ] = useState( null );
-	const [ excluded, setExcluded ] = useState( [] );
+	const [ curriculum, setCurriculum ] = useState(
+		/** @type {SkillCurriculum|null} */ ( null )
+	);
+	const [ excluded, setExcluded ] = useState(
+		/** @type {number[]} */ ( [] )
+	);
 	const [ curriculumError, setCurriculumError ] = useState( '' );
 
 	useEffect( () => {
@@ -143,12 +163,17 @@ export function SkillPicker( {
 			] );
 		} catch ( cause ) {
 			setError(
-				cause.message || __( 'Could not load skills.', 'ohmylms' )
+				/** @type {{message?: string}} */ ( cause ).message ||
+					__( 'Could not load skills.', 'ohmylms' )
 			);
 		}
 		setMore( false );
 	}
 
+	/**
+	 * @param {PickedSkill} skill
+	 * @param {boolean}     checked
+	 */
 	const toggle = ( skill, checked ) =>
 		setSelected( ( current ) => {
 			const next = new Map( current );
@@ -167,10 +192,13 @@ export function SkillPicker( {
 		setBusy( true );
 		setError( '' );
 		try {
-			const skill = await createSkill( {
-				name: draft.name.trim(),
-				code: draft.code.trim(),
-			} );
+			const skill =
+				/** @type {{id: number, name: string, code?: string}} */ (
+					await createSkill( {
+						name: draft.name.trim(),
+						code: draft.code.trim(),
+					} )
+				);
 			const entry = {
 				id: skill.id,
 				name: skill.name,
@@ -182,7 +210,8 @@ export function SkillPicker( {
 			setDraft( { name: '', code: '' } );
 		} catch ( cause ) {
 			setError(
-				cause.message || __( 'Could not create the skill.', 'ohmylms' )
+				/** @type {{message?: string}} */ ( cause ).message ||
+					__( 'Could not create the skill.', 'ohmylms' )
 			);
 		} finally {
 			setBusy( false );
@@ -199,6 +228,10 @@ export function SkillPicker( {
 	const hidden = [ ...selected.values() ].filter(
 		( skill ) => ! shown.has( skill.id ) && ! visible.has( skill.id )
 	);
+	/**
+	 * @param {PickedSkill}   skill
+	 * @param {number|string} [key]
+	 */
 	const skillCheckbox = ( skill, key = skill.id ) => (
 		<CheckboxControl
 			key={ key }
@@ -208,6 +241,7 @@ export function SkillPicker( {
 			__nextHasNoMarginBottom
 		/>
 	);
+	/** @param {SkillBranch} node */
 	const renderBranch = ( node ) => {
 		if ( node.skill ) {
 			return skillCheckbox( node.skill, node.key );

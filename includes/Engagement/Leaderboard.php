@@ -246,12 +246,12 @@ class Leaderboard {
 		}
 
 		// Prepare quiz IDs for SQL IN clause.
-		$quiz_ids_sql = implode( ',', array_map( 'intval', $quiz_ids ) );
+		$quiz_id_list = array_map( 'intval', $quiz_ids );
 		$student_ids  = wp_list_pluck( $students, 'student_id' );
 		if ( empty( $student_ids ) ) {
 			return $students;
 		}
-		$student_ids_sql = implode( ',', array_map( 'intval', $student_ids ) );
+		$student_id_list = array_map( 'intval', $student_ids );
 
 		// Normalize each completed attempt using its saved possible marks, then
 		// average attempts per quiz. Missing quizzes contribute zero below.
@@ -265,11 +265,11 @@ class Leaderboard {
                     FROM {$wpdb->prefix}ohmylms_quiz_attempts_answers
                     GROUP BY quiz_attempt_id
                 ) marks ON marks.quiz_attempt_id = a.id
-                WHERE a.quiz_id IN ($quiz_ids_sql)
-                AND a.student_id IN ($student_ids_sql)
+                WHERE a.quiz_id IN (" . implode( ',', array_fill( 0, count( $quiz_id_list ), '%d' ) ) . ')
+                AND a.student_id IN (' . implode( ',', array_fill( 0, count( $student_id_list ), '%d' ) ) . ")
                 AND a.course_id = %d AND a.status = 'completed' AND marks.possible > 0
                 GROUP BY a.student_id, a.quiz_id",
-				$course_id
+				array_merge( $quiz_id_list, $student_id_list, array( $course_id ) )
 			)
 		);
 		$student_scores = array();

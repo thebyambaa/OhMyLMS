@@ -19,9 +19,20 @@ import type {
 	QuizFormErrors,
 	QuizInput,
 	QuizLayout,
+	QuizPool,
+	QuizSection,
+	QuizQuestionCreated,
+	QuizQuestions,
+	QuizQuestionSlot,
 	QuizSettings,
 	QuizStatus,
+	RubricCriterion,
+	RubricScores,
 } from './types';
+import { createValidators } from '../../lib/validation';
+
+const { text } = createValidators( invalidResponse );
+export const { record, positiveId } = createValidators( invalidResponse );
 
 const STATUSES: readonly QuizStatus[] = [ 'draft', 'publish', 'trash' ];
 const ATTEMPT_STATUSES: readonly AttemptStatus[] = [
@@ -69,26 +80,6 @@ export function invalidResponse(): ApiError {
 	} );
 }
 
-/**
- * Narrow an unknown value to a plain object or fail with an invalid response.
- *
- * @param value Parsed JSON.
- * @return The object.
- */
-export function record( value: unknown ): Record< string, unknown > {
-	if ( ! value || 'object' !== typeof value || Array.isArray( value ) ) {
-		throw invalidResponse();
-	}
-	return value as Record< string, unknown >;
-}
-
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
-}
-
 function boolean( value: unknown ): boolean {
 	if ( 'boolean' !== typeof value ) {
 		throw invalidResponse();
@@ -116,23 +107,6 @@ function oneOf< T extends string >( value: unknown, allowed: readonly T[] ): T {
 		throw invalidResponse();
 	}
 	return found;
-}
-
-/**
- * Validate a positive integer identifier.
- *
- * @param value Candidate id.
- * @return The id.
- */
-export function positiveId( value: unknown ): number {
-	if (
-		'number' !== typeof value ||
-		! Number.isSafeInteger( value ) ||
-		value < 1
-	) {
-		throw invalidResponse();
-	}
-	return value;
 }
 
 function count( value: unknown ): number {
@@ -282,6 +256,18 @@ function parsePart( value: unknown ): AttemptPart {
 	};
 }
 
+function parseScores( value: unknown ): Record< string, number > | null {
+	if ( null === value || undefined === value ) {
+		return null;
+	}
+	return Object.fromEntries(
+		Object.entries( record( value ) ).map( ( [ id, points ] ) => [
+			id,
+			finite( points ),
+		] )
+	);
+}
+
 function parseEvent( value: unknown ): GradeEvent {
 	const item = record( value );
 	return {
@@ -290,7 +276,25 @@ function parseEvent( value: unknown ): GradeEvent {
 		reviewer_id: count( item.reviewer_id ),
 		reviewer_name: text( item.reviewer_name ),
 		reason: text( item.reason ),
+		rubric_scores: parseScores( item.rubric_scores ),
 		created_at: text( item.created_at ),
+	};
+}
+
+function parseCriterion( value: unknown ): RubricCriterion {
+	const item = record( value );
+	return {
+		id: text( item.id ),
+		title: text( item.title ),
+		description: text( item.description ),
+		points: finite( item.points ),
+		levels: list( item.levels ).map( ( raw ) => {
+			const level = record( raw );
+			return {
+				points: finite( level.points ),
+				description: text( level.description ),
+			};
+		} ),
 	};
 }
 
@@ -307,6 +311,11 @@ function parseQuestion( value: unknown ): AttemptQuestion {
 		correct: null === item.correct ? null : boolean( item.correct ),
 		answer: list( item.answer ).map( text ),
 		parts: null === item.parts ? null : list( item.parts ).map( parsePart ),
+		rubric:
+			null === item.rubric || undefined === item.rubric
+				? null
+				: list( item.rubric ).map( parseCriterion ),
+		rubric_scores: parseScores( item.rubric_scores ),
 		history: list( item.history ).map( parseEvent ),
 	};
 }
@@ -662,6 +671,56 @@ export function parseMarks(
 }
 
 /**
+ * Marks from rubric scores: the sum of the criteria's points, scaled to the question's maximum in this
+ * quiz when the rubric total differs (for example when the quiz overrides the question's marks).
+ *
+ * @param rubric Criteria of the question.
+ * @param scores Points chosen per criterion.
+ * @param max    Maximum marks of the question in the attempt.
+ * @return `null` until every criterion is scored, an error for an invalid score, or the score, the
+ *         rubric total and the marks to award.
+ */
+export function rubricMarks(
+	rubric: readonly RubricCriterion[],
+	scores: RubricScores,
+	max: number
+): { score: number; total: number; marks: number } | { error: string } | null {
+	let score = 0;
+	let total = 0;
+	for ( const criterion of rubric ) {
+		const raw = ( scores[ criterion.id ] ?? '' ).trim();
+		if ( '' === raw ) {
+			return null;
+		}
+		const parsed = parseMarks( raw, criterion.points );
+		if ( 'error' in parsed ) {
+			return {
+				error: sprintf(
+					/* translators: 1: criterion title, 2: problem. */
+					__( '%1$s: %2$s', 'ohmylms' ),
+					criterion.title,
+					parsed.error
+				),
+			};
+		}
+		score += parsed.marks;
+		total += criterion.points;
+	}
+	if ( ! rubric.length || total <= 0 ) {
+		return null;
+	}
+	const marks =
+		Math.abs( total - max ) < 0.00005
+			? score
+			: Math.round( ( score / total ) * max * 10000 ) / 10000;
+	return {
+		score: Math.round( score * 10000 ) / 10000,
+		total: Math.round( total * 10000 ) / 10000,
+		marks: Math.min( marks, max ),
+	};
+}
+
+/**
  * Start drafts from the stored marks. Questions waiting for review start empty so an ungraded answer
  * is never submitted as zero by accident.
  *
@@ -683,8 +742,93 @@ export function draftsFromQuestions( questions: AttemptQuestion[] ): Drafts {
 			total: pending ? '' : formatMarks( question.awarded ),
 			parts,
 		};
+		if ( question.rubric_scores && ! pending ) {
+			drafts[ question.question_id ]!.rubric = Object.fromEntries(
+				Object.entries( question.rubric_scores ).map(
+					( [ id, points ] ) => [ id, formatMarks( points ) ]
+				)
+			);
+		}
 	}
 	return drafts;
+}
+
+/**
+ * The rubric breakdown to send with the marks of a question: the points of every criterion, when
+ * they are all scored and the marks are their (scaled) total. Marks typed over the rubric score are
+ * sent without a breakdown.
+ *
+ * @param question Question of the attempt.
+ * @param scores   Points chosen per criterion.
+ * @param marks    Marks to send.
+ * @return Points by criterion id in rubric order, `null` for none, or an error for an invalid score.
+ */
+export function rubricBreakdown(
+	question: AttemptQuestion,
+	scores: RubricScores | undefined,
+	marks: number
+): { points: Record< string, number > } | { error: string } | null {
+	if ( ! question.rubric?.length || ! scores ) {
+		return null;
+	}
+	const result = rubricMarks( question.rubric, scores, question.max_marks );
+	if ( ! result ) {
+		return null;
+	}
+	if ( 'error' in result ) {
+		return result;
+	}
+	if ( Math.abs( result.marks - marks ) > 0.00005 ) {
+		return null;
+	}
+	return {
+		points: Object.fromEntries(
+			question.rubric.map( ( criterion ) => [
+				criterion.id,
+				Number( scores[ criterion.id ] ),
+			] )
+		),
+	};
+}
+
+/**
+ * A rubric breakdown in words, such as "Reasoning: 3, Clarity: 0.5".
+ *
+ * @param rubric Criteria of the question (for their titles).
+ * @param scores Points by criterion id.
+ * @return Text.
+ */
+export function scoresLabel(
+	rubric: readonly RubricCriterion[],
+	scores: Record< string, number >
+): string {
+	return Object.entries( scores )
+		.map( ( [ id, points ] ) =>
+			sprintf(
+				/* translators: 1: rubric criterion, 2: points. */
+				__( '%1$s: %2$s', 'ohmylms' ),
+				rubric.find( ( criterion ) => criterion.id === id )?.title ||
+					id,
+				formatMarks( points )
+			)
+		)
+		.join( ', ' );
+}
+
+function sameScores(
+	rubric: readonly RubricCriterion[],
+	next: Record< string, number >,
+	saved: Record< string, number > | null
+): boolean {
+	return (
+		!! saved &&
+		rubric.every(
+			( criterion ) =>
+				undefined !== saved[ criterion.id ] &&
+				Math.abs( saved[ criterion.id ]! - next[ criterion.id ]! ) <
+					0.00005
+		)
+	);
 }
 
 function gradePartsQuestion(
@@ -756,13 +900,32 @@ export function buildGrades(
 		const parsed = parseMarks( draft.total, question.max_marks );
 		if ( 'error' in parsed ) {
 			errors[ question.question_id ] = parsed.error;
-		} else if (
+			continue;
+		}
+		const breakdown = rubricBreakdown(
+			question,
+			draft.rubric,
+			parsed.marks
+		);
+		if ( breakdown && 'error' in breakdown ) {
+			errors[ question.question_id ] = breakdown.error;
+			continue;
+		}
+		const rubric = breakdown?.points ?? null;
+		if (
 			'in-review' === question.status ||
-			Math.abs( question.awarded - parsed.marks ) > 0.00005
+			Math.abs( question.awarded - parsed.marks ) > 0.00005 ||
+			( rubric &&
+				! sameScores(
+					question.rubric ?? [],
+					rubric,
+					question.rubric_scores
+				) )
 		) {
 			grades.push( {
 				question_id: question.question_id,
 				marks: parsed.marks,
+				...( rubric ? { rubric } : {} ),
 			} );
 		}
 	}
@@ -824,6 +987,268 @@ export function attemptStatusLabel( status: AttemptStatus ): string {
 	}
 }
 
+const SLOT_STATUSES = [
+	'draft',
+	'approved',
+	'archived',
+	'unavailable',
+] as const;
+const DELIVERY_SOURCES = [
+	'pinned',
+	'current',
+	'approved',
+	'unavailable',
+] as const;
+
+function parseSlot( value: unknown ): QuizQuestionSlot {
+	const item = record( value );
+	const delivery = record( item.delivery );
+	const usage = record( item.usage );
+	const permissions = record( item.permissions );
+	return {
+		question_id: positiveId( item.question_id ),
+		position: positiveId( item.position ),
+		name: text( item.name ),
+		type: text( item.type ),
+		type_label: text( item.type_label ),
+		marks: finite( item.marks ),
+		question_marks:
+			undefined === item.question_marks
+				? finite( item.marks )
+				: finite( item.question_marks ),
+		marks_override:
+			null === item.marks_override || undefined === item.marks_override
+				? null
+				: finite( item.marks_override ),
+		section: text( item.section ),
+		status: oneOf( item.status, SLOT_STATUSES ),
+		version: count( item.version ),
+		current_version_id: count( item.current_version_id ),
+		approved_version_id: count( item.approved_version_id ),
+		pinned_version_id: count( item.pinned_version_id ),
+		pinned_version_no: count( item.pinned_version_no ),
+		delivery: {
+			source: oneOf( delivery.source, DELIVERY_SOURCES ),
+			version_id: count( delivery.version_id ),
+			version_no: count( delivery.version_no ),
+		},
+		usage: {
+			quizzes: count( usage.quizzes ),
+			responses: count( usage.responses ),
+		},
+		permissions: {
+			can_edit: boolean( permissions.can_edit ),
+			can_use: boolean( permissions.can_use ),
+		},
+		modified: text( item.modified ),
+	};
+}
+
+function parsePool( value: unknown ): QuizPool {
+	const item = record( value );
+	const skill = record( item.skill );
+	return {
+		id: text( item.id ),
+		title: text( item.title ),
+		skill: { id: count( skill.id ), name: text( skill.name ) },
+		count: count( item.count ),
+		marks: finite( item.marks ),
+		difficulty: text( item.difficulty ),
+		bank_id: count( item.bank_id ),
+		include_secure: boolean( item.include_secure ),
+	};
+}
+
+/**
+ * Validate the question list of a quiz.
+ *
+ * @param value Parsed JSON.
+ * @return The slots, pools, totals and revision.
+ */
+export function parseQuizQuestions( value: unknown ): QuizQuestions {
+	const item = record( value );
+	const totals = record( item.totals );
+	const revision = text( item.revision );
+	if ( ! /^[0-9a-f]{16}$/.test( revision ) ) {
+		throw invalidResponse();
+	}
+	return {
+		quiz_id: positiveId( item.quiz_id ),
+		revision,
+		questions: list( item.questions ).map( parseSlot ),
+		sections: list( item.sections ?? [] ).map( ( raw ) => {
+			const section = record( raw );
+			return {
+				title: text( section.title ),
+				question_ids: list( section.question_ids ).map( positiveId ),
+				new_page: boolean( section.new_page ),
+			};
+		} ),
+		pools: list( item.pools ).map( parsePool ),
+		totals: {
+			questions: count( totals.questions ),
+			fixed_marks: finite( totals.fixed_marks ),
+			pool_questions: count( totals.pool_questions ),
+			pool_marks: finite( totals.pool_marks ),
+			total_marks: finite( totals.total_marks ),
+		},
+	};
+}
+
+/**
+ * Validate the answer to creating a question in a quiz.
+ *
+ * @param value Parsed JSON.
+ * @return The list and the id of the new question, which must be in it.
+ */
+export function parseQuizQuestionCreated(
+	value: unknown
+): QuizQuestionCreated {
+	const parsed = parseQuizQuestions( value );
+	const created = positiveId( record( value ).created_id );
+	if ( ! parsed.questions.some( ( slot ) => slot.question_id === created ) ) {
+		throw invalidResponse();
+	}
+	return { ...parsed, created_id: created };
+}
+
+/**
+ * Question ids with one moved up or down.
+ *
+ * @param ids   Ids in order.
+ * @param index Position of the question to move.
+ * @param delta -1 to move up, 1 to move down.
+ * @return The new order, or `null` when the move leaves the list.
+ */
+export function moveQuestion(
+	ids: readonly number[],
+	index: number,
+	delta: -1 | 1
+): number[] | null {
+	const target = index + delta;
+	if ( index < 0 || target < 0 || Math.max( index, target ) >= ids.length ) {
+		return null;
+	}
+	const next = [ ...ids ];
+	const [ moved ] = next.splice( index, 1 );
+	next.splice( target, 0, moved as number );
+	return next;
+}
+
+/**
+ * Display name of a slot.
+ *
+ * @param slot Slot.
+ * @return The name, or a placeholder for untitled and restricted questions.
+ */
+export function slotName( slot: QuizQuestionSlot ): string {
+	if ( ! slot.permissions.can_use ) {
+		return sprintf(
+			/* translators: %d: question id. */
+			__( 'Restricted question #%d', 'ohmylms' ),
+			slot.question_id
+		);
+	}
+	return slot.name.trim() || __( 'Untitled question', 'ohmylms' );
+}
+
+/**
+ * Which version learners get, in words.
+ *
+ * @param slot Slot.
+ * @return Text such as "Pinned to version 2".
+ */
+export function deliveryLabel( slot: QuizQuestionSlot ): string {
+	const { source, version_no: number } = slot.delivery;
+	switch ( source ) {
+		case 'pinned':
+			return sprintf(
+				/* translators: %d: version number. */
+				__( 'Pinned to version %d', 'ohmylms' ),
+				number
+			);
+		case 'approved':
+			return sprintf(
+				/* translators: %d: version number. */
+				__( 'Approved version %d', 'ohmylms' ),
+				number
+			);
+		case 'current':
+			return number
+				? sprintf(
+						/* translators: %d: version number. */
+						__( 'Latest version (%d)', 'ohmylms' ),
+						number
+					)
+				: __( 'Latest version', 'ohmylms' );
+		default:
+			return __(
+				'No approved version: learners cannot get it',
+				'ohmylms'
+			);
+	}
+}
+
+/**
+ * Status of a slot when it needs attention.
+ *
+ * @param slot Slot.
+ * @return A warning, or an empty string.
+ */
+export function slotWarning( slot: QuizQuestionSlot ): string {
+	switch ( slot.status ) {
+		case 'archived':
+			return __( 'Archived', 'ohmylms' );
+		case 'unavailable':
+			return __( 'Deleted or in the trash', 'ohmylms' );
+		default:
+			return '';
+	}
+}
+
+/**
+ * Whether a bank question can be added, and why not.
+ *
+ * @param item                      List row of the question bank.
+ * @param item.id                   Question id.
+ * @param item.status               Lifecycle status.
+ * @param item.permissions          Permissions of the current user.
+ * @param item.permissions.can_edit Whether the user may edit the question.
+ * @param inQuiz                    Ids already in the quiz.
+ * @return `null` when it can be added, otherwise the reason.
+ */
+export function addBlocker(
+	item: {
+		id: number;
+		status: string;
+		permissions: { can_edit: boolean };
+	},
+	inQuiz: ReadonlySet< number >
+): string | null {
+	if ( inQuiz.has( item.id ) ) {
+		return __( 'Already in this quiz', 'ohmylms' );
+	}
+	if ( 'archived' === item.status ) {
+		return __( 'Archived', 'ohmylms' );
+	}
+	if ( ! item.permissions.can_edit && 'approved' !== item.status ) {
+		return __( 'Shared question without an approved version', 'ohmylms' );
+	}
+	return null;
+}
+
+/**
+ * Whether a bank question can be copied into the quiz, and why not. A copy is a new question of the
+ * user, so questions already in the quiz and shared questions without an approved version qualify.
+ *
+ * @param item        List row of the question bank.
+ * @param item.status Lifecycle status.
+ * @return `null` when it can be copied, otherwise the reason.
+ */
+export function copyBlocker( item: { status: string } ): string | null {
+	return 'archived' === item.status ? __( 'Archived', 'ohmylms' ) : null;
+}
+
 /**
  * Label of a quiz status.
  *
@@ -839,4 +1264,51 @@ export function quizStatusLabel( status: QuizStatus ): string {
 		default:
 			return __( 'Draft', 'ohmylms' );
 	}
+}
+
+/** Most marks a question or pool question can be worth in a quiz. */
+export const MAX_SLOT_MARKS = 10000;
+
+/**
+ * Read marks typed for a question or pool: a number from 0 to {@link MAX_SLOT_MARKS} with at most four
+ * decimals.
+ *
+ * @param value Typed text.
+ * @return The marks, or `null` when the text is not such a number.
+ */
+export function slotMarks( value: string ): number | null {
+	const trimmed = value.trim();
+	if ( ! /^\d+(\.\d{1,4})?$/.test( trimmed ) ) {
+		return null;
+	}
+	const marks = Number( trimmed );
+	return marks <= MAX_SLOT_MARKS ? marks : null;
+}
+
+/**
+ * Sections with one question moved into another section, or out of every section. Questions keep the
+ * order of the quiz inside their section.
+ *
+ * @param sections   Sections in paper order.
+ * @param order      Question ids of the quiz in order.
+ * @param questionId Question to move.
+ * @param target     Index of the new section, or -1 for none.
+ * @return The new sections.
+ */
+export function assignSection< T extends QuizSection >(
+	sections: readonly T[],
+	order: readonly number[],
+	questionId: number,
+	target: number
+): T[] {
+	return sections.map( ( section, index ) => {
+		const ids = section.question_ids.filter( ( id ) => id !== questionId );
+		if ( index === target ) {
+			ids.push( questionId );
+		}
+		return {
+			...section,
+			question_ids: order.filter( ( id ) => ids.includes( id ) ),
+		};
+	} );
 }

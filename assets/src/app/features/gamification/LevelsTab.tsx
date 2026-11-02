@@ -1,6 +1,7 @@
 import { Button, Notice, Spinner } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
+import { ListTable } from '../../../ui/ListTable';
 import { ConfirmDelete } from './ConfirmDelete';
 import { ToggleField } from './fields';
 import { LevelEditor } from './LevelEditor';
@@ -84,94 +85,73 @@ export function LevelsTab( {
 							{ __( 'Add level', 'ohmylms' ) }
 						</Button>
 					</p>
-					{ 0 === resource.items.length ? (
-						<p>
-							{ __(
-								'No levels yet. Add the first level, for example “Beginner” at 0 points.',
-								'ohmylms'
-							) }
-						</p>
-					) : (
-						<table className="widefat striped">
-							<caption className="screen-reader-text">
-								{ __( 'Levels', 'ohmylms' ) }
-							</caption>
-							<thead>
-								<tr>
-									<th scope="col">
-										{ __( 'Level', 'ohmylms' ) }
-									</th>
-									<th scope="col">
-										{ __( 'Points needed', 'ohmylms' ) }
-									</th>
-									<th scope="col">
-										{ __( 'Learners', 'ohmylms' ) }
-									</th>
-									<th scope="col">
-										{ __( 'Actions', 'ohmylms' ) }
-									</th>
-								</tr>
-							</thead>
-							<tbody>
-								{ resource.items.map( ( level ) => (
-									<tr key={ level.slug }>
-										<th scope="row">
-											<span
-												style={ {
-													background: level.color,
-													color: level.text_color,
-													padding: '2px 8px',
-													borderRadius: 4,
-												} }
-											>
-												{ level.name }
-											</span>
-										</th>
-										<td>{ level.points }</td>
-										<td>{ level.earned_count }</td>
-										<td>
-											<Button
-												variant="link"
-												onClick={ () =>
-													setDialog( {
-														kind: 'edit',
-														level,
-													} )
-												}
-												aria-label={ sprintf(
-													/* translators: %s: level name. */
-													__( 'Edit %s', 'ohmylms' ),
-													level.name
-												) }
-											>
-												{ __( 'Edit', 'ohmylms' ) }
-											</Button>{ ' ' }
-											<Button
-												variant="link"
-												isDestructive
-												onClick={ () =>
-													setDialog( {
-														kind: 'delete',
-														level,
-													} )
-												}
-												aria-label={ sprintf(
-													/* translators: %s: level name. */
-													__(
-														'Delete %s',
-														'ohmylms'
-													),
-													level.name
-												) }
-											>
-												{ __( 'Delete', 'ohmylms' ) }
-											</Button>
-										</td>
-									</tr>
-								) ) }
-							</tbody>
-						</table>
-					) }
+					<ListTable
+						caption={ __( 'Levels', 'ohmylms' ) }
+						rows={ resource.items }
+						rowKey={ ( level ) => level.slug }
+						fixed={ false }
+						emptyMessage={ __(
+							'No levels yet. Add the first level, for example “Beginner” at 0 points.',
+							'ohmylms'
+						) }
+						columns={ [
+							{
+								id: 'level',
+								label: __( 'Level', 'ohmylms' ),
+								primary: true,
+								render: ( level ) => (
+									<strong>
+										<span
+											className="ohmylms-level-chip"
+											style={ {
+												background: level.color,
+												color: level.text_color,
+											} }
+										>
+											{ level.name }
+										</span>
+									</strong>
+								),
+							},
+							{
+								id: 'points',
+								label: __( 'Points needed', 'ohmylms' ),
+								className: 'num',
+								render: ( level ) => level.points,
+							},
+							{
+								id: 'learners',
+								label: __( 'Learners', 'ohmylms' ),
+								className: 'num',
+								render: ( level ) => level.earned_count,
+							},
+						] }
+						rowActions={ ( level ) => [
+							{
+								key: 'edit',
+								label: __( 'Edit', 'ohmylms' ),
+								ariaLabel: sprintf(
+									/* translators: %s: level name. */
+									__( 'Edit %s', 'ohmylms' ),
+									level.name
+								),
+								onClick: () =>
+									setDialog( { kind: 'edit', level } ),
+							},
+							{
+								key: 'delete',
+								label: __( 'Delete', 'ohmylms' ),
+								destructive: true,
+								ariaLabel: sprintf(
+									/* translators: %s: level name. */
+									__( 'Delete %s', 'ohmylms' ),
+									level.name
+								),
+								onClick: () =>
+									setDialog( { kind: 'delete', level } ),
+							},
+						] }
+					/>
 				</>
 			) }
 			{ dialog?.kind === 'edit' && (

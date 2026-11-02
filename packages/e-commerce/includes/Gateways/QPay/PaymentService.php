@@ -19,16 +19,17 @@ class PaymentService {
 	public static function locked( $order_id, $operation ) {
 		global $wpdb;
 		// Connection-owned MySQL lock: atomic across workers, automatically released on disconnect.
-		$key = 'ohmylms_qpay_' . md5( $wpdb->prefix . ':' . (int) $order_id );
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', $key ) ) ) {
-			return new \WP_Error( 'qpay_busy', __( 'Payment is being checked. Please try again shortly.', 'ohmylms' ) );
-		}
-		try {
-			clean_post_cache( $order_id );
-			return $operation();
-		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $key ) );
-		}
+		return \OhMyLMS\Utility\Lock::with(
+			'ohmylms_qpay_' . md5( $wpdb->prefix . ':' . (int) $order_id ),
+			0,
+			static function () use ( $order_id, $operation ) {
+				clean_post_cache( $order_id );
+				return $operation();
+			},
+			static function () {
+				return new \WP_Error( 'qpay_busy', __( 'Payment is being checked. Please try again shortly.', 'ohmylms' ) );
+			}
+		);
 	}
 
 	/** Integer minor units avoid floating-point comparisons and malformed amounts.
@@ -137,7 +138,7 @@ class PaymentService {
 					if ( $details ) {
 						update_post_meta( $order_id, '_qpay_verified_payment', $details ); }
 				}
-				if ( ! $details || $invoice !== ( $details['invoice_id'] ?? '' ) ) {
+				if ( ! $details || ( $details['invoice_id'] ?? '' ) !== $invoice ) {
 					return array( 'status' => 'pending' );
 				}
 				if ( $details['minor_units'] < self::minor_units( $order->get_total() ) ) {

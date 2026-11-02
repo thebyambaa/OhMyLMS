@@ -24,13 +24,50 @@ export interface Content {
 	id: number;
 	parent_id: number;
 	name: string;
+	code?: string;
 	depth: number;
 	groups: Group[];
 }
+export type Target = 'proficient' | 'mastered';
+export interface Requirement {
+	term_id: number;
+	required: boolean;
+	target: Target;
+}
+export interface CategoryStyle {
+	icon: string;
+	color: string;
+}
+export interface Profile {
+	subject: string;
+	grade: string;
+	language: string;
+	categories: string[];
+	category_styles: Record< string, CategoryStyle >;
+}
+/** The colour `SyllabusSettings::clean` stores for a style sent without one. */
+export const DEFAULT_CATEGORY_COLOR = '#6e42d3';
+export const HEX_COLOR = /^#[0-9a-f]{6}$/i;
+export interface SourceDetails {
+	id: number;
+	name: string;
+	code: string;
+	version: string;
+	description: string;
+	item_type: string;
+}
 export interface SyllabusOutline {
-	syllabus: { id: number; name: string };
+	syllabus: SourceDetails;
 	contents: Content[];
-	course: { id: number; title: string; published: boolean } | null;
+	course: {
+		id: number;
+		title: string;
+		published: boolean;
+		mode: string;
+	} | null;
+	settings: Profile;
+	roadmap_sources: { id: number; name: string; version: string }[];
+	requirements: Requirement[];
 	course_error?: string;
 }
 export interface Fields {
@@ -51,11 +88,14 @@ export type CommandName =
 	| 'add_group'
 	| 'edit_group'
 	| 'move_group'
+	| 'delete_group'
 	| 'create_skill'
 	| 'edit_skill'
 	| 'attach_skill'
 	| 'move_skill'
 	| 'detach_skill'
+	| 'edit_source'
+	| 'set_requirements'
 	| 'sync_course';
 export type SendCommand = (
 	operation: CommandName,
@@ -75,6 +115,25 @@ export function parseSkill( value: unknown ): Skill {
 		description: text( row.description ),
 	};
 }
+/**
+ * Category styles keyed by category. PHP sends an empty map as `[]`.
+ *
+ * @param value Decoded `category_styles`.
+ */
+function parseStyles( value: unknown ): Record< string, CategoryStyle > {
+	if ( undefined === value || ( Array.isArray( value ) && ! value.length ) ) {
+		return {};
+	}
+	return Object.fromEntries(
+		Object.entries( record( value ) ).map( ( [ category, raw ] ) => {
+			const style = record( raw );
+			return [
+				category,
+				{ icon: text( style.icon ), color: text( style.color ) },
+			];
+		} )
+	);
+}
 export function parseOutline( value: unknown ): SyllabusOutline {
 	const row = record( value );
 	if ( ! Array.isArray( row.contents ) ) {
@@ -90,8 +149,35 @@ export function parseOutline( value: unknown ): SyllabusOutline {
 			id: positiveId( item.id ),
 			title: text( item.title ),
 			published: item.published,
+			mode: text( item.mode ),
 		};
 	}
+	const settings = record( row.settings );
+	if (
+		! Array.isArray( settings.categories ) ||
+		! Array.isArray( row.requirements )
+	) {
+		return invalid();
+	}
+	const requirements = row.requirements.map( ( raw ): Requirement => {
+		const requirement = record( raw );
+		if (
+			typeof requirement.required !== 'boolean' ||
+			( requirement.target !== 'proficient' &&
+				requirement.target !== 'mastered' )
+		) {
+			return invalid();
+		}
+		return {
+			term_id: positiveId( requirement.term_id ),
+			required: requirement.required,
+			target: requirement.target,
+		};
+	} );
+	const rawSources = row.roadmap_sources ?? [];
+	const sources = Array.isArray( rawSources )
+		? rawSources
+		: Object.values( record( rawSources ) );
 	const contents = row.contents.map( ( rawContent ) => {
 		const content = record( rawContent );
 		if ( ! Array.isArray( content.groups ) ) {
@@ -101,6 +187,7 @@ export function parseOutline( value: unknown ): SyllabusOutline {
 			id: positiveId( content.id ),
 			parent_id: nonnegative( content.parent_id ),
 			name: text( content.name ),
+			code: undefined === content.code ? '' : text( content.code ),
 			depth: nonnegative( content.depth ),
 			groups: content.groups.map( ( rawGroup ) => {
 				const group = record( rawGroup );
@@ -124,9 +211,31 @@ export function parseOutline( value: unknown ): SyllabusOutline {
 		syllabus: {
 			id: positiveId( syllabus.id ),
 			name: text( syllabus.name ),
+			code: text( syllabus.code ?? '' ),
+			version: text( syllabus.version ?? '' ),
+			description: text( syllabus.description ?? '' ),
+			item_type: text( syllabus.item_type ),
 		},
 		contents,
 		course,
+		settings: {
+			subject: text( settings.subject ),
+			grade: text( settings.grade ),
+			language: text( settings.language ),
+			categories: settings.categories.map( ( category ) =>
+				text( category )
+			),
+			category_styles: parseStyles( settings.category_styles ),
+		},
+		roadmap_sources: sources.map( ( raw ) => {
+			const source = record( raw );
+			return {
+				id: positiveId( source.id ),
+				name: text( source.name ),
+				version: text( source.version ?? '' ),
+			};
+		} ),
+		requirements,
 		...( row.course_error !== undefined
 			? { course_error: text( row.course_error ) }
 			: {} ),

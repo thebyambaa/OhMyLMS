@@ -36,6 +36,10 @@ cookie nonce verification remain in effect. Request IDs are job IDs, not source-
 | `POST /wp-json/ohmylms/v1/exam-imports/{id}/commit` | Validate and commit reviewed rows through the existing bank writer. |
 | `GET /wp-json/ohmylms/v1/exam-import-skills?search=algebra` | Search the existing skill catalogue during review. |
 
+The new admin uses the typed `exam-imports/jobs` routes instead (row-by-row edit, accept, reject and an
+idempotent apply); see [api/exams.md](api/exams.md). Rows rejected there are left out of every commit,
+including this legacy commit route, and are listed in the status as `rejected`.
+
 Job records use a nonpublic `ohmylms-import` persistence type. It is separate from the
 Exam content type and is absent from WordPress's generic REST API, search, rewrite and admin UI.
 Owner status includes review candidates and private answer/rubric fields. It never includes
@@ -65,7 +69,8 @@ quality and provider compatibility must be checked with the supplied papers.
 
 `POST /ohmylms/v1/exams` creates a private Exam from the committed job. Separate
 `/exams/{id}/publish` and `/exams/{id}/release` operations publish approved frozen versions
-and release feedback. The player uses a managed private course and the existing quiz engine.
+and release feedback (the release now goes through the logged per-attempt release of
+[the exams API](api/exams.md#results-release)). The player uses a managed private course and the existing quiz engine.
 Source routes `?ohmylms_import_source=JOB` and `?ohmylms_exam_source=EXAM` enforce ownership
 or actual attempt access. Learners cannot access a scheme until submission and release;
 add `&mark_scheme=1` to select it. Jobs referenced by an Exam cannot be deleted.

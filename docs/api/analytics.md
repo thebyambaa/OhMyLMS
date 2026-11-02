@@ -151,5 +151,8 @@ its total (same rule as `/students/{id}/enrollments`).
 
 - Orders in different currencies are summed as if they used the site currency (`_order_currency` is not read).
 - Refunds are attributed to the order's date, not the refund's date.
-- The recovered "skipped quizzes", reminder history and reminder sending of the course student report are
-  not part of this API; the notification endpoint is unchanged.
+- The recovered "skipped quizzes" and reminder history of the course student report are not part of this
+  API. Roster writes (enrol by e-mail, bulk unenrol, fixed-template reminders) live in
+  `CourseRosterController` under the same `/analytics/courses/{id}` prefix and are documented in
+  [students.md](students.md#course-roster-courserostercontroller); the old open-relay notification
+  route now answers 410.

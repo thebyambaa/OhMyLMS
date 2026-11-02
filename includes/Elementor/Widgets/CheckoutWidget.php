@@ -75,7 +75,7 @@ class CheckoutWidget extends Widget_Base {
 	 * @return array
 	 */
 	public function get_script_depends() {
-		return array( 'ohmylms-frontend', 'ohmylms-checkout', 'ohmylms-tax-calculation', 'ohmylms-slick' );
+		return array( 'ohmylms-frontend' );
 	}
 
 	/**

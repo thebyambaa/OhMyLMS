@@ -20,17 +20,17 @@ defined( 'ABSPATH' ) || exit();
 			<span class="ohmylms-checkbox-text">
 				<span class="checkedbox" aria-hidden="true" id="terms-label"></span>
 				<?php
-					$link                = '#';
+					$privacy_policy_url  = '#';
 					$privacy_policy_page = get_option( 'wp_page_for_privacy_policy' );
 
 				if ( $privacy_policy_page ) {
-					$link = esc_url( get_the_permalink( $privacy_policy_page ) );
+					$privacy_policy_url = esc_url( get_the_permalink( $privacy_policy_page ) );
 				}
 
-				if ( empty( $link ) ) {
-					$link = $link ? $link : '#';
+				if ( empty( $privacy_policy_url ) ) {
+					$privacy_policy_url = $privacy_policy_url ? $privacy_policy_url : '#';
 				}
-					$privacy_policy_link = '<a href="' . $link . '">' . __( 'privacy policy', 'ohmylms' ) . '</a>';
+					$privacy_policy_link = '<a href="' . $privacy_policy_url . '">' . __( 'privacy policy', 'ohmylms' ) . '</a>';
 					$privacy_policy_text = get_option( 'ohmylms_privacy_policy_message', '' );
 
 				if ( empty( $privacy_policy_text ) ) {

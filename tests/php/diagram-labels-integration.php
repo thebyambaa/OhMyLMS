@@ -82,7 +82,7 @@ try {
 				)
 			);
 			diagram_check( ! is_wp_error( $written ), 'Fixture save failed.' );
-			$request = new WP_REST_Request( 'POST', '/ohmylms/v1/question-bank/' . $written['id'] . '/approve' );
+			$request = new WP_REST_Request( 'POST', '/ohmylms/v1/questions/' . $written['id'] . '/approve' );
 			diagram_check( 200 === rest_do_request( $request )->get_status(), 'Approval failed.' );
 			$snapshot = QuestionPlayer::eligible( $written['id'], $admin->ID );
 			$public   = \OhMyLMS\Assessment\ExtendedQuestions::public_view( 'labeling', $snapshot->get_settings() );

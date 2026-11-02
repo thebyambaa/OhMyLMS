@@ -262,21 +262,22 @@ class StudentStore extends DataStore {
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'ohmylms_user_enrollment';
 		$post_table = $wpdb->prefix . 'posts';
-		$query      = $wpdb->prepare(
-			'
-			SELECT DISTINCT e.course_id
-			FROM %i e
-			JOIN %i p ON e.course_id = p.ID
-			WHERE e.user_id = %d AND e.status = %s AND p.post_type = %s
-		',
-			$table_name,
-			$post_table,
-			$student->get_id(),
-			'enrolled',
-			'ohmylms-course'
+		$course_ids = $wpdb->get_results(
+			$wpdb->prepare(
+				'
+				SELECT DISTINCT e.course_id
+				FROM %i e
+				JOIN %i p ON e.course_id = p.ID
+				WHERE e.user_id = %d AND e.status = %s AND p.post_type = %s
+			',
+				$table_name,
+				$post_table,
+				$student->get_id(),
+				'enrolled',
+				'ohmylms-course'
+			),
+			ARRAY_A
 		);
-
-		$course_ids = $wpdb->get_results( $query, ARRAY_A );
 
 		$courses = array();
 		foreach ( $course_ids as $course_id ) {
@@ -300,19 +301,21 @@ class StudentStore extends DataStore {
 		global $wpdb;
 		$table_name     = $wpdb->prefix . 'ohmylms_user_membership';
 		$post_table     = $wpdb->prefix . 'posts';
-		$query          = $wpdb->prepare(
-			'
-			SELECT e.membership_id
-			FROM %i e
-			JOIN %i p ON e.membership_id = p.ID
-			WHERE e.user_id = %d AND p.post_type = %s
-		',
-			$table_name,
-			$post_table,
-			$student->get_id(),
-			'ohmylms-membership'
+		$membership_ids = $wpdb->get_results(
+			$wpdb->prepare(
+				'
+				SELECT e.membership_id
+				FROM %i e
+				JOIN %i p ON e.membership_id = p.ID
+				WHERE e.user_id = %d AND p.post_type = %s
+			',
+				$table_name,
+				$post_table,
+				$student->get_id(),
+				'ohmylms-membership'
+			),
+			ARRAY_A
 		);
-		$membership_ids = $wpdb->get_results( $query, ARRAY_A );
 
 		$memberships = array();
 		foreach ( $membership_ids as $membership_id ) {
@@ -341,20 +344,22 @@ class StudentStore extends DataStore {
 		global $wpdb;
 		$table_name      = $wpdb->prefix . 'ohmylms_user_membership';
 		$post_table      = $wpdb->prefix . 'posts';
-		$query           = $wpdb->prepare(
-			'
-			SELECT e.membership_id, e.order_id
-			FROM %i e
-			JOIN %i p ON e.membership_id = p.ID
-			WHERE e.user_id = %d AND e.status = %s AND p.post_type = %s
-		',
-			$table_name,
-			$post_table,
-			$student->get_id(),
-			'enrolled',
-			'ohmylms-membership'
+		$membership_data = $wpdb->get_results(
+			$wpdb->prepare(
+				'
+				SELECT e.membership_id, e.order_id
+				FROM %i e
+				JOIN %i p ON e.membership_id = p.ID
+				WHERE e.user_id = %d AND e.status = %s AND p.post_type = %s
+			',
+				$table_name,
+				$post_table,
+				$student->get_id(),
+				'enrolled',
+				'ohmylms-membership'
+			),
+			ARRAY_A
 		);
-		$membership_data = $wpdb->get_results( $query, ARRAY_A );
 
 		$memberships = array();
 		if ( function_exists( 'ohmylms_get_membership' ) ) {
@@ -392,20 +397,22 @@ class StudentStore extends DataStore {
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'ohmylms_user_enrollment';
 		$post_table = $wpdb->prefix . 'posts';
-		$query      = $wpdb->prepare(
-			'
-			SELECT DISTINCT e.course_id
-			FROM %i e
-			JOIN %i p ON e.course_id = p.ID
-			WHERE e.user_id = %d AND e.status = %s AND p.post_type = %s
-		',
-			$table_name,
-			$post_table,
-			$student->get_id(),
-			'enrolled',
-			'ohmylms-course'
+		$course_ids = $wpdb->get_results(
+			$wpdb->prepare(
+				'
+				SELECT DISTINCT e.course_id
+				FROM %i e
+				JOIN %i p ON e.course_id = p.ID
+				WHERE e.user_id = %d AND e.status = %s AND p.post_type = %s
+			',
+				$table_name,
+				$post_table,
+				$student->get_id(),
+				'enrolled',
+				'ohmylms-course'
+			),
+			ARRAY_A
 		);
-		$course_ids = $wpdb->get_results( $query, ARRAY_A );
 
 		$courses = array();
 		foreach ( $course_ids as $course_id ) {
@@ -425,20 +432,22 @@ class StudentStore extends DataStore {
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'ohmylms_user_enrollment';
 		$post_table = $wpdb->prefix . 'posts';
-		$query      = $wpdb->prepare(
-			'
-			SELECT DISTINCT e.course_id
-			FROM %i e
-			JOIN %i p ON e.course_id = p.ID
-			WHERE e.user_id = %d AND e.progress = %s AND p.post_type = %s
-		',
-			$table_name,
-			$post_table,
-			$student->get_id(),
-			'running',
-			'ohmylms-course'
+		$course_ids = $wpdb->get_results(
+			$wpdb->prepare(
+				'
+				SELECT DISTINCT e.course_id
+				FROM %i e
+				JOIN %i p ON e.course_id = p.ID
+				WHERE e.user_id = %d AND e.progress = %s AND p.post_type = %s
+			',
+				$table_name,
+				$post_table,
+				$student->get_id(),
+				'running',
+				'ohmylms-course'
+			),
+			ARRAY_A
 		);
-		$course_ids = $wpdb->get_results( $query, ARRAY_A );
 
 		$courses = array();
 		foreach ( $course_ids as $course_id ) {
@@ -457,20 +466,22 @@ class StudentStore extends DataStore {
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'ohmylms_user_enrollment';
 		$post_table = $wpdb->prefix . 'posts';
-		$query      = $wpdb->prepare(
-			'
-			SELECT DISTINCT e.course_id
-			FROM %i e
-			JOIN %i p ON e.course_id = p.ID
-			WHERE e.user_id = %d AND e.progress = %s AND p.post_type = %s
-		',
-			$table_name,
-			$post_table,
-			$student->get_id(),
-			'completed',
-			'ohmylms-course'
+		$course_ids = $wpdb->get_results(
+			$wpdb->prepare(
+				'
+				SELECT DISTINCT e.course_id
+				FROM %i e
+				JOIN %i p ON e.course_id = p.ID
+				WHERE e.user_id = %d AND e.progress = %s AND p.post_type = %s
+			',
+				$table_name,
+				$post_table,
+				$student->get_id(),
+				'completed',
+				'ohmylms-course'
+			),
+			ARRAY_A
 		);
-		$course_ids = $wpdb->get_results( $query, ARRAY_A );
 
 		$courses = array();
 		foreach ( $course_ids as $course_id ) {
@@ -628,14 +639,19 @@ class StudentStore extends DataStore {
 		return ohmylms_get_course_first_lesson_url( $course_id );
 	}
 	/**
-	 * Return the placeholder URL while certificate downloads are unavailable.
+	 * Download address of the learner's valid certificate for a course.
 	 *
-	 * @param Student $student The student object, retained for compatibility.
-	 * @param int     $course_id The course ID, retained for compatibility.
-	 * @return string The placeholder URL.
+	 * @param Student $student The student object.
+	 * @param int     $course_id The course ID.
+	 * @return string The PDF (or printable page) address, or '' without a valid certificate.
 	 */
 	public function get_course_certificate_url( $student, $course_id ) {
-		return '#';
+		$record = \OhMyLMS\Certificates\Issuer::active_for( (int) $student->get_id(), (int) $course_id );
+		if ( ! $record ) {
+			return '';
+		}
+
+		return \OhMyLMS\Certificates\Download::url( $record['code'], \OhMyLMS\Certificates\PdfRenderer::available() ? 'pdf' : 'print' );
 	}
 
 	/**
@@ -732,7 +748,9 @@ class StudentStore extends DataStore {
 	 * @since 1.0.0
 	 */
 	public function has_cover_image( $student ) {
-		return ! empty( get_user_meta( $student->get_id(), 'cover_image', true ) );
+		$cover = (string) get_user_meta( $student->get_id(), 'cover_image', true );
+		// Removing a cover used to store the placeholder URL.
+		return '' !== $cover && false === strpos( $cover, 'student-cover-image-placeholder' );
 	}
 
 
@@ -747,8 +765,11 @@ class StudentStore extends DataStore {
 	 * @throws \Exception When the operation cannot be completed.*/
 	public function complete_lesson( $student, $lesson_id, $course_id ) {
 		global $wpdb;
-		$content_type  = ohmylms_get_content_type_id_by_content_id( $lesson_id );
-		$lesson        = ohmylms_get_content_object( $content_type, $lesson_id );
+		$content_type = ohmylms_get_content_type_id_by_content_id( $lesson_id );
+		$lesson       = ohmylms_get_content_object( $content_type, $lesson_id );
+		if ( ! $lesson ) {
+			return false;
+		}
 		$content_type  = $lesson->get_type();
 		$enrollment_id = $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE user_id = %d AND course_id = %d', $wpdb->prefix . 'ohmylms_user_enrollment', $student->get_id(), $course_id ) );
 		$table_name    = $wpdb->prefix . 'ohmylms_user_progress';
@@ -805,20 +826,22 @@ class StudentStore extends DataStore {
 		global $wpdb;
 		$table_name       = $wpdb->prefix . 'ohmylms_user_progress';
 		$enrollment_table = $wpdb->prefix . 'ohmylms_user_enrollment';
-		$query            = $wpdb->prepare(
-			'
-		SELECT p.*
-		FROM %i p
-		JOIN %i e ON p.enrollment_id = e.id
-		WHERE e.user_id = %d AND p.content_id = %d AND p.status = %s
-	',
-			$table_name,
-			$enrollment_table,
-			$student->get_id(),
-			$lesson_id,
-			'completed'
+		$lesson           = $wpdb->get_row(
+			$wpdb->prepare(
+				'
+			SELECT p.*
+			FROM %i p
+			JOIN %i e ON p.enrollment_id = e.id
+			WHERE e.user_id = %d AND p.content_id = %d AND p.status = %s
+		',
+				$table_name,
+				$enrollment_table,
+				$student->get_id(),
+				$lesson_id,
+				'completed'
+			),
+			ARRAY_A
 		);
-		$lesson           = $wpdb->get_row( $query, ARRAY_A );
 		$result           = $lesson ? true : false;
 
 		if ( $result ) {
@@ -913,13 +936,12 @@ class StudentStore extends DataStore {
 		$completed_content_count = 0;
 		if ( $course && ! empty( $content_type ) ) {
 			$course_id               = $course->get_id();
-			$placeholders            = implode( ',', array_fill( 0, count( $content_type ), '%s' ) );
 			$args                    = array_merge( array( $table_name, $enrollment_table, $user_id, $course_id, 'completed' ), array_values( $content_type ) );
 			$completed_content_count = $wpdb->get_var(
 				$wpdb->prepare(
-					"SELECT COUNT(*) FROM %i up
+					'SELECT COUNT(*) FROM %i up
 			INNER JOIN %i ue ON up.enrollment_id = ue.id
-			WHERE ue.user_id = %d AND ue.course_id = %d AND up.status = %s AND up.content_type IN ($placeholders)",
+			WHERE ue.user_id = %d AND ue.course_id = %d AND up.status = %s AND up.content_type IN (' . implode( ',', array_fill( 0, count( $content_type ), '%s' ) ) . ')',
 					$args
 				)
 			);
@@ -966,8 +988,7 @@ class StudentStore extends DataStore {
 			$table_name  = $wpdb->prefix . 'ohmylms_user_enrollment';
 			$enroll_data = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE user_id = %d AND course_id = %d', $table_name, $student_id, $course_id ), ARRAY_A );
 			if ( 'enrolled' === $enroll_data['status'] && 'running' === $enroll_data['progress'] ) {
-				$wpdb->update(
-					$table_name,
+				\OhMyLMS\Student\Enrollments::update(
 					array(
 						'progress' => 'completed',
 						'end_date' => current_time( 'mysql' ),
@@ -1031,11 +1052,8 @@ class StudentStore extends DataStore {
 	 * @param mixed $order_id Order identifier.
 	 */
 	public function delete_enrollment( $student_id, $order_id ) {
-		global $wpdb;
-		$table_name = $wpdb->prefix . 'ohmylms_user_enrollment';
 		// Delete the row.
-		$delete_result = $wpdb->delete(
-			$table_name,
+		$delete_result = \OhMyLMS\Student\Enrollments::delete(
 			array(
 				'user_id'  => $student_id,
 				'order_id' => $order_id,
@@ -1059,17 +1077,14 @@ class StudentStore extends DataStore {
 	 * @param mixed $new_status New status.
 	 */
 	public function update_enrollment_status( $student_id, $order_id, $new_status ) {
-		global $wpdb;
-		$table_name = $wpdb->prefix . 'ohmylms_user_enrollment';
-
 		// Update the status.
-		$update_result = $wpdb->update(
-			$table_name,
+		$update_result = \OhMyLMS\Student\Enrollments::update(
 			array( 'status' => $new_status ), // Data to update.
 			array(
 				'user_id'  => $student_id,
 				'order_id' => $order_id,
 			), // WHERE conditions.
+			null,
 			array( '%s' ), // Format for updated data.
 			array( '%d', '%d' ) // Format for WHERE conditions.
 		);
@@ -1223,18 +1238,18 @@ class StudentStore extends DataStore {
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'ohmylms_notifications';
 
-		$query = $wpdb->prepare(
-			'SELECT COUNT(*) FROM %i
-			WHERE student_id = %d
-			AND course_id = %d
-			AND status = %s',
-			$table_name,
-			$student->get_id(),
-			$course_id,
-			'sent'
+		$count = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM %i
+				WHERE student_id = %d
+				AND course_id = %d
+				AND status = %s',
+				$table_name,
+				$student->get_id(),
+				$course_id,
+				'sent'
+			)
 		);
-
-		$count = $wpdb->get_var( $query );
 		return $count > 0;
 	}
 
@@ -1251,21 +1266,22 @@ class StudentStore extends DataStore {
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'ohmylms_notifications';
 
-		$query = $wpdb->prepare(
-			'SELECT id, subject, message, created_at as sent_date, email
-			FROM %i
-			WHERE student_id = %d
-			AND course_id = %d
-			AND status = %s
-			ORDER BY created_at DESC
-			LIMIT 1',
-			$table_name,
-			$student->get_id(),
-			$course_id,
-			'sent'
+		$result = $wpdb->get_row(
+			$wpdb->prepare(
+				'SELECT id, subject, message, created_at as sent_date, email
+				FROM %i
+				WHERE student_id = %d
+				AND course_id = %d
+				AND status = %s
+				ORDER BY created_at DESC
+				LIMIT 1',
+				$table_name,
+				$student->get_id(),
+				$course_id,
+				'sent'
+			),
+			ARRAY_A
 		);
-
-		$result = $wpdb->get_row( $query, ARRAY_A );
 
 		if ( ! $result ) {
 			return false;

@@ -8,6 +8,7 @@
 namespace OhMyLMS\Curriculum;
 
 use OhMyLMS\Skills\Taxonomy;
+use OhMyLMS\Utility\Lock;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -40,7 +41,7 @@ final class MappingReconnect {
 			return Access::error( 'ohmylms_reconnect_invalid', __( 'The replacement objective must belong to the chosen source syllabus.', 'ohmylms' ) );
 		}
 		$lock = SkillMappings::LOCK . '-' . md5( $wpdb->prefix );
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) ) {
+		if ( ! Lock::acquire( $lock, 5 ) ) {
 			return Access::error( 'ohmylms_mapping_busy', __( 'Another mapping change is being saved. Try again.', 'ohmylms' ), 409 );
 		}
 		try {
@@ -98,7 +99,7 @@ final class MappingReconnect {
 				),
 			);
 		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+			Lock::release( $lock );
 		}
 	}
 }

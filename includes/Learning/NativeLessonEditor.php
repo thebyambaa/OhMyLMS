@@ -254,9 +254,41 @@ final class NativeLessonEditor {
 			if ( 'external_url' === $property ) {
 				$setting = esc_url_raw( $setting );
 			}
+			if ( 'video_settings' === $property && is_array( $setting ) ) {
+				$setting = self::clean_video_settings( $setting, $post->ID );
+			}
 			update_post_meta( $post->ID, self::META_KEYS[ $property ], $setting );
 		}
 		return true;
+	}
+
+	/**
+	 * Bound the completion keys of native video settings: duration 0–86400 s, a known rule, 1–100 %, and a
+	 * poster that is an image the author can edit (else the stored poster is kept).
+	 *
+	 * @param array $video     Submitted video settings.
+	 * @param int   $lesson_id Lesson ID.
+	 * @return array
+	 */
+	private static function clean_video_settings( array $video, $lesson_id ) {
+		if ( array_key_exists( 'duration', $video ) ) {
+			$video['duration'] = max( 0, min( VideoCompletion::MAX_DURATION, (int) $video['duration'] ) );
+		}
+		if ( array_key_exists( 'completion_rule', $video ) ) {
+			$video['completion_rule'] = in_array( $video['completion_rule'], VideoCompletion::RULES, true ) ? $video['completion_rule'] : 'none';
+		}
+		if ( array_key_exists( 'watch_percent', $video ) ) {
+			$video['watch_percent'] = max( 1, min( 100, (int) $video['watch_percent'] ) );
+		}
+		if ( array_key_exists( 'poster_id', $video ) ) {
+			$poster = absint( $video['poster_id'] );
+			$stored = VideoCompletion::settings( $lesson_id )['poster_id'];
+			if ( $poster && $poster !== $stored && ( 'attachment' !== get_post_type( $poster ) || 0 !== strpos( (string) get_post_mime_type( $poster ), 'image/' ) || ! current_user_can( 'edit_post', $poster ) ) ) {
+				$poster = $stored;
+			}
+			$video['poster_id'] = $poster;
+		}
+		return $video;
 	}
 
 	/**
@@ -285,13 +317,17 @@ final class NativeLessonEditor {
 	public static function return_url() {
 		// Navigation only: this parameter never changes lesson data.
 		$screen   = get_current_screen();
-		$fallback = $screen && 'ohmylms-quiz' === $screen->post_type ? \OhMyLMS\Assessment\Profiles::of( get_the_ID() )['return_route'] : ( $screen && 'ohmylms-question' === $screen->post_type ? '/question-bank' : '/content-hub/lessons' );
+		$fallback = $screen && 'ohmylms-quiz' === $screen->post_type ? \OhMyLMS\Assessment\Profiles::of( get_the_ID() )['return_route'] : ( $screen && 'ohmylms-question' === $screen->post_type ? '/content-hub/question-bank' : '/content-hub/lessons' );
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only editor navigation.
 		$route = isset( $_GET['ohmylms_return'] ) ? wp_sanitize_redirect( wp_unslash( $_GET['ohmylms_return'] ) ) : $fallback;
 		if ( ! preg_match( '#^/(?:content-hub|course-edit|question-bank)(?:/|$)#', $route ) || preg_match( '/[\r\n]/', $route ) ) {
 			$route = $fallback;
 		}
-		return admin_url( 'admin.php?page=ohmylms' ) . '#' . $route;
+		// `/question-bank` was never a legacy route; the bank is a Content Hub tab.
+		if ( preg_match( '#^/question-bank(?=/|\?|$)#', $route ) ) {
+			$route = '/content-hub' . $route;
+		}
+		return \OhMyLMS\Admin\LegacyRoutes::url( $route );
 	}
 
 	/**
@@ -377,7 +413,7 @@ final class NativeLessonEditor {
 				'initialSkillId'  => isset( $_GET['ohmylms_skill'] ) ? absint( $_GET['ohmylms_skill'] ) : 0,
 				'questionTypes'   => \OhMyLMS\Extensions\Registry::manifest()['question'] ?? array(),
 				'newQuestionUrl'  => admin_url( 'post-new.php?post_type=ohmylms-question' ),
-				'bankUrl'         => admin_url( 'admin.php?page=ohmylms' ) . '#/question-bank',
+				'bankUrl'         => \OhMyLMS\Admin\LegacyRoutes::app_url( '/content-hub/question-bank' ),
 				'chapterId'       => ohmylms_get_chapter_id_by_content_id( get_the_ID() ),
 				'profile'         => 'ohmylms-quiz' === $screen->post_type ? \OhMyLMS\Assessment\Profiles::editor( get_the_ID() ) : null,
 				'assessmentTypes' => array_values(

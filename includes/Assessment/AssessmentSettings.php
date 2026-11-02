@@ -221,6 +221,17 @@ final class AssessmentSettings {
 	 * @param mixed $attempt_id Attempt identifier.
 	 */
 	public static function feedback_visible( $attempt_id ) {
+		/**
+		 * Decide feedback visibility for an attempt before the quiz release policy; null leaves it to
+		 * the policy. Exams answer for their attempts (`Exams\Results`).
+		 *
+		 * @param bool|null $visible    Decision, or null.
+		 * @param int       $attempt_id Attempt ID.
+		 */
+		$decided = apply_filters( 'ohmylms_attempt_feedback_visible', null, (int) $attempt_id );
+		if ( null !== $decided ) {
+			return (bool) $decided;
+		}
 		$context = AttemptItems::context( $attempt_id );
 		if ( ! $context ) {
 			return true; }

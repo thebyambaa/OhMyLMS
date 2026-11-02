@@ -275,6 +275,7 @@ final class SyllabusCourse {
 		$request = new \WP_REST_Request( 'POST', '/ohmylms/v1/courses' );
 		$request->set_body_params(
 			array(
+				'title'             => $name,
 				'name'              => $name,
 				'status'            => 'draft',
 				'course_type'       => 'self-paced',
@@ -487,6 +488,31 @@ final class SyllabusCourse {
 			return true; }
 		$saved = Catalog::save_draft( $course_id, array( 'outcomes' => $next ) );
 		return is_wp_error( $saved ) ? $saved : true;
+	}
+
+	/**
+	 * The requirement and target of each syllabus skill that is an outcome of the course draft; empty without a course.
+	 *
+	 * @param int $syllabus_id Syllabus ID.
+	 * @return array[] `[{term_id, required, target}]` in draft order.
+	 */
+	public static function requirements( $syllabus_id ) {
+		$course_id = self::course_id( $syllabus_id );
+		if ( ! $course_id ) {
+			return array();
+		}
+		$mine = Syllabus::skill_ids( Items::with_descendants( $syllabus_id ) );
+		$rows = array();
+		foreach ( CourseProgram::editor( $course_id )['draft']['outcomes'] as $outcome ) {
+			if ( in_array( (int) $outcome['term_id'], $mine, true ) ) {
+				$rows[] = array(
+					'term_id'  => (int) $outcome['term_id'],
+					'required' => ! empty( $outcome['required'] ),
+					'target'   => (string) $outcome['target'],
+				);
+			}
+		}
+		return $rows;
 	}
 
 	/**

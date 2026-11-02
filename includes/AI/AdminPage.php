@@ -22,17 +22,16 @@ final class AdminPage {
 	const SLUG = 'ohmylms-ai';
 
 	/** Where the tab lives in the admin app. */
-	const TAB = 'ai-tutor-settings';
+	const TAB = 'ai-tutor';
 
-	/** Register shared AI tools routes and the legacy bookmark. */
+	/** Register the legacy bookmark. The routes are in {@see Rest\SettingsController}. */
 	public static function init() {
-		add_action( 'rest_api_init', array( __CLASS__, 'routes' ) );
 		add_action( 'admin_menu', array( __CLASS__, 'legacy_menu' ), 99 );
 	}
 
 	/** URL of the Settings tab. */
 	public static function url() {
-		return admin_url( 'admin.php?page=ohmylms#/settings/' . self::TAB );
+		return \OhMyLMS\Admin\LegacyRoutes::app_url( '/settings?tab=' . self::TAB );
 	}
 
 	/** Keep old bookmarks working: a hidden page that forwards to the tab. */
@@ -52,44 +51,6 @@ final class AdminPage {
 	/** Restrict provider credentials and tool policies to administrators. */
 	public static function can() {
 		return current_user_can( 'manage_options' );
-	}
-
-	/** Register settings, model discovery and connection tests. */
-	public static function routes() {
-		register_rest_route(
-			'ohmylms/v1',
-			'/ai/models',
-			array(
-				'methods'             => 'POST',
-				'permission_callback' => array( __CLASS__, 'can' ),
-				'callback'            => array( Models::class, 'listing' ),
-			)
-		);
-		register_rest_route(
-			'ohmylms/v1',
-			'/ai',
-			array(
-				array(
-					'methods'             => 'GET',
-					'permission_callback' => array( __CLASS__, 'can' ),
-					'callback'            => array( __CLASS__, 'read' ),
-				),
-				array(
-					'methods'             => 'POST',
-					'permission_callback' => array( __CLASS__, 'can' ),
-					'callback'            => array( __CLASS__, 'save' ),
-				),
-			)
-		);
-		register_rest_route(
-			'ohmylms/v1',
-			'/ai/test',
-			array(
-				'methods'             => 'POST',
-				'permission_callback' => array( __CLASS__, 'can' ),
-				'callback'            => array( __CLASS__, 'test' ),
-			)
-		);
 	}
 
 	/** Everything the settings tab shows. Never contains the key. */

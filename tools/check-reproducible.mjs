@@ -7,7 +7,7 @@ const walk = ( dir ) =>
 	fs
 		.readdirSync( dir, { withFileTypes: true } )
 		.flatMap( ( e ) =>
-			e.isDirectory() && e.name !== 'parity'
+			e.isDirectory()
 				? walk( path.join( dir, e.name ) )
 				: e.isFile()
 					? [ path.join( dir, e.name ) ]
@@ -27,7 +27,7 @@ const hashes = () =>
 	);
 const build = () => {
 	for ( const args of [
-		[ 'tools/build-assets.mjs', '--extensions' ],
+		[ 'tools/build-assets.mjs' ],
 		[
 			'node_modules/webpack-cli/bin/cli.js',
 			'--config',

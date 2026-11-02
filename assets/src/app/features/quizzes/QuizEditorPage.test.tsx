@@ -6,12 +6,18 @@ import { BootstrapProvider } from '../../bootstrap/BootstrapContext';
 import { ApiError } from '../../lib/api';
 import { createBootstrap } from '../../test/render';
 import * as api from './api';
-import { quiz } from './fixtures';
+import { questionList, quiz, sharedSlot } from './fixtures';
+import * as questionsApi from './questionsApi';
 import QuizEditorPage from './QuizEditorPage';
 
 vi.mock( './api', () => ( {
 	getQuiz: vi.fn(),
 	updateQuiz: vi.fn(),
+} ) );
+vi.mock( './questionsApi', async ( original ) => ( {
+	...( await original< typeof import( './questionsApi' ) >() ),
+	listQuizQuestions: vi.fn(),
+	removeQuizQuestion: vi.fn(),
 } ) );
 
 function renderPage( route = '/quizzes/11' ) {
@@ -38,6 +44,9 @@ const rejection = ( status: number, code: string, message: string ) =>
 beforeEach( () => {
 	vi.resetAllMocks();
 	vi.mocked( api.getQuiz ).mockResolvedValue( quiz );
+	vi.mocked( questionsApi.listQuizQuestions ).mockResolvedValue(
+		questionList
+	);
 } );
 
 describe( 'QuizEditorPage', () => {
@@ -65,14 +74,53 @@ describe( 'QuizEditorPage', () => {
 			screen.getByRole( 'link', { name: 'Attempts (3)' } )
 		).toHaveAttribute( 'href', '/quizzes/11/attempts' );
 		expect(
-			screen.getByRole( 'link', { name: 'Edit questions' } )
-		).toHaveAttribute(
-			'href',
-			'http://example.test/wp-admin/admin.php?page=ohmylms#/quiz-edit/11'
-		);
+			screen.queryByRole( 'link', { name: 'Edit questions' } )
+		).toBeNull();
 		expect(
 			screen.getByRole( 'textbox', { name: 'Questions per page' } )
 		).toBeDisabled();
+		expect(
+			await screen.findByRole( 'table', {
+				name: 'Questions in this quiz',
+			} )
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'region', { name: 'Questions' } )
+		).toHaveTextContent( '2 questions · Total marks: 5' );
+		expect(
+			screen.getByText( /worth 5 marks in total/ )
+		).toBeInTheDocument();
+	} );
+	it( 'updates the total marks in the passing score help after a question change', async () => {
+		vi.mocked( questionsApi.removeQuizQuestion ).mockResolvedValue( {
+			...questionList,
+			questions: [ { ...sharedSlot, position: 1 } ],
+			totals: { ...questionList.totals, questions: 1, total_marks: 3 },
+		} );
+		const user = userEvent.setup();
+		renderPage();
+		await user.click(
+			await screen.findByRole( 'button', {
+				name: 'Remove Pick the larger fraction',
+			} )
+		);
+		await user.click(
+			screen.getByRole( 'button', { name: 'Remove question' } )
+		);
+		expect(
+			await screen.findByText( /worth 3 marks in total/ )
+		).toBeInTheDocument();
+	} );
+	it( 'disables the question actions for a trashed quiz', async () => {
+		vi.mocked( api.getQuiz ).mockResolvedValue( {
+			...quiz,
+			status: 'trash',
+		} );
+		renderPage();
+		await screen.findByRole( 'table', { name: 'Questions in this quiz' } );
+		expect(
+			screen.queryByRole( 'button', { name: 'Add from question bank' } )
+		).toBeNull();
 	} );
 	it( 'rejects an invalid route id without requesting anything', () => {
 		renderPage( '/quizzes/abc' );
@@ -139,9 +187,9 @@ describe( 'QuizEditorPage', () => {
 		const title = await screen.findByRole( 'textbox', { name: /Title/ } );
 		await user.clear( title );
 		await user.type( title, 'Renamed' );
-		expect( screen.getByRole( 'status' ) ).toHaveTextContent(
-			'You have unsaved changes.'
-		);
+		expect(
+			screen.getByText( 'You have unsaved changes.' )
+		).toHaveAttribute( 'role', 'status' );
 		await user.click(
 			screen.getByRole( 'checkbox', { name: 'Randomise question order' } )
 		);

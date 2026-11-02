@@ -278,7 +278,7 @@ try {
 			$check( 'draft' === $exam['status'] && 18.0 === (float) $exam['total_marks'] && 6 === count( $exam['question_ids'] ), 'Draft exam contains the complete paper' );
 			$check( 409 === $call( 'POST', 'exams/' . $exam_id . '/publish' )->get_status(), 'Publication requires approved question versions' );
 			foreach ( $job['version_ids'] as $question_id => $version_id ) {
-				$check( 200 === $call( 'POST', 'question-bank/' . $question_id . '/approve', array( 'version_id' => $version_id ) )->get_status(), 'Approve exact version' ); }
+				$check( 200 === $call( 'POST', 'questions/' . $question_id . '/approve', array( 'version_id' => $version_id ) )->get_status(), 'Approve exact version' ); }
 			$check( 200 === $call( 'POST', 'exams/' . $exam_id . '/publish' )->get_status(), 'Publish approved exam' );
 			$branch = \OhMyLMS\Curriculum\Items::create(
 				array(
@@ -295,24 +295,24 @@ try {
 			\OhMyLMS\Curriculum\Links::add( $child['id'], 'skill', $skill['id'] );
 			$scope = $call(
 				'GET',
-				'question-bank',
+				'questions',
 				array(
 					'organisation' => 'curriculum',
 					'scope'        => $branch['id'],
 				)
-			)->get_data();
-			$check( 6 === $scope['total'], 'Curriculum branch includes descendant skill questions without copying them' );
+			);
+			$check( 6 === (int) $scope->get_headers()['X-WP-Total'], 'Curriculum branch includes descendant skill questions without copying them' );
 			$empty        = \OhMyLMS\Curriculum\Items::create( array( 'name' => 'Empty bank scope' ) );
 			$empty_result = $call(
 				'GET',
-				'question-bank',
+				'questions',
 				array(
 					'organisation' => 'curriculum',
 					'scope'        => $empty['id'],
 				)
-			)->get_data();
+			);
 			$check(
-				0 === $empty_result['total'],
+				0 === (int) $empty_result->get_headers()['X-WP-Total'],
 				'Empty branch fails closed: ' . wp_json_encode(
 					array(
 						'empty'  => $empty,
@@ -328,26 +328,26 @@ try {
 			);
 			\OhMyLMS\Curriculum\Links::add( $roadmap['id'], 'skill', $skill['id'] );
 			$check(
-				6 === $call(
+				6 === (int) $call(
 					'GET',
-					'question-bank',
+					'questions',
 					array(
 						'organisation' => 'roadmap',
 						'scope'        => $roadmap['id'],
 					)
-				)->get_data()['total'],
+				)->get_headers()['X-WP-Total'],
 				'Roadmap skill references discover the same reusable questions'
 			);
 			$exam_data = get_post_meta( $exam_id, Library::META, true );
 			$check(
-				6 === $call(
+				6 === (int) $call(
 					'GET',
-					'question-bank',
+					'questions',
 					array(
 						'organisation' => 'course',
 						'scope'        => $exam_data['course_id'],
 					)
-				)->get_data()['total'],
+				)->get_headers()['X-WP-Total'],
 				'Course placements discover the same questions'
 			);
 			$extension = static function ( $references, $view ) use ( $skill ) {
@@ -355,14 +355,14 @@ try {
 			};
 				add_filter( 'ohmylms_question_bank_resolve_scope', $extension, 10, 2 );
 				$check(
-					6 === $call(
+					6 === (int) $call(
 						'GET',
-						'question-bank',
+						'questions',
 						array(
 							'organisation' => 'fixture',
 							'scope'        => 1,
 						)
-					)->get_data()['total'],
+					)->get_headers()['X-WP-Total'],
 					'Extension scope resolves existing identities'
 				);
 			$other_author = wp_insert_user(
@@ -374,14 +374,14 @@ try {
 			);
 			wp_set_current_user( $other_author );
 			$check(
-				0 === $call(
+				0 === (int) $call(
 					'GET',
-					'question-bank',
+					'questions',
 					array(
 						'organisation' => 'fixture',
 						'scope'        => 1,
 					)
-				)->get_data()['total'],
+				)->get_headers()['X-WP-Total'],
 				'Organisation cannot expand question visibility'
 			);
 			wp_set_current_user( $admin );

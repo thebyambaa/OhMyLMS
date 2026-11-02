@@ -137,7 +137,7 @@ class StripeApi {
 		);
 
 		if ( is_wp_error( $response ) ) {
-			throw new \Exception( 'WP_Error: ' . $response->get_error_message() );
+			throw new \Exception( 'WP_Error: ' . $response->get_error_message() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Callers record it as order-note or JSON error text.
 		}
 
 		$response_body    = wp_remote_retrieve_body( $response );
@@ -145,13 +145,13 @@ class StripeApi {
 		$response_headers = wp_remote_retrieve_headers( $response );
 
 		if ( empty( $response_body ) ) {
-			throw new \Exception( __( 'Empty response body from Stripe API.', 'ohmylms' ) );
+			throw new \Exception( esc_html__( 'Empty response body from Stripe API.', 'ohmylms' ) );
 		}
 
 		$decoded_body = json_decode( $response_body );
 
 		if ( json_last_error() !== JSON_ERROR_NONE ) {
-			throw new \Exception( __( 'Failed to decode JSON response from Stripe API.', 'ohmylms' ) . ' Body: ' . substr( $response_body, 0, 200 ) );
+			throw new \Exception( __( 'Failed to decode JSON response from Stripe API.', 'ohmylms' ) . ' Body: ' . substr( $response_body, 0, 200 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Callers record it as order-note or JSON error text.
 		}
 
 		// Check for Stripe errors in the response body itself

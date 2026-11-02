@@ -15,12 +15,12 @@ defined( 'ABSPATH' ) || exit();
 
 <?php
 
-	$title = '';
-	$total = 0;
+	$membership_title = '';
+	$total            = 0;
 if ( isset( $_GET['membership_id'] ) ) {
-	$membership_id = sanitize_text_field( wp_unslash( $_GET['membership_id'] ));
-	$title         = get_the_title( $membership_id );
-	$total         = MembershipHelper::get_plan_price( $membership_id );
+	$membership_id    = sanitize_text_field( wp_unslash( $_GET['membership_id'] ) );
+	$membership_title = get_the_title( $membership_id );
+	$total            = MembershipHelper::get_plan_price( $membership_id );
 } else {
 	$cart_items = \OhMyLMS\Commerce\ecommerce()->cart->get_cart_contents();
 	$total      = \OhMyLMS\Commerce\ecommerce()->cart->get_total( $cart_items );
@@ -41,7 +41,7 @@ if ( isset( $_GET['membership_id'] ) ) {
 	if ( ! empty( $membership_id ) ) {
 		?>
 		<tr>
-			<td><?php echo esc_html( $title ); ?></td>
+			<td><?php echo esc_html( $membership_title ); ?></td>
 			<td>
 				<?php
 				echo 1;

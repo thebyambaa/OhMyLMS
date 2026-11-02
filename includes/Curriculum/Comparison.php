@@ -10,6 +10,7 @@ namespace OhMyLMS\Curriculum;
 use OhMyLMS\Skills\SubjectProfileModel;
 use OhMyLMS\Skills\SubjectProfiles;
 use OhMyLMS\Skills\Taxonomy;
+use OhMyLMS\Utility\Lock;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -349,7 +350,7 @@ final class Comparison {
 			return Access::error( 'ohmylms_shared_invalid', __( 'Enter a name up to 190 characters, a scope up to 2000 characters and a topic up to 100 characters.', 'ohmylms' ) );
 		}
 		$lock = SkillMappings::LOCK . '-' . md5( $wpdb->prefix );
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) ) {
+		if ( ! Lock::acquire( $lock, 5 ) ) {
 			return Access::error( 'ohmylms_mapping_busy', __( 'Another mapping change is being saved. Try again.', 'ohmylms' ), 409 );
 		}
 		try {
@@ -391,7 +392,7 @@ final class Comparison {
 			}
 			return self::shared_skill( $id );
 		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+			Lock::release( $lock );
 		}
 	}
 

@@ -1,5 +1,6 @@
 import contract from './contract.json';
-import { editorPath } from './model';
+import { quizGraded } from './fixtures';
+import { TEXT_FIELDS, editorPath } from './model';
 
 describe( 'emails REST contract', () => {
 	it( 'describes every route the client calls', () => {
@@ -19,8 +20,8 @@ describe( 'emails REST contract', () => {
 		expect( contract.capability ).toBe( 'manage_options' );
 	} );
 
-	it( 'lists the eleven emails once and every id is URL safe', () => {
-		expect( new Set( contract.emailIds ).size ).toBe( 11 );
+	it( 'lists the fifteen emails once and every id is URL safe', () => {
+		expect( new Set( contract.emailIds ).size ).toBe( 15 );
 		for ( const id of contract.emailIds ) {
 			expect( id ).toMatch( /^[a-z][a-z0-9_]*$/ );
 			expect( editorPath( id ) ).toBe( `/emails?email=${ id }` );
@@ -28,5 +29,23 @@ describe( 'emails REST contract', () => {
 		expect( Object.keys( contract.mergeTags.perEmail ).sort() ).toEqual(
 			[ ...contract.emailIds ].sort()
 		);
+	} );
+
+	it( 'reports the default and the customized flag of every text field', () => {
+		const email = contract.definitions.Email;
+		expect( Object.keys( quizGraded ).sort() ).toEqual(
+			[ ...email.required ].sort()
+		);
+		expect( email.properties.defaults.required ).toEqual( [
+			...TEXT_FIELDS,
+		] );
+		expect( email.properties.customized.required ).toEqual( [
+			...TEXT_FIELDS,
+		] );
+		for ( const field of TEXT_FIELDS ) {
+			expect(
+				contract.definitions.EmailWrite.properties[ field ].type
+			).toEqual( [ 'string', 'null' ] );
+		}
 	} );
 } );

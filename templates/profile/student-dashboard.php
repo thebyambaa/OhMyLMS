@@ -4,6 +4,7 @@
  *
  * @package OhMyLMS
  */
+
 defined( 'ABSPATH' ) || exit;
 if ( ! is_user_logged_in() ) {
 	return; }
@@ -20,7 +21,8 @@ $in_progress_courses = array_values(
 		}
 	)
 );
-$name                = $student->get_first_name() ?: wp_get_current_user()->display_name;
+$name                = $student->get_first_name();
+$name                = $name ? $name : wp_get_current_user()->display_name;
 $streak_enabled      = \OhMyLMS\Engagement\StreakSettings::enabled();
 $badges              = ( \OhMyLMS\Engagement\Badge::maybe_enable() || $streak_enabled ) ? \OhMyLMS\Engagement\Badge::get_all_badges_of_a_user( $user_id ) : array();
 if ( ! \OhMyLMS\Engagement\Badge::maybe_enable() ) {
@@ -36,13 +38,22 @@ if ( ! \OhMyLMS\Engagement\Badge::maybe_enable() ) {
 }
 $level      = \OhMyLMS\Engagement\Level::get_current_level_of_a_user( $user_id );
 $next_level = \OhMyLMS\Engagement\Level::get_next_level_of_a_user( $user_id );
-$browse     = get_permalink( ohmylms_get_page_id( 'course' ) ) ?: home_url( '/' );
+$browse     = get_permalink( ohmylms_get_page_id( 'course' ) );
+$browse     = $browse ? $browse : home_url( '/' );
 ?>
 <?php ohmylms_get_template( 'global/ohmylms-celebration.php' ); ?>
 <section class="oml-student-dashboard" data-dashboard-theme="<?php echo esc_attr( $dashboard['theme'] ); ?>" data-theme-endpoint="<?php echo esc_url( rest_url( 'ohmylms/v1/student/dashboard-theme' ) ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>" data-save-error="<?php esc_attr_e( 'Could not save your theme. Please try again.', 'ohmylms' ); ?>" data-save-success="<?php esc_attr_e( 'Dashboard theme saved.', 'ohmylms' ); ?>">
 	<header class="oml-dashboard-greeting">
-		<div class="oml-dashboard-person"><?php echo get_avatar( $user_id, 56, '', '', array( 'class' => 'oml-dashboard-avatar' ) ); ?><div><p class="oml-dashboard-eyebrow"><?php esc_html_e( 'Your learning space', 'ohmylms' ); ?></p><h1><?php echo esc_html( sprintf( /* translators: %s: text value. */
-		__( 'Hi %s, let’s keep learning!', 'ohmylms' ), $name ) ); ?></h1></div></div>
+		<div class="oml-dashboard-person"><?php echo get_avatar( $user_id, 56, '', '', array( 'class' => 'oml-dashboard-avatar' ) ); ?><div><p class="oml-dashboard-eyebrow"><?php esc_html_e( 'Your learning space', 'ohmylms' ); ?></p><h1>
+		<?php
+		echo esc_html(
+			sprintf( /* translators: %s: text value. */
+				__( 'Hi %s, let’s keep learning!', 'ohmylms' ),
+				$name
+			)
+		);
+		?>
+		</h1></div></div>
 		<details class="oml-dashboard-customize"><summary><?php esc_html_e( 'Customize dashboard', 'ohmylms' ); ?></summary><div class="oml-dashboard-theme-picker"><p><?php esc_html_e( 'Choose your background', 'ohmylms' ); ?></p>
 		<?php
 		foreach ( array(
@@ -77,9 +88,23 @@ $browse     = get_permalink( ohmylms_get_page_id( 'course' ) ) ?: home_url( '/' 
 					foreach ( array_slice( $in_progress_courses, 0, 6 ) as $learning_course ) {
 						$percent = max( 0, min( 100, (float) $student->get_course_progress_percentage( $learning_course->get_id() ) ) );
 						?>
-						<article class="oml-dashboard-course"><img src="<?php echo esc_url( has_post_thumbnail( $learning_course->get_id() ) ? $learning_course->get_thumbnail_url() : plugins_url( 'assets/images/dashboard-course.svg', OHMYLMS_FILE ) ); ?>" alt="" loading="lazy"><div><h3><a href="<?php echo esc_url( $learning_course->get_permalink() ); ?>"><?php echo esc_html( $learning_course->get_name() ); ?></a></h3><p><?php echo esc_html( sprintf( /* translators: %s: text value. */
-						__( '%s%% complete', 'ohmylms' ), $percent ) ); ?></p><progress max="100" value="<?php echo esc_attr( $percent ); ?>" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: text value. */
-						__( '%s course progress', 'ohmylms' ), $learning_course->get_name() ) ); ?>"></progress><a class="oml-dashboard-button" href="<?php echo esc_url( $student->get_course_resume_url( $learning_course->get_id() ) ); ?>"><?php echo esc_html( $percent > 0 ? __( 'Continue', 'ohmylms' ) : __( 'Start learning', 'ohmylms' ) ); ?></a></div></article><?php } ?></div>
+						<article class="oml-dashboard-course"><img src="<?php echo esc_url( has_post_thumbnail( $learning_course->get_id() ) ? $learning_course->get_thumbnail_url() : plugins_url( 'assets/images/dashboard-course.svg', OHMYLMS_FILE ) ); ?>" alt="" loading="lazy"><div><h3><a href="<?php echo esc_url( $learning_course->get_permalink() ); ?>"><?php echo esc_html( $learning_course->get_name() ); ?></a></h3><p>
+						<?php
+						echo esc_html(
+							sprintf( /* translators: %s: text value. */
+								__( '%s%% complete', 'ohmylms' ),
+								$percent
+							)
+						);
+						?>
+						</p>
+						<?php
+						$ohmylms_aria_label = sprintf( /* translators: %s: text value. */
+							__( '%s course progress', 'ohmylms' ),
+							$learning_course->get_name()
+						);
+						?>
+						<progress max="100" value="<?php echo esc_attr( $percent ); ?>" aria-label="<?php echo esc_attr( $ohmylms_aria_label ); ?>"></progress><a class="oml-dashboard-button" href="<?php echo esc_url( $student->get_course_resume_url( $learning_course->get_id() ) ); ?>"><?php echo esc_html( $percent > 0 ? __( 'Continue', 'ohmylms' ) : __( 'Start learning', 'ohmylms' ) ); ?></a></div></article><?php } ?></div>
 					<?php
 					if ( $courses ) {
 						?>
@@ -110,9 +135,25 @@ $browse     = get_permalink( ohmylms_get_page_id( 'course' ) ) ?: home_url( '/' 
 						}
 						if ( ! empty( $skill['last_evidence_at'] ) ) {
 							?>
-						<p><?php echo esc_html( sprintf( /* translators: %s: text value. */
-						__( 'Last practiced %s', 'ohmylms' ), wp_date( 'M j', strtotime( $skill['last_evidence_at'] . ' UTC' ), new DateTimeZone( $dashboard['timezone'] ) ) ) ); ?></p><?php } ?><p><?php echo esc_html( $skill['review_due'] ? __( 'Ready for a review', 'ohmylms' ) : sprintf( /* translators: %d: number. */
-						__( '%d independent correct answers', 'ohmylms' ), $skill['independent_correct'] ) ); ?></p><a class="oml-dashboard-button" href="<?php echo esc_url( add_query_arg( 'ohmylms_practice', $skill['id'], home_url( '/' ) ) ); ?>"><?php esc_html_e( 'Practice skill', 'ohmylms' ); ?></a></article><?php } ?></div>
+						<p>
+							<?php
+							echo esc_html(
+								sprintf( /* translators: %s: text value. */
+									__( 'Last practiced %s', 'ohmylms' ),
+									wp_date( 'M j', strtotime( $skill['last_evidence_at'] . ' UTC' ), new DateTimeZone( $dashboard['timezone'] ) )
+								)
+							);
+							?>
+						</p><?php } ?><p>
+						<?php
+						echo esc_html(
+							$skill['review_due'] ? __( 'Ready for a review', 'ohmylms' ) : sprintf( /* translators: %d: number. */
+								__( '%d independent correct answers', 'ohmylms' ),
+								$skill['independent_correct']
+							)
+						);
+						?>
+						</p><a class="oml-dashboard-button" href="<?php echo esc_url( add_query_arg( 'ohmylms_practice', $skill['id'], home_url( '/' ) ) ); ?>"><?php esc_html_e( 'Practice skill', 'ohmylms' ); ?></a></article><?php } ?></div>
 				</div>
 				<div role="tabpanel" id="oml-panel-recommendations" aria-labelledby="oml-tab-recommendations" tabindex="0" hidden>
 					<?php
@@ -151,9 +192,25 @@ $browse     = get_permalink( ohmylms_get_page_id( 'course' ) ) ?: home_url( '/' 
 						if ( $milestone['days'] <= $snapshot['current_streak'] || $wpdb->get_var( $wpdb->prepare( 'SELECT days FROM %i WHERE user_id=%d AND days=%d', \OhMyLMS\Engagement\StreakSchema::table( 'milestones' ), $user_id, $milestone['days'] ) ) ) {
 							continue; }
 						?>
-					<div class="oml-dashboard-card oml-dashboard-goal"><span class="oml-dashboard-pill"><?php esc_html_e( 'Next streak milestone', 'ohmylms' ); ?></span><h3><?php echo esc_html( sprintf( /* translators: %d: number. */
-					__( '%d learning days', 'ohmylms' ), $milestone['days'] ) ); ?></h3><p><?php echo esc_html( sprintf( /* translators: %d: number. */
-					__( '%d more qualifying days to reach this milestone.', 'ohmylms' ), $milestone['days'] - $snapshot['current_streak'] ) ); ?></p><progress max="<?php echo esc_attr( $milestone['days'] ); ?>" value="<?php echo esc_attr( $snapshot['current_streak'] ); ?>" aria-label="<?php esc_attr_e( 'Next streak milestone progress', 'ohmylms' ); ?>"></progress></div>
+					<div class="oml-dashboard-card oml-dashboard-goal"><span class="oml-dashboard-pill"><?php esc_html_e( 'Next streak milestone', 'ohmylms' ); ?></span><h3>
+						<?php
+						echo esc_html(
+							sprintf( /* translators: %d: number. */
+								__( '%d learning days', 'ohmylms' ),
+								$milestone['days']
+							)
+						);
+						?>
+					</h3><p>
+						<?php
+						echo esc_html(
+							sprintf( /* translators: %d: number. */
+								__( '%d more qualifying days to reach this milestone.', 'ohmylms' ),
+								$milestone['days'] - $snapshot['current_streak']
+							)
+						);
+						?>
+					</p><progress max="<?php echo esc_attr( $milestone['days'] ); ?>" value="<?php echo esc_attr( $snapshot['current_streak'] ); ?>" aria-label="<?php esc_attr_e( 'Next streak milestone progress', 'ohmylms' ); ?>"></progress></div>
 						<?php
 						break; }
 				}
@@ -179,8 +236,16 @@ $browse     = get_permalink( ohmylms_get_page_id( 'course' ) ) ?: home_url( '/' 
 			<?php
 			if ( \OhMyLMS\Engagement\Point::maybe_enable() ) {
 				?>
-			<p><?php echo esc_html( sprintf( /* translators: %d: number. */
-			__( '%d bonus points', 'ohmylms' ), \OhMyLMS\Engagement\Point::get_total_points( $user_id ) ) ); ?></p><?php } ?>
+			<p>
+				<?php
+				echo esc_html(
+					sprintf( /* translators: %d: number. */
+						__( '%d bonus points', 'ohmylms' ),
+						\OhMyLMS\Engagement\Point::get_total_points( $user_id )
+					)
+				);
+				?>
+			</p><?php } ?>
 			<?php
 			if ( $level ) {
 				?>
@@ -188,8 +253,16 @@ $browse     = get_permalink( ohmylms_get_page_id( 'course' ) ) ?: home_url( '/' 
 			<?php
 			if ( $next_level ) {
 				?>
-	<p><?php echo esc_html( sprintf( /* translators: %s: text value. */
-	__( 'Working toward %s', 'ohmylms' ), $next_level['level_data']['name'] ?? __( 'the next level', 'ohmylms' ) ) ); ?></p><progress max="100" value="<?php echo esc_attr( $next_level['progress_percentage'] ); ?>" aria-label="<?php esc_attr_e( 'Next level progress', 'ohmylms' ); ?>"></progress><?php } ?><ul class="oml-dashboard-badges">
+	<p>
+				<?php
+				echo esc_html(
+					sprintf( /* translators: %s: text value. */
+						__( 'Working toward %s', 'ohmylms' ),
+						$next_level['level_data']['name'] ?? __( 'the next level', 'ohmylms' )
+					)
+				);
+				?>
+	</p><progress max="100" value="<?php echo esc_attr( $next_level['progress_percentage'] ); ?>" aria-label="<?php esc_attr_e( 'Next level progress', 'ohmylms' ); ?>"></progress><?php } ?><ul class="oml-dashboard-badges">
 			<?php
 			foreach ( $badges as $badge ) {
 				?>

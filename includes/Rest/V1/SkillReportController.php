@@ -11,6 +11,7 @@ namespace OhMyLMS\Rest\V1;
 use OhMyLMS\Abstracts\RestController;
 use OhMyLMS\Assessment\Schema;
 use OhMyLMS\Schools\Access;
+use OhMyLMS\Schools\Directory;
 use OhMyLMS\Skills\Evidence;
 use OhMyLMS\Skills\Mastery;
 use OhMyLMS\Performance\Guidance;
@@ -22,6 +23,7 @@ use OhMyLMS\Skills\Recommendations;
 use OhMyLMS\Skills\ReportData;
 use OhMyLMS\Skills\Taxonomy;
 use OhMyLMS\Skills\UnitReport;
+use OhMyLMS\Student\Enrollments;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Server;
@@ -193,18 +195,17 @@ class SkillReportController extends RestController {
 	 * @param WP_REST_Request $request REST request.
 	 */
 	private function scope_students( WP_REST_Request $request ) {
-		global $wpdb;
 		if ( (int) $request['class_id'] ) {
 			if ( ! class_exists( Access::class ) || ! Access::classroom( (int) $request['class_id'] ) ) {
 				return new WP_Error( 'ohmylms_forbidden', __( 'You cannot view this class.', 'ohmylms' ), array( 'status' => 403 ) ); }
-			return array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT user_id FROM %i WHERE class_id=%d AND role=\'student\' AND status=\'active\'', $wpdb->prefix . 'ohmylms_class_memberships', (int) $request['class_id'] ) ) );
+			return Directory::class_student_ids( (int) $request['class_id'] );
 		}
 		$course = (int) $request['course_id'];
 		if ( ! $course || get_post_type( $course ) !== OHMYLMS_COURSE_CPT ) {
 			return new WP_Error( 'ohmylms_scope_required', __( 'Choose a course or class.', 'ohmylms' ), array( 'status' => 400 ) ); }
 		if ( ! current_user_can( 'edit_post', $course ) ) {
 			return new WP_Error( 'ohmylms_forbidden', __( 'You cannot view this course.', 'ohmylms' ), array( 'status' => rest_authorization_required_code() ) ); }
-		return array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT user_id FROM %i WHERE course_id=%d AND status=\'enrolled\'', $wpdb->prefix . 'ohmylms_user_enrollment', $course ) ) );
+		return Enrollments::course_user_ids( $course, 0, 0, true );
 	}
 
 	/**
@@ -241,7 +242,7 @@ class SkillReportController extends RestController {
 		$student = (int) $request['student'];
 		if ( ! is_user_logged_in() ) {
 			return new WP_Error( 'ohmylms_forbidden', __( 'Sign in to view skills.', 'ohmylms' ), array( 'status' => rest_authorization_required_code() ) ); }
-		if ( $student === get_current_user_id() || current_user_can( 'manage_options' ) ) {
+		if ( get_current_user_id() === $student || current_user_can( 'manage_options' ) ) {
 			return 'full'; }
 		// Guardians and teachers see a learner only through an explicit school relationship.
 		$school = (int) $request['school_id'];
@@ -347,7 +348,6 @@ class SkillReportController extends RestController {
 	 * @param WP_REST_Request $request REST request.
 	 */
 	public function student( WP_REST_Request $request ) {
-		global $wpdb;
 		$student = (int) $request['student'];
 		Evidence::process( 100 );
 		$view = $this->unit_view( $request, Evidence::summary( $student ) );
@@ -364,15 +364,7 @@ class SkillReportController extends RestController {
 				)
 			);
 		}
-		$evidence = $wpdb->get_results(
-			$wpdb->prepare(
-				'SELECT e.term_id, e.part_id, e.role, e.awarded, e.available, e.independent, e.first_try, e.difficulty, e.source_type, e.source_id, e.question_id, e.version_id, e.evidence_at, e.superseded
-             FROM %i e WHERE e.student_id=%d ORDER BY e.evidence_at DESC, e.id DESC LIMIT 200',
-				Schema::table( 'skill_evidence' ),
-				$student
-			),
-			ARRAY_A
-		);
+		$evidence = Evidence::recent( $student );
 		foreach ( $evidence as &$row ) {
 			$row['question'] = get_the_title( (int) $row['question_id'] ); }
 		return rest_ensure_response(
@@ -417,7 +409,7 @@ class SkillReportController extends RestController {
 		if ( ! is_user_logged_in() ) {
 			return new WP_Error( 'ohmylms_forbidden', __( 'Sign in to set your exam.', 'ohmylms' ), array( 'status' => rest_authorization_required_code() ) );
 		}
-		return (int) $request['student'] === get_current_user_id() || current_user_can( 'manage_options' ) ? true : new WP_Error( 'ohmylms_forbidden', __( 'Only the learner can set their exam.', 'ohmylms' ), array( 'status' => 403 ) );
+		return get_current_user_id() === (int) $request['student'] || current_user_can( 'manage_options' ) ? true : new WP_Error( 'ohmylms_forbidden', __( 'Only the learner can set their exam.', 'ohmylms' ), array( 'status' => 403 ) );
 	}
 
 	/**
@@ -497,7 +489,7 @@ class SkillReportController extends RestController {
 		$access = $this->student_access( $request );
 		if ( is_wp_error( $access ) ) {
 			return $access; }
-		$own = (int) $request['student'] === get_current_user_id();
+		$own = get_current_user_id() === (int) $request['student'];
 		if ( 'full' !== $access || ( 'student' === $request['audience'] ) !== $own ) {
 			return new WP_Error( 'ohmylms_forbidden', __( 'You cannot ask for this note.', 'ohmylms' ), array( 'status' => 403 ) ); }
 		return true;

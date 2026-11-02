@@ -8,6 +8,8 @@
 
 namespace OhMyLMS\Integrations\GoogleMeet\Includes;
 
+use OhMyLMS\I18n\RecipientLocale;
+
 /**
  * Class SessionReminderScheduler
  *
@@ -113,12 +115,18 @@ class SessionReminderScheduler {
 			}
 
 			// Send email reminder.
-			$subject = sprintf( /* translators: %s: text value. */
-			__( 'Reminder: %s starts in 1 hour', 'ohmylms' ), $session_title );
-			$message = sprintf(
-				/* translators: %1$s: text value; %2$s: text value; %3$s: text value; %4$s: text value. */
-				__(
-					'Hi %1$s,
+			RecipientLocale::run(
+				$user,
+				static function () use ( $user, $session_title, $start_time, $meet_link ) {
+					$subject = sprintf(
+						/* translators: %s: session title. */
+						__( 'Reminder: %s starts in 1 hour', 'ohmylms' ),
+						$session_title
+					);
+					$message = sprintf(
+						/* translators: %1$s: recipient's display name; %2$s: session title; %3$s: date and time the session starts; %4$s: Google Meet URL. */
+						__(
+							'Hi %1$s,
 
 This is a reminder that your Google Meet session "%2$s" will start in 1 hour.
 
@@ -126,15 +134,17 @@ Start Time: %3$s
 Join Link: %4$s
 
 See you there!',
-					'ohmylms'
-				),
-				$user->display_name,
-				$session_title,
-				\wp_date( 'F j, Y g:i A', $start_time ),
-				$meet_link
-			);
+							'ohmylms'
+						),
+						$user->display_name,
+						$session_title,
+						\wp_date( 'F j, Y g:i A', $start_time ),
+						$meet_link
+					);
 
-			\wp_mail( $user->user_email, $subject, $message );
+					\wp_mail( $user->user_email, $subject, $message );
+				}
+			);
 		}
 	}
 

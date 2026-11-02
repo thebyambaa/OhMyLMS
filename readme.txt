@@ -5,7 +5,7 @@ Tags: lms, coaching, cohort, course builder, online course
 Requires at least: 6.0
 Tested up to: 7.2
 Requires PHP: 7.4
-Stable tag: 1.2.20
+Stable tag: 1.2.22
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -492,6 +492,10 @@ Yes. All student data is stored in your own WordPress database on your hosting a
 13. Student Profile Edit UI
 
 == Upgrade Notice ==
+= 1.2.22 =
+Mongolian is a second interface language: learners pick English or Монгол (the default follows the browser), staff use their profile language, and every email goes out in its recipient's language. Learner pages no longer load jQuery. Saved email settings forget text that only repeated the default, so defaults are translated per recipient again.
+= 1.2.21 =
+The admin is rebuilt inside the WordPress menu (Dashboard, Content Hub, Account Hub, Commerce, Engagement, Settings) with WordPress list tables and your admin colour scheme; old admin links and bookmarks redirect. Enrolments move to a new table in the background after the update; nothing changes for learners. The administrator chat assistant is removed and its stored settings are deleted.
 = 1.2.12 =
 Adds Google One-Click Sign-In, live session recording auto-attach, and a dedicated student role (existing students migrate automatically). Free version now shows a small "Powered by OhMyLMS" credit on OhMyLMS pages only — auto-hidden with Pro, filterable for developers. Update recommended for all users.
 = 1.2.6 =
@@ -500,7 +504,49 @@ Community feature enhancements and improved OhMyLMS compatibility. Update recomm
 New Gutenberg blocks for Student Dashboard, My Courses, and Student Profile pages. Includes page restore functionality.
 
 == Changelog ==
-= Unreleased =
+= 1.2.22 =
+🚀 New Features
+
+- Added: The full Mongolian translation is live after a native review (13,819 strings; previously only the admin menu, dashboard, learner pages and checkout were).
+- Added: Mongolian interface language. Learners switch between English and Монгол in the learner header, profile and Student Hub (or with `[ohmylms_language_switcher]`); visitors without a choice follow their browser language. Staff use Users › Profile › Language. The switcher can be turned off in Settings › General.
+- Added: Emails are written in each recipient's language, and an email template stores only the fields an administrator changed (with "Reset to default" per field).
+- Changed: The learner front end runs on the WordPress Interactivity API: catalog search and filters, account and profile, login, sign-up and reviews, the lesson and assignment player, video, carousels, checkout and the exam paper. jQuery and the Slick carousel are no longer loaded on learner pages.
+- Changed: Image fields in the admin (course thumbnail, certificate images, badges, hub icons) open the WordPress media library.
+- Added: "Create from syllabus" in the course list and the syllabus editor: select topics or skills, review the generated units, draft lessons and skill links, then create an independent draft course and open its outline.
+- Added: Syllabus editor skill-group deletion (skills stay in the library), source and profile editing with category icon and colour styles, per-skill required and target controls for the syllabus's course, publication of that course through the reviewed Publish panel, and the `syllabus.skill.resources` extension slot under each skill.
+- Added: Quiz editor "Versions" dialog to read any saved version of a question and pin the quiz to it, or unpin it.
+- Added: Marking rubric for short and long text questions (criteria with points, levels and descriptions). Graders score each criterion; the server checks the breakdown against the delivered rubric and saves it with the manual grade and its history. Learners see it with their marked answers only when feedback is released.
+- Added: Question editor fields for add-on question settings, generated from the settings schema, and a `registerQuestionSettings` extension panel. Rejected add-on settings name the add-on (`data.namespace`).
+- Added: Exam import renders pages and crops with Imagick and Ghostscript when Poppler is not set up (Poppler stays preferred; the `ohmylms_exam_import_renderers` filter controls the engines).
+- Changed: School administrators and teachers can open the read-only skill map with their own learners' mastery; editing stays with administrators.
+- Changed: The School workspace's year rollover uses the same rollover as Account Hub: classes move with their active students, classes without students are skipped unless included, and the old copy-every-class path was removed.
+- Changed: Each course placement in the assignment editor links to the course outline opened on that placement.
+
+🛡 Security and fixes
+
+- Fixed: Mark as complete is checked on the server (enrolment, drip, prerequisites, sequential lock), assignment deadlines are enforced on every submit path, and membership cancellation only works for the subscription's owner.
+- Fixed: The PayPal gateway loads and its webhook route is registered; its return handler only marks a PayPal order paid after PayPal confirms the amount.
+- Fixed: Links to lessons, quizzes and assignments in unpublished courses, the login `redirect_to` (no off-site redirects), and the Mongolian PHP strings (`Domain Path: /languages`).
+- Fixed: A syllabus course could be published while a skill it requires had too few approved questions, so no learner could complete it. Required skills of syllabus courses now pass the same question check as other courses, and the readiness panel lists them.
+- Changed: A syllabus course is published only when it has a completion requirement (and, unless it is traditional, a required skill), like any course; before, one with nothing required could be published that no learner could complete.
+- Changed: The syllabus editor shows one outline workspace; the mind map and spreadsheet layouts are removed and their old addresses open the outline.
+- Fixed: Exam import checks every figure crop on the server (minimum size, page range, crop inside the rendered page, and a figure's page and area against its crop on save and accept); the review screen offers to redraw a refused crop, and choosing a crop copies its page and bounds.
+- Fixed: A class without a grade is kept in a year rollover instead of being treated as graduating (which cancelled its students' roster enrolments).
+- Fixed: The MailMint automation list could put an unchecked sort column and search text into SQL; both are now prepared, and unknown sort values fall back to the creation date.
+- Fixed: A Stripe error while creating a customer threw a PHP TypeError instead of reporting Stripe's message.
+- Fixed: Settings › Fonts brings back the learner font (Theme font, System or a Cyrillic-ready Google Font) and the admin font. Both take effect again, "Theme font" keeps the theme's font (it had shown the system font), and web fonts load only on the pages that use them.
+- Fixed: Dashboard, My Courses and Profile redirects keep `&` in their URLs (they were HTML-encoded inside JavaScript).
+- Changed: All PHP code meets the WordPress coding standards with no errors (CI enforces it). Visible effects: request values such as `redirect_to`, the checkout payment method and Google Meet fields are unslashed and sanitized; course card descriptions go through `wp_kses_post`; a few strings (Email, Country, the order total, the plugin installer messages) now use the `ohmylms` text domain.
+
+🗑 Removed (breaking for themes and add-ons that used them; see docs/EXTENSIONS.md)
+
+- Removed: The jQuery learner events `course_adding_to_cart`, `course_added_to_cart`, `payment_method_selected` and `ohmylms:video:completed`, and the SDK's `jqueryTrigger()`. Listen to the DOM events `ohmylms:cart-before-add`, `ohmylms:cart-added`, `ohmylms:cart-error`, `ohmylms:checkout-gateway-changed`, `ohmylms:video-completed` and `ohmylms:lesson-completed` instead.
+- Removed: Payment gateway `open()` and `resume()` hooks receive the checkout form element, not a jQuery object; the QPay script no longer needs jQuery.
+- Removed: The unused admin-ajax actions `ohmylms_loadmore` and `ohmylms_search_filter`, and every `ohmylms_frontend_params` field except `ajax_url` (including `load_more_nonce` and `search_filter_nonce`). The catalogue uses its GET URLs.
+- Removed: The compatibility stylesheets `assets/css/style.css` and `style-rtl.css` (483 KB, never enqueued by the plugin); old URLs now answer 404. Use the `ohmylms-frontend` style handle.
+- Removed: BEM-style class names in the shared editor and hot-text styles (`oml-unit__*`, `oml-outline-item__*`, `oml-vars__*`, `oml-editor-header__*`, `oml-editor-status--*`, `ohmylms-hot-text__*`) are now hyphenated (`oml-unit-header`, `ohmylms-hot-text-option` and so on). Theme overrides that targeted them need the new names.
+
+= 1.2.21 =
 🚀 New Features
 
 - Added: Curriculum — build exam-board, national-curriculum, test, grade, subject and syllabus structures of any depth in one accordion editor, with inline editing, reordering, moving, search and safe deletion, and place courses, skills, question banks and exams in them. Learning mode stays a course setting.

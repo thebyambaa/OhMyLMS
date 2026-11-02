@@ -141,7 +141,7 @@ class StripeCustomer {
 		$response = StripeApi::request( $args, 'customers' );
 
 		if ( ! empty( $response->error ) ) {
-			throw new \Exception( print_r( $response, true ), $response->error->message );
+			throw new \Exception( (string) $response->error->message ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Stripe's message for callers' order notes and logs.
 		}
 
 		$this->set_id( $response->id );
@@ -163,7 +163,7 @@ class StripeCustomer {
 	 * @since 1.0.0
 	 */
 	protected function generate_customer_request( $args = array() ) {
-		$billing_email  = isset( $_POST['billing_email'] ) ? filter_var( wp_unslash( $_POST['billing_email'] ), FILTER_SANITIZE_EMAIL ) : '';
+		$billing_email  = isset( $_POST['billing_email'] ) ? filter_var( wp_unslash( $_POST['billing_email'] ), FILTER_SANITIZE_EMAIL ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Runs during checkout payment; Ajax::checkout() verifies the nonce.
 		$user           = $this->get_user();
 		$address_fields = array(
 			'line1'       => 'billing_address_1',

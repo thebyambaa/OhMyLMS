@@ -177,7 +177,6 @@ class GeneralSettings extends SettingsPage {
 				'id'       => 'ohmylms_currency',
 				'default'  => 'USD',
 				'type'     => 'select',
-				'class'    => 'ohmylms-select2',
 				'desc_tip' => true,
 				'options'  => $currency_code_options,
 			),
@@ -186,7 +185,6 @@ class GeneralSettings extends SettingsPage {
 				'title'    => __( 'Currency position', 'ohmylms' ),
 				'desc'     => __( 'This controls the position of the currency symbol.', 'ohmylms' ),
 				'id'       => 'ohmylms_currency_pos',
-				'class'    => 'ohmylms-select2',
 				'default'  => 'left',
 				'type'     => 'select',
 				'options'  => array(

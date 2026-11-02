@@ -8,6 +8,7 @@ import {
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ApiError } from '../../lib/api';
+import { attachment, mockMediaFrame } from '../../test/mediaFrame';
 import * as api from './api';
 import CertificateEditorPage from './CertificateEditorPage';
 import { certificate, options } from './fixtures';
@@ -18,8 +19,11 @@ vi.mock( './api', () => ( {
 	updateCertificate: vi.fn(),
 	previewCertificate: vi.fn(),
 	listCourses: vi.fn(),
-	listMedia: vi.fn(),
 } ) );
+
+let media: ReturnType< typeof mockMediaFrame >;
+
+afterEach( () => media.restore() );
 
 function renderEditor( route = '/certificates/7' ) {
 	return render(
@@ -46,6 +50,7 @@ async function loaded() {
 
 beforeEach( () => {
 	vi.resetAllMocks();
+	media = mockMediaFrame();
 	vi.mocked( api.getCertificate ).mockResolvedValue( certificate );
 	vi.mocked( api.getOptions ).mockResolvedValue( options );
 	vi.mocked( api.previewCertificate ).mockResolvedValue( {
@@ -59,18 +64,6 @@ beforeEach( () => {
 			{ id: 12, title: 'Geometry', status: 'draft' },
 		],
 		total: 2,
-		totalPages: 1,
-	} );
-	vi.mocked( api.listMedia ).mockResolvedValue( {
-		items: [
-			{
-				id: 9,
-				url: 'https://example.test/logo.png',
-				thumbnail_url: 'https://example.test/logo-150.png',
-				title: 'Logo',
-			},
-		],
-		total: 1,
 		totalPages: 1,
 	} );
 	vi.mocked( api.updateCertificate ).mockImplementation(
@@ -494,16 +487,17 @@ describe( 'CertificateEditorPage', () => {
 		await user.click(
 			screen.getByRole( 'button', { name: 'Choose background image' } )
 		);
-		const picker = within(
-			screen.getByRole( 'dialog', { name: 'Choose background image' } )
-		);
-		expect(
-			await picker.findByRole( 'list', { name: 'Images' } )
-		).toBeInTheDocument();
-		await user.click(
-			picker.getByRole( 'button', { name: 'Use image Logo' } )
-		);
-		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		expect( media.last().options ).toMatchObject( {
+			title: 'Choose background image',
+			library: {
+				type: [ 'image/jpeg', 'image/png', 'image/gif', 'image/webp' ],
+			},
+		} );
+		media
+			.last()
+			.choose(
+				attachment( { id: 9, url: 'https://example.test/logo.png' } )
+			);
 		expect(
 			screen.getByText( /Background image: #9/ )
 		).toBeInTheDocument();
@@ -526,30 +520,20 @@ describe( 'CertificateEditorPage', () => {
 			screen.getByText( /No background image\./ )
 		).toBeInTheDocument();
 	} );
-	it( 'reports a media library error inside the picker and closes with Escape', async () => {
+	it( 'rejects an unsupported signature image with the certificate error', async () => {
 		const user = userEvent.setup();
-		vi.mocked( api.listMedia ).mockRejectedValue(
-			new ApiError( {
-				status: 403,
-				code: 'rest_forbidden',
-				message: 'Sorry, you are not allowed to do that.',
-			} )
-		);
 		renderEditor();
 		await loaded();
 		await user.click(
 			screen.getByRole( 'button', { name: 'Choose signature image' } )
 		);
-		expect(
-			await screen.findByText(
-				'Sorry, you are not allowed to do that.',
-				notice
-			)
-		).toBeInTheDocument();
-		await user.keyboard( '{Escape}' );
-		await waitFor( () =>
-			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		media.last().choose( attachment( { mime: 'image/svg+xml' } ) );
+		expect( screen.getByRole( 'alert' ) ).toHaveTextContent(
+			'The server returned invalid certificate data.'
 		);
+		expect(
+			screen.getByText( /No signature image\./ )
+		).toBeInTheDocument();
 	} );
 	it( 'assigns and removes courses', async () => {
 		const user = userEvent.setup();

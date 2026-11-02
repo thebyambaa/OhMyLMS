@@ -65,7 +65,7 @@ try {
 	native_question_check( $native_question_type->show_ui && $native_question_type->show_in_rest && ! $native_question_type->publicly_queryable && use_block_editor_for_post_type( $native_question_type->name ), 'The standalone editor is not enabled with private delivery.' );
 	$question = native_question_request(
 		'POST',
-		'/ohmylms/v1/question',
+		'/ohmylms/v1/questions',
 		array(
 			'name'        => 'Native standalone security fixture',
 			'description' => '<p>Original private statement.</p>',
@@ -76,7 +76,7 @@ try {
 					'value'   => 1,
 				),
 			),
-			'questions'   => array(
+			'options'     => array(
 				array(
 					'answer'     => 'Correct private answer',
 					'is_correct' => true,
@@ -107,8 +107,8 @@ try {
 	);
 	native_question_check( 200 === $saved->get_status(), 'Saving the native shell failed.' );
 	native_question_check( get_post_field( 'post_title', $question_id ) === $before['post_title'] && get_post_field( 'post_content', $question_id ) === $before['post_content'], 'Core saving bypassed the question writer.' );
-	$detail = native_question_request( 'GET', '/ohmylms/v1/question-bank/' . $question_id );
-	native_question_check( str_contains( $detail->get_data()['native_editor_url'], 'post.php?post=' . $question_id ), 'The bank did not expose native navigation.' );
+	$detail = native_question_request( 'GET', '/ohmylms/v1/questions/' . $question_id );
+	native_question_check( 200 === $detail->get_status() && 'Correct private answer' === $detail->get_data()['options'][0]['answer'], 'The bank editor view did not load for the author.' );
 
 	$blank_id                = wp_insert_post(
 		array(
@@ -119,8 +119,8 @@ try {
 	);
 	$native_question_posts[] = $blank_id;
 	native_question_check( 400 === native_question_request( 'POST', '/wp/v2/ohmylms-questions/' . $blank_id, array( 'status' => 'publish' ) )->get_status(), 'A blank native question was publishable.' );
-	$blank = native_question_request( 'GET', '/ohmylms/v1/question-bank/' . $blank_id );
-	native_question_check( 200 === $blank->get_status() && empty( $blank->get_data()['settings']['type'] ), 'The new native document cannot initialize its shared controls.' );
+	$blank = native_question_request( 'GET', '/ohmylms/v1/questions/' . $blank_id );
+	native_question_check( 200 === $blank->get_status() && empty( ( (array) $blank->get_data()['settings'] )['type'] ), 'The new native document cannot initialize its shared controls.' );
 
 	$quiz                    = native_question_request(
 		'POST',
@@ -162,7 +162,14 @@ try {
 
 	$bank       = Banks::create( 'Native grant fixture', 0, 'shared' );
 	$bank_id    = (int) $bank['id'];
-	$attributes = native_question_request( 'PUT', '/ohmylms/v1/question/' . $question_id, array( 'bank' => array( 'bank_id' => $bank_id ) ) );
+	$attributes = native_question_request(
+		'PATCH',
+		'/ohmylms/v1/questions/' . $question_id,
+		array(
+			'bank'          => array( 'bank_id' => $bank_id ),
+			'base_modified' => native_question_request( 'GET', '/ohmylms/v1/questions/' . $question_id )->get_data()['modified'],
+		)
+	);
 	native_question_check( 200 === $attributes->get_status(), 'The bank membership fixture could not be saved: ' . wp_json_encode( $attributes->get_data() ) );
 	foreach ( array( 'edit', 'use', 'unrelated' ) as $grant_level ) {
 		$user_id = wp_insert_user(

@@ -1,15 +1,13 @@
-import { Table } from '../../../ui/Table';
-import {
-	Button,
-	Modal,
-	Notice,
-	SelectControl,
-	TextControl,
-} from '@wordpress/components';
+import { ListTable } from '../../../ui/ListTable';
+import { Button, Modal, Notice, TextControl } from '@wordpress/components';
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useNavigate } from 'react-router-dom';
-import { Pagination } from '../../components/Pagination';
+import { statusViews } from '../../components/listViews';
+import {
+	PageTitleAction,
+	PageTitleActions,
+} from '../../layout/PageTitleActions';
 import { normalizeApiError } from '../../lib/api';
 import { createMembership, deleteMembership, duplicateMembership } from './api';
 import { billingLabel, formatPrice } from './model';
@@ -35,7 +33,8 @@ type Dialog = { kind: 'create' } | { kind: 'delete'; item: Membership } | null;
 export default function MembershipsPage() {
 	const list = useMemberships();
 	const navigate = useNavigate();
-	const [ query, setQuery ] = useState( '' );
+	const [ query, setQuery ] = useState( list.searchTerm );
+	useEffect( () => setQuery( list.searchTerm ), [ list.searchTerm ] );
 	const [ dialog, setDialog ] = useState< Dialog >( null );
 	const [ name, setName ] = useState( '' );
 	const [ nameError, setNameError ] = useState< string | null >( null );
@@ -126,51 +125,24 @@ export default function MembershipsPage() {
 
 	return (
 		<>
-			<h2>{ __( 'Memberships', 'ohmylms' ) }</h2>
+			<PageTitleActions>
+				<PageTitleAction
+					disabled={ busy }
+					onClick={ () => {
+						setName( '' );
+						setError( null );
+						setDialog( { kind: 'create' } );
+					} }
+				>
+					{ __( 'Add plan', 'ohmylms' ) }
+				</PageTitleAction>
+			</PageTitleActions>
 			<p>
 				{ __(
 					'Sell access to a set of courses with a membership plan.',
 					'ohmylms'
 				) }
 			</p>
-			<Button
-				variant="primary"
-				disabled={ busy }
-				onClick={ () => {
-					setName( '' );
-					setError( null );
-					setDialog( { kind: 'create' } );
-				} }
-			>
-				{ __( 'Add plan', 'ohmylms' ) }
-			</Button>
-			<form
-				role="search"
-				aria-label={ __( 'Search membership plans', 'ohmylms' ) }
-				onSubmit={ ( event ) => {
-					event.preventDefault();
-					list.search( query );
-				} }
-			>
-				<TextControl
-					label={ __( 'Search membership plans', 'ohmylms' ) }
-					value={ query }
-					onChange={ setQuery }
-				/>
-				<SelectControl
-					label={ __( 'Status', 'ohmylms' ) }
-					value={ list.status }
-					options={ statusFilters() }
-					onChange={ list.setStatus }
-				/>
-				<Button
-					type="submit"
-					variant="secondary"
-					disabled={ busy || list.loading }
-				>
-					{ __( 'Search', 'ohmylms' ) }
-				</Button>
-			</form>
 			{ message && (
 				<Notice status="success" onRemove={ () => setMessage( null ) }>
 					{ message }
@@ -194,155 +166,163 @@ export default function MembershipsPage() {
 					{ __( 'Loading membership plans…', 'ohmylms' ) }
 				</p>
 			) }
-			{ ! list.loading &&
-				! list.error &&
-				( list.data.items.length ? (
-					<>
-						<p role="status">
-							{ sprintf(
-								/* translators: %d: total plan count. */
-								_n(
-									'%d plan found.',
-									'%d plans found.',
-									list.data.total,
-									'ohmylms'
-								),
-								list.data.total
-							) }
-						</p>
-						<Table
-							caption={ __( 'Membership plans', 'ohmylms' ) }
-							striped
-						>
-							<thead>
-								<tr>
-									{ [
-										__( 'Name', 'ohmylms' ),
-										__( 'Status', 'ohmylms' ),
-										__( 'Price', 'ohmylms' ),
-										__( 'Billing', 'ohmylms' ),
-										__( 'Courses', 'ohmylms' ),
-										__( 'Members', 'ohmylms' ),
-										__( 'Actions', 'ohmylms' ),
-									].map( ( title ) => (
-										<th key={ title } scope="col">
-											{ title }
-										</th>
-									) ) }
-								</tr>
-							</thead>
-							<tbody>
-								{ list.data.items.map( ( item ) => (
-									<tr key={ item.id }>
-										<th scope="row">
-											<Link
-												to={ `/memberships/${ item.id }` }
-											>
-												{ item.name }
-											</Link>
-										</th>
-										<td>
-											{ 'publish' === item.status
-												? __( 'Published', 'ohmylms' )
-												: __( 'Draft', 'ohmylms' ) }
-										</td>
-										<td>
-											{ formatPrice(
-												item.price,
-												item.currency
-											) }
-											{ item.price !==
-												item.regular_price && (
-												<>
-													{ ' ' }
-													<s>
-														{ formatPrice(
-															item.regular_price,
-															item.currency
-														) }
-													</s>
-												</>
-											) }
-										</td>
-										<td>{ billingLabel( item ) }</td>
-										<td>
-											{ item.all_learning_content
-												? sprintf(
-														/* translators: %d: number of courses. */
-														__(
-															'All (%d)',
-															'ohmylms'
-														),
-														item.course_count
-													)
-												: item.course_count }
-										</td>
-										<td>{ item.member_count }</td>
-										<td>
-											<Link
-												to={ `/memberships/${ item.id }` }
-												aria-label={ sprintf(
-													/* translators: %s: plan name. */
-													__( 'Edit %s', 'ohmylms' ),
-													item.name
+			{ ! list.loading && ! list.error && (
+				<ListTable< Membership >
+					caption={ __( 'Membership plans', 'ohmylms' ) }
+					heading={ __( 'Membership plans list', 'ohmylms' ) }
+					formLabel={ __( 'Search membership plans', 'ohmylms' ) }
+					busy={ busy }
+					rows={ list.data.items }
+					rowKey={ ( item ) => item.id }
+					emptyMessage={ __(
+						'No membership plans found.',
+						'ohmylms'
+					) }
+					views={ statusViews(
+						statusFilters(),
+						list.status,
+						list.data.total,
+						list.setStatus,
+						list.statusHref
+					) }
+					search={ {
+						label: __( 'Search membership plans', 'ohmylms' ),
+						submitLabel: __( 'Search', 'ohmylms' ),
+						value: query,
+						onChange: setQuery,
+						onSubmit: () => list.search( query ),
+					} }
+					pagination={ {
+						page: list.page,
+						totalPages: list.data.totalPages,
+						totalItems: list.data.total,
+						itemsLabel: sprintf(
+							/* translators: %d: total plan count. */
+							_n(
+								'%d plan found.',
+								'%d plans found.',
+								list.data.total,
+								'ohmylms'
+							),
+							list.data.total
+						),
+						onChange: list.setPage,
+						href: list.pageHref,
+					} }
+					columns={ [
+						{
+							id: 'name',
+							label: __( 'Name', 'ohmylms' ),
+							primary: true,
+							render: ( item ) => (
+								<strong>
+									<Link
+										className="row-title"
+										to={ `/memberships/${ item.id }` }
+									>
+										{ item.name }
+									</Link>
+								</strong>
+							),
+						},
+						{
+							id: 'status',
+							label: __( 'Status', 'ohmylms' ),
+							render: ( item ) =>
+								'publish' === item.status
+									? __( 'Published', 'ohmylms' )
+									: __( 'Draft', 'ohmylms' ),
+						},
+						{
+							id: 'price',
+							label: __( 'Price', 'ohmylms' ),
+							render: ( item ) => (
+								<>
+									{ formatPrice( item.price, item.currency ) }
+									{ item.price !== item.regular_price && (
+										<>
+											{ ' ' }
+											<s>
+												{ formatPrice(
+													item.regular_price,
+													item.currency
 												) }
-											>
-												{ __( 'Edit', 'ohmylms' ) }
-											</Link>{ ' ' }
-											<Button
-												variant="link"
-												disabled={ busy }
-												onClick={ () =>
-													duplicate( item )
-												}
-												aria-label={ sprintf(
-													/* translators: %s: plan name. */
-													__(
-														'Duplicate %s',
-														'ohmylms'
-													),
-													item.name
-												) }
-											>
-												{ __( 'Duplicate', 'ohmylms' ) }
-											</Button>{ ' ' }
-											<Button
-												variant="link"
-												isDestructive
-												disabled={ busy }
-												onClick={ () => {
-													setError( null );
-													setDialog( {
-														kind: 'delete',
-														item,
-													} );
-												} }
-												aria-label={ sprintf(
-													/* translators: %s: plan name. */
-													__(
-														'Delete %s',
-														'ohmylms'
-													),
-													item.name
-												) }
-											>
-												{ __( 'Delete', 'ohmylms' ) }
-											</Button>
-										</td>
-									</tr>
-								) ) }
-							</tbody>
-						</Table>
-						<Pagination
-							page={ list.page }
-							pages={ list.data.totalPages }
-							busy={ busy || list.loading }
-							onChange={ list.setPage }
-						/>
-					</>
-				) : (
-					<p>{ __( 'No membership plans found.', 'ohmylms' ) }</p>
-				) ) }
+											</s>
+										</>
+									) }
+								</>
+							),
+						},
+						{
+							id: 'billing',
+							label: __( 'Billing', 'ohmylms' ),
+							render: ( item ) => billingLabel( item ),
+						},
+						{
+							id: 'courses',
+							label: __( 'Courses', 'ohmylms' ),
+							render: ( item ) =>
+								item.all_learning_content
+									? sprintf(
+											/* translators: %d: number of courses. */
+											__( 'All (%d)', 'ohmylms' ),
+											item.course_count
+										)
+									: item.course_count,
+						},
+						{
+							id: 'members',
+							label: __( 'Members', 'ohmylms' ),
+							className: 'num',
+							render: ( item ) => item.member_count,
+						},
+					] }
+					rowActions={ ( item ) => [
+						{
+							key: 'edit',
+							label: __( 'Edit', 'ohmylms' ),
+							render: (
+								<Link
+									to={ `/memberships/${ item.id }` }
+									aria-label={ sprintf(
+										/* translators: %s: plan name. */
+										__( 'Edit %s', 'ohmylms' ),
+										item.name
+									) }
+								>
+									{ __( 'Edit', 'ohmylms' ) }
+								</Link>
+							),
+						},
+						{
+							key: 'duplicate',
+							label: __( 'Duplicate', 'ohmylms' ),
+							disabled: busy,
+							onClick: () => duplicate( item ),
+							ariaLabel: sprintf(
+								/* translators: %s: plan name. */
+								__( 'Duplicate %s', 'ohmylms' ),
+								item.name
+							),
+						},
+						{
+							key: 'delete',
+							label: __( 'Delete', 'ohmylms' ),
+							destructive: true,
+							disabled: busy,
+							onClick: () => {
+								setError( null );
+								setDialog( { kind: 'delete', item } );
+							},
+							ariaLabel: sprintf(
+								/* translators: %s: plan name. */
+								__( 'Delete %s', 'ohmylms' ),
+								item.name
+							),
+						},
+					] }
+				/>
+			) }
 			{ dialog?.kind === 'create' && (
 				<Modal
 					title={ __( 'Add membership plan', 'ohmylms' ) }

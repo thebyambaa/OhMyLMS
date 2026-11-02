@@ -179,8 +179,10 @@ try {
 	$outline_new          = $outline_data['units'][2]['id'];
 	outline_check( is_int( $outline_new ) && $outline_new > 0 && $outline_new !== $outline_first, 'A temporary unit UUID resolves to a real native unit.' );
 	outline_check( array_column( $outline_native_units, 'id' ) === array( $outline_second, $outline_first, $outline_new ), 'Unit order and existing IDs are retained.' );
-	outline_check( $outline_data['program']['groups'][0]['chapter_id'] === $outline_new && $outline_data['program']['groups'][0]['id'] === $outline_lesson, 'Lesson references are remapped while preserving their UUID.' );
+	// Since b0e21ca5 a lesson is a block lesson item, not a folder: submitted lesson groups are flattened into their unit.
+	outline_check( ! isset( $outline_data['program']['groups'] ) && ! array_filter( array_column( $outline_data['program']['items'], 'group_id' ) ), 'Lesson groups are flattened into their unit.' );
 	outline_check( $outline_data['program']['items'][1]['id'] === $outline_program['items'][0]['id'] && $outline_data['program']['items'][1]['chapter_id'] === $outline_new, 'Activity identity and its new unit are retained.' );
+	outline_check( 'Course-specific activity name' === $outline_data['program']['items'][1]['title'], 'The course-specific activity label is kept.' );
 	outline_check( 'Resource one' === get_post_field( 'post_title', $outline_one ) && 'Reusable content.' === get_post_field( 'post_content', $outline_one ), 'Inline course labels do not rename or overwrite shared resources.' );
 	outline_check( CourseProgram::current( $outline_course ) === $outline_old_program, 'Outline save remains a draft.' );
 	outline_check(
@@ -229,9 +231,6 @@ try {
 	$outline_good                                  = $outline_data['program'];
 	$outline_cases                                 = array();
 	$outline_bad_program                           = $outline_good;
-	$outline_bad_program['items'][2]['group_id']   = $outline_lesson;
-	$outline_cases[]                               = $outline_bad_program;
-	$outline_bad_program                           = $outline_good;
 	$outline_bad_program['items'][2]['chapter_id'] = 0;
 	$outline_cases[]                               = $outline_bad_program;
 	$outline_bad_program                           = $outline_good;
@@ -265,7 +264,7 @@ try {
 	$outline_publish = outline_api( 'POST', 'courses/' . $outline_course . '/structure/publish', array( 'revision' => Catalog::revision( $outline_course ) ) );
 	outline_check( 200 === $outline_publish->get_status(), 'The valid grouped outline publishes.' );
 	$outline_learner = \OhMyLMS\Student\CourseOutline::get( $outline_course, 0 );
-	outline_check( $outline_learner['units'][1]['groups'][0]['id'] === $outline_lesson && 'Course-specific activity name' === $outline_learner['units'][1]['groups'][0]['items'][0]['name'], 'Learners see the same lesson grouping and course-specific activity label.' );
+	outline_check( $outline_new === $outline_learner['units'][1]['id'] && array() === $outline_learner['units'][1]['groups'] && 'Course-specific activity name' === $outline_learner['units'][1]['ungrouped'][0]['name'], 'Learners see the activity ungrouped in its new unit with the course-specific label: ' . wp_json_encode( $outline_learner['units'][1] ?? null ) );
 	outline_check( 'unit-test' === $outline_learner['units'][1]['test']['style'] && 'course-challenge' === $outline_learner['challenge']['style'], 'Published checkpoint locations are exposed correctly.' );
 	wp_set_current_user( 0 );
 	outline_check( 401 === outline_api( 'PUT', 'courses/' . $outline_course . '/structure' )->get_status(), 'Anonymous unified writes are denied.' );

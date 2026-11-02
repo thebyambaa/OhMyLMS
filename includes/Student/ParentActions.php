@@ -7,7 +7,7 @@
 
 namespace OhMyLMS\Student;
 
-use OhMyLMS\Schools\Controller;
+use OhMyLMS\Schools\Signup;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -37,7 +37,7 @@ final class ParentActions {
 			exit;
 		}
 		try {
-			Controller::signup(
+			Signup::create(
 				array(
 					'role'       => $role,
 					'email'      => isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '',

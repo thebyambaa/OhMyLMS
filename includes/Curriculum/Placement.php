@@ -87,7 +87,9 @@ final class Placement {
 				$ids[] = (int) $match[1]; }
 		}
 		$ids = array_values( array_unique( $ids ) );
-		return $ids ?: ( $parts ? array( 0 ) : array() );
+		if ( $ids ) {
+			return $ids; }
+		return $parts ? array( 0 ) : array();
 	}
 
 	// ---- Reading a course's placement ------------------------------------------------------
@@ -102,7 +104,7 @@ final class Placement {
 		global $wpdb;
 		if ( ! self::ready() ) {
 			return array(); }
-		return array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT item_id FROM ' . Links::table() . " WHERE object_type='course' AND object_id=%d ORDER BY item_id", (int) $course_id ) ) );
+		return array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT item_id FROM %i WHERE object_type=\'course\' AND object_id=%d ORDER BY item_id', Links::table(), (int) $course_id ) ) );
 	}
 
 	/** Linked curriculum items with their ancestry, for display.
@@ -138,7 +140,7 @@ final class Placement {
 		global $wpdb;
 		if ( ! self::ready() ) {
 			return array(); }
-		return array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT bundle_id FROM ' . Bundles::members_table() . " WHERE item_type='course' AND item_id=%d ORDER BY bundle_id", (int) $course_id ) ) );
+		return array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT bundle_id FROM %i WHERE item_type=\'course\' AND item_id=%d ORDER BY bundle_id', Bundles::members_table(), (int) $course_id ) ) );
 	}
 
 	/**
@@ -190,10 +192,9 @@ final class Placement {
 		$bundle_ids = array_values( array_unique( array_filter( array_map( 'intval', $bundle_ids ) ) ) );
 		if ( ! $bundle_ids || ! self::ready() ) {
 			return array(); }
-		$placeholders = implode( ',', array_fill( 0, count( $bundle_ids ), '%d' ) );
-		$courses      = array();
-		$items        = array();
-		foreach ( $wpdb->get_results( $wpdb->prepare( 'SELECT item_type, item_id FROM ' . Bundles::members_table() . " WHERE bundle_id IN ($placeholders)", $bundle_ids ), ARRAY_A ) as $row ) {
+		$courses = array();
+		$items   = array();
+		foreach ( $wpdb->get_results( $wpdb->prepare( 'SELECT item_type, item_id FROM %i WHERE bundle_id IN (' . implode( ',', array_fill( 0, count( $bundle_ids ), '%d' ) ) . ')', array_merge( array( Bundles::members_table() ), $bundle_ids ) ), ARRAY_A ) as $row ) {
 			if ( 'course' === $row['item_type'] ) {
 				$courses[] = (int) $row['item_id'];
 			} else {
@@ -247,7 +248,7 @@ final class Placement {
 	private static function published_links() {
 		global $wpdb;
 		$map = array();
-		foreach ( $wpdb->get_results( 'SELECT l.item_id, l.object_id FROM ' . Links::table() . " l JOIN {$wpdb->posts} p ON p.ID=l.object_id WHERE l.object_type='course' AND p.post_type='" . esc_sql( OHMYLMS_COURSE_CPT ) . "' AND p.post_status='publish'", ARRAY_A ) as $row ) {
+		foreach ( $wpdb->get_results( $wpdb->prepare( 'SELECT l.item_id, l.object_id FROM %i l JOIN %i p ON p.ID=l.object_id WHERE l.object_type=\'course\' AND p.post_type=%s AND p.post_status=\'publish\'', Links::table(), $wpdb->posts, OHMYLMS_COURSE_CPT ), ARRAY_A ) as $row ) {
 			$map[ (int) $row['item_id'] ][ (int) $row['object_id'] ] = true;
 		}
 		return $map;
@@ -337,7 +338,7 @@ final class Placement {
 		$map = array();
 		if ( ! self::ready() ) {
 			return $map; }
-		foreach ( $wpdb->get_results( 'SELECT l.item_id, p.ID AS course_id, p.post_title FROM ' . Links::table() . " l JOIN {$wpdb->posts} p ON p.ID=l.object_id WHERE l.object_type='course' AND p.post_type='" . esc_sql( OHMYLMS_COURSE_CPT ) . "' AND p.post_status='publish' ORDER BY p.post_title, p.ID", ARRAY_A ) as $row ) {
+		foreach ( $wpdb->get_results( $wpdb->prepare( 'SELECT l.item_id, p.ID AS course_id, p.post_title FROM %i l JOIN %i p ON p.ID=l.object_id WHERE l.object_type=\'course\' AND p.post_type=%s AND p.post_status=\'publish\' ORDER BY p.post_title, p.ID', Links::table(), $wpdb->posts, OHMYLMS_COURSE_CPT ), ARRAY_A ) as $row ) {
 			$map[ (int) $row['item_id'] ][] = array(
 				'id'    => (int) $row['course_id'],
 				'title' => $row['post_title'],
@@ -356,8 +357,7 @@ final class Placement {
 			$courses = self::course_ids_for_bundles( array( (int) $bundle['id'] ) );
 			if ( ! $courses ) {
 				continue; }
-			$placeholders = implode( ',', array_fill( 0, count( $courses ), '%d' ) );
-			$count        = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type=%s AND post_status='publish' AND ID IN ($placeholders)", array_merge( array( OHMYLMS_COURSE_CPT ), $courses ) ) );
+			$count = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE post_type=%s AND post_status=\'publish\' AND ID IN (' . implode( ',', array_fill( 0, count( $courses ), '%d' ) ) . ')', array_merge( array( $wpdb->posts, OHMYLMS_COURSE_CPT ), $courses ) ) );
 			if ( $count ) {
 				$result[] = array(
 					'id'    => (int) $bundle['id'],
@@ -590,7 +590,7 @@ final class Placement {
 		global $wpdb;
 		$parent = 0;
 		foreach ( array_values( array_filter( array_map( 'trim', array_map( 'strval', $path ) ), 'strlen' ) ) as $name ) {
-			$found = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . Items::table() . ' WHERE parent_id=%d AND name=%s ORDER BY id LIMIT 1', $parent, $name ) );
+			$found = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE parent_id=%d AND name=%s ORDER BY id LIMIT 1', Items::table(), $parent, $name ) );
 			if ( ! $found ) {
 				$created = Items::create(
 					array(

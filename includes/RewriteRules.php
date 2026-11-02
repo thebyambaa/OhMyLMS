@@ -60,6 +60,14 @@ class RewriteRules {
 	 * @since 1.0.0
 	 */
 	public function change_content_single_url( $post_link, $post ) {
+		if ( in_array( $post->post_type, array( 'ohmylms-lesson', 'ohmylms-quiz', 'ohmylms-assignment' ), true ) ) {
+			$course_id = (int) ohmylms_get_course_by_content_id( $post->ID );
+			$course    = $course_id ? get_post( $course_id ) : null;
+			// The content rules need a course segment; without one keep WordPress's own link.
+			if ( ! $course || '' === (string) $course->post_name ) {
+				return $post_link;
+			}
+		}
 		$permalink_settings = ohmylms_get_permalink_structure();
 		if ( ! isset( $permalink_settings['assignment_base'] ) ) {
 			$permalink_settings['assignment_base'] = 'assignments';

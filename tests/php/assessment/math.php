@@ -26,39 +26,43 @@ $skill = static function ($name) use (&$fixture) {
 $fractions = $skill('Fractions'); $equations = $skill('Equations'); $reasoning = $skill('Reasoning'); $areas = $skill('Area');
 
 // ---- Authoring validation ----
-$bad = call('POST', 'question', ['name' => 'Bad number', 'settings' => ['type' => 'numerical', 'answer' => 'four']]);
+$bad = create_question(['name' => 'Bad number', 'settings' => ['type' => 'numerical', 'answer' => 'four']]);
 ok(status_of($bad) === 400, 'Non-numeric numerical answer accepted: ' . status_of($bad));
-$bad = call('POST', 'question', ['name' => 'Bad parts', 'settings' => ['type' => 'structured', 'parts' => [['id' => 'a', 'kind' => 'numerical']]]]);
+$bad = create_question(['name' => 'Bad parts', 'settings' => ['type' => 'structured', 'parts' => [['id' => 'a', 'kind' => 'numerical']]]]);
 ok(status_of($bad) === 400, 'Structured part without answer accepted');
 
 [$course_id, $quiz_id] = course_with_quiz($admin, ['allow_attempts' => 10, 'layout' => 'all_questions_in_one_page']);
-$numerical = remember_post(call('POST', 'question', ['quiz_id' => $quiz_id, 'name' => 'Simplify 6/8', 'settings' => ['type' => 'numerical', 'answer' => 0.75, 'tolerance' => 0.001, 'unit' => '', 'score' => ['enabled' => true, 'value' => 2]],
-    'skills' => ['p1' => ['primary' => $fractions]]])->get_data()['id']);
-$structured = call('POST', 'question', ['quiz_id' => $quiz_id, 'name' => 'Rectangle', 'description' => 'A rectangle has sides 3 cm and 5 cm.',
+$numerical = new_question(['quiz_id' => $quiz_id, 'name' => 'Simplify 6/8', 'settings' => ['type' => 'numerical', 'answer' => 0.75, 'tolerance' => 0.001, 'unit' => '', 'score' => ['enabled' => true, 'value' => 2]],
+    'skills' => ['p1' => ['primary' => $fractions]]]);
+$structured = create_question(['quiz_id' => $quiz_id, 'name' => 'Rectangle', 'description' => 'A rectangle has sides 3 cm and 5 cm.',
     'settings' => ['type' => 'structured', 'score' => ['enabled' => true, 'value' => 6], 'parts' => [
         ['id' => 'a', 'label' => '(a)', 'prompt' => 'Area?', 'kind' => 'numerical', 'marks' => 2, 'answer' => 15, 'unit' => 'cm²', 'rubric' => 'secret rubric'],
         ['id' => 'b', 'label' => '(b)', 'prompt' => 'Solve 2x=4', 'kind' => 'text', 'marks' => 1, 'accepted' => ['x=2']],
         ['id' => 'c', 'label' => '(c)', 'prompt' => 'Explain', 'kind' => 'written', 'marks' => 3],
     ]], 'skills' => ['a' => ['primary' => $areas], 'b' => ['primary' => $equations], 'c' => ['primary' => $reasoning]]]);
 ok(status_of($structured) === 201, 'Structured create failed: ' . wp_json_encode($structured->get_data()));
-$structured = remember_post($structured->get_data()['id']);
+$structured = remember_post($structured->get_data()['created_id']);
 
 // ---- Pools: shortage is reported, then satisfied ----
 $pool_questions = [];
 foreach ([['f1', 0.5], ['f1', 0.25], ['f2', 0.2]] as $i => [$family, $answer]) {
-    $id = remember_post(call('POST', 'question', ['name' => 'Pool ' . $i, 'settings' => ['type' => 'numerical', 'answer' => $answer, 'score' => ['enabled' => true, 'value' => 1]],
-        'skills' => ['p1' => ['primary' => $fractions]], 'bank' => ['family_id' => $family . '-' . $quiz_id]])->get_data()['id']);
-    call('POST', 'question-bank/' . $id . '/approve');
+    $id = new_question(['name' => 'Pool ' . $i, 'settings' => ['type' => 'numerical', 'answer' => $answer, 'score' => ['enabled' => true, 'value' => 1]],
+        'skills' => ['p1' => ['primary' => $fractions]], 'bank' => ['family_id' => $family . '-' . $quiz_id]]);
+    call('POST', 'questions/' . $id . '/approve');
     $pool_questions[] = $id;
 }
-$shortage = call('PUT', 'quiz/' . $quiz_id . '/pools', ['pools' => [['title' => 'Random fractions', 'term_id' => $fractions, 'count' => 3, 'marks' => 1]]]);
+$pools = static function () use ($quiz_id, $fractions) {
+    return call('PUT', 'quizzes/' . $quiz_id . '/questions/pools', ['pools' => [['title' => 'Random fractions', 'skill_id' => $fractions, 'count' => 3, 'marks' => 1]],
+        'revision' => call('GET', 'quizzes/' . $quiz_id . '/questions')->get_data()['revision']]);
+};
+$shortage = $pools();
 ok(status_of($shortage) === 409 && $shortage->get_data()['code'] === 'quiz_pool_shortage', 'Pool shortage not reported: ' . wp_json_encode($shortage->get_data()));
-$extra = remember_post(call('POST', 'question', ['name' => 'Pool extra', 'settings' => ['type' => 'numerical', 'answer' => 0.1, 'score' => ['enabled' => true, 'value' => 1]],
-    'skills' => ['p1' => ['primary' => $fractions]], 'bank' => ['family_id' => 'f3-' . $quiz_id]])->get_data()['id']);
-call('POST', 'question-bank/' . $extra . '/approve');
+$extra = new_question(['name' => 'Pool extra', 'settings' => ['type' => 'numerical', 'answer' => 0.1, 'score' => ['enabled' => true, 'value' => 1]],
+    'skills' => ['p1' => ['primary' => $fractions]], 'bank' => ['family_id' => 'f3-' . $quiz_id]]);
+call('POST', 'questions/' . $extra . '/approve');
 // The fixed numerical question is mapped to the same skill but must never be drawn twice.
-call('POST', 'question-bank/' . $numerical . '/approve');
-$saved = call('PUT', 'quiz/' . $quiz_id . '/pools', ['pools' => [['title' => 'Random fractions', 'term_id' => $fractions, 'count' => 3, 'marks' => 1]]]);
+call('POST', 'questions/' . $numerical . '/approve');
+$saved = $pools();
 ok(status_of($saved) === 200, 'Feasible pool rejected: ' . wp_json_encode($saved->get_data()));
 
 $student = make_user('subscriber');
@@ -130,17 +134,17 @@ ok(status_of(call('POST', 'quiz/' . $quiz_id . '/preview')) === 403, 'Learner op
 
 // ---- Per-part marking through the grading endpoint ----
 as_user($admin);
-$report = call('GET', 'quiz/' . $quiz_id . '/report/' . $attempt)->get_data();
-$entry = array_values(array_filter($report['report']['questions'], static function ($question) use ($structured) { return (int) $question['id'] === $structured; }))[0];
-ok($entry['parts']['a']['max'] === 2.0 && $entry['parts']['c']['max'] === 3.0 && $entry['parts']['a']['awarded'] === 2.0, 'Report lacks per-part marks: ' . wp_json_encode($entry['parts']));
-$entry['part_marks'] = ['c' => 1.5];
-$posted = call('POST', 'quiz/' . $quiz_id . '/report/' . $attempt, ['report' => ['questions' => [$entry]]]);
-ok(status_of($posted) === 200 && $row_total() === 4.5, 'Per-part marks via the grading endpoint failed: ' . $row_total());
+$report = call('GET', 'quizzes/' . $quiz_id . '/attempts/' . $attempt)->get_data();
+$entry = array_values(array_filter($report['questions'], static function ($question) use ($structured) { return (int) $question['question_id'] === $structured; }))[0];
+$parts = array_column((array) $entry['parts'], null, 'id');
+ok($parts['a']['max'] === 2.0 && $parts['c']['max'] === 3.0 && $parts['a']['awarded'] === 2.0, 'Report lacks per-part marks: ' . wp_json_encode($entry['parts']));
+$posted = call('POST', 'quizzes/' . $quiz_id . '/attempts/' . $attempt . '/grades', ['grades' => [['question_id' => $structured, 'marks' => ['c' => 1.5]]], 'reason' => 'Part (c) remarked']);
+ok(status_of($posted) === 200 && $row_total() === 4.5, 'Per-part marks via the grading endpoint failed: ' . $row_total() . ' ' . wp_json_encode($posted->get_data()));
 
 // ---- Mongolian content survives authoring, versions and grading ----
 as_user($admin);
 $mn_skill = $skill('Бутархай тоо');
-$mn = call('POST', 'question', ['name' => 'Хялбарчил: \(\frac{6}{8}\)', 'description' => '<p>Тэгшитгэл бод.</p>', 'settings' => ['type' => 'structured', 'score' => ['enabled' => true, 'value' => 2],
+$mn = create_question(['name' => 'Хялбарчил: \(\frac{6}{8}\)', 'description' => '<p>Тэгшитгэл бод.</p>', 'settings' => ['type' => 'structured', 'score' => ['enabled' => true, 'value' => 2],
     'parts' => [['id' => 'a', 'label' => '(а)', 'prompt' => 'Хариу', 'kind' => 'text', 'marks' => 2, 'accepted' => ['Х = 2']]]], 'skills' => ['a' => ['primary' => $mn_skill]], 'bank' => ['family_id' => 'бутархай-1']]);
 ok(status_of($mn) === 201, 'Mongolian question rejected: ' . wp_json_encode($mn->get_data()));
 $mn_id = remember_post($mn->get_data()['id']);

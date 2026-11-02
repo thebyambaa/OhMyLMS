@@ -116,21 +116,25 @@ final class Template {
 	 */
 	public static function placeholders() {
 		$placeholders = array(
-			'{student_name}' => array(
+			'{student_name}'     => array(
 				'label'  => __( 'Student name', 'ohmylms' ),
 				'sample' => __( 'Alex Morgan', 'ohmylms' ),
 			),
-			'{course_name}'  => array(
+			'{course_name}'      => array(
 				'label'  => __( 'Course name', 'ohmylms' ),
 				'sample' => __( 'Introduction to Learning', 'ohmylms' ),
 			),
-			'{date}'         => array(
+			'{date}'             => array(
 				'label'  => __( 'Completion date', 'ohmylms' ),
 				'sample' => wp_date( get_option( 'date_format' ) ),
 			),
-			'{site_name}'    => array(
+			'{site_name}'        => array(
 				'label'  => __( 'Site name', 'ohmylms' ),
 				'sample' => wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
+			),
+			'{certificate_code}' => array(
+				'label'  => __( 'Verification code', 'ohmylms' ),
+				'sample' => 'ABCD-EFGH-JKMN-PQRS',
 			),
 		);
 

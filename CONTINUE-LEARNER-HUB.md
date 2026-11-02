@@ -1983,7 +1983,7 @@ uncommitted work (`docs/question-player-block.md`, `docs/shared-choice-prototype
 - `docs/learner-experience/PARENT-CHILD-P3-PLAN.md`: P3a to P3d shipped; the adopted decisions moved into `PARENT-CHILD-P0.md`.
 - `docs/SCHOOL-FAMILY-IMPLEMENTATION-PLAN.md`: the 2026-09-30 plan for the retired portal and React app; the design rules and table list moved
   into `docs/SCHOOL-FAMILY-SETUP.md`.
-- `docs/UNIFIED-LEARNING-PLAN.md`: the planning proposal shipped as `docs/UNIFIED-LEARNING.md`; its still-valid design rules moved there.
+- `docs/UNIFIED-LEARNING-PLAN.md`: the planning proposal shipped as `docs/LEARNING-ARCHITECTURE.md`; its still-valid design rules moved there.
 - `docs/shared-skills-implementation-plan.md`: the original phased plan, shipped and documented in `docs/SHARED-SKILLS.md`.
 - `docs/question-editor-continuation.md`: a session hand-off from another machine ("resume this task"); the work was completed and is described in
   `question-block-editor.md` and `question-editor-verification.md`.
@@ -2001,7 +2001,7 @@ uncommitted work (`docs/question-player-block.md`, `docs/shared-choice-prototype
 **Rewritten:** `docs/learner-experience/LEGACY-RETIREMENT-PLAN.md` (now the record of what was retired and what still forwards, with no front-end portal) and
 `docs/SCHOOL-FAMILY-SETUP.md` (hub workspaces instead of the portal and blocks). **Corrected or extended:** `README.md` (now an index), `README-UNIFIED.md`,
 `readme.txt` (translation claim and Unreleased changelog), `docs/DEVELOPMENT.md` (assessment-engine status, Translations section), `docs/CODING-STANDARDS.md`,
-`docs/ACCEPTANCE.md`, `docs/ASSESSMENT-ENGINE.md`, `docs/UNIFIED-LEARNING.md`, `docs/STUDENT-HOME.md`, `docs/STUDENT-DASHBOARD-REFERENCE.md`, `docs/XP-MASTERY.md`,
+`docs/ACCEPTANCE.md`, `docs/ASSESSMENT-ENGINE.md`, `docs/LEARNING-ARCHITECTURE.md`, `docs/STUDENT-HOME.md`, `docs/STUDENT-DASHBOARD-REFERENCE.md`, `docs/XP-MASTERY.md`,
 `docs/ADDONS.md`, `docs/BLOCK-CLEANUP.md`, `docs/CURRICULUM-BUNDLES.md`, `docs/SYLLABUS.md`, `docs/GAMIFICATION-STREAKS.md`, `docs/EXAM-IMPORT-IMPLEMENTATION.md`,
 `docs/EXAM-PAPERS-AND-FIGURES.md`, `docs/QUESTION-TYPES-IMPLEMENTATION-PLAN.md`, `docs/EXTENSIBILITY-SCOPE.md`, `docs/CREATORLMS-COEXISTENCE.md`, the learner-experience
 documents (`KHAN-ACTIVITIES.md`, `MAPPING.md`, `RESEARCH.md`, `PARENT-CHILD-P0.md`, `learner-hub-development.md`, `RELEASE-READINESS.md`), the Google Meet and WPBakery

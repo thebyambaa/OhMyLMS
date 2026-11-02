@@ -53,7 +53,7 @@ class Course {
 		// Duplicate the course post.
 		$original_post = get_post( $this->course_id );
 		if ( ! $original_post || OHMYLMS_COURSE_CPT !== $original_post->post_type ) {
-			throw new \Exception( __( 'Invalid course type.', 'ohmylms' ) );
+			throw new \Exception( __( 'Invalid course type.', 'ohmylms' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Plain text returned as REST error data.
 		}
 
 		$new_post = array(
@@ -69,12 +69,12 @@ class Course {
 		$new_course_id = wp_insert_post( $new_post );
 		$new_course    = ohmylms_get_course( $new_course_id );
 		if ( ! $new_course ) {
-			throw new \Exception( __( 'Failed to create new course.', 'ohmylms' ) );
+			throw new \Exception( __( 'Failed to create new course.', 'ohmylms' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Plain text returned as REST error data.
 		}
 		$new_course->save();
 
 		if ( is_wp_error( $new_course_id ) ) {
-			throw new \Exception( __( 'Failed to duplicate course.', 'ohmylms' ) );
+			throw new \Exception( __( 'Failed to duplicate course.', 'ohmylms' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Plain text returned as REST error data.
 		}
 
 		// Duplicate meta data. The learning program is copied below, once the new units and content exist;
@@ -104,17 +104,18 @@ class Course {
 		}
 
 		// Duplicate chapters and contents.
-		$chapter_query = $wpdb->prepare(
-			'
+		$chapters    = $wpdb->get_results(
+			$wpdb->prepare(
+				'
             SELECT * FROM %i
             WHERE course_id = %d
             ORDER BY order_number ASC
         ',
-			$wpdb->prefix . 'ohmylms_chapter_relationship',
-			$this->course_id
+				$wpdb->prefix . 'ohmylms_chapter_relationship',
+				$this->course_id
+			),
+			ARRAY_A
 		);
-
-		$chapters    = $wpdb->get_results( $chapter_query, ARRAY_A );
 		$chapter_map = array();
 		$content_map = array();
 
@@ -146,17 +147,18 @@ class Course {
 			);
 
 			// Duplicate contents.
-			$content_query = $wpdb->prepare(
-				'
+			$contents = $wpdb->get_results(
+				$wpdb->prepare(
+					'
                 SELECT * FROM %i
                 WHERE chapter_id = %d
                 ORDER BY order_number ASC
             ',
-				$wpdb->prefix . 'ohmylms_content_relationship',
-				$original_chapter_id
+					$wpdb->prefix . 'ohmylms_content_relationship',
+					$original_chapter_id
+				),
+				ARRAY_A
 			);
-
-			$contents = $wpdb->get_results( $content_query, ARRAY_A );
 
 			foreach ( $contents as $content ) {
 				$original_content_id = $content['content_id'];

@@ -26,42 +26,6 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Composer {
 
-	/** Register creation and the learner instructions field beside the other exam routes. */
-	public static function init() {
-		add_action( 'rest_api_init', array( __CLASS__, 'routes' ) );
-	}
-
-	/** Create a blank exam; save exam-only fields. */
-	public static function routes() {
-		register_rest_route(
-			'ohmylms/v1',
-			'/exams/compose',
-			array(
-				'methods'             => 'POST',
-				'permission_callback' => array( Library::class, 'permission' ),
-				'callback'            => array( __CLASS__, 'create' ),
-			)
-		);
-		register_rest_route(
-			'ohmylms/v1',
-			'/exams/(?P<id>\d+)/settings',
-			array(
-				'methods'             => 'POST',
-				'permission_callback' => array( Library::class, 'permission' ),
-				'callback'            => array( __CLASS__, 'settings' ),
-			)
-		);
-		register_rest_route(
-			'ohmylms/v1',
-			'/exams/(?P<id>\d+)/questions',
-			array(
-				'methods'             => 'POST',
-				'permission_callback' => array( Library::class, 'permission' ),
-				'callback'            => array( __CLASS__, 'add_questions' ),
-			)
-		);
-	}
-
 	/**
 	 * Place existing bank questions at the end of a draft exam, in the order given. Questions already in
 	 * the exam keep their position.

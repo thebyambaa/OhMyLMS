@@ -176,7 +176,7 @@ class OrderRefund extends Order {
 	 * Cancel the student enrollment for the given order.
 	 *
 	 * @param \OhMyLMS\Commerce\Data\Order $order The order object.
-	 * @return void
+	 * @return mixed The data store result.
 	 * @since 1.0.0
 	 */
 	public function cancel_student_enrollment( $order ) {

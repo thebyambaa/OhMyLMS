@@ -63,6 +63,7 @@ const scope = {
 	BuildChartEditor: 'BuildChart',
 	GridBuildEditor: 'GridBuild',
 	ExtendedEditor: 'extended',
+	ExtensionBoundary: 'extension-boundary',
 	isExtendedType,
 	moveOption,
 };
@@ -137,6 +138,45 @@ test( 'shared answer drag reorders and renumbers the persisted option IDs', () =
 			[ 1, 2 ],
 		]
 	);
+} );
+test( 'a registered extension editor renders inside its own error boundary', () => {
+	const custom = () => null;
+	globalThis.window = {
+		ohmylms: {
+			extensions: {
+				get: ( kind, id ) =>
+					'question-editor' === kind && 'example-number' === id
+						? { id, render: custom }
+						: undefined,
+			},
+		},
+	};
+	try {
+		let saved;
+		const tree = Fields( {
+			type: 'example-number',
+			settings: { type: 'example-number', expected: 1 },
+			onChange: ( patch ) => ( saved = patch ),
+		} );
+		assert.equal( tree.type, 'extension-boundary' );
+		assert.equal( tree.props.id, 'example-number' );
+		const [ editor ] = tree.children;
+		assert.equal( editor.type, custom );
+		assert.deepEqual( editor.props.value, {
+			type: 'example-number',
+			expected: 1,
+		} );
+		editor.props.onChange( { expected: 2, type: 'other' } );
+		assert.deepEqual( saved, {
+			settings: { type: 'example-number', expected: 2 },
+		} );
+		assert.equal(
+			Fields( { type: 'single-choice', options: [], settings: {} } ).type,
+			'div'
+		);
+	} finally {
+		delete globalThis.window;
+	}
 } );
 test( 'every built-in type is available in standalone creation and matching metadata survives saving', () => {
 	assert.deepEqual(

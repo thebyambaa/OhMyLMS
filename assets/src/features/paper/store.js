@@ -2,6 +2,15 @@ import { createReduxStore, register } from '@wordpress/data';
 
 export const PAPER_STORE = 'ohmylms/paper';
 
+/**
+ * @typedef {Object} PaperState
+ * @property {boolean}                view    Whether the canvas shows sheets.
+ * @property {boolean}                answers Whether the answer key is visible.
+ * @property {Record<string, string>} types   Question type by block.
+ * @property {Record<string, number>} marks   Marks by block.
+ */
+
+/** @type {PaperState} */
 const DEFAULT_STATE = { view: false, answers: false, types: {}, marks: {} };
 
 /**
@@ -40,11 +49,18 @@ const store = createReduxStore( PAPER_STORE, {
 		}
 	},
 	actions: {
+		/** @param {unknown} view */
 		setView: ( view ) => ( { type: 'SET_VIEW', view: Boolean( view ) } ),
+		/** @param {unknown} answers */
 		setAnswers: ( answers ) => ( {
 			type: 'SET_ANSWERS',
 			answers: Boolean( answers ),
 		} ),
+		/**
+		 * @param {string} clientId
+		 * @param {string} questionType
+		 * @param {number} marks
+		 */
 		setQuestion: ( clientId, questionType, marks ) => ( {
 			type: 'SET_QUESTION',
 			clientId,
@@ -53,9 +69,19 @@ const store = createReduxStore( PAPER_STORE, {
 		} ),
 	},
 	selectors: {
+		/** @param {PaperState} state */
 		isPaperView: ( state ) => state.view,
+		/** @param {PaperState} state */
 		showsAnswers: ( state ) => state.answers,
+		/**
+		 * @param {PaperState} state
+		 * @param {string}     clientId
+		 */
 		getQuestionType: ( state, clientId ) => state.types[ clientId ] || '',
+		/**
+		 * @param {PaperState} state
+		 * @param {string}     clientId
+		 */
 		getQuestionMarks: ( state, clientId ) => state.marks[ clientId ] || 0,
 	},
 } );

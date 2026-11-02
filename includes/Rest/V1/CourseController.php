@@ -11,6 +11,7 @@ use OhMyLMS\Abstracts\RestController;
 use OhMyLMS\Course\CourseHelper;
 use OhMyLMS\Data\Course;
 use OhMyLMS\Data\Chapter;
+use OhMyLMS\Student\Enrollments;
 use WP_Post;
 use WP_Query;
 use WP_REST_Request;
@@ -593,22 +594,7 @@ class CourseController extends RestController {
 	 * @return array<int,int>
 	 */
 	private function count_enrolled( array $ids ) {
-		global $wpdb;
-
-		$ids = array_values( array_filter( array_map( 'absint', $ids ) ) );
-		if ( ! $ids ) {
-			return array();
-		}
-
-		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery
-		$rows   = $wpdb->get_results( $wpdb->prepare( "SELECT course_id, COUNT(*) AS total FROM %i WHERE status = 'enrolled' AND course_id IN ({$placeholders}) GROUP BY course_id", array_merge( array( $wpdb->prefix . 'ohmylms_user_enrollment' ), $ids ) ) );
-		$counts = array_fill_keys( $ids, 0 );
-		foreach ( (array) $rows as $row ) {
-			$counts[ (int) $row->course_id ] = (int) $row->total;
-		}
-
-		return $counts;
+		return Enrollments::count_by_course( $ids );
 	}
 
 	/**
@@ -997,7 +983,7 @@ class CourseController extends RestController {
 					'publish'      => $can_publish,
 					'edit_others'  => $this->can( 'list_others' ),
 					'upload_files' => current_user_can( 'upload_files' ),
-					'builder_url'  => current_user_can( 'manage_options' ) ? admin_url( 'admin.php?page=ohmylms#/courses/' ) : '',
+					'builder_url'  => current_user_can( 'manage_options' ) ? \OhMyLMS\Admin\LegacyRoutes::app_url( '/courses/' ) : '',
 				),
 			)
 		);
@@ -1419,6 +1405,8 @@ class CourseController extends RestController {
 			'slug'              => (string) $post->post_name,
 			'status'            => $status,
 			'permalink'         => (string) get_permalink( $post ),
+			// Drafts have no public address yet; editors open the signed preview link instead.
+			'preview_url'       => 'publish' === $status || 'trash' === $status ? '' : (string) get_preview_post_link( $post ),
 			'author_id'         => (int) $post->post_author,
 			'author_name'       => $this->can( 'list_others' ) ? (string) get_the_author_meta( 'display_name', $post->post_author ) : '',
 			'description'       => (string) $post->post_content,
@@ -1558,6 +1546,7 @@ class CourseController extends RestController {
 					'context'     => $both,
 				),
 				'permalink'         => $text( __( 'Public address of the course.', 'ohmylms' ), $both, array( 'readonly' => true ) ),
+				'preview_url'       => $text( __( 'Preview link for a course that is not published, empty otherwise.', 'ohmylms' ), $both, array( 'readonly' => true ) ),
 				'author_id'         => array(
 					'description' => __( 'Author user ID.', 'ohmylms' ),
 					'type'        => 'integer',
@@ -2082,9 +2071,6 @@ class CourseController extends RestController {
 		}
 
 		try {
-			global $wpdb;
-			$enrollment_table = $wpdb->prefix . 'ohmylms_user_enrollment';
-
 			$enrollment_data = array(
 				'course_id'  => $course_id,
 				'user_id'    => $student_id,
@@ -2097,21 +2083,13 @@ class CourseController extends RestController {
 			update_user_meta( $student_id, '_is_ohmylms_student', 'yes' );
 			update_user_meta( $student_id, '_is_ohmylms_user', 'yes' );
 			if ( $student && ! $student->maybe_enrolled( $course_id ) ) {
-				// Check if the record exists.
-				$existing_record = $wpdb->get_var(
-					$wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE user_id = %d AND course_id = %d', $enrollment_table, $student_id, $course_id )
-				);
-
-				if ( $existing_record ) {
+				if ( Enrollments::rows_in_course( $student_id, $course_id ) ) {
 					$response = array(
 						'success' => false,
 						'message' => __( 'Already enrolled.', 'ohmylms' ),
 					);
 				} else {
-					$wpdb->insert(
-						$enrollment_table,
-						$enrollment_data
-					);
+					Enrollments::create( $enrollment_data, array( 'source' => 'manual' ) );
 
 					// Trigger action hook for manual enrollment to enable community access and other integrations.
 					do_action( 'ohmylms_manual_student_enrollment', $student_id, $course_id );
@@ -2153,15 +2131,7 @@ class CourseController extends RestController {
 		}
 
 		try {
-			global $wpdb;
-			$enrollment_table = $wpdb->prefix . 'ohmylms_user_enrollment';
-
-			// Check if the enrollment exists.
-			$existing_record = $wpdb->get_var(
-				$wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE user_id = %d AND course_id = %d', $enrollment_table, $student_id, $course_id )
-			);
-
-			if ( ! $existing_record ) {
+			if ( ! Enrollments::rows_in_course( $student_id, $course_id ) ) {
 				return new \WP_Error(
 					'enrollment_not_found',
 					__( 'The enrollment record does not exist.', 'ohmylms' ),
@@ -2170,8 +2140,7 @@ class CourseController extends RestController {
 			}
 
 			// Delete the enrollment.
-			$deleted = $wpdb->delete(
-				$enrollment_table,
+			$deleted = Enrollments::delete(
 				array(
 					'user_id'   => $student_id,
 					'course_id' => $course_id,
@@ -2287,15 +2256,10 @@ class CourseController extends RestController {
 		}
 
 		try {
-			global $wpdb;
-			$enrollment_table = $wpdb->prefix . 'ohmylms_user_enrollment';
-
 			update_user_meta( $student_id, '_is_ohmylms_student', 'yes' );
 			update_user_meta( $student_id, '_is_ohmylms_user', 'yes' );
 
-			$existing_status = $wpdb->get_var(
-				$wpdb->prepare( 'SELECT status FROM %i WHERE user_id = %d AND course_id = %d', $enrollment_table, $student_id, $course_id )
-			);
+			$existing_status = Enrollments::legacy_status( $student_id, $course_id );
 
 			if ( 'enrolled' === $existing_status ) {
 				return new \WP_REST_Response(
@@ -2309,8 +2273,7 @@ class CourseController extends RestController {
 			}
 
 			if ( $existing_status ) {
-				$wpdb->update(
-					$enrollment_table,
+				Enrollments::update(
 					array(
 						'status'     => 'enrolled',
 						'start_date' => current_time( 'mysql' ),
@@ -2319,19 +2282,20 @@ class CourseController extends RestController {
 						'user_id'   => $student_id,
 						'course_id' => $course_id,
 					),
+					array( 'source' => 'manual' ),
 					array( '%s', '%s' ),
 					array( '%d', '%d' )
 				);
 			} else {
-				$wpdb->insert(
-					$enrollment_table,
+				Enrollments::create(
 					array(
 						'course_id'  => $course_id,
 						'user_id'    => $student_id,
 						'status'     => 'enrolled',
 						'progress'   => 'running',
 						'start_date' => current_time( 'mysql' ),
-					)
+					),
+					array( 'source' => 'manual' )
 				);
 			}
 

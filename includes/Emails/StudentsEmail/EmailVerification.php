@@ -9,6 +9,7 @@
 namespace OhMyLMS\Emails\StudentsEmail;
 
 use OhMyLMS\Emails\Emails;
+use OhMyLMS\I18n\RecipientLocale;
 use OhMyLMS\Services\EmailVerificationService;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -40,6 +41,22 @@ class EmailVerification {
 			return false;
 		}
 
+		return (bool) RecipientLocale::run(
+			$user,
+			function () use ( $user, $token ) {
+				return $this->compose_and_send( $user, $token );
+			}
+		);
+	}
+
+	/**
+	 * Compose and send the email, in the user's language.
+	 *
+	 * @param \WP_User $user  User.
+	 * @param string   $token Token.
+	 * @return bool
+	 */
+	private function compose_and_send( $user, $token ) {
 		$site_name      = get_bloginfo( 'name' );
 		$verify_url     = EmailVerificationService::get_verification_url( $token );
 		$email_settings = Emails::get_email_settings();
@@ -52,7 +69,7 @@ class EmailVerification {
 
 		$message = $this->get_template(
 			array(
-				'user_name'      => $user->display_name ?: $user->user_login,
+				'user_name'      => $user->display_name ? $user->display_name : $user->user_login,
 				'verify_url'     => $verify_url,
 				'site_name'      => $site_name,
 				'email_settings' => $email_settings,
@@ -103,8 +120,16 @@ class EmailVerification {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title><?php echo esc_html( sprintf( /* translators: %s: text value. */
-__( 'Confirm your email for %s', 'ohmylms' ), $data['site_name'] ) ); ?></title>
+<title>
+		<?php
+		echo esc_html(
+			sprintf( /* translators: %s: text value. */
+				__( 'Confirm your email for %s', 'ohmylms' ),
+				$data['site_name']
+			)
+		);
+		?>
+		</title>
 </head>
 <body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background-color:<?php echo esc_attr( $bg_color ); ?>;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background-color:<?php echo esc_attr( $bg_color ); ?>;padding:40px 20px;">
@@ -132,12 +157,24 @@ __( 'Confirm your email for %s', 'ohmylms' ), $data['site_name'] ) ); ?></title>
 </div>
 
 <p style="margin:0 0 16px;font-size:16px;color:<?php echo esc_attr( $text_color ); ?>;line-height:1.6;">
-		<?php echo esc_html( sprintf( /* translators: %s: text value. */
-		__( 'Hi %s,', 'ohmylms' ), $data['user_name'] ) ); ?>
+		<?php
+		echo esc_html(
+			sprintf( /* translators: %s: text value. */
+				__( 'Hi %s,', 'ohmylms' ),
+				$data['user_name']
+			)
+		);
+		?>
 </p>
 <p style="margin:0 0 24px;font-size:16px;color:<?php echo esc_attr( $text_color ); ?>;line-height:1.6;">
-		<?php echo esc_html( sprintf( /* translators: %s: text value. */
-		__( 'Thanks for joining %s! Please verify your email address to activate your account and access your courses.', 'ohmylms' ), $data['site_name'] ) ); ?>
+		<?php
+		echo esc_html(
+			sprintf( /* translators: %s: text value. */
+				__( 'Thanks for joining %s! Please verify your email address to activate your account and access your courses.', 'ohmylms' ),
+				$data['site_name']
+			)
+		);
+		?>
 </p>
 
 <div style="text-align:center;margin:32px 0;">

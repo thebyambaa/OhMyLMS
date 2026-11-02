@@ -34,13 +34,13 @@ $settings = static function ($template_value) {
 };
 
 // ---- Authoring validation: a template must work before it can be saved ----
-$impossible = call('POST', 'question', ['name' => 'What is {{a}} × {{b}}?', 'settings' => $settings($template(['constraints' => ['a>100']]))]);
+$impossible = create_question(['name' => 'What is {{a}} × {{b}}?', 'settings' => $settings($template(['constraints' => ['a>100']]))]);
 ok(status_of($impossible) === 400 && strpos($impossible->get_data()['message'], 'strict') !== false, 'Impossible template accepted: ' . wp_json_encode($impossible->get_data()));
-$unknown = call('POST', 'question', ['name' => 'What is {{a}} × {{zz}}?', 'settings' => $settings($template())]);
+$unknown = create_question(['name' => 'What is {{a}} × {{zz}}?', 'settings' => $settings($template())]);
 ok(status_of($unknown) === 400, 'Unknown placeholder accepted');
-$constant = call('POST', 'question', ['name' => 'What is {{a}} × {{b}}?', 'settings' => $settings(['variables' => [['name' => 'a', 'type' => 'int', 'min' => 3, 'max' => 3], ['name' => 'b', 'type' => 'int', 'min' => 2, 'max' => 2]], 'set' => [['path' => 'answer', 'expr' => 'a*b']]])]);
+$constant = create_question(['name' => 'What is {{a}} × {{b}}?', 'settings' => $settings(['variables' => [['name' => 'a', 'type' => 'int', 'min' => 3, 'max' => 3], ['name' => 'b', 'type' => 'int', 'min' => 2, 'max' => 2]], 'set' => [['path' => 'answer', 'expr' => 'a*b']]])]);
 ok(status_of($constant) === 400, 'A template that never changes accepted');
-$wrongkey = call('POST', 'question', ['name' => 'What is {{a}} × {{b}}?', 'settings' => $settings($template(['set' => [['path' => 'tolerance', 'expr' => '-1']]]))]);
+$wrongkey = create_question(['name' => 'What is {{a}} × {{b}}?', 'settings' => $settings($template(['set' => [['path' => 'tolerance', 'expr' => '-1']]]))]);
 ok(status_of($wrongkey) === 400, 'An example question that fails the type check was accepted (negative tolerance)');
 
 // ---- The author's preview endpoint shows concrete examples ----
@@ -59,11 +59,11 @@ as_user($admin);
 
 // ---- A quiz question that is a template ----
 [$course_id, $quiz_id] = course_with_quiz($admin, ['allow_attempts' => 20, 'layout' => 'all_questions_in_one_page']);
-$created_q = call('POST', 'question', ['quiz_id' => $quiz_id, 'name' => 'What is {{a}} × {{b}}?', 'description' => '<p>Give the product of {{a}} and {{b}}.</p>',
+$created_q = create_question(['quiz_id' => $quiz_id, 'name' => 'What is {{a}} × {{b}}?', 'description' => '<p>Give the product of {{a}} and {{b}}.</p>',
     'settings' => $settings($template()), 'skills' => ['p1' => ['primary' => $skill]]]);
 ok(status_of($created_q) === 201, 'Template question create failed: ' . wp_json_encode($created_q->get_data()));
-$qid = remember_post($created_q->get_data()['id']);
-$approved = call('POST', 'question-bank/' . $qid . '/approve');
+$qid = remember_post($created_q->get_data()['created_id']);
+$approved = call('POST', 'questions/' . $qid . '/approve');
 ok(status_of($approved) === 200, 'Approve failed: ' . wp_json_encode($approved->get_data()));
 $version_id = (int) VersionPublisher::identity($qid)['current_version_id'];
 $frozen = VersionPublisher::snapshot($version_id);
@@ -110,16 +110,17 @@ ok(count($seen) >= 4, 'Ten attempts gave too few different questions: ' . implod
 [$attempt0, $view0, $a0, $b0] = $first_attempt;
 as_user($admin);
 
-$report = call('GET', 'quiz/' . $quiz_id . '/report/' . $attempt0)->get_data();
-$entry = $report['report']['questions'][0];
+$entry = ohmylms_get_quiz($quiz_id)->get_attempt_report($attempt0)['questions'][0];
 ok($entry['name'] === 'What is ' . $a0 . ' × ' . $b0 . '?' && $entry['instance']['params']['a'] === $a0 && $entry['instance']['params']['b'] === $b0, 'Report shows other numbers than the learner saw: ' . wp_json_encode([$entry['name'], $entry['instance']]));
 ok($entry['settings']['answer'] == $a0 * $b0 && !isset($entry['settings']['template']), 'Report settings are not the concrete question');
 ok($entry['correct'] === true && (float) $entry['achive_mark'] === 2.0, 'Report verdict wrong');
+$graded_view = call('GET', 'quizzes/' . $quiz_id . '/attempts/' . $attempt0)->get_data()['questions'][0];
+ok($graded_view['title'] === $entry['name'] && $graded_view['correct'] === true && (float) $graded_view['awarded'] === 2.0 && strpos(wp_json_encode($graded_view), '{{') === false, 'The grading view shows other numbers than the learner saw: ' . wp_json_encode($graded_view));
 
 // ---- Versions are immutable: editing the template does not disturb finished attempts ----
-$edited = call('PUT', 'question/' . $qid, ['settings' => $settings($template(['variables' => [['name' => 'a', 'type' => 'int', 'min' => 11, 'max' => 19], ['name' => 'b', 'type' => 'int', 'min' => 2, 'max' => 8]], 'constraints' => []]))]);
+$edited = edit_question($qid, ['settings' => $settings($template(['variables' => [['name' => 'a', 'type' => 'int', 'min' => 11, 'max' => 19], ['name' => 'b', 'type' => 'int', 'min' => 2, 'max' => 8]], 'constraints' => []]))]);
 ok(status_of($edited) === 200, 'Template edit failed: ' . wp_json_encode($edited->get_data()));
-$after = call('GET', 'quiz/' . $quiz_id . '/report/' . $attempt0)->get_data()['report']['questions'][0];
+$after = ohmylms_get_quiz($quiz_id)->get_attempt_report($attempt0)['questions'][0];
 ok($after['name'] === $entry['name'] && $after['instance'] == $entry['instance'], 'Editing the template changed a finished attempt');
 ok($wpdb->get_var($wpdb->prepare("SELECT content_hash FROM {$t('qb_question_versions')} WHERE id=%d", $version_id)) === $hash_before, 'The frozen version changed');
 $new_version = (int) VersionPublisher::identity($qid)['current_version_id'];
@@ -144,7 +145,7 @@ ok(Inline::seed($token) === Inline::seed($token) && Inline::seed($token) > 0 && 
 ok(Inline::seed('garbage') === 0, 'A forged token produced a seed');
 
 // ---- Practice: a template is endless, each item has its own numbers, each counts as a first try ----
-$approved = call('POST', 'question-bank/' . $qid . '/approve');
+$approved = call('POST', 'questions/' . $qid . '/approve');
 ok(status_of($approved) === 200, 'Second approve failed: ' . wp_json_encode($approved->get_data()));
 as_user($student);
 $session = call('POST', 'practice/sessions', ['term_id' => $skill, 'item_limit' => 5]);
@@ -179,9 +180,9 @@ ok(count(array_filter($rows, static function ($row) { return (int) $row['indepen
 
 // ---- A plain question is untouched by all of this ----
 as_user($admin);
-$plain = call('POST', 'question', ['quiz_id' => $quiz_id, 'name' => 'Plain {{a}} stays literal', 'settings' => ['type' => 'numerical', 'answer' => 12, 'score' => ['enabled' => true, 'value' => 1]]]);
+$plain = create_question(['quiz_id' => $quiz_id, 'name' => 'Plain {{a}} stays literal', 'settings' => ['type' => 'numerical', 'answer' => 12, 'score' => ['enabled' => true, 'value' => 1]]]);
 ok(status_of($plain) === 201, 'Plain question with braces rejected');
-$plain_id = remember_post($plain->get_data()['id']);
+$plain_id = remember_post($plain->get_data()['created_id']);
 $plain_snapshot = VersionPublisher::snapshot((int) VersionPublisher::identity($plain_id)['current_version_id']);
 ok(!$plain_snapshot->is_template() && $plain_snapshot->instantiate(5) === $plain_snapshot && $plain_snapshot->get_name() === 'Plain {{a}} stays literal', 'A plain question was altered by instantiation');
 
@@ -257,5 +258,6 @@ foreach ($topic_checks as $kind => $check) {
 $formula_settings = ['type' => 'numerical', 'answer' => '{{a*b}}', 'answers' => ['{{a}}', 7], 'tolerance' => '{{c}}', 'tolerance_type' => 'absolute', 'template' => ['variables' => [['name' => 'a', 'type' => 'int', 'min' => 2, 'max' => 9], ['name' => 'b', 'type' => 'int', 'min' => 2, 'max' => 9], ['name' => 'c', 'type' => 'int', 'min' => 1, 'max' => 3]]]];
 $formula_applied = Template::apply('', 'x', $formula_settings, [], 11);
 $fp = $formula_applied['params'];
-ok(!$formula_applied['errors'] && $formula_applied['settings']['answer'] === (float) ($fp['a'] * $fp['b']) && $formula_applied['settings']['answers'] === [(float) $fp['a'], 7] && $formula_applied['settings']['tolerance'] === (float) $fp['c'], 'Formulas in a numerical answer, alternatives and tolerance were not turned into numbers: ' . wp_json_encode($formula_applied['settings']));
+$numeric_fields = array_merge([$formula_applied['settings']['answer'], $formula_applied['settings']['tolerance']], $formula_applied['settings']['answers']);
+ok(!$formula_applied['errors'] && count(array_filter($numeric_fields, 'is_numeric')) === 4 && (float) $formula_applied['settings']['answer'] === (float) ($fp['a'] * $fp['b']) && array_map('floatval', $formula_applied['settings']['answers']) === [(float) $fp['a'], 7.0] && (float) $formula_applied['settings']['tolerance'] === (float) $fp['c'], 'Formulas in a numerical answer, alternatives and tolerance were not turned into numbers: ' . wp_json_encode($formula_applied['settings']));
 ok(true === Template::validate($formula_settings, '', 'x', [], static function ($example) { return is_numeric($example['answer']) && is_numeric($example['tolerance']) && count(array_filter($example['answers'], 'is_numeric')) === 2 ? true : 'not numeric'; }), 'A numerical template with formula fields did not validate');

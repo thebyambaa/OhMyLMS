@@ -22,6 +22,8 @@ export interface Course {
 	slug: string;
 	status: CourseStatus;
 	permalink: string;
+	/** Preview link for an unpublished course; empty when published or trashed. */
+	preview_url: string;
 	author_id: number;
 	/** Empty unless the user can edit other people's courses. */
 	author_name: string;
@@ -123,13 +125,15 @@ export interface CourseOptions {
 	};
 }
 
-/** An image from the media library. */
-export interface MediaImage {
-	id: number;
-	url: string;
-	thumbnail_url: string;
-	title: string;
+/** The certificate template a course awards, with the templates the user may assign. */
+export interface CertificateAssignment {
+	course_id: number;
+	/** Assigned template ID, or 0 for none. */
+	certificate_id: number;
+	choices: { id: number; title: string; status: string }[];
 }
+
+export type { MediaImage } from '../../lib/media';
 
 /** The list filters. */
 export interface CourseFilters {

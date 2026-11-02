@@ -48,7 +48,7 @@ test( 'standalone questions use the native canvas and survive document saves', a
 			.poll( () =>
 				page.evaluate( async ( questionId ) => {
 					const question = await wp.apiFetch( {
-						path: `/ohmylms/v1/question-bank/${ questionId }`,
+						path: `/ohmylms/v1/questions/${ questionId }`,
 					} );
 					return question.options.map( ( option ) => option.answer );
 				}, id )
@@ -79,7 +79,7 @@ test( 'standalone questions use the native canvas and survive document saves', a
 					async ( questionId ) =>
 						(
 							await wp.apiFetch( {
-								path: `/ohmylms/v1/question-bank/${ questionId }`,
+								path: `/ohmylms/v1/questions/${ questionId }`,
 							} )
 						).options[ 1 ].answer,
 					id
@@ -103,7 +103,7 @@ test( 'standalone questions use the native canvas and survive document saves', a
 					async ( questionId ) =>
 						(
 							await wp.apiFetch( {
-								path: `/ohmylms/v1/question-bank/${ questionId }`,
+								path: `/ohmylms/v1/questions/${ questionId }`,
 							} )
 						).options[ 1 ].answer,
 					id
@@ -140,12 +140,12 @@ test( 'standalone questions use the native canvas and survive document saves', a
 	}
 } );
 
-test( 'legacy quiz links open Gutenberg and save quiz settings with the document', async ( {
+test( 'quizzes open in Gutenberg and save quiz settings with the document', async ( {
 	page,
 } ) => {
 	const errors = [];
 	page.on( 'pageerror', ( error ) => errors.push( error.message ) );
-	await page.goto( '/wp-admin/admin.php?page=ohmylms#/content-hub/quizzes' );
+	await page.goto( '/wp-admin/admin.php?page=ohmylms-app#/quizzes' );
 	await page.waitForFunction( () => window.wp?.apiFetch );
 	const quiz = await page.evaluate( () =>
 		wp.apiFetch( {
@@ -158,14 +158,7 @@ test( 'legacy quiz links open Gutenberg and save quiz settings with the document
 		} )
 	);
 	try {
-		await page.goto(
-			`/wp-admin/admin.php?page=ohmylms#/quiz-edit/${ quiz.id }`
-		);
-		await page.waitForURL(
-			( url ) =>
-				url.pathname.endsWith( '/post.php' ) &&
-				url.searchParams.get( 'post' ) === String( quiz.id )
-		);
+		await page.goto( `/wp-admin/post.php?post=${ quiz.id }&action=edit` );
 		await page.waitForFunction( () =>
 			window.wp?.plugins?.getPlugin( 'ohmylms-native-quiz-settings' )
 		);
@@ -227,7 +220,7 @@ test( 'legacy quiz links open Gutenberg and save quiz settings with the document
 test( 'bank insertion stays in the native draft and unsaved assessment settings block publication', async ( {
 	page,
 } ) => {
-	await page.goto( '/wp-admin/admin.php?page=ohmylms#/content-hub/quizzes' );
+	await page.goto( '/wp-admin/admin.php?page=ohmylms-app#/quizzes' );
 	await page.waitForFunction( () => window.wp?.apiFetch );
 	const fixture = await page.evaluate( async () => {
 		const quiz = await wp.apiFetch( {
@@ -236,7 +229,7 @@ test( 'bank insertion stays in the native draft and unsaved assessment settings 
 			data: { name: 'Native bank insertion fixture', status: 'draft' },
 		} );
 		const question = await wp.apiFetch( {
-			path: '/ohmylms/v1/question',
+			path: '/ohmylms/v1/questions',
 			method: 'POST',
 			data: {
 				name: `Unique native bank picker fixture ${ quiz.id }`,
@@ -244,14 +237,14 @@ test( 'bank insertion stays in the native draft and unsaved assessment settings 
 					type: 'single-choice',
 					score: { enabled: true, value: 1 },
 				},
-				questions: [
+				options: [
 					{ answer: '4', is_correct: true },
 					{ answer: '5', is_correct: false },
 				],
 			},
 		} );
 		await wp.apiFetch( {
-			path: `/ohmylms/v1/question-bank/${ question.id }/approve`,
+			path: `/ohmylms/v1/questions/${ question.id }/approve`,
 			method: 'POST',
 			data: {},
 		} );

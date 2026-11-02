@@ -6,9 +6,12 @@
  * @package OhMyLMS
  */
 
+namespace OhMyLMS\Gateways\Paypal;
+
 use OhMyLMS\Commerce\Abstracts\PaymentGateway;
-use OhMyLMS\Gateways\Paypal\PaypalAPI;
+use OhMyLMS\Gateways\Paypal\Rest\WebhookController;
 use OhMyLMS\Integrations\Funnel\Includes\FunnelManager;
+use WP_REST_Response;
 
 /**
  * Class GatewayPaypal
@@ -106,7 +109,7 @@ class GatewayPaypal extends PaymentGateway {
 			? 'https://api-m.sandbox.paypal.com'
 			: 'https://api-m.paypal.com';
 		add_action( 'template_redirect', array( $this, 'handle_paypal_return' ) );
-		add_action( 'rest_api_init', array( $this, 'register_webhook_endpoint' ) );
+		add_action( 'rest_api_init', array( new WebhookController( $this ), 'register_routes' ) );
 		$this->paypal_api = new PaypalAPI(
 			$this->client_id,
 			$this->client_secret,
@@ -266,7 +269,7 @@ class GatewayPaypal extends PaymentGateway {
 	public function payment_fields() {
 		$description = $this->get_description();
 		if ( $description ) {
-			echo wpautop( wp_kses_post( $description ) );
+			echo wp_kses_post( wpautop( $description ) );
 		}
 	}
 
@@ -297,23 +300,6 @@ class GatewayPaypal extends PaymentGateway {
 		} catch ( \Exception $e ) {
 			return new \WP_Error( 'paypal_webhook_error', $e->getMessage() );
 		}
-	}
-
-	/**
-	 * Registers a REST API endpoint for webhook handling.
-	 *
-	 * @since 1.0.0
-	 */
-	public function register_webhook_endpoint() {
-		register_rest_route(
-			'ohmylms/v1',
-			'/paypal-webhook',
-			array(
-				'methods'             => WP_REST_Server::ALLMETHODS,
-				'callback'            => array( $this, 'handle_webhook' ),
-				'permission_callback' => '__return_true',
-			)
-		);
 	}
 
 	/**
@@ -749,7 +735,8 @@ class GatewayPaypal extends PaymentGateway {
 	 */
 	public function get_url( $links, $rel ) {
 		$filtered = array_filter( $links, fn( $link ) => isset( $link['rel'] ) && $link['rel'] === $rel );
-		return ( $first = reset( $filtered ) ) ? $first['href'] : null;
+		$first    = reset( $filtered );
+		return $first ? $first['href'] : null;
 	}
 
 	/**
@@ -991,20 +978,33 @@ class GatewayPaypal extends PaymentGateway {
 	 * @since 1.0.0
 	 */
 	public function handle_paypal_return() {
-		if ( ! is_user_logged_in() ) {
+		if ( 'yes' !== $this->enabled || ! is_user_logged_in() ) {
 			return;
 		}
 
-		if ( ! isset( $_GET['token'] ) && ! isset( $_POST['token'] ) ) {
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- PayPal's return redirect; the order key authorises it.
+		if ( ! isset( $_GET['token'], $_GET['order_id'], $_GET['key'] ) ) {
 			return;
 		}
 
 		global $wpdb;
-		$order_id      = sanitize_text_field( wp_unslash( $_GET['order_id'] ));
-		$token         = sanitize_text_field( wp_unslash( $_GET['token'] ));
+		$order_id  = absint( $_GET['order_id'] );
+		$token     = sanitize_text_field( wp_unslash( $_GET['token'] ) );
+		$order_key = sanitize_text_field( wp_unslash( $_GET['key'] ) );
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+		// Other pages use `token` too; only a PayPal order whose key matches the return URL is captured here.
+		$order = $order_id ? ohmylms_ecommerce_get_order( $order_id ) : null;
+		if ( ! $order || $this->id !== $order->get_payment_method() || ! hash_equals( (string) $order->get_order_key(), $order_key ) ) {
+			return;
+		}
+
 		$response_data = $this->paypal_api->get_order_details( $token );
 
 		if ( is_wp_error( $response_data ) ) {
+			return;
+		}
+		if ( empty( $response_data['id'] ) || true !== $this->confirm_paypal_capture( $response_data['id'], $order_id ) ) {
 			return;
 		}
 		$vault_id        = isset( $response_data['payment_source']['paypal']['attributes']['vault']['id'] ) ? $response_data['payment_source']['paypal']['attributes']['vault']['id'] : null;

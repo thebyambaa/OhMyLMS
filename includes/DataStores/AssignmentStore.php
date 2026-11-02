@@ -348,17 +348,18 @@ class AssignmentStore extends DataStore {
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'ohmylms_assignment_attempts';
 
-		$query = $wpdb->prepare(
-			'SELECT attempts.*, u.user_email, u.display_name, attempts.start_date AS submitted_date
-		FROM %i attempts
-		LEFT JOIN %i u ON attempts.user_id = u.ID
-		WHERE assignment_id = %d',
-			$table_name,
-			$wpdb->prefix . 'users',
-			$assignment->get_id()
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT attempts.*, u.user_email, u.display_name, attempts.start_date AS submitted_date
+			FROM %i attempts
+			LEFT JOIN %i u ON attempts.user_id = u.ID
+			WHERE assignment_id = %d',
+				$table_name,
+				$wpdb->prefix . 'users',
+				$assignment->get_id()
+			),
+			ARRAY_A
 		);
-
-		$results = $wpdb->get_results( $query, ARRAY_A );
 		$report  = array();
 
 		foreach ( $results as $submission ) {
@@ -392,18 +393,19 @@ class AssignmentStore extends DataStore {
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'ohmylms_assignment_attempts';
 
-		$query = $wpdb->prepare(
-			'SELECT attempts.*, u.user_email, u.display_name, attempts.start_date AS submitted_date
-		FROM %i attempts
-		LEFT JOIN %i u ON attempts.user_id = u.ID
-		WHERE assignment_id = %d AND user_id = %d',
-			$table_name,
-			$wpdb->prefix . 'users',
-			$assignment->get_id(),
-			$student_id
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT attempts.*, u.user_email, u.display_name, attempts.start_date AS submitted_date
+			FROM %i attempts
+			LEFT JOIN %i u ON attempts.user_id = u.ID
+			WHERE assignment_id = %d AND user_id = %d',
+				$table_name,
+				$wpdb->prefix . 'users',
+				$assignment->get_id(),
+				$student_id
+			),
+			ARRAY_A
 		);
-
-		$results = $wpdb->get_results( $query, ARRAY_A );
 		$report  = array();
 
 		foreach ( $results as $submission ) {

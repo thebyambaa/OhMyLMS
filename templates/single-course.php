@@ -17,7 +17,7 @@ if ( $syllabus_id && ! post_password_required() ) {
 	$directory = \OhMyLMS\Curriculum\Directory::render( $syllabus_id );
 	if ( '' !== $directory ) {
 		ohmylms_get_header();
-		echo $directory;
+		echo $directory; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Directory::render() escapes its output.
 		ohmylms_get_footer();
 		return;
 	}

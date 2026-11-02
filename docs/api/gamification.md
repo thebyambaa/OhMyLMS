@@ -25,9 +25,9 @@ Server code: `includes/Rest/V1/EngagementController.php` (settings, options, poi
 | Low | `Rules::valid()` accepted `=` and `==`, float strings and `INF`-like values; `get_option()` was called per rule; `Badge::maybe_met_rules()` ran the lesson-count SQL once per badge (now once per learner per call). `Reward` rules had an unused threshold comparison. |
 | OK | Cookie authentication: core verifies `X-WP-Nonce` before any permission callback. SQL uses `$wpdb->prepare()` and `%i`. Award rows are inserted under a per-learner `GET_LOCK`. |
 
-Not part of this API (unchanged): streak, XP, score and mastery settings, still at
-`engagement/settings/<streak|xp|score|mastery>` (same validation and capability; they have no authored screen yet), and
-the learner-facing templates. `student-dashboard.php` builds the learner leaderboard from
+The streak, XP, score and mastery settings stay at `engagement/settings/<streak|xp|score|mastery>` and were hardened in
+place; see [Streak, XP, score and mastery settings](#streak-xp-score-and-mastery-settings). Not part of this API: the
+learner-facing templates. `student-dashboard.php` builds the learner leaderboard from
 `Course::get_students()`, which loads every student of a course: that is an unbounded query outside this API.
 
 ## Storage
@@ -48,7 +48,7 @@ before the permission callback (core behaviour).
 | --- | --- | --- | --- | --- |
 | GET | `/gamification/settings` | All sections plus `integration_enabled` | 200 | 401, 403 |
 | GET | `/gamification/settings/{section}` | One section (`points`, `levels`, `badges`, `leaderboard`, `rewards`) | 200 | 401, 403 |
-| PUT / PATCH / POST | `/gamification/settings/{section}` | Partial update; only fields sent change | 200 (section) | 400, 401, 403, 422, 500 |
+| PUT / PATCH / POST | `/gamification/settings/{section}` | Partial update; only fields sent change; optional `revision` | 200 (section) | 400, 401, 403, 409, 422, 500 |
 | GET | `/gamification/options` | Metrics, operators, leaderboard modes, image types, limits | 200 | 401, 403 |
 | GET | `/gamification/levels` | List, lowest threshold first (`page`, `per_page`) | 200 + `X-WP-Total`, `X-WP-TotalPages`, `Link` | 400, 401, 403 |
 | POST | `/gamification/levels` | Create | 201 + `Location` | 400, 401, 403, 422 |
@@ -59,7 +59,8 @@ before the permission callback (core behaviour).
 | POST | `/gamification/badges/{slug}/awards` | Award by hand (`user_id`); idempotent | 201 new, 200 already held | 400, 401, 403, 404, 500 |
 | DELETE | `/gamification/badges/{slug}/awards/{user_id}` | Revoke; idempotent | 200 `{revoked: 0|n}` | 401, 403, 404 |
 | POST | `/gamification/points/adjustments` | Add or remove points by hand, once per `reference` | 201 new, 200 replay | 400, 401, 403, 404, 409, 422, 500 |
-| GET / POST | `/engagement/settings/{streak|xp|score|mastery}` | Existing groups, unchanged | 200 | 400, 401, 403, 500 |
+| GET | `/engagement/settings/{streak|xp|score|mastery}` | One group (mastery adds its choices) | 200 | 401, 403 |
+| POST / PUT / PATCH | `/engagement/settings/{streak|xp|score|mastery}` | Partial update; only fields sent change | 200 `{success, message, settings}` | 400, 401, 403, 422, 500 |
 
 Collections accept `page` (>= 1), `per_page` (1-100, default 20) and `context`. A page past the end answers 400
 `ohmylms_gamification_invalid_page`. Levels and badges are capped at 50 and 100.
@@ -84,6 +85,68 @@ Collections accept `page` (>= 1), `per_page` (1-100, default 20) and `context`. 
 - **leaderboard**: `{ "enabled", "mode": "completion_rate|highest_quiz|fastest_time", "threshold": 0-100, "limit": 1-100 }`.
 - **rewards**: `{ "enabled", "purchase_with_points" }`.
 
+Every single-section GET and save answer also carries `revision` (16 hex characters of a hash of the stored option;
+not part of `GET /gamification/settings`). Send the loaded `revision` with a save: the option row is locked
+(`SELECT … FOR UPDATE` inside `OhMyLMS\Utility\Transaction`) and a different stored revision answers
+`409 ohmylms_gamification_conflict` with `data.revision`, writing nothing. Without `revision` the save is
+unconditional (scripts, MCP). A save that changes nothing keeps the revision.
+
+## Rewards (`#/gamification?tab=rewards`)
+
+Screen: `RewardsTab.tsx` in `assets/src/app/features/gamification`, its own tab (it used to share the leaderboard
+tab). It replaces the legacy `#/gamification/reward-settings` and `#/settings/gamification-settings/reward-settings`
+screen (`RewardSettings.jsx`, deleted with the recovered admin). The tab saves with the loaded `revision`, offers a
+reload after a 409, and warns when the Points section is off (learners could not earn anything to spend).
+
+What the front end reads: a course is sold for points only when the Gamification add-on is on, `enabled` and
+`purchase_with_points` are both true (`Reward::maybe_met_rules( 'purchase_course' )`, used by
+`template-functions.php`, `Point` and `Reward::valid_point_cart()`), and the course has a point price above 0 and is
+not opted out (`_purchase_point`, `_reward_disabled`, edited in the course settings, not here). Both flags are
+booleans in the schema; unknown fields (including the legacy `enable`/`rules` shape) answer 400.
+
+## Point purchases
+
+Buying courses with bonus points (`includes/Engagement/PointPurchase.php`, `includes/Rest/V1/PointPurchasesController.php`;
+test `tests/php/point-purchase-integration.php`, `OHMYLMS_POINTS_TEST=1`, 59 checks). Eligibility is unchanged: the
+flags above, a published course with `_purchase_point` > 0 and not `_reward_disabled`, a learner who is not blocked
+and holds no active or pending enrolment in it, and (cohort-based courses) an open cohort with a seat.
+
+- **Purchase** (one transaction under the learner's points lock): re-check the balance, create a zero-total order
+  paid with `points` (`_purchased_by = point`, `_purchased_point`, one line item per course), insert one debit row
+  (`reason = purchase_course`, `content_id` = order), create a pending enrolment per course through
+  `Student\Enrollments::create()` with source `purchase/order`; commit; then complete the order, which activates
+  the enrolments through the existing `ohmylms_payment_completed` listener (`ohmylms_after_enrolled_student`
+  fires). Any failure rolls back everything (no order, no debit); a failure to complete after the commit restores
+  the points and marks the order failed. Hook `ohmylms_point_purchase_completed( $order_id, $user_id, $course_ids, $points )`.
+  The checkout's point carts use the same service (`Checkout::process_point_checkout()`); the old inline debit is gone.
+  `EnrolmentMirror` now records points orders as `purchase`, not `self`, although their total is 0.
+- **Refund** (administrators): restores the spent points once (`purchase_course_refund` row), cancels the order's
+  enrolments and sets the order `refunded`, in one transaction under a per-order lock. A points order is refused by
+  the money refund route. Hook `ohmylms_point_purchase_refunded( $order_id, $user_id, $points )`. The order detail
+  (`GET ohmylms-commerce/v1/orders/{id}`) has `points: {points, refunded, refunded_at, refundable}` or `null`, and the
+  order screen offers **Refund points** with a reason and a confirmation.
+
+| Method | Path | Who | Purpose |
+| --- | --- | --- | --- |
+| GET | `/point-purchases/quote?course_ids[]=` | logged-in learner | `{course_ids, prices, points, balance, affordable}` |
+| POST | `/point-purchases` `{course_ids}` | logged-in learner | 201 `{order_id, course_ids, points, balance, redirect}` |
+| POST | `/point-purchases/{order_id}/refund` `{reason, confirm: true}` | `manage_options` | Summary plus the new `balance` |
+| GET / PATCH | `/point-purchases/courses/{id}` `{point_price 0-100000, points_enabled}` | `manage_options` + `edit_post` | The course's point price (the Settings tab of the course editor, "Bonus points price") |
+
+Errors: 401 `ohmylms_points_not_logged_in`; 400 `ohmylms_points_invalid_courses` (1-20 distinct ids),
+`ohmylms_points_confirm_required`; 403 `ohmylms_points_student_blocked`, `ohmylms_refund_cannot_create`; 409
+`ohmylms_points_purchase_disabled`, `_course_not_for_points`, `_already_enrolled`, `_insufficient` (with `points`,
+`balance`), `_busy`, `_not_point_order`, `_already_refunded`, `_refund_in_progress`, `ohmylms_refund_order_status`,
+`ohmylms_cohort_enrolment_closed`; 422 `ohmylms_points_refund_reason`; 500 `ohmylms_points_purchase_failed`,
+`ohmylms_refund_failed`.
+
+| Severity | Finding (legacy reward screen) |
+| --- | --- |
+| Medium | **The legacy screen no longer worked.** It read and posted `engagement/settings/reward` with `{ enable, rules: [ { slug: "purchase_course", value } ] }`; contract v1 removed that group, so it showed the defaults and every save failed with a generic "Something went wrong". |
+| Medium | **Concurrent saves overwrote each other** silently (no revision); now 409 for any section when `revision` is sent. |
+| Low | The screen merged a client-side default rule list into the server answer and showed a threshold input the server never used; the rule tooltip described course completion points instead of purchases. |
+| OK | `manage_options` and the core REST nonce; the per-course price and opt-out stay on the course. |
+
 ## Levels and badges
 
 ```json
@@ -106,6 +169,55 @@ threshold. A level may start at 0. Deleting a level keeps earlier awards in the 
 - `image_id` is a media-library attachment id. It must be a JPEG, PNG, GIF or WebP attachment (422 `ohmylms_badge_invalid_image`);
   `image_url` is derived and read-only. Remote URLs are not accepted. `null` or `0` removes the image.
 - Slugs come from the name, are unique among custom and system badges (`-2`, `-3`, ...) and never change.
+
+## Streak, XP, score and mastery settings
+
+Screens: `#/gamification?tab=streaks` (streak group) and `#/gamification?tab=xp` (XP, mastery score and mastery model, each
+saved on its own) in `assets/src/app/features/gamification` (`StreaksTab.tsx`, `XpTab.tsx`, `engagementApi.ts`,
+`engagementModel.ts`, `useEngagement.ts`). The recovered `streak-settings` and `xp-settings` tabs and the MCP
+`get/set_performance_settings` tools keep working: they post whole groups and read `success`/`message`.
+
+### Audit before
+
+| Severity | Finding |
+| --- | --- |
+| Medium | **No schema or argument validation.** One regex route served the four groups with no `args` and no `schema`; the body went straight to each group's `validate()`. Types were checked there, but every failure was one generic 400 (`streak_settings`, `xp_settings`, `score_settings`) without the field. |
+| Medium | **A partial request reset the rest to the defaults.** `StreakSettings`, `XpSettings` and `Score::validate()` merge the body over the *defaults*, so `POST {"refill_days": 9}` silently reset every other streak setting (including milestones). |
+| Medium | **Unknown keys were dropped silently** and the mastery group's read-only GET keys (`policies`, `surface_options`, `ai_ready`) were accepted without notice. |
+| Low | Cross-field rules (initial vs maximum freezes, duplicate milestone days, the default goal outside the goals, unknown badges) answered the generic 400 or `streak_badge` 400. Only POST/PUT/PATCH (`EDITABLE`) existed; the save answer did not carry the stored values, so clients re-read every group. |
+| OK | `manage_options` on both methods (401 anonymous, 403 others), core REST nonce; values are bounded integers, flags and allow-listed policies; storage tables install only when a group is enabled. The learner routes `GET/PUT engagement/xp` and `engagement/streak` are per-user (`is_user_logged_in`), bound `history_days` (7-90 / 7-366) and validate `goal` and `timezone`; they are unchanged. |
+
+### Contract
+
+- One route per group (`/engagement/settings/(?P<group_id>streak)` and so on) with a draft-04 schema (`OPTIONS`, title
+  `engagement-<group>-settings`) whose writable properties are the route `args`. Types and ranges fail with core
+  `rest_invalid_param` (400, `data.params` per field); unknown keys with `rest_invalid_param` (400). Numeric and flag strings
+  (`"10"`, `"0"`) from the recovered screens are still accepted and normalised.
+- **Partial updates:** only the fields sent change; the rest keep their *stored* values. The group's own `validate()` runs
+  last, so nothing weaker than before is stored. Nothing is written unless the whole request is valid.
+- **422 with `data.field`:** `ohmylms_streak_freezes` (`initial_freezes` above `maximum_freezes`), `ohmylms_streak_milestone_days`
+  (two milestones on the same day), `ohmylms_streak_badge` (a milestone badge that is neither a custom nor a built-in badge;
+  empty means no badge), `ohmylms_xp_default_goal` (default goal not among the goals). These replace the old 400 `streak_badge`.
+- **Answer:** `{ "success": true, "message": "Settings saved successfully.", "settings": { ...same shape as GET } }`.
+- **Mastery:** read-only `policies`, `surface_options` and `ai_ready` may be posted back and are ignored; `policy` is an enum of
+  the registered policies; unknown `surfaces` keys are dropped as before. Changing the policy or the surfaces still schedules
+  the background rebuild.
+
+| Group | Fields (ranges) |
+| --- | --- |
+| streak | `enable, lesson, quiz, practice, freezes` (booleans); `practice_minimum` 1-30; `initial_freezes` 0-10 (<= maximum); `maximum_freezes` 0-10; `refill_days` 1-365; `milestones` <= 20 of `{days 1-10000 (unique), badge (slug or ""), points 0-100000}` |
+| xp | `enable`; `lesson`, `perfect` 0-1000; `challenge` 0-100; `min_answered` 1-30; `goals` 1-6 integers 1-10000 (de-duplicated, sorted); `default_goal` one of the goals; `goal_bonus` 0-1000; `daily_cap` 10-100000 |
+| score | `enable`; `bands` exactly 4 of `{gain, loss}` 0-50; `hint_gain` 0-1; `unlock` 50-100; `decay_grace_days` 0-365; `decay_per_week` 0-20 |
+| mastery | `policy` (registered policy); `surfaces` {activity: boolean}; `show_score`, `ai_insights` (booleans) |
+
+```http
+PATCH /wp-json/ohmylms/v1/engagement/settings/xp
+{ "goals": [ 30 ] }
+
+HTTP/1.1 422 Unprocessable Entity
+{ "code": "ohmylms_xp_default_goal", "message": "The default goal must be one of the goal choices.",
+  "data": { "status": 422, "field": "default_goal" } }
+```
 
 ## Awards and adjustments
 
@@ -130,6 +242,7 @@ threshold. A level may start at 0. Deleting a level keeps earlier awards in the 
 | 403 | `rest_cookie_invalid_nonce` | Cookie auth without a valid `X-WP-Nonce` (core). |
 | 404 | `ohmylms_level_not_found`, `ohmylms_badge_not_found`, `ohmylms_gamification_user_not_found` | Unknown slug or user. |
 | 409 | `ohmylms_badge_system`, `ohmylms_points_busy` | System badge change; another award is running. |
+| 409 | `ohmylms_gamification_conflict` (`data.revision`) | A section save with a stale `revision`. |
 | 422 | `ohmylms_gamification_duplicate_event`, `_threshold_unsupported`, `_email_incomplete` | Points section rules. |
 | 422 | `ohmylms_level_invalid_name`, `_invalid_points`, `_points_taken` (`data.conflicting_slug`), `_limit` | Level rules. |
 | 422 | `ohmylms_badge_invalid_name`, `_invalid_criteria`, `_criteria_not_allowed`, `_invalid_image`, `_limit` | Badge rules. |
@@ -155,4 +268,12 @@ Filters `ohmylms_point_settings`, `ohmylms_level_settings`, `ohmylms_badge_setti
 ## Tests
 
 `tests/php/gamification-rest-integration.php` (set `OHMYLMS_GAMIFICATION_TEST=1`; see the file header). It snapshots and
-restores every option it touches and removes its temporary users and attachments.
+restores every option it touches (including `ohmylms_streak_settings`, `ohmylms_xp_settings`, `ohmylms_score_settings` and
+`ohmylms_performance`) and removes its temporary users and attachments. For the four engagement groups it checks denied
+callers, the legacy full POST, partial updates, string normalisation, every schema and 422 rule with the option unchanged
+afterwards, the mastery round trip and the group schemas. It never enables streaks or XP, so no table is installed.
+
+`tests/php/gamification-rewards-rest-integration.php` (same flag) covers the rewards section: denied callers, the
+revision on GET and saves, a stale revision refused with nothing written, partial and unconditional saves, the
+legacy shape refused, and the front-end readers following the flags and the add-on switch. It restores the reward
+and integration options.

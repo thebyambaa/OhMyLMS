@@ -24,7 +24,7 @@ $user_id = get_current_user_id();
 			<label for="email">Email:</label>
 			<input type="email" id="email" name="email" required>
 
-			<input type="hidden" id="user_id" value="<?php echo $user_id; ?>">
+			<input type="hidden" id="user_id" value="<?php echo esc_attr( $user_id ); ?>">
 		</div>
 
 	</div>
@@ -33,25 +33,25 @@ $user_id = get_current_user_id();
 		<div id="orderDetails">
 			<?php
 
-			$totalPrice = 0;
+			$total_price = 0;
 			if ( ! is_admin() ) {
 				foreach ( ohmylms()->order_loader->cart->get_cart() as $cart_item_key => $cart_item ) {
 					$course              = $cart_item['data'];
 					$product['price']    = 50;
 					$product['quantity'] = 1;
 
-					echo "<div>
-                                <p>Product Name: {$course->get_name()}</p>
+					echo '<div>
+                                <p>Product Name: ' . esc_html( $course->get_name() ) . '</p>
                                 <p>Quantity: 1</p>
                                 <p>Price: $50 </p>
                                 <hr>
-                              </div>";
-					$totalPrice += $product['price'] * $product['quantity'];
+                              </div>';
+					$total_price += $product['price'] * $product['quantity'];
 				}
 			}
 
 
-			echo '<p><strong>Total Price: $' . number_format( $totalPrice, 2 ) . '</strong></p>';
+			echo '<p><strong>Total Price: $' . number_format( $total_price, 2 ) . '</strong></p>';
 			?>
 		</div>
 

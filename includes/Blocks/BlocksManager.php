@@ -123,6 +123,16 @@ class BlocksManager {
 	 * @return void
 	 */
 	public function enqueue_block_editor_assets() {
+		// Preview banners read the shared sheet. Fallbacks keep the previous colours when the editor
+		// canvas has no design tokens; hex is not allowed in oml-ui.css.
+		if ( class_exists( \OhMyLMS\Design\Ui::class ) ) {
+			\OhMyLMS\Design\Ui::enqueue();
+			wp_add_inline_style(
+				\OhMyLMS\Design\Ui::STYLE_HANDLE,
+				'.ohmylms-gutenberg-edit-mode{--oml-edit-background:var(--oml-background,#f0f0f1);--oml-edit-info:var(--oml-info,#2271b1);--oml-edit-text:var(--oml-text,#3c434a)}'
+			);
+		}
+
 		// Enqueue main blocks script.
 		wp_enqueue_script(
 			'ohmylms-blocks-editor',
@@ -135,23 +145,10 @@ class BlocksManager {
 		// Enqueue individual block scripts.
 		$this->enqueue_individual_block_scripts();
 
-		// Enqueue slick.js for carousel functionality in editor.
-		wp_enqueue_script(
-			'ohmylms-slick-editor',
-			OHMYLMS_URL . '/assets/dist/frontend/slick.js',
-			array( 'jquery' ),
-			'1.8.1',
-			true
-		);
-
-		// Enqueue frontend script for slick initialization in editor.
-		wp_enqueue_script(
-			'ohmylms-frontend-editor',
-			OHMYLMS_URL . '/assets/dist/frontend/ohmylms.js',
-			array( 'jquery', 'ohmylms-slick-editor' ),
-			OHMYLMS_VERSION,
-			true
-		);
+		// Script-less handle: ohmylms.js was deleted in L7. The editor preview still receives
+		// ohmylms_frontend_params; learner behaviour is the Interactivity modules.
+		wp_register_script( 'ohmylms-frontend-editor', false, array(), OHMYLMS_VERSION, true );
+		wp_enqueue_script( 'ohmylms-frontend-editor' );
 		// The editor uses a separate handle, so the frontend print hook does not localize it.
 		$frontend_assets = new \OhMyLMS\Assets\FrontendAssets();
 		wp_localize_script( 'ohmylms-frontend-editor', 'ohmylms_frontend_params', $frontend_assets->get_script_data( 'ohmylms-frontend' ) );
@@ -197,7 +194,7 @@ class BlocksManager {
 		// Dashboard block.
 		wp_enqueue_script(
 			'ohmylms-dashboard-block',
-			OHMYLMS_URL . "/assets/blocks/js/dashboard{$suffix}.js",
+			OHMYLMS_URL . '/assets/blocks/js/dashboard.js',
 			array( 'wp-blocks', 'wp-element', 'wp-editor', 'wp-components', 'wp-i18n', 'wp-server-side-render' ),
 			OHMYLMS_VERSION,
 			true
@@ -206,7 +203,7 @@ class BlocksManager {
 		// Profile block.
 		wp_enqueue_script(
 			'ohmylms-profile-block',
-			OHMYLMS_URL . "/assets/blocks/js/profile{$suffix}.js",
+			OHMYLMS_URL . '/assets/blocks/js/profile.js',
 			array( 'wp-blocks', 'wp-element', 'wp-editor', 'wp-components', 'wp-i18n', 'wp-server-side-render' ),
 			OHMYLMS_VERSION,
 			true
@@ -284,15 +281,6 @@ class BlocksManager {
 			OHMYLMS_URL . '/assets/blocks/css/blocks-frontend.css',
 			array(),
 			OHMYLMS_VERSION
-		);
-
-		// Enqueue frontend script.
-		wp_enqueue_script(
-			'ohmylms-blocks-frontend',
-			OHMYLMS_URL . '/assets/blocks/js/blocks-frontend.js',
-			array( 'jquery' ),
-			OHMYLMS_VERSION,
-			true
 		);
 	}
 }

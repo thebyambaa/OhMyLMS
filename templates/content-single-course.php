@@ -21,7 +21,7 @@ do_action( 'ohmylms_before_single_course' );
 
 if ( post_password_required() ) {
 	echo '<div class="ohmylms-password-protected">';
-		echo get_the_password_form();
+		echo get_the_password_form(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core password form markup, escaped by WordPress.
 	echo '</div>';
 
 	return;

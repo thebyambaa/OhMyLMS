@@ -35,7 +35,7 @@ final class ErrorException extends \RuntimeException {
 	 */
 	public static function raise( $value ) {
 		if ( is_wp_error( $value ) ) {
-			throw new self( $value ); }
+			throw new self( $value ); } // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Carries the WP_Error object; callers return it, not the message.
 		return $value;
 	}
 }

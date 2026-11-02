@@ -17,19 +17,6 @@ $hub_standalone = ! empty( $hub_standalone );
 $hub_outline    = CourseOutline::get( $hub_course_id, get_current_user_id() );
 $hub_back       = $hub_standalone ? Hub::catalog_url() : Hub::url( 'library' );
 
-$hub_requested_lesson = get_query_var( 'hub_lesson', '' );
-if ( ! is_wp_error( $hub_outline ) && $hub_requested_lesson ) {
-	$hub_lesson = \OhMyLMS\Student\LessonJourney::find( $hub_outline, $hub_requested_lesson );
-	ohmylms_get_template(
-		'student-hub/lesson.php',
-		array(
-			'hub_outline' => $hub_outline,
-			'hub_lesson'  => $hub_lesson,
-		)
-	);
-	return;
-}
-
 $hub_back_label      = __( 'Browse subjects', 'ohmylms' );
 $hub_subject_context = absint( get_query_var( 'hub_subject', 0 ) );
 if ( $hub_subject_context ) {
@@ -280,13 +267,6 @@ $hub_course_object = $hub_outline['locked'] ? null : ohmylms_get_course( $hub_co
 							<span><?php echo esc_html( $hub_unit['test']['complete'] ? __( 'Take the unit test again to keep your skills sharp.', 'ohmylms' ) : __( 'Take the unit test to level up your skills in this unit.', 'ohmylms' ) ); ?></span>
 						</p>
 					<?php endif; ?>
-					<?php foreach ( $hub_unit['groups'] ?? array() as $hub_custom_group ) : ?>
-						<section class="oml-hub-unit-group oml-hub-lesson-group" aria-labelledby="hub-group-<?php echo esc_attr( $hub_custom_group['id'] ); ?>">
-							<h3 id="hub-group-<?php echo esc_attr( $hub_custom_group['id'] ); ?>"><a href="<?php echo esc_url( \OhMyLMS\Student\LessonJourney::url( $hub_course_id, $hub_custom_group['id'] ) ); ?>"><?php echo esc_html( $hub_custom_group['title'] ); ?></a></h3>
-							<p><?php /* translators: 1: complete activities, 2: total activities. */ echo esc_html( sprintf( __( '%1$d of %2$d activities complete', 'ohmylms' ), $hub_custom_group['activity_done'], $hub_custom_group['activity_total'] ) ); ?></p>
-							<?php $hub_rows( $hub_custom_group['items'] ); ?>
-						</section>
-					<?php endforeach; ?>
 					<?php
 					$hub_groups = array(
 						'learn'       => array(
@@ -304,7 +284,7 @@ $hub_course_object = $hub_outline['locked'] ? null : ohmylms_get_course( $hub_co
 					);
 					foreach ( $hub_groups as $hub_group_key => $hub_group ) :
 						$hub_group_items = array_filter(
-							$hub_unit['ungrouped'] ?? $hub_unit['items'],
+							$hub_unit['items'],
 							static function ( $item ) use ( $hub_group ) {
 								return in_array( $item['kind'], $hub_group['kinds'], true );
 							}

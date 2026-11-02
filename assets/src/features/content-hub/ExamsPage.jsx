@@ -10,18 +10,92 @@ import {
 } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Button, Modal, Notice, Spinner } from '@wordpress/components';
-import { approveQuestion } from '../question-bank/api.mjs';
+import { approveQuestion } from '../question-bank/public.mjs';
 import { NewExamDialog } from './NewExamDialog.jsx';
 import { examEditorHref } from './examEditor.mjs';
 import { ExamPaperDialog } from './ExamPaperDialog.jsx';
 import { ImportDialog } from './ImportDialog.jsx';
 import { useHubAction } from './useHubAction.js';
 import { ImportFigures } from './ImportFigures.jsx';
+import { request } from '../rest.mjs';
+
+/** @typedef {import('./ImportFigures.jsx').FigurePlacement} FigurePlacement */
+
+/**
+ * @typedef {Object} ReviewPart
+ * @property {string}        id          Part ID.
+ * @property {string}        [label]     Printed label.
+ * @property {string}        [prompt]    Part prompt.
+ * @property {string}        [kind]      written, numerical or text.
+ * @property {number|string} [marks]     Available marks.
+ * @property {number|string} [answer]    Expected number.
+ * @property {number}        [tolerance] Numerical tolerance.
+ * @property {string[]}      [accepted]  Accepted text answers.
+ * @property {string}        [skills]    Skill code override.
+ * @property {string}        [rubric]    Teacher marking notes.
+ */
+
+/**
+ * @typedef {Object} ReviewQuestion
+ * @property {string}            number             Printed question number.
+ * @property {string}            [question]         Stem.
+ * @property {string}            [skills]           Default skill codes.
+ * @property {number}            page               Source PDF page.
+ * @property {ReviewPart[]}      parts              Parts.
+ * @property {FigurePlacement[]} [figures]          Figure placements.
+ * @property {boolean}           [reviewed]         Whether the teacher checked it.
+ * @property {boolean}           [requires_source]  Whether a figure or table is required.
+ * @property {boolean}           [figures_complete] Whether the figures are confirmed complete.
+ * @property {string}            [notes]            Extraction notes.
+ */
+
+/**
+ * @typedef {Object} ImportInventory
+ * @property {string}        title              Paper title.
+ * @property {number}        [duration_minutes] Time allowed.
+ * @property {string[]}      question_numbers   Printed question numbers.
+ * @property {number}        [page_count]       Source PDF pages.
+ * @property {number|string} [total_marks]      Total printed in the paper.
+ */
+
+/**
+ * @typedef {Object} ImportJob
+ * @property {number}                                                             id                Job ID.
+ * @property {string}                                                             state             Processing state.
+ * @property {string}                                                             [target]          exam, quiz or questions.
+ * @property {{name: string}}                                                     source            Uploaded PDF.
+ * @property {ReviewQuestion[]}                                                   [draft]           Review draft.
+ * @property {ImportInventory}                                                    [inventory]       What the PDF holds.
+ * @property {ImportInventory}                                                    [draft_inventory] Reviewed inventory.
+ * @property {number}                                                             [cursor]          Questions extracted.
+ * @property {string}                                                             [error]           Why a stage stopped.
+ * @property {{requests?: number, input_tokens?: number, output_tokens?: number}} [usage]           AI usage.
+ * @property {boolean}                                                            [has_mark_scheme] Whether a mark scheme was supplied.
+ * @property {Array<{number: string, figures?: FigurePlacement[]}>}               [suggestions]     Detected figures by question.
+ * @property {number}                                                             [draft_revision]  Draft revision.
+ * @property {number[]}                                                           [question_ids]    Saved bank questions.
+ * @property {Record<string, number>}                                             [version_ids]     Saved version by question ID.
+ * @property {number}                                                             [quiz_id]         Draft quiz.
+ * @property {number}                                                             [exam_id]         Draft exam.
+ */
+
+/**
+ * @typedef {import('./ExamPaperDialog.jsx').PaperExam & {
+ *   id: number,
+ *   status: string,
+ *   url: string,
+ *   quiz_id: number,
+ *   composed?: boolean,
+ *   released?: boolean,
+ *   editor_url?: string,
+ *   print_urls?: {paper: string, key: string}|null
+ * }} ExamSummary
+ */
 
 /**
  * Associate each repeated question/part control with its own accessible label.
- * @param {Object} root0          Component properties.
- * @param {Array}  root0.children Label and native input.
+ * @param {Object}                    root0          Component properties.
+ * @param {import('react').ReactNode} root0.children Label and native input.
  */
 function ExamField( { children } ) {
 	const id = useId();
@@ -29,7 +103,9 @@ function ExamField( { children } ) {
 		<label htmlFor={ id }>
 			{ Children.map( children, ( child ) =>
 				isValidElement( child ) &&
-				[ 'input', 'textarea', 'select' ].includes( child.type )
+				[ 'input', 'textarea', 'select' ].includes(
+					/** @type {string} */ ( child.type )
+				)
 					? cloneElement( child, { id } )
 					: child
 			) }
@@ -37,16 +113,22 @@ function ExamField( { children } ) {
 	);
 }
 
+/**
+ * @param {string}                  path
+ * @param {Record<string, unknown>} [data]
+ */
 const api = ( path, data ) =>
-	window.wp.apiFetch( {
+	request( {
 		path: `/ohmylms/v1/${ path }`,
 		...( data ? { method: 'POST', data } : {} ),
 	} );
+/** @return {Record<string, string>} Target labels. */
 const targets = () => ( {
 	exam: __( 'Exam', 'ohmylms' ),
 	quiz: __( 'Quiz', 'ohmylms' ),
 	questions: __( 'Questions', 'ohmylms' ),
 } );
+/** @return {Record<string, string>} State labels. */
 const states = () => ( {
 	queued: __( 'Checking PDF', 'ohmylms' ),
 	failed: __( 'PDF check failed', 'ohmylms' ),
@@ -57,6 +139,8 @@ const states = () => ( {
 	committed: __( 'Question drafts saved', 'ohmylms' ),
 } );
 
+/** @typedef {{id: number, code?: string, name?: string}} SkillMatch */
+
 /**
  * Find existing catalogue skills without navigating away from review edits.
  * @param {Object}                  root0        Component properties.
@@ -64,7 +148,9 @@ const states = () => ( {
  */
 function SkillSearch( { onPick } ) {
 	const [ query, setQuery ] = useState( '' );
-	const [ matches, setMatches ] = useState( [] );
+	const [ matches, setMatches ] = useState(
+		/** @type {SkillMatch[]} */ ( [] )
+	);
 	const [ error, setError ] = useState( '' );
 	useEffect( () => {
 		let active = true;
@@ -76,7 +162,9 @@ function SkillSearch( { onPick } ) {
 			api( `exam-import-skills?search=${ encodeURIComponent( query ) }` )
 				.then( ( data ) => {
 					if ( active ) {
-						setMatches( data.items );
+						setMatches(
+							/** @type {{items: SkillMatch[]}} */ ( data ).items
+						);
 						setError( '' );
 					}
 				} )
@@ -128,11 +216,11 @@ function SkillSearch( { onPick } ) {
 
 /**
  * PDF papers become reviewed bank questions and an exam on the shared quiz engine.
- * @param root0
- * @param root0.reviewOnly  Show only the review window of one import.
- * @param root0.jobId       Import to open for review.
- * @param root0.onQuestions Imported question IDs.
- * @param root0.onClosed    Called when that review window is closed.
+ * @param {Object}                                       root0
+ * @param {boolean}                                      [root0.reviewOnly]  Show only the review window of one import.
+ * @param {number}                                       [root0.jobId]       Import to open for review.
+ * @param {((ids: number[]) => void|Promise<void>)|null} [root0.onQuestions] Imported question IDs.
+ * @param {(() => void)|null}                            [root0.onClosed]    Called when that review window is closed.
  */
 export function ExamsPage( {
 	reviewOnly = false,
@@ -141,9 +229,11 @@ export function ExamsPage( {
 	onQuestions = null,
 } ) {
 	const [ importing, setImporting ] = useState( false );
-	const [ jobs, setJobs ] = useState( [] );
-	const [ exams, setExams ] = useState( [] );
-	const [ paperExam, setPaperExam ] = useState( null );
+	const [ jobs, setJobs ] = useState( /** @type {ImportJob[]} */ ( [] ) );
+	const [ exams, setExams ] = useState( /** @type {ExamSummary[]} */ ( [] ) );
+	const [ paperExam, setPaperExam ] = useState(
+		/** @type {ExamSummary|null} */ ( null )
+	);
 	const [ creating, setCreating ] = useState( false );
 	// Ctrl+K opens `#/content-hub/exams?action=new` and `?action=import`.
 	useHubAction(
@@ -154,8 +244,10 @@ export function ExamsPage( {
 					import: () => setImporting( true ),
 				}
 	);
-	const [ job, setJob ] = useState( null );
-	const [ questions, setQuestions ] = useState( [] );
+	const [ job, setJob ] = useState( /** @type {ImportJob|null} */ ( null ) );
+	const [ questions, setQuestions ] = useState(
+		/** @type {ReviewQuestion[]} */ ( [] )
+	);
 	const [ selected, setSelected ] = useState( 0 );
 	const [ busy, setBusy ] = useState( false );
 	const [ dirty, setDirty ] = useState( false );
@@ -174,15 +266,18 @@ export function ExamsPage( {
 		instructions: '',
 	} );
 	const refresh = async () => {
-		const [ imports, library ] = await Promise.all( [
-			api( 'exam-imports' ),
-			api( 'exams' ),
-		] );
+		const [ imports, library ] =
+			/** @type {[{items: ImportJob[]}, {items: ExamSummary[]}]} */ (
+				await Promise.all( [ api( 'exam-imports' ), api( 'exams' ) ] )
+			);
 		setJobs( imports.items );
 		setExams( library.items );
 	};
+	/** @param {number} id */
 	const load = async ( id ) => {
-		const next = await api( `exam-imports/${ id }` );
+		const next = /** @type {ImportJob} */ (
+			await api( `exam-imports/${ id }` )
+		);
 		setJob( next );
 		setQuestions( next.draft || [] );
 		setSelected( 0 );
@@ -196,6 +291,7 @@ export function ExamsPage( {
 			} ) );
 		}
 	};
+	/** @param {() => Promise<unknown>} action */
 	const run = async ( action ) => {
 		setBusy( true );
 		setError( '' );
@@ -204,7 +300,7 @@ export function ExamsPage( {
 			await action();
 		} catch ( failure ) {
 			setError(
-				failure.message ||
+				/** @type {{message?: string}} */ ( failure ).message ||
 					__(
 						'The operation failed. Your edits remain on this page.',
 						'ohmylms'
@@ -239,22 +335,28 @@ export function ExamsPage( {
 		let active = true;
 		const timer = setInterval( async () => {
 			try {
-				const next = await api( `exam-imports/${ job.id }` );
+				const next = /** @type {ImportJob} */ (
+					await api( `exam-imports/${ job.id }` )
+				);
 				if ( active ) {
 					setJob( next );
 					if ( next.state === 'ready_for_review' ) {
+						const inventory = /** @type {ImportInventory} */ (
+							next.inventory
+						);
 						setQuestions( next.draft || [] );
 						setHeader( ( previous ) => ( {
 							...previous,
-							title: next.inventory.title,
-							duration_minutes:
-								next.inventory.duration_minutes || 60,
+							title: inventory.title,
+							duration_minutes: inventory.duration_minutes || 60,
 						} ) );
 					}
 				}
 			} catch ( failure ) {
 				if ( active ) {
-					setError( failure.message );
+					setError(
+						/** @type {{message: string}} */ ( failure ).message
+					);
 				}
 			}
 		}, 3000 );
@@ -267,6 +369,7 @@ export function ExamsPage( {
 		if ( ! dirty ) {
 			return undefined;
 		}
+		/** @param {BeforeUnloadEvent} event */
 		const protect = ( event ) => {
 			event.preventDefault();
 			event.returnValue = '';
@@ -274,6 +377,10 @@ export function ExamsPage( {
 		window.addEventListener( 'beforeunload', protect );
 		return () => window.removeEventListener( 'beforeunload', protect );
 	}, [ dirty ] );
+	/**
+	 * @param {string}  field
+	 * @param {unknown} value
+	 */
 	const change = ( field, value ) => {
 		setQuestions( ( previous ) =>
 			previous.map( ( question, index ) =>
@@ -295,17 +402,23 @@ export function ExamsPage( {
 		);
 		setDirty( true );
 	};
+	/**
+	 * @param {number} index
+	 * @param {string} destination
+	 */
 	const moveFigure = ( index, destination ) => {
 		const source = questions[ selected ];
-		const figure = source.figures[ index ];
+		const figure = /** @type {FigurePlacement[]} */ ( source.figures )[
+			index
+		];
 		setQuestions( ( previous ) =>
 			previous.map( ( question ) => {
 				if ( question.number === source.number ) {
 					return {
 						...question,
-						figures: question.figures.filter(
-							( item ) => item.id !== figure.id
-						),
+						figures: /** @type {FigurePlacement[]} */ (
+							question.figures
+						).filter( ( item ) => item.id !== figure.id ),
 						reviewed: false,
 						figures_complete: false,
 					};
@@ -332,6 +445,11 @@ export function ExamsPage( {
 		);
 		setDirty( true );
 	};
+	/**
+	 * @param {number}  index
+	 * @param {string}  field
+	 * @param {unknown} value
+	 */
 	const changePart = ( index, field, value ) =>
 		change(
 			'parts',
@@ -341,9 +459,18 @@ export function ExamsPage( {
 		);
 	const extract = () =>
 		run( async () => {
-			const next = await api( `exam-imports/${ job.id }/extract`, {} );
+			const next = /** @type {ImportJob} */ (
+				await api(
+					`exam-imports/${ /** @type {ImportJob} */ ( job ).id }/extract`,
+					{}
+				)
+			);
 			setJob( next );
 		} );
+	/**
+	 * @param {string}              label
+	 * @param {keyof typeof header} name
+	 */
 	const field = ( label, name ) => (
 		<ExamField>
 			{ label }
@@ -431,7 +558,8 @@ export function ExamsPage( {
 									{ entry.source.name }
 								</Button>{ ' ' }
 								—{ ' ' }
-								{ targets()[ entry.target ] || targets().exam }{ ' ' }
+								{ targets()[ String( entry.target ) ] ||
+									targets().exam }{ ' ' }
 								· { states()[ entry.state ] || entry.state }
 							</li>
 						) ) }
@@ -714,9 +842,9 @@ export function ExamsPage( {
 												type="number"
 												min="1"
 												max={
-													(
+													/** @type {ImportInventory} */ (
 														job.draft_inventory ||
-														job.inventory
+															job.inventory
 													).page_count
 												}
 												value={ current.page }
@@ -1065,21 +1193,27 @@ export function ExamsPage( {
 											'Part marks: %1$s · Paper total: %2$s',
 											'ohmylms'
 										),
-										questions.reduce(
-											( sum, question ) =>
-												sum +
-												question.parts.reduce(
-													( marks, part ) =>
-														marks +
-														Number(
-															part.marks || 0
-														),
-													0
-												),
-											0
+										String(
+											questions.reduce(
+												( sum, question ) =>
+													sum +
+													question.parts.reduce(
+														( marks, part ) =>
+															marks +
+															Number(
+																part.marks || 0
+															),
+														0
+													),
+												0
+											)
 										),
-										( job.draft_inventory || job.inventory )
-											.total_marks
+										String(
+											/** @type {ImportInventory} */ (
+												job.draft_inventory ||
+													job.inventory
+											).total_marks ?? ''
+										)
 									) }
 								</p>
 								<p>
@@ -1100,16 +1234,23 @@ export function ExamsPage( {
 									disabled={ busy }
 									onClick={ () =>
 										run( async () => {
-											const next = await api(
-												`exam-imports/${ job.id }/review`,
-												{
-													questions,
-													revision:
-														job.draft_revision,
-												}
-											);
+											const next =
+												/** @type {ImportJob} */ (
+													await api(
+														`exam-imports/${ job.id }/review`,
+														{
+															questions,
+															revision:
+																job.draft_revision,
+														}
+													)
+												);
 											setJob( next );
-											setQuestions( next.draft );
+											setQuestions(
+												/** @type {ReviewQuestion[]} */ (
+													next.draft
+												)
+											);
 											setDirty( false );
 											setMessage(
 												__( 'Review saved.', 'ohmylms' )
@@ -1155,7 +1296,9 @@ export function ExamsPage( {
 										onClick={ () =>
 											run( async () => {
 												await onQuestions(
-													job.question_ids
+													/** @type {number[]} */ (
+														job.question_ids
+													)
 												);
 												setJob( null );
 											} )
@@ -1178,7 +1321,9 @@ export function ExamsPage( {
 									disabled={ busy }
 									onClick={ () =>
 										run( async () => {
-											for ( const id of job.question_ids ) {
+											for ( const id of /** @type {number[]} */ (
+												job.question_ids
+											) ) {
 												await approveQuestion(
 													id,
 													job.version_ids?.[ id ]

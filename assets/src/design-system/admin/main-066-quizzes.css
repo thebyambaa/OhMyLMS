@@ -1,8 +1,0 @@
-.ohmylms-options-list .ohmylms-option-item > div {
-	width: 100%;
-}
-
-.ohmylms-options-list .ohmylms-option-error-msg {
-	color: var(--oml-danger) !important;
-	text-align: left;
-}

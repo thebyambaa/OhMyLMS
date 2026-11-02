@@ -1,5 +1,6 @@
 import { Button } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { ExtensionSlot } from '../../extensions/ExtensionSlot';
 import type {
 	Fields,
 	Group,
@@ -7,6 +8,12 @@ import type {
 	Skill,
 	SyllabusOutline,
 } from './model';
+import {
+	GroupRequirements,
+	SkillRequirement,
+	type RequirementChange,
+	type Requirements,
+} from './RequirementControls';
 
 export type EditSelection = {
 	operation: 'add_group' | 'edit_group' | 'create_skill' | 'edit_skill';
@@ -26,6 +33,8 @@ export function GroupList( {
 	attach,
 	detach,
 	mapping,
+	remove,
+	requirements,
 }: {
 	data: SyllabusOutline;
 	busy: boolean;
@@ -35,13 +44,17 @@ export function GroupList( {
 	attach: ( group: Group ) => void;
 	detach: ( group: Group, skill: Skill ) => void;
 	mapping: ( skill: Skill ) => void;
+	remove: ( group: Group ) => void;
+	requirements: Requirements | null;
 } ) {
+	const change = ( skills: RequirementChange[] ) =>
+		void send( 'set_requirements', { skills } );
 	return (
 		<fieldset disabled={ busy }>
 			<legend>{ __( 'Syllabus outline', 'ohmylms' ) }</legend>
 			{ data.contents.map( ( content ) => (
 				<section key={ content.id } aria-label={ content.name }>
-					<h2>{ content.name }</h2>
+					<h3>{ content.name }</h3>
 					<Button
 						onClick={ () =>
 							edit( {
@@ -97,6 +110,19 @@ export function GroupList( {
 							<Button onClick={ () => move( { group } ) }>
 								{ __( 'Move group…', 'ohmylms' ) }
 							</Button>
+							<Button
+								isDestructive
+								onClick={ () => remove( group ) }
+							>
+								{ __( 'Delete group', 'ohmylms' ) }
+							</Button>
+							{ requirements && (
+								<GroupRequirements
+									group={ group }
+									requirements={ requirements }
+									change={ change }
+								/>
+							) }
 							<ol>
 								{ group.skills.map( ( skill, position ) => (
 									<li key={ skill.term_id }>
@@ -169,6 +195,22 @@ export function GroupList( {
 												'ohmylms'
 											) }
 										</Button>
+										<SkillRequirement
+											requirement={ requirements?.get(
+												skill.term_id
+											) }
+											change={ change }
+										/>
+										<ExtensionSlot
+											name="syllabus.skill.resources"
+											context={ {
+												skill,
+												syllabus: {
+													id: data.syllabus.id,
+													name: data.syllabus.name,
+												},
+											} }
+										/>
 									</li>
 								) ) }
 							</ol>

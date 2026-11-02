@@ -2,9 +2,9 @@ import { del, get, post, put } from '../../lib/api';
 import { getCollection } from '../../lib/api/collection';
 import {
 	invalidResponse,
+	parseCertificateAssignment,
 	parseCourse,
 	parseCourseDetail,
-	parseMedia,
 	parseOptions,
 	positiveId,
 	record,
@@ -16,9 +16,6 @@ const itemPath = ( id: number ) => `${ BASE }/${ positiveId( id ) }`;
 
 /** Rows per page in the course list. */
 export const PER_PAGE = 20;
-
-/** Images per page in the media picker. */
-export const MEDIA_PER_PAGE = 12;
 
 /**
  * List courses, newest first. Empty filters are not sent.
@@ -175,30 +172,53 @@ export async function duplicateCourse( id: number, signal?: AbortSignal ) {
 	);
 }
 
+const certificatePath = ( id: number ) =>
+	`/ohmylms/v1/authoring/courses/${ positiveId( id ) }/certificate`;
+
 /**
- * List images for the thumbnail picker through the core media route.
+ * Read the certificate template a course awards and the templates the user may assign.
  *
- * @param search Title search.
- * @param page   Page number, from 1.
+ * @param id     Course id.
  * @param signal Cancels the request.
- * @return Validated images and totals.
+ * @return The validated assignment.
  */
-export function listMedia(
-	search: string,
-	page: number,
+export async function getCourseCertificate( id: number, signal?: AbortSignal ) {
+	const result = parseCertificateAssignment(
+		await get< unknown >( certificatePath( id ), { signal } )
+	);
+	if ( result.course_id !== id ) {
+		throw invalidResponse();
+	}
+	return result;
+}
+
+/**
+ * Replace the course's certificate template. A change made elsewhere since `expected` answers 409.
+ *
+ * @param id            Course id.
+ * @param certificateId Template id, or 0 for none.
+ * @param expected      Template id that was read.
+ * @param signal        Cancels the request.
+ * @return The stored assignment.
+ */
+export async function saveCourseCertificate(
+	id: number,
+	certificateId: number,
+	expected: number,
 	signal?: AbortSignal
 ) {
-	return getCollection( '/wp/v2/media', parseMedia, {
-		signal,
-		query: {
-			search,
-			page,
-			per_page: MEDIA_PER_PAGE,
-			media_type: 'image',
-			mime_type: 'image/jpeg,image/png,image/gif,image/webp',
-			orderby: 'date',
-			order: 'desc',
-			_fields: 'id,source_url,mime_type,title,media_details',
-		},
-	} );
+	const result = parseCertificateAssignment(
+		await put< unknown >(
+			certificatePath( id ),
+			{
+				certificate_id: certificateId,
+				expected_certificate_id: expected,
+			},
+			{ signal }
+		)
+	);
+	if ( result.course_id !== id ) {
+		throw invalidResponse();
+	}
+	return result;
 }

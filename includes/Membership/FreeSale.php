@@ -7,7 +7,9 @@
 
 namespace OhMyLMS\Membership;
 
+use OhMyLMS\Student\Enrollments;
 use OhMyLMS\Student\Hub;
+use OhMyLMS\Utility\Lock;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -117,7 +119,7 @@ final class FreeSale {
 			return new \WP_Error( 'free_membership_user', __( 'Sign in to start free access.', 'ohmylms' ) );
 		}
 		$lock = 'oml-free-' . md5( $wpdb->prefix . ':' . $user_id );
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 3)', $lock ) ) ) {
+		if ( ! Lock::acquire( $lock, 3 ) ) {
 			return new \WP_Error( 'free_membership_busy', __( 'Please try again.', 'ohmylms' ) );
 		}
 		try {
@@ -167,7 +169,7 @@ final class FreeSale {
 			CourseSelection::sync( $plan_id );
 			return true;
 		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+			Lock::release( $lock );
 		}
 	}
 
@@ -189,15 +191,14 @@ final class FreeSale {
 		if ( ! is_array( $grants ) || ! $grants ) {
 			return;
 		}
-		$lock = 'oml-free-' . md5( $wpdb->prefix . ':' . $user_id );
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 3)', $lock ) ) ) {
-			return;
-		}
-		try {
-			self::expire_locked( $user_id );
-		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
-		}
+		Lock::with(
+			'oml-free-' . md5( $wpdb->prefix . ':' . $user_id ),
+			3,
+			static function () use ( $user_id ) {
+				self::expire_locked( $user_id );
+			},
+			false
+		);
 	}
 
 	/**
@@ -222,6 +223,15 @@ final class FreeSale {
 			$revoked = $wpdb->query( $wpdb->prepare( "UPDATE %i SET status='cancelled' WHERE user_id=%d AND membership_id=%d AND order_id=0 AND status='enrolled' AND NOT EXISTS (SELECT 1 FROM %i WHERE user_id=%d AND membership_id=%d AND status='enrolled')", $wpdb->prefix . 'ohmylms_user_enrollment', $user_id, $grant['plan_id'], $wpdb->prefix . 'ohmylms_user_membership', $user_id, $grant['plan_id'] ) );
 			if ( false === $revoked ) {
 				continue;
+			}
+			if ( $revoked ) {
+				Enrollments::resync(
+					array(
+						'user_id'       => (int) $user_id,
+						'membership_id' => (int) $grant['plan_id'],
+						'order_id'      => 0,
+					)
+				);
 			}
 			unset( $remaining[ $row_id ] );
 		}

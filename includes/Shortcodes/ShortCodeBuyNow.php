@@ -42,19 +42,19 @@ class ShortCodeBuyNow {
 		);
 
 		if ( empty( $atts['course_id'] ) ) {
-			echo '<span style="color:red">Course ID is required.</span>';
+			self::error( __( 'Course ID is required.', 'ohmylms' ) );
 			return;
 		}
 
 		$course = function_exists( 'ohmylms_get_course' ) ? ohmylms_get_course( $atts['course_id'] ) : null;
 		if ( ! $course ) {
-			echo '<span style="color:red">Invalid Course ID.</span>';
+			self::error( __( 'Invalid Course ID.', 'ohmylms' ) );
 			return;
 		}
 
 		$status = $course->get_status();
 		if ( 'publish' !== $status ) {
-			echo '<span style="color:red">Course is not published.</span>';
+			self::error( __( 'Course is not published.', 'ohmylms' ) );
 			return;
 		}
 
@@ -120,14 +120,29 @@ class ShortCodeBuyNow {
 				$html_attributes .= sprintf( ' %s="%s"', esc_attr( $attr_key ), esc_attr( $attr_val ) );
 			}
 			$html_attributes .= sprintf( ' data-quantity="%s"', esc_attr( $defaults['quantity'] ) );
-			printf(
+
+			$button = sprintf(
 				'<a href="%s"%s class="%s" style="%s">%s</a>',
 				esc_url( $url ),
-				$html_attributes,
+				$html_attributes, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- each key and value is escaped above.
 				esc_attr( $default_class ),
 				esc_attr( $style ),
 				esc_html( $btn_text )
 			);
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above; Commerce only adds directive attributes.
+			echo \OhMyLMS\Extensions\Commerce::cart_buttons( $button );
 		}
+	}
+
+	/**
+	 * Plain-text error for a shortcode that cannot render a button.
+	 *
+	 * @param string $message Message.
+	 */
+	private static function error( $message ) {
+		if ( class_exists( \OhMyLMS\Design\Ui::class ) ) {
+			\OhMyLMS\Design\Ui::enqueue();
+		}
+		echo '<span class="ohmylms-buy-now-error">' . esc_html( $message ) . '</span>';
 	}
 }

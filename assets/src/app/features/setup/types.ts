@@ -114,11 +114,7 @@ export interface NicheInput {
 export type StepInput =
 	ExperienceInput | PreferencesInput | NicheInput | Record< string, never >;
 
-export interface CurrencyOption {
-	code: string;
-	name: string;
-	symbol: string;
-}
+export type { CurrencyOption } from '../settings/public';
 
 export type FieldErrors = Record< string, string >;
 

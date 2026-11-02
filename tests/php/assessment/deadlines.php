@@ -17,7 +17,7 @@ if (!\OhMyLMS\Extensions\Registry::get('question', 'test-half')) {
 }
 [$course_id, $quiz_id] = course_with_quiz($admin, ['allow_attempts' => 20, 'time_limit' => ['value' => 10, 'type' => 'minutes'], 'passing_grade' => ['enabled' => true, 'value' => 1]]);
 $choice = choice_question($quiz_id, 'Pick right', 2);
-$half = remember_post(call('POST', 'question', ['quiz_id' => $quiz_id, 'name' => 'Partial', 'settings' => ['type' => 'test-half', 'score' => ['enabled' => true, 'value' => 3]]])->get_data()['id']);
+$half = new_question(['quiz_id' => $quiz_id, 'name' => 'Partial', 'settings' => ['type' => 'test-half', 'score' => ['enabled' => true, 'value' => 3]]]);
 $student = make_user('subscriber');
 $other = make_user('subscriber');
 enroll($student, $course_id);
@@ -44,9 +44,9 @@ ok(AttemptItems::context($decimal)['scoring'] === Scoring::DECIMAL, 'New attempt
 $result = Submission::submit($quiz_id, $decimal, $student, [$choice => [$tokens($decimal, $choice)['Right']], $half => ['half']]);
 ok(!is_wp_error($result) && (float) $result['total'] === 3.5 && (float) $wpdb->get_var($wpdb->prepare("SELECT total FROM {$wpdb->prefix}ohmylms_quiz_attempts WHERE id=%d", $decimal)) === 3.5, 'Decimal total not stored: ' . wp_json_encode($result));
 as_user($admin);
-$report = call('GET', 'quiz/' . $quiz_id . '/report')->get_data()['report'];
-$row = array_values(array_filter($report, static function ($r) use ($decimal) { return (int) $r['quiz_attempt_id'] === $decimal; }))[0];
-ok($row['total_marks'] === 3.5, 'Report did not expose a numeric decimal total');
+$report = call('GET', 'quizzes/' . $quiz_id . '/attempts', [], ['student_id' => $student, 'per_page' => 100])->get_data();
+$row = array_values(array_filter($report, static function ($r) use ($decimal) { return (int) $r['id'] === $decimal; }))[0];
+ok($row['score'] === 3.5, 'Report did not expose a numeric decimal total: ' . wp_json_encode($row));
 // Manual review honors decimal policy on new attempts.
 $reviewed = \OhMyLMS\Quiz\Review::save($quiz_id, $decimal, [$half => 2.25]);
 ok((float) $reviewed['total_achieved_marks'] === 4.25, 'Decimal manual mark rounded');

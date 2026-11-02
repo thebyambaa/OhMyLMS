@@ -181,10 +181,10 @@ Item progress: completed items are counted from `ohmylms_user_progress` (`text`,
 - **Progress cost.** The enrolment list computes course totals with `Course::get_lessons_count()`,
   `get_quiz_count()` and `get_assignment_count()` (statically cached, three queries per distinct
   course) plus one progress query per page, so a page costs at most `per_page * 3 + 2` queries.
-- **Reminder e-mails.** `POST /notification/course/{c}/student/{s}` (NotificationController) accepts
-  any recipient `email`, `subject` and HTML `message` from the caller and sends them. That is an open
-  mail relay for its callers; the Students screen deliberately does not use it. Rebuild it to derive
-  the recipient from the student and course before adding a reminder action.
+- **Reminder e-mails (fixed 31 October 2026).** `POST /notification/course/{c}/student/{s}`
+  (NotificationController) used to send any caller-supplied `email`, `subject` and HTML `message` for
+  every `edit_posts` user: an open mail relay. It now sends nothing: `manage_options` callers get
+  `410 ohmylms_reminder_route_retired`, others 401/403. Reminders moved to the course roster below.
 
 ## Hooks
 
@@ -196,9 +196,72 @@ New: `ohmylms_student_unenrolled( $user_id, $course_id )` (it was listened to by
 integration but never fired), `ohmylms_student_blocked( $user_id )` and
 `ohmylms_student_unblocked( $user_id )`.
 
+## Student report (`StudentReportController`)
+
+Read-only, `manage_options`, 404 for users who are not students (same rule as `/students/{id}`).
+Collections take `page` and `per_page` (1-50, default 10) and send `X-WP-Total`,
+`X-WP-TotalPages` and `Link`; a page past the end answers `400 ohmylms_student_report_invalid_page`;
+denied callers get `401/403 ohmylms_student_report_cannot_view`.
+
+| Method | Path | Body |
+| --- | --- | --- |
+| GET | `/students/{id}/report` | `{ student_id, courses: {enrolled, completed, in_progress}, quizzes: {attempts, in_review, average_percent}, assignments: {submitted, graded, passed, failed}, skills: {total, review_due, struggling} }` |
+| GET | `/students/{id}/quiz-attempts` | `{ id, quiz_id, quiz_title, course_id, course_title, status, score, max_marks, percentage, started_at, submitted_at }[]`, newest first |
+| GET | `/students/{id}/assignment-submissions` | `{ id, assignment_id, assignment_title, course_id, course_title, status (submitted\|graded), result (passed\|failed\|null), score, max_score, attempts, submitted_at, graded_at }[]` |
+| GET | `/students/{id}/skills?filter=all\|review_due\|struggling` | `{ skill_id, name, level, level_label, review_due, struggling, evidence_count, recent_accuracy (0-1), last_evidence_at }[]` by name |
+
+Minimal personal data: no row repeats the student's name or e-mail; answers, submission text, files,
+feedback and skill evidence stay on the grading and skill screens. `average_percent` averages
+`total / sum(question_marks)` over submitted attempts (null without scored attempts). Dates are site
+time. Cost: summary is four aggregate queries; each page is a count, one indexed page query and one
+batched lookup (attempt maxima, post titles via `_prime_post_caches`, assignment meta via
+`update_meta_cache`). Skills read `student_skill_state` joined to `terms`; an install without the
+assessment tables answers an empty page. Known limit: `ohmylms_assignment_attempts` has no
+`user_id` index (reported, not altered).
+
+## Course roster (`CourseRosterController`)
+
+Writes for one course under `/analytics/courses/{id}` (`manage_options`; unknown or trashed course
+`404 ohmylms_analytics_course_not_found`). The roster list is `GET /analytics/courses/{id}/students`
+(docs/api/analytics.md).
+
+| Method | Path | Behaviour |
+| --- | --- | --- |
+| POST | `/analytics/courses/{id}/enrollments` `{ email }` | Finds an existing user by e-mail (`404 ohmylms_roster_user_not_found`; no account is created) and dispatches `POST /students/{user}/enrollments`, so the 409s and `ohmylms_manual_student_enrollment` apply. 201 `{ user_id, name, enrollment }`; the e-mail is not echoed. |
+| POST | `/analytics/courses/{id}/enrollments/bulk` `{ action: "unenroll", user_ids }` | 1-50 unique ids. Each id is dispatched to `DELETE /students/{user}/enrollments/{course}`; 200 `{ action, results: [{ user_id, ok, code }] }` (one failure does not stop the rest). |
+| POST | `/analytics/courses/{id}/reminders` `{ template, user_ids }` | 1-20 ids; `template` is `start`, `continue` or `complete`. 200 `{ sent, skipped: [{ user_id, reason }], remaining }`. |
+
+Reminder rules (`OhMyLMS\Analytics\Reminders`):
+
+- **Recipients** come from the enrolment table: only users with an `enrolled` (not `banned`) row in
+  this course and no account-level block. Others are skipped as `not_enrolled` or `blocked`;
+  `completed` enrolments are skipped. No address, subject or body is accepted from the caller
+  (unknown body keys are ignored).
+- **Fixed templates**: translated plain text (no HTML) with the student's display name, the course
+  title and permalink and the site name. Rows are logged in `ohmylms_notifications` (template key in
+  `message`, `sent` or `failed`).
+- **Rate limits**: one reminder per student and course per 24 hours (`recently_reminded`, filter
+  `ohmylms_reminder_interval`, minimum one hour) and 50 per sender per rolling hour (filter
+  `ohmylms_reminder_hourly_limit`, 1-500). A request with no quota left answers
+  `429 ohmylms_reminder_rate_limited`; quota running out mid-request skips the rest as
+  `rate_limited`. The quota is a per-user transient (best effort under concurrency).
+- Action `ohmylms_course_reminder_sent( $user_id, $course_id, $template )` fires after each send.
+
+Test: `tests/php/student-report-rest-integration.php` (`OHMYLMS_STUDENT_REPORT_TEST=1`): permissions,
+404s, paging bounds, figures, enrol by e-mail, bulk results, reminder recipients, fixed subject,
+plain body, interval, hourly 429 and the retired relay (mail intercepted with `pre_wp_mail`).
+
 ## Authored admin preview
 
 `#/students` (list: search, course filter, sort, paging) and `#/students?student=<id>` (profile:
 enrolments with progress, enrol, unenrol, block/unblock) in
-`assets/src/app/features/students/`. The profile uses a query parameter because the app shell
-registers one exact path per feature.
+`assets/src/app/features/students/`. `#/students/<id>/report` (hidden `student-report` route,
+extension route `/students/:id/report`) shows the summary and the three paged tables, linking quiz
+attempts to `#/quizzes/<id>/attempts` and submissions to their grading screen.
+`#/reports/courses/<id>/students` (hidden `course-roster` route in the dashboard feature, extension
+route `/courses/:id/students`) offers enrol by e-mail, search, progress filter, row selection per page,
+bulk unenrol and the three reminders, each behind a confirmation dialog.
+
+Legacy routes these replace (the map in `includes/Admin/LegacyRoutes.php` is owned elsewhere):
+`/students/:id/report` → `/students/:id/report`, `/courses/:id/students` →
+`/reports/courses/:id/students`.

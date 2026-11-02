@@ -11,11 +11,14 @@ function account_check($condition, $message) {
     if (!$condition) { throw new RuntimeException($message); }
     $GLOBALS['account_checks']++;
 }
-function account_register($data, $nonce = true) {
-    $request = new WP_REST_Request('POST', '/ohmylms/v1/school/register');
-    if ($nonce) { $request->set_header('X-WP-Nonce', wp_create_nonce('wp_rest')); }
-    $request->set_body_params($data);
-    return rest_do_request($request);
+/** Sign up through the hub form's service (the `school/register` route was retired); answers an HTTP-like status. */
+function account_register($data) {
+    try {
+        $result = \OhMyLMS\Schools\Signup::create($data);
+        return new WP_REST_Response($result, 200);
+    } catch (\Throwable $error) {
+        return new WP_REST_Response(['message' => $error->getMessage()], in_array($error->getCode(), [400, 429], true) ? $error->getCode() : 500);
+    }
 }
 $GLOBALS['account_checks'] = 0;
 $original_prefix = $wpdb->prefix;
@@ -51,7 +54,6 @@ try {
         account_check(0 === (int) $wpdb->get_var('SELECT COUNT(*) FROM ' . Schema::table($table)), 'Registration granted ' . $table);
     }
     account_check(400 === account_register(['role' => 'administrator'])->get_status(), 'Arbitrary role accepted');
-    account_check(403 === account_register(['role' => 'teacher'], false)->get_status(), 'Missing nonce accepted');
     account_check(400 === account_register(['role' => 'teacher', 'website' => 'spam'])->get_status(), 'Honeypot bypassed');
     account_check(400 === account_register(['role' => 'teacher', 'email' => 'weak@example.invalid', 'password' => 'short'])->get_status(), 'Weak password accepted');
     account_check(WP_Block_Type_Registry::get_instance()->is_registered('ohmylms/sign-in'), 'Sign-in block missing');

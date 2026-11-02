@@ -1,6 +1,19 @@
 # cmi5 support (phase 2): design
 
-Status: **design only, nothing built.** Written 2026-10-13 after the xAPI emitter (phase 1, `docs/XAPI.md`) merged. Open decisions are at the end; the spikes behind the choices are in "What was verified".
+Status: **phase 2a started** (branch `cmi5-import-launch`). Written 2026-10-13 after the xAPI emitter (phase 1, `docs/XAPI.md`) merged. Open decisions are at the end; the spikes behind the choices are in "What was verified".
+
+Built so far, all independent of how courses and lessons are stored (`includes/Cmi5/`, tests in `tests/cmi5-unit.php`, run with `php -d extension=zip tests/cmi5-unit.php`):
+
+| Piece | What it does |
+|---|---|
+| `CourseStructure` | Parses and validates `cmi5.xml` (IDs, moveOn, masteryScore, launchMethod, URLs), refuses any DOCTYPE or entity, caps size, depth and AU count (more than 1000 AUs import fine), reports every problem at once |
+| `PackageExtractor` | Unpacks a ZIP safely: no path escapes, links or executable types, an allow-list of file types, size, count and compression-ratio limits, a counted copy instead of `extractTo()`, and it never deletes a folder it did not create |
+| `ContentPath`, `Routes` | Clean request paths, content types, single byte-range requests (so audio and video can seek), and the route parser for `/ohmylms-cmi5/{c,fetch,lrs}/…` |
+| `Tokens`, `LaunchUrl` | Random content, fetch and auth tokens (only hashes are stored) and the launch URL with the five cmi5 parameters merged into the AU's own query |
+
+Not built yet, and waiting on what changes in the LMS architecture: creating the course, chapters and lessons from a package, the `cmi5` lesson type, the enrolment check at launch, and marking lessons complete. Also not built: the session and package tables, the content server, the fetch endpoint, then 2b and 2c.
+
+Things the spec text settled while building: `cmi5.xml` must be at the ZIP root (a wrapper folder is not accepted), media in the ZIP must use relative URLs and everything else fully qualified ones, and the launch `actor` must be an Agent with an `account` (so the email-based learner identity from the xAPI settings cannot be used for cmi5 launches). The root element's namespace was not in the part of the spec I could read, so the parser matches on the local name.
 
 ## Goal and scope
 

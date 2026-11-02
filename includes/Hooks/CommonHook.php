@@ -2,17 +2,6 @@
 
 namespace OhMyLMS\Hooks;
 
-use MailMintPro\App\Utilities\Helper\Integration;
-use MailMintPro\Mint\Internal\AbandonedCart\Helper\Common;
-use Mint\MRM\DataBase\Models\ContactGroupModel;
-use Mint\MRM\Internal\Constants;
-use Mint\MRM\Utilites\Helper\Email;
-use Mint\MRM\Utilities\Helper\PermissionManager;
-use Mint\MRM\Utilities\Helper\TranslationString\TransStrings;
-use MintMail\App\Internal\Automation\HelperFunctions;
-use MintMailPro\Mint_Pro_Helper;
-use MRM\Common\MrmCommon;
-
 use OhMyLMS\Abstracts\HookHandler;
 
 /**
@@ -44,7 +33,6 @@ class CommonHook extends HookHandler {
 		add_filter( 'mint_webhook_allowed', array( $this, 'maybe_allowed_webhook' ), 10 );
 
 		add_filter( 'wp_head', array( $this, 'ohmylms_add_internal_styles' ), 10 );
-		add_filter( 'admin_init', array( $this, 'ohmylms_remove_notice' ), 10 );
 		add_action( 'admin_init', array( $this, 'ohmylms_remove_emoji' ), 10 );
 		add_action( 'admin_bar_menu', array( $this, 'add_edit_course_menu' ), 999 );
 		add_action( 'wp_login', array( $this, 'set_users_last_login' ), 10, 2 );
@@ -73,9 +61,7 @@ class CommonHook extends HookHandler {
 		add_filter( 'ohmylms_data_stores', array( $this, 'pro_data_stores' ), 10 );
 		add_filter( 'ohmylms_modules', array( $this, 'pro_modules' ), 10 );
 		add_filter( 'ohmylms_is_pro', array( $this, 'ohmylms_is_pro' ), 10 );
-		add_filter( 'ohmylms_get_admin_script_data', array( $this, 'ohmylms_get_admin_script_data_for_mm' ), 10, 2 );
 		add_action( 'template_redirect', array( $this, 'restrict_session_access' ), 10 );
-		add_action( 'ohmylms_after_settings_menu_item', array( $this, 'register_submenu' ) );
 		add_filter( 'post_type_link', array( $this, 'session_single_url' ), 1, 2 );
 		add_filter( 'ohmylms_is_lesson_sequentially_locked', array( $this, 'is_lesson_sequentially_locked' ), 10, 4 );
 		add_filter( 'ohmylms_can_save_sequential_mode', '__return_true' );
@@ -105,7 +91,7 @@ class CommonHook extends HookHandler {
 			$node = $admin_bar->get_node( 'new-ohmylms-course' ); // This targets the "New Course" button in the admin bar.
 			if ( $node ) {
 				// Update the URL with your custom link (e.g., redirecting to a different page).
-				$new_url = admin_url( 'admin.php?page=ohmylms#/courses' );
+				$new_url = \OhMyLMS\Admin\LegacyRoutes::app_url( '/courses' );
 				// Add the updated node back to the admin bar with the new URL.
 				$admin_bar->add_node(
 					array(
@@ -124,7 +110,7 @@ class CommonHook extends HookHandler {
 				if ( $post && 'ohmylms-course' === $post->post_type ) {
 					// Find the "Edit" menu item
 					// Modify the URL of the "Edit Course" link.
-					$new_url = admin_url( "admin.php?page=ohmylms#/course-edit/{$post->ID}" );
+					$new_url = \OhMyLMS\Admin\LegacyRoutes::app_url( '/courses/' . $post->ID );
 
 					// Update the existing "Edit" node with the new URL.
 					$admin_bar->add_node(
@@ -139,19 +125,6 @@ class CommonHook extends HookHandler {
 		}
 	}
 
-
-	/**
-	 * Removes the notice.
-	 *
-	 * @since 1.0.0
-	 */
-	public function ohmylms_remove_notice() {
-		global $pagenow;
-		if ( 'admin.php' === $pagenow && isset( $_GET['page'] ) && 'ohmylms' === $_GET['page'] ) {
-			remove_all_actions( 'admin_notices' );
-			remove_all_actions( 'all_admin_notices' );
-		}
-	}
 
 	/**
 	 * Modifies the number of posts per page for the course archive.
@@ -173,6 +146,10 @@ class CommonHook extends HookHandler {
 	 * Restrict post access for not enrolled users
 	 */
 	public function restrict_access() {
+		// A signed learner preview already passed OhMyLMS\Learning\LessonPreview::start(), which applies these gates as a new learner.
+		if ( \OhMyLMS\Learning\LessonPreview::active() ) {
+			return;
+		}
 		if ( is_single() ) {
 			global $post;
 
@@ -190,8 +167,16 @@ class CommonHook extends HookHandler {
 			// Check if the current post type is in the restricted list.
 			if ( in_array( $post->post_type, $restrict_post_types, true ) ) {
 
-				// Check if the user is logged in and is the author of the post.
-				if ( ! is_user_logged_in() || get_current_user_id() !== (int) $post->post_author ) {
+				// Opening a quiz you author is a preview: clear any old recorded attempt or
+				// completion of it so the page never opens on a stale "passed".
+				if ( 'ohmylms-quiz' === $post->post_type && is_user_logged_in() ) {
+					\OhMyLMS\Quiz\Submission::clear_preview_record( $post->ID, get_current_user_id() );
+				}
+
+				// Admins and the post's author preview and work through their own content
+				// without enrolling. This matches the template-level check in
+				// templates/single-lesson.php and OhMyLMS\SequentialMode's bypass.
+				if ( ! is_user_logged_in() || ( ! current_user_can( 'manage_options' ) && get_current_user_id() !== (int) $post->post_author ) ) {
 
 					// Block access for logged-in users who haven't verified their email yet.
 					if (
@@ -201,12 +186,20 @@ class CommonHook extends HookHandler {
 					) {
 						$resend_url = \OhMyLMS\Services\EmailVerificationService::get_resend_url();
 						ob_start();
+						// wp_die() exits before the footer, so print the shared sheet and tokens here.
+						if ( class_exists( \OhMyLMS\Design\Ui::class ) && function_exists( 'wp_print_styles' ) ) {
+							\OhMyLMS\Design\Ui::enqueue();
+							if ( class_exists( \OhMyLMS\Design\Tokens::class ) ) {
+								wp_add_inline_style( \OhMyLMS\Design\Ui::STYLE_HANDLE, \OhMyLMS\Design\Tokens::frontend_css() );
+							}
+							wp_print_styles( \OhMyLMS\Design\Ui::STYLE_HANDLE );
+						}
 						?>
 						<div class="ohmylms-access-denied-modal">
 							<div class="ohmylms-access-denied-inner">
 								<div class="ohmylms-access-denied-modal-content">
 									<span class="denied-icon">
-										<svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#6E42D3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+										<svg class="ohmylms-verification-icon" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
 									</span>
 									<h4 class="ohmylms-access-denied-title">
 										<?php esc_html_e( 'Please verify your email', 'ohmylms' ); ?>
@@ -214,8 +207,8 @@ class CommonHook extends HookHandler {
 									<p class="ohmylms-access-denied-description">
 										<?php esc_html_e( 'Check your inbox and click the verification link to access course content.', 'ohmylms' ); ?>
 									</p>
-									<p style="margin-top:16px;">
-										<a href="<?php echo esc_url( $resend_url ); ?>" style="color:#6E42D3;text-decoration:underline;">
+									<p class="ohmylms-verification-resend-row">
+										<a class="ohmylms-verification-resend" href="<?php echo esc_url( $resend_url ); ?>">
 											<?php esc_html_e( 'Resend verification email', 'ohmylms' ); ?>
 										</a>
 									</p>
@@ -326,7 +319,7 @@ class CommonHook extends HookHandler {
 						<?php
 						$content = ob_get_clean();
 
-						wp_die( $content, 'Access Denied', array( 'response' => 403 ) );
+						wp_die( $content, 'Access Denied', array( 'response' => 403 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Template markup buffered above; its dynamic values are escaped there.
 					}
 
 					if ( $student && $student->maybe_banned() ) {
@@ -420,7 +413,7 @@ class CommonHook extends HookHandler {
 						<?php
 						$content = ob_get_clean();
 
-						wp_die( $content, 'Access Denied', array( 'response' => 403 ) );
+						wp_die( $content, 'Access Denied', array( 'response' => 403 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Template markup buffered above; its dynamic values are escaped there.
 					}
 
 					$prerequisites = null;
@@ -521,13 +514,11 @@ class CommonHook extends HookHandler {
 							<?php
 							$content = ob_get_clean();
 
-							wp_die( $content, 'Access Denied', array( 'response' => 403 ) );
+							wp_die( $content, 'Access Denied', array( 'response' => 403 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Template markup buffered above; its dynamic values are escaped there.
 					}
 
-					if ( 'ohmylms-assignment' === $post->post_type ) {
-						$assignment_obj = ohmylms_get_assignment( $post->ID );
-						$prerequisites  = $assignment_obj->get_prerequisites();
-					}
+					// Assignment prerequisites gate submitting, not reading: the assignment page lists them
+					// and OhMyLMS\Assignment\Delivery refuses the submission until they are complete.
 
 					// Check prerequisites settings.
 					if ( is_array( $prerequisites ) && ! empty( $prerequisites ) && ! empty( $prerequisites['enable'] ) && ! empty( $prerequisites['data'] ) && $prerequisites['enable'] ) {
@@ -640,7 +631,7 @@ class CommonHook extends HookHandler {
 							<?php
 							$content = ob_get_clean();
 
-							wp_die( $content, 'Access Denied', array( 'response' => 403 ) );
+							wp_die( $content, 'Access Denied', array( 'response' => 403 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Template markup buffered above; its dynamic values are escaped there.
 						}
 					}
 
@@ -715,7 +706,7 @@ class CommonHook extends HookHandler {
 						</style>
 						<?php
 						$content = ob_get_clean();
-						wp_die( $content, 'Content Locked', array( 'response' => 403 ) );
+						wp_die( $content, 'Content Locked', array( 'response' => 403 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Template markup buffered above; its dynamic values are escaped there.
 					}
 				}
 			}
@@ -733,11 +724,7 @@ class CommonHook extends HookHandler {
 		// Ensure course_id is sanitized.
 		$course_id = intval( $course_id );
 		// Delete rows where course_id matches.
-		$deleted = $wpdb->delete(
-			"{$wpdb->prefix}ohmylms_user_enrollment", // Table name.
-			array( 'course_id' => $course_id ),           // Where condition.
-			array( '%d' )                                 // Data type for the condition.
-		);
+		$deleted = \OhMyLMS\Student\Enrollments::delete( array( 'course_id' => $course_id ), array( '%d' ) );
 	}
 
 
@@ -755,11 +742,7 @@ class CommonHook extends HookHandler {
 			$order_id = $parent_order_id;
 		}
 		// Delete rows where order_id matches.
-		$deleted = $wpdb->delete(
-			"{$wpdb->prefix}ohmylms_user_enrollment", // Table name.
-			array( 'order_id' => $order_id ),           // Where condition.
-			array( '%d' )                                 // Data type for the condition.
-		);
+		$deleted = \OhMyLMS\Student\Enrollments::delete( array( 'order_id' => $order_id ), array( '%d' ) );
 		if ( ohmylms_is_pro() ) {
 			// Delete rows where order_id matches.
 			$deleted = $wpdb->delete(
@@ -789,11 +772,7 @@ class CommonHook extends HookHandler {
 		// Check if an order_id was found.
 		if ( $order_id ) {
 			// Delete rows from ohmylms_user_enrollment where order_id matches.
-			$wpdb->delete(
-				"{$wpdb->prefix}ohmylms_user_enrollment", // Table name.
-				array( 'order_id' => $order_id ),       // Where condition.
-				array( '%d' )                           // Data type for the condition.
-			);
+			\OhMyLMS\Student\Enrollments::delete( array( 'order_id' => (int) $order_id ), array( '%d' ) );
 		}
 		if ( ohmylms_is_pro() ) {
 			// Delete rows where course_id matches.
@@ -822,11 +801,7 @@ class CommonHook extends HookHandler {
 			);
 		}
 
-		$wpdb->delete(
-			"{$wpdb->prefix}ohmylms_user_enrollment", // Table name.
-			array( 'user_id' => $id ),       // Where condition.
-			array( '%d' )                           // Data type for the condition.
-		);
+		\OhMyLMS\Student\Enrollments::delete( array( 'user_id' => (int) $id ), array( '%d' ) );
 	}
 
 	/**
@@ -836,13 +811,6 @@ class CommonHook extends HookHandler {
 	 * @return string
 	 */
 	public function load_custom_template( $template ) {
-
-		if ( isset( $_GET['ohmylms-certificate-data'] ) ) {
-			$plugin_template = OHMYLMS_PATH . '/templates/page-template/ohmylms-certificate.php';
-			if ( file_exists( $plugin_template ) ) {
-				return $plugin_template;
-			}
-		}
 
 		if ( is_ohmylms_profile() && get_page_template_slug() === 'ohmylms-profile' ) {
 			$plugin_template = OHMYLMS_PATH . '/templates/page-template/ohmylms-profile.php';
@@ -1082,8 +1050,6 @@ class CommonHook extends HookHandler {
 
 		$templates['ohmylms-thankyou'] = 'OhMyLMS Thank You'; // Template name as it appears in the editor.
 
-		$templates['ohmylms-certificate'] = 'Certificate template';
-
 		$templates['ohmylms-dashboard'] = 'OhMyLMS Dashboard'; // Template name as it appears in the editor.
 
 		$templates['ohmylms-my-courses'] = 'OhMyLMS My Courses'; // Template name as it appears in the editor.
@@ -1240,7 +1206,7 @@ class CommonHook extends HookHandler {
 		$wp_query->queried_object       = $page;
 		$wp_query->queried_object_id    = $page_id;
 
-		$post = $page;
+		$post = $page; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Deliberately points the global post at the archive's page, matching the query context above.
 		setup_postdata( $post );
 	}
 
@@ -1253,9 +1219,8 @@ class CommonHook extends HookHandler {
 	public function update_earning( $order, $data ) {
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'ohmylms_earning';
-		$query      = $wpdb->prepare( 'SELECT order_id FROM %i WHERE order_id = %d', $table_name, $order->get_id() );
 		// Execute the query and return the result.
-		$result        = $wpdb->get_row( $query, ARRAY_A );
+		$result        = $wpdb->get_row( $wpdb->prepare( 'SELECT order_id FROM %i WHERE order_id = %d', $table_name, $order->get_id() ), ARRAY_A );
 		$membership_id = null;
 		$course_id     = null;
 		$status        = $order->get_status();
@@ -1308,15 +1273,15 @@ class CommonHook extends HookHandler {
 	 * @since 1.0.0
 	 */
 	public function maybe_allowed_webhook( $is_allowed ) {
-		$queryString     = 'mailmint=1&route=webhook&topic=contact&hash=f9fcd11c-fde8-4c7f-9810-0ebb02d2740e';
-		$userQueryString = $_SERVER['QUERY_STRING'] ?? '';
+		$query_string      = 'mailmint=1&route=webhook&topic=contact&hash=f9fcd11c-fde8-4c7f-9810-0ebb02d2740e';
+		$user_query_string = isset( $_SERVER['QUERY_STRING'] ) ? wp_unslash( $_SERVER['QUERY_STRING'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Only compared for exact equality with the constant above.
 
-		if ( $queryString !== $userQueryString ) {
+		if ( $query_string !== $user_query_string ) {
 			return true;
 		}
 
-		$userAgent         = $_SERVER['HTTP_USER_AGENT'] ?? '';
-		$allowedUserAgents = array(
+		$user_agent          = isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
+		$allowed_user_agents = array(
 			'Mozilla', // Covers Firefox.
 			'Chrome',  // Covers Chrome.
 			'Safari',  // Covers Safari.
@@ -1325,8 +1290,8 @@ class CommonHook extends HookHandler {
 			'WordPress',
 		);
 
-		foreach ( $allowedUserAgents as $allowedUserAgent ) {
-			if ( stripos( $userAgent, $allowedUserAgent ) !== false ) {
+		foreach ( $allowed_user_agents as $allowed_user_agent ) {
+			if ( stripos( $user_agent, $allowed_user_agent ) !== false ) {
 					return true;
 			}
 		}
@@ -1339,7 +1304,7 @@ class CommonHook extends HookHandler {
 	 *
 	 * @param mixed $data Input data.
 	 */
-	function create_contact_on_mm_from_appsero_optin( $data ) {
+	public function create_contact_on_mm_from_appsero_optin( $data ) {
 		if ( isset( $data['admin_email'], $data['first_name'], $data['last_name'] ) ) {
 			$json_body_data = wp_json_encode(
 				array(
@@ -1349,13 +1314,13 @@ class CommonHook extends HookHandler {
 				)
 			);
 
-			$webHookUrl = array(
+			$web_hook_url = array(
 				'https://staging-useraccount.kinsta.cloud/?mailmint=1&route=webhook&topic=contact&hash=b258136d-6759-4e91-bbab-0b7397af6dc7',
 			);
 
 			try {
-				if ( ! empty( $webHookUrl ) ) {
-					foreach ( $webHookUrl as $url ) {
+				if ( ! empty( $web_hook_url ) ) {
+					foreach ( $web_hook_url as $url ) {
 						wp_remote_request(
 							$url,
 							array(
@@ -1396,7 +1361,7 @@ class CommonHook extends HookHandler {
 	 * Set users last login
 	 *
 	 * @param mixed  $user_login User login.
-	 * @param object $user
+	 * @param object $user User object.
 	 * .
 	 * @return void
 	 *
@@ -1433,14 +1398,12 @@ class CommonHook extends HookHandler {
 	 */
 	public function after_delete_wp_user( $user_id ) {
 		global $wpdb;
-		$table_name = $wpdb->prefix . 'ohmylms_user_enrollment';
-		$wpdb->update(
-			$table_name,
+		\OhMyLMS\Student\Enrollments::update(
 			array(
 				'status' => 'cancelled',
 			),
 			array(
-				'user_id' => $user_id,
+				'user_id' => (int) $user_id,
 			)
 		);
 		if ( ohmylms_is_pro() ) {
@@ -1512,7 +1475,6 @@ class CommonHook extends HookHandler {
 
 		// Check if we're on any OhMyLMS admin page.
 		$ohmylms_pages = array(
-			'toplevel_page_ohmylms',
 			'ohmylms_page_ohmylms-courses',
 			'ohmylms_page_ohmylms-lessons',
 			'ohmylms_page_ohmylms-quiz',
@@ -1581,7 +1543,7 @@ class CommonHook extends HookHandler {
 		}
 
 		if ( ! empty( $_GET['ohmylms_verify_error'] ) ) {
-			$error = sanitize_key( wp_unslash( $_GET['ohmylms_verify_error'] ));
+			$error = sanitize_key( wp_unslash( $_GET['ohmylms_verify_error'] ) );
 			if ( 'expired' === $error ) {
 				$msg = __( 'The verification link has expired.', 'ohmylms' );
 			} else {
@@ -1604,37 +1566,21 @@ class CommonHook extends HookHandler {
 	}
 
 	/**
-	 * Render a styled inline notice.
+	 * Render a verification notice. Colours and spacing come from the shared stylesheet.
 	 *
 	 * @param string $type 'success' | 'info' | 'warning'.
 	 * @param string $message Already-escaped or safe HTML message.
-	 * @param bool   $escape Whether to run esc_html on $message (default true).
+	 * @param bool   $escape  Whether to run esc_html on $message (default true).
 	 */
 	private function render_verification_notice( string $type, string $message, bool $escape = true ): void {
-		$brand = get_option( 'ohmylms_notification_color', get_option( 'ohmylms_email_base_color', '#6E42D3' ) );
-		if ( empty( $brand ) ) {
-			$brand = '#6E42D3';
+		if ( ! in_array( $type, array( 'success', 'info', 'warning' ), true ) ) {
+			$type = 'info';
 		}
-		$colors = array(
-			'success' => array(
-				'bg'     => '#f0fdf4',
-				'border' => '#16a34a',
-				'text'   => '#15803d',
-			),
-			'info'    => array(
-				'bg'     => '#eff6ff',
-				'border' => $brand,
-				'text'   => $brand,
-			),
-			'warning' => array(
-				'bg'     => '#fffbeb',
-				'border' => '#d97706',
-				'text'   => '#92400e',
-			),
-		);
-		$c      = $colors[ $type ] ?? $colors['info'];
+		if ( class_exists( \OhMyLMS\Design\Ui::class ) ) {
+			\OhMyLMS\Design\Ui::enqueue();
+		}
 		?>
-		<div class="ohmylms-verification-notice ohmylms-verification-notice--<?php echo esc_attr( $type ); ?>" style="background:<?php echo esc_attr( $c['bg'] ); ?>;border-left:4px solid <?php echo esc_attr( $c['border'] ); ?>;border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:14px;color:<?php echo esc_attr( $c['text'] ); ?>;line-height:1.6;">
+		<div class="ohmylms-verification-notice ohmylms-verification-notice-<?php echo esc_attr( $type ); ?> ohmylms-verification-notice--<?php echo esc_attr( $type ); ?>">
 			<?php
 			if ( $escape ) {
 				echo esc_html( $message );
@@ -1660,14 +1606,16 @@ class CommonHook extends HookHandler {
 		if ( ! $user_id || \OhMyLMS\Services\EmailVerificationService::is_verified( $user_id ) ) {
 			return;
 		}
-		$resend_url  = \OhMyLMS\Services\EmailVerificationService::get_resend_url();
-		$brand_color = get_option( 'ohmylms_notification_color', get_option( 'ohmylms_email_base_color', '#6E42D3' ) ) ?: '#6E42D3';
+		$resend_url = \OhMyLMS\Services\EmailVerificationService::get_resend_url();
+		if ( class_exists( \OhMyLMS\Design\Ui::class ) ) {
+			\OhMyLMS\Design\Ui::enqueue();
+		}
 		?>
-		<div class="ohmylms-verification-notice ohmylms-verification-notice--info" style="background:#f5f0ff;border:1px solid <?php echo esc_attr( $brand_color ); ?>;border-radius:10px;padding:18px 22px;margin:24px 0;font-size:15px;color:<?php echo esc_attr( $brand_color ); ?>;line-height:1.7;text-align:center;">
+		<div class="ohmylms-verification-notice ohmylms-verification-notice-info ohmylms-verification-notice-thankyou ohmylms-verification-notice--info">
 			<strong><?php esc_html_e( 'One more step — verify your email!', 'ohmylms' ); ?></strong><br>
 			<?php esc_html_e( 'We sent a verification link to your inbox. Click it to unlock your course content.', 'ohmylms' ); ?>
 			<br><br>
-			<a href="<?php echo esc_url( $resend_url ); ?>" style="display:inline-block;background:<?php echo esc_attr( $brand_color ); ?>;color:#fff;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:600;">
+			<a class="ohmylms-verification-resend-button" href="<?php echo esc_url( $resend_url ); ?>">
 				<?php esc_html_e( 'Resend verification email', 'ohmylms' ); ?>
 			</a>
 		</div>
@@ -1698,7 +1646,10 @@ class CommonHook extends HookHandler {
 		$token  = sanitize_text_field( wp_unslash( $_GET['ohmylms_verify_email'] ) );
 		$result = \OhMyLMS\Services\EmailVerificationService::verify_token_detailed( $token );
 
-		$dashboard_url = ohmylms_get_dashboard_url() ?: home_url( '/' );
+		$dashboard_url = ohmylms_get_dashboard_url();
+		if ( ! $dashboard_url ) {
+			$dashboard_url = home_url( '/' );
+		}
 
 		if ( 'verified' === $result['status'] ) {
 			// Auto-login the user if not already logged in.
@@ -1909,22 +1860,6 @@ class CommonHook extends HookHandler {
 	}
 
 	/**
-	 * Register submenu for Common hook.
-	 */
-	public function register_submenu() {
-		$slug       = OHMYLMS_SLUG;
-		$capability = 'manage_options';
-		add_submenu_page(
-			$slug,
-			__( 'Add-ons', 'ohmylms' ),
-			__( 'Add-ons', 'ohmylms' ),
-			$capability,
-			admin_url( 'admin.php?page=ohmylms#/integrations' ),
-			null
-		);
-	}
-
-	/**
 	 * Ohmylms is pro for Common hook.
 	 *
 	 * @param mixed $is_pro Is pro.
@@ -2073,7 +2008,7 @@ class CommonHook extends HookHandler {
 										<?php
 										$content = ob_get_clean();
 
-										wp_die( $content, 'Access Denied', array( 'response' => 403 ) );
+										wp_die( $content, 'Access Denied', array( 'response' => 403 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Template markup buffered above; its dynamic values are escaped there.
 									}
 								} elseif ( $current_date < $drip_date ) {
 									// If current date is earlier than the drip feed date.
@@ -2170,7 +2105,7 @@ class CommonHook extends HookHandler {
 										<?php
 										$content = ob_get_clean();
 
-										wp_die( $content, 'Access Denied', array( 'response' => 403 ) );
+										wp_die( $content, 'Access Denied', array( 'response' => 403 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Template markup buffered above; its dynamic values are escaped there.
 								}
 							} elseif ( 'enrollment-from-x-days' === $drip_feed['type'] ) {
 								$days = ! empty( $drip_feed['enrollment_from_x_days'] ) ? $drip_feed['enrollment_from_x_days'] : 0;
@@ -2285,7 +2220,7 @@ class CommonHook extends HookHandler {
 										<?php
 										$content = ob_get_clean();
 
-										wp_die( $content, 'Access Denied', array( 'response' => 403 ) );
+										wp_die( $content, 'Access Denied', array( 'response' => 403 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Template markup buffered above; its dynamic values are escaped there.
 									}
 								}
 							} elseif ( 'course-content-sequentially' === $drip_feed['type'] ) {
@@ -2392,7 +2327,7 @@ class CommonHook extends HookHandler {
 										<?php
 										$content = ob_get_clean();
 
-										wp_die( $content, 'Access Denied', array( 'response' => 403 ) );
+										wp_die( $content, 'Access Denied', array( 'response' => 403 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Template markup buffered above; its dynamic values are escaped there.
 									}
 								}
 							}
@@ -2401,186 +2336,6 @@ class CommonHook extends HookHandler {
 				}
 			}
 		}
-	}
-
-	/**
-	 * Ohmylms get admin script data for mm for Common hook.
-	 *
-	 * @param mixed $localized_data Localized data.
-	 * @param mixed $handle Handle.
-	 */
-	public function ohmylms_get_admin_script_data_for_mm( $localized_data, $handle ) {
-		if ( defined( 'MAILMINT' ) && 'ohmylms' === $handle ) {
-			$wc_active         = MrmCommon::is_wc_active();
-			$recaptcha_default = MrmCommon::recaptcha_default_configuration();
-			$default           = array(
-				'business_name'    => '',
-				'phone'            => '',
-				'business_address' => array(
-					'address_line_1' => '',
-					'postal'         => '',
-					'city'           => '',
-					'address_line_2' => '',
-					'country'        => '',
-					'state'          => '',
-				),
-				'logo_url'         => '',
-			);
-
-			// Admin Name & Email Finding Starts.
-			$admin_email = get_option( 'admin_email' );
-			$admin_user  = get_user_by( 'email', $admin_email );
-			$admin_name  = $admin_user ? $admin_user->display_name : '';
-			// Get current user email.
-			$current_user       = wp_get_current_user();
-			$current_user_email = $current_user->user_email;
-
-			$new_data = array(
-				'current_userID'                 => get_current_user_id(),
-				'editor_data_source'             => $this->get_editor_source(),
-				'timezone_list'                  => Constants::get_timezone_list(),
-				'admin_url'                      => get_admin_url(),
-				'countries'                      => Constants::get_country_name(),
-				'states'                         => Constants::get_country_state(),
-				'lists'                          => ContactGroupModel::get_all_to_custom_select( 'lists' ),
-				'tags'                           => ContactGroupModel::get_all_to_custom_select( 'tags' ),
-				'email_settings'                 => get_option( '_mrm_email_settings', Email::default_email_settings() ),
-				'is_wc_active'                   => $wc_active,
-				'start_of_week'                  => get_option( 'start_of_week', 1 ),
-				'unsubscribe_url'                => home_url(),
-				'preference_url'                 => home_url(),
-				'business_basic_settings'        => get_option( '_mrm_business_basic_info_setting', $default ),
-				'business_social_settings'       => get_option( '_mrm_business_social_info_setting', array( 'socialMedia' => array() ) ),
-				'date_format'                    => get_option( 'date_format', 'F j, Y' ),
-				'local_time'                     => date_i18n( 'Y-m-d H:i:s' ),
-				'site_url'                       => site_url(),
-				'currency_format'                => $wc_active ? html_entity_decode( get_woocommerce_currency_symbol() ) : '',
-				'is_mailmint_pro_active'         => MrmCommon::is_mailmint_pro_active(),
-				'is_mailmint_pro_license_active' => MrmCommon::is_mailmint_pro_license_active(),
-				'is_edd_active'                  => HelperFunctions::is_edd_active(),
-				'contacts_map_attrs'             => MrmCommon::import_contacts_map_attrs(),
-				'post_types'                     => MrmCommon::get_all_post_types(),
-				'open_ai_key'                    => MrmCommon::is_mailmint_pro_active() && MrmCommon::is_mailmint_pro_version_compatible( '1.15.2' ) ? Integration::get_open_ai_secret_key() : array(),
-				'recaptcha_settings'             => get_option( '_mint_recaptcha_settings', $recaptcha_default ),
-				'smtp_warring'                   => MrmCommon::find_active_smtp_plugin(),
-				'exist_contact_field'            => Constants::get_exsiting_fields_array(),
-				'contact_general_fields'         => MrmCommon::get_contact_general_fields(),
-				'contact_custom_fields'          => MrmCommon::get_contact_custom_fields(),
-				'cart_settings'                  => $wc_active && MrmCommon::is_mailmint_pro_active() && MrmCommon::is_mailmint_pro_version_compatible( '1.5.0' ) ? Common::get_abandoned_cart_settings() : array(),
-				'images_url'                     => plugins_url( 'Email-Templates/images', __FILE__ ) . '/',
-				'mint_page'                      => 'campaign',
-				'is_learndash_active'            => HelperFunctions::is_learndash_lms_active(),
-				'is_tutor_active'                => HelperFunctions::is_tutor_active(),
-				'tutor_courses'                  => HelperFunctions::get_tutor_lms_courses(),
-				'is_memberpress_active'          => HelperFunctions::is_memberpress_active(),
-				'mint_trans'                     => TransStrings::getStrings(),
-				'is_customize_wc_email'          => method_exists( MrmCommon::class, 'is_email_customization_active' ) ? MrmCommon::is_email_customization_active() : false,
-				'total_batches'                  => MrmCommon::get_total_batches(),
-				'wp_uuid4'                       => wp_generate_uuid4(),
-				'is_lifterlms_active'            => HelperFunctions::is_lifter_lms_active(),
-				'lifter_courses'                 => HelperFunctions::get_lifter_lms_courses(),
-				'lifter_memberships'             => HelperFunctions::get_lifter_lms_memberships(),
-				'admin_img_url'                  => MRM_DIR_URL . 'admin/assets/images',
-				'admin_name'                     => $admin_name,
-				'admin_email'                    => $admin_email,
-				'address'                        => MrmCommon::get_business_full_address(),
-				'current_user_email'             => $current_user_email,
-				'bounce_configs'                 => MrmCommon::get_bounce_configs(),
-				'is_wcs_active'                  => MrmCommon::is_mailmint_pro_active() && MrmCommon::is_mailmint_pro_version_compatible( '1.15.0' ) ? Mint_Pro_Helper::is_woocommerce_subscription_active() : false,
-				'is_wcm_active'                  => MrmCommon::is_mailmint_pro_active() && MrmCommon::is_mailmint_pro_version_compatible( '1.15.0' ) ? Mint_Pro_Helper::is_woocommerce_membership_active() : false,
-				'permissions'                    => PermissionManager::get_readable_permissions(),
-				'is_wcw_active'                  => MrmCommon::is_mailmint_pro_active() && MrmCommon::is_mailmint_pro_version_compatible( '1.15.0' ) ? Mint_Pro_Helper::is_woocommerce_wishlist_active() : false,
-				'is_fluent_booking_active'       => HelperFunctions::is_fluent_booking_active(),
-				'is_mailpoet_active'             => HelperFunctions::is_mailpoet_active(),
-			);
-
-			// Merge new data into localized data.
-			$localized_data = array_merge( $localized_data, $new_data );
-		}
-		return $localized_data;
-	}
-
-	/**
-	 * Get editor source for Common hook.
-	 */
-	private function get_editor_source() {
-		// get product categories for email builder.
-		$wc_categories = $this->get_formatted_wc_categories();
-		$wp_categories = $this->get_formatted_wp_post_categories();
-
-		return apply_filters(
-			'plugin_hook_name',
-			array(
-				'product_categories' => $wc_categories,
-				'post_categories'    => $wp_categories,
-				'placeholder_image'  => MRM_DIR_URL . 'admin/assets/images/mint-placeholder.png',
-			)
-		);
-	}
-
-	/**
-	 * Get formatted wc categories for Common hook.
-	 */
-	private function get_formatted_wc_categories() {
-		$taxonomy     = 'product_cat';
-		$orderby      = 'name';
-		$show_count   = 0;
-		$pad_counts   = 0;
-		$hierarchical = 1;
-		$title        = '';
-		$empty        = 0;
-
-		$args               = array(
-			'taxonomy'     => $taxonomy,
-			'orderby'      => $orderby,
-			'show_count'   => $show_count,
-			'pad_counts'   => $pad_counts,
-			'hierarchical' => $hierarchical,
-			'title_li'     => $title,
-			'hide_empty'   => $empty,
-		);
-		$product_categories = get_categories( $args );
-		$wc_categories      = array();
-		foreach ( $product_categories as $product_cat ) {
-			$wc_categories[] = array(
-				'value' => $product_cat->term_id,
-				'label' => $product_cat->name,
-			);
-		}
-
-		return $wc_categories;
-	}
-
-	/**
-	 * Get formatted wp post categories for Common hook.
-	 */
-	private function get_formatted_wp_post_categories() {
-		$taxonomy     = 'category';
-		$orderby      = 'name';
-		$show_count   = 0;
-		$pad_counts   = 0;
-		$hierarchical = 1;
-		$title        = '';
-		$empty        = 0;
-
-		$args            = array(
-			'taxonomy'     => $taxonomy,
-			'orderby'      => $orderby,
-			'show_count'   => $show_count,
-			'pad_counts'   => $pad_counts,
-			'hierarchical' => $hierarchical,
-			'title_li'     => $title,
-			'hide_empty'   => $empty,
-		);
-		$post_categories = get_categories( $args );
-		$categories      = array();
-		foreach ( $post_categories as $post_cat ) {
-			$categories[] = array(
-				'value' => $post_cat->term_id,
-				'label' => $post_cat->name,
-			);
-		}
-		return $categories;
 	}
 
 	/**

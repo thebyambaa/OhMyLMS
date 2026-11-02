@@ -22,6 +22,8 @@ class OhMyLMS_Tax_Calculator {
 
 	/**
 	 * Instance of this class
+	 *
+	 * @var OhMyLMS_Tax_Calculator|null
 	 */
 	private static $instance = null;
 

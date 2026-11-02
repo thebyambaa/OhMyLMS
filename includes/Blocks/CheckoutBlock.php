@@ -679,7 +679,7 @@ class CheckoutBlock {
 
 		// Add preview notice in editor mode.
 		if ( $is_editor ) {
-			echo '<div class="ohmylms-gutenberg-edit-mode" style="background: #f0f0f1; padding: 8px 12px; margin-bottom: 16px; border-left: 4px solid #2271b1; font-size: 12px; color: #3c434a;">';
+			echo '<div class="ohmylms-gutenberg-edit-mode">';
 			echo '<small>' . esc_html__( 'Gutenberg Preview Mode: This is how the checkout will appear to users with items in their cart.', 'ohmylms' ) . '</small>';
 			echo '</div>';
 		}

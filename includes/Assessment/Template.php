@@ -54,7 +54,8 @@ final class Template {
 	 * @param mixed $text Text.
 	 */
 	public static function seed_from( $text ) {
-		return (int) ( hexdec( substr( hash( 'sha256', (string) $text ), 0, 7 ) ) ?: 1 );
+		$seed = hexdec( substr( hash( 'sha256', (string) $text ), 0, 7 ) );
+		return (int) ( $seed ? $seed : 1 );
 	}
 
 	/** A fresh random instance seed. */
@@ -68,7 +69,20 @@ final class Template {
 	 * @param mixed $n N.
 	 */
 	private static function draw( $seed, &$n ) {
-		return (int) hexdec( substr( hash( 'sha256', $seed . ':' . ( $n++ ) ), 0, 12 ) );
+		return hexdec( substr( hash( 'sha256', $seed . ':' . ( $n++ ) ), 0, 12 ) );
+	}
+
+	/** Draw an index in [0, $count). hexdec() returns a float above PHP_INT_MAX, so on 32-bit
+	 * builds (PHP in WebAssembly, some shared hosts) the old integer cast overflowed into
+	 * negative values that broke variable ranges. fmod() of the exact 48-bit float gives the
+	 * same index as the 64-bit integer remainder, so existing instances keep their numbers.
+	 *
+	 * @param mixed $seed Seed.
+	 * @param mixed $n N.
+	 * @param int   $count Number of choices.
+	 */
+	private static function pick( $seed, &$n, $count ) {
+		return (int) fmod( (float) self::draw( $seed, $n ), (float) max( 1, (int) $count ) );
 	}
 
 	/** Only real numbers can appear in arithmetic.
@@ -148,7 +162,7 @@ final class Template {
 				$count = intdiv( $max - $min, $step ) + 1;
 				if ( $count < 1 ) {
 					return null; }
-				$value = $min + ( self::draw( $seed, $n ) % $count ) * $step;
+				$value = $min + self::pick( $seed, $n, $count ) * $step;
 				return in_array( $value, array_map( 'intval', (array) ( $def['exclude'] ?? array() ) ), true ) ? null : $value;
 			case 'decimal':
 				$places = max( 0, min( 6, (int) ( $def['places'] ?? 1 ) ) );
@@ -157,10 +171,10 @@ final class Template {
 				$high   = (int) round( (float) ( $def['max'] ?? 10 ) * $scale );
 				if ( $high < $low ) {
 					return null; }
-				return ( $low + self::draw( $seed, $n ) % ( $high - $low + 1 ) ) / $scale;
+				return ( $low + self::pick( $seed, $n, $high - $low + 1 ) ) / $scale;
 			case 'choice':
 				$values = array_values( (array) ( $def['values'] ?? array() ) );
-				return $values ? $values[ self::draw( $seed, $n ) % count( $values ) ] : null;
+				return $values ? $values[ self::pick( $seed, $n, count( $values ) ) ] : null;
 			case 'expr':
 				$value = self::eval_expression( (string) ( $def['expr'] ?? '' ), $params );
 				if ( null === $value ) {
@@ -312,6 +326,46 @@ final class Template {
 		return $preserve_text && is_string( $value ) ? (string) $substituted : $substituted;
 	}
 
+	/** Keys whose values are text to a question type even when a formula fills them alone. */
+	const TEXT_KEYS = array( 'text', 'label', 'prompt', 'clue', 'title', 'caption', 'passage', 'explanation', 'feedback', 'hint', 'accepted', 'choices', 'distractors', 'alternatives', 'symbol', 'unit' );
+
+	/**
+	 * Substitute settings. A lone {{expr}} still becomes a number for typed values (an
+	 * expected answer, a target, a coordinate), but stays text where the type stores text:
+	 * text-like keys, items of a list of values (accepted answers, dropdown choices, tiles)
+	 * and an answer nested in a list item (a label target, a checkpoint, a dropdown slot).
+	 * Without this, {{a+b}} as an accepted answer or a dropdown choice became a number and
+	 * the type rejected the question.
+	 *
+	 * @param mixed  $value Settings value.
+	 * @param array  $params Generated values.
+	 * @param array  $errors Unresolved formulas.
+	 * @param string $key Key of $value in its parent.
+	 * @param int    $depth Nesting depth (0 = settings).
+	 * @param bool   $text Force text.
+	 * @return mixed
+	 */
+	private static function substitute_settings( $value, array $params, array &$errors, $key = '', $depth = 0, $text = false ) {
+		if ( is_array( $value ) ) {
+			$list = array_is_list( $value );
+			foreach ( $value as $child => $item ) {
+				$is_text         = $text || in_array( (string) $child, self::TEXT_KEYS, true ) || ( 'answer' === (string) $child && $depth > 1 ) || ( $list && ! is_array( $item ) && $depth > 0 );
+				$value[ $child ] = self::substitute_settings( $item, $params, $errors, (string) $child, $depth + 1, $is_text );
+			}
+			return $value;
+		}
+		$substituted = self::substitute( $value, $params, $errors );
+		return $text && is_string( $value ) && is_scalar( $substituted ) ? self::text( $substituted ) : $substituted;
+	}
+
+	/** A scalar as text, numbers without float noise ("7", never "7.0").
+	 *
+	 * @param mixed $value Value.
+	 */
+	private static function text( $value ) {
+		return is_float( $value ) || is_int( $value ) ? self::format( $value ) : (string) $value;
+	}
+
 	/** Assign $value at a dotted path such as "blanks.a.answer" or "parts.0.answer".
 	 *
 	 * @param array $settings Configuration settings.
@@ -352,7 +406,7 @@ final class Template {
 		);
 		$params   = $gen['params'];
 		unset( $settings['template'] );
-		$settings = self::substitute_deep( $settings, $params, $errors );
+		$settings = self::substitute_settings( $settings, $params, $errors );
 		foreach ( (array) ( $template['set'] ?? array() ) as $rule ) {
 			$value = is_array( $rule ) ? self::eval_expression( (string) ( $rule['expr'] ?? '' ), $params ) : null;
 			if ( null === $value || ! preg_match( '/^[A-Za-z0-9_.-]{1,80}$/', (string) ( $rule['path'] ?? '' ) ) ) {

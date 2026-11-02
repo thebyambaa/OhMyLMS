@@ -13,6 +13,7 @@ import {
 	order,
 	otherOrder,
 	pendingDetail,
+	pointsDetail,
 } from './fixtures';
 import { coupons, orderDetail, orders } from './index';
 
@@ -22,6 +23,7 @@ vi.mock( './api', () => ( {
 	getOrder: vi.fn(),
 	changeOrderStatus: vi.fn(),
 	trashOrder: vi.fn(),
+	refundPoints: vi.fn(),
 	listNotes: vi.fn(),
 	addNote: vi.fn(),
 	listCoupons: vi.fn(),
@@ -37,6 +39,7 @@ const as = {
 	getOrder: vi.mocked( api.getOrder ),
 	changeOrderStatus: vi.mocked( api.changeOrderStatus ),
 	trashOrder: vi.mocked( api.trashOrder ),
+	refundPoints: vi.mocked( api.refundPoints ),
 	listNotes: vi.mocked( api.listNotes ),
 	addNote: vi.mocked( api.addNote ),
 	listCoupons: vi.mocked( api.listCoupons ),
@@ -81,18 +84,19 @@ describe( 'commerce routes', () => {
 		expect( as.listOrders ).not.toHaveBeenCalled();
 	} );
 
-	it( 'list orders and coupons in the navigation, not the order detail', async () => {
+	it( 'make orders and coupons Commerce tabs, and the order detail a screen of the Orders tab', async () => {
 		show( '/orders' );
 		await screen.findByRole( 'table', { name: 'Orders' } );
-		expect(
-			screen.getByRole( 'link', { name: 'Orders' } )
-		).toBeInTheDocument();
-		expect(
-			screen.getByRole( 'link', { name: 'Coupons' } )
-		).toBeInTheDocument();
-		expect(
-			screen.queryByRole( 'link', { name: 'Order' } )
-		).not.toBeInTheDocument();
+		expect( orders ).toMatchObject( { group: 'commerce', tab: 'orders' } );
+		expect( coupons ).toMatchObject( {
+			group: 'commerce',
+			tab: 'coupons',
+		} );
+		expect( orderDetail ).toMatchObject( {
+			group: 'commerce',
+			tab: 'orders',
+			hidden: true,
+		} );
 	} );
 } );
 
@@ -107,20 +111,21 @@ describe( 'order list', () => {
 		expect(
 			within( table ).getByText( 'Pending payment' )
 		).toBeInTheDocument();
-		expect( screen.getByText( '2 orders found.' ) ).toBeInTheDocument();
+		expect(
+			screen.getAllByText( '2 orders found.' )[ 0 ]
+		).toBeInTheDocument();
 		expect( screen.queryByText( /@example\.com/ ) ).not.toBeInTheDocument();
 		expect(
-			await screen.findByRole( 'option', { name: 'Completed (4)' } )
+			await screen.findByRole( 'link', { name: 'Completed (4)' } )
 		).toBeInTheDocument();
 	} );
 
 	it( 'shows loading, then an empty state', async () => {
 		as.listOrders.mockResolvedValue( page( [] ) );
 		show( '/orders' );
-		expect(
-			await screen.findByText( 'No orders found.' )
-		).toBeInTheDocument();
-		expect( screen.queryByRole( 'table' ) ).not.toBeInTheDocument();
+		expect( await screen.findByText( 'No orders found.' ) ).toHaveClass(
+			'colspanchange'
+		);
 	} );
 
 	it( 'shows a server error and retries', async () => {
@@ -162,7 +167,7 @@ describe( 'order list', () => {
 		show( '/orders' );
 		await screen.findByText( 'Ada Lovelace' );
 		await user.type(
-			screen.getByRole( 'textbox', { name: 'Search orders' } ),
+			screen.getByRole( 'searchbox', { name: 'Search orders' } ),
 			'ada{Enter}'
 		);
 		await waitFor( () =>
@@ -171,12 +176,11 @@ describe( 'order list', () => {
 				expect.any( AbortSignal )
 			)
 		);
-		await user.selectOptions(
-			screen.getByRole( 'combobox', { name: 'Status' } ),
-			'pending'
+		await user.click(
+			await screen.findByRole( 'link', { name: /^Pending payment/ } )
 		);
 		await user.selectOptions(
-			screen.getByRole( 'combobox', { name: 'Payment method' } ),
+			await screen.findByRole( 'combobox', { name: 'Payment method' } ),
 			'stripe'
 		);
 		await waitFor( () =>
@@ -189,7 +193,10 @@ describe( 'order list', () => {
 				expect.any( AbortSignal )
 			)
 		);
-		await user.type( screen.getByLabelText( 'From date' ), '2026-02-01' );
+		await user.type(
+			await screen.findByLabelText( 'From date' ),
+			'2026-02-01'
+		);
 		await waitFor( () =>
 			expect( as.listOrders ).toHaveBeenLastCalledWith(
 				expect.objectContaining( { after: '2026-02-01' } ),
@@ -202,7 +209,10 @@ describe( 'order list', () => {
 		const user = userEvent.setup();
 		show( '/orders' );
 		await screen.findByText( 'Ada Lovelace' );
-		await user.type( screen.getByLabelText( 'From date' ), '2026-03-01' );
+		await user.type(
+			await screen.findByLabelText( 'From date' ),
+			'2026-03-01'
+		);
 		await waitFor( () =>
 			expect( as.listOrders ).toHaveBeenLastCalledWith(
 				expect.objectContaining( { after: '2026-03-01' } ),
@@ -210,7 +220,10 @@ describe( 'order list', () => {
 			)
 		);
 		const calls = as.listOrders.mock.calls.length;
-		await user.type( screen.getByLabelText( 'To date' ), '2026-02-01' );
+		await user.type(
+			await screen.findByLabelText( 'To date' ),
+			'2026-02-01'
+		);
 		expect(
 			await screen.findByText(
 				'The start date must not be after the end date.',
@@ -229,7 +242,9 @@ describe( 'order list', () => {
 		} );
 		show( '/orders' );
 		await screen.findByText( 'Ada Lovelace' );
-		await user.click( screen.getByRole( 'button', { name: 'Next page' } ) );
+		await user.click(
+			screen.getAllByRole( 'link', { name: 'Next page' } )[ 0 ]!
+		);
 		await waitFor( () =>
 			expect( as.listOrders ).toHaveBeenLastCalledWith(
 				expect.objectContaining( { page: 2 } ),
@@ -270,6 +285,64 @@ describe( 'order details', () => {
 		).toBeInTheDocument();
 		expect(
 			screen.queryByRole( 'button', { name: /refund/i } )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'refunds a points order after confirmation with a reason', async () => {
+		const user = userEvent.setup();
+		as.getOrder.mockResolvedValue( pointsDetail );
+		as.refundPoints.mockResolvedValue( {
+			points: 80,
+			refunded: true,
+			refunded_at: '2026-10-31T10:00:00',
+			refundable: false,
+			balance: 120,
+		} );
+		show( '/orders/312' );
+		expect(
+			await screen.findByText( 'Paid with 80 bonus points.' )
+		).toBeInTheDocument();
+		await user.click(
+			screen.getByRole( 'button', { name: 'Refund points' } )
+		);
+		const dialog = await screen.findByRole( 'dialog', {
+			name: 'Refund points',
+		} );
+		const confirm = within( dialog ).getByRole( 'button', {
+			name: 'Refund points',
+		} );
+		expect( confirm ).toHaveAttribute( 'aria-disabled', 'true' );
+		await user.type(
+			within( dialog ).getByLabelText( 'Reason' ),
+			'Changed mind'
+		);
+		as.getOrder.mockResolvedValue( {
+			...pointsDetail,
+			status: 'refunded',
+			points: {
+				points: 80,
+				refunded: true,
+				refunded_at: '2026-10-31T10:00:00',
+				refundable: false,
+			},
+		} );
+		await user.click( confirm );
+		expect( as.refundPoints ).toHaveBeenCalledWith(
+			312,
+			'Changed mind',
+			expect.any( AbortSignal )
+		);
+		expect(
+			await screen.findByText(
+				'Points restored. The learner now has 120 points.',
+				noticeOptions
+			)
+		).toBeInTheDocument();
+		expect(
+			await screen.findByText( /The points were refunded on/ )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'button', { name: 'Refund points' } )
 		).not.toBeInTheDocument();
 	} );
 

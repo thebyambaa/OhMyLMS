@@ -39,7 +39,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 		$ohmylms_has_lesson_access = (bool) $preview_mode;
 
 	if ( ! $ohmylms_has_lesson_access && is_user_logged_in() ) {
-		if ( current_user_can( 'manage_options' ) || get_current_user_id() === (int) $post->post_author ) {
+		if ( current_user_can( 'manage_options' ) || get_current_user_id() === (int) $post->post_author || \OhMyLMS\Learning\LessonPreview::active( $post->ID ) ) {
 			$ohmylms_has_lesson_access = true;
 		} else {
 			$ohmylms_lesson_course_id = ohmylms_get_course_id_by_content_id( $post->ID );

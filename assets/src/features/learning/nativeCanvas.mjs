@@ -15,7 +15,9 @@ export async function recoverNativeCanvas( frame ) {
 		if ( doc?.head?.childNodes.length || doc?.body?.childNodes.length ) {
 			return false;
 		}
-		const response = await frame.ownerDocument.defaultView.fetch( source );
+		const response = await /** @type {Window} */ (
+			frame.ownerDocument.defaultView
+		).fetch( source );
 		if ( ! response.ok ) {
 			return false;
 		}
@@ -36,8 +38,8 @@ export async function recoverNativeCanvas( frame ) {
 export function installNativeCanvasRecovery() {
 	const pending = new WeakSet();
 	const inspect = () => {
-		for ( const frame of document.querySelectorAll(
-			'iframe[name="editor-canvas"]'
+		for ( const frame of /** @type {Iterable<HTMLIFrameElement>} */ (
+			document.querySelectorAll( 'iframe[name="editor-canvas"]' )
 		) ) {
 			if ( pending.has( frame ) ) {
 				continue;

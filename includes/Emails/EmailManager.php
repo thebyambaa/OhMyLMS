@@ -7,6 +7,7 @@
 
 namespace OhMyLMS\Emails;
 
+use OhMyLMS\I18n\RecipientLocale;
 use WP_Error;
 use WP_User;
 
@@ -40,6 +41,17 @@ class EmailManager {
 	const TEST_INTERVAL = 30;
 
 	/**
+	 * Text fields an administrator can customize. Only customized ones are stored; a missing one is the
+	 * class default, rendered (and so translated) for each recipient when the email is composed.
+	 */
+	const TEXT_FIELDS = array( 'subject', 'heading', 'additional_content', 'button_text', 'button_link', 'footer_text', 'course_suggestion_text' );
+
+	/**
+	 * Text fields that cannot be empty: an empty value sent for one of them resets it to the default.
+	 */
+	const REQUIRED_FIELDS = array( 'subject', 'heading', 'additional_content' );
+
+	/**
 	 * Merge tags offered by every email.
 	 *
 	 * @return string[]
@@ -67,6 +79,10 @@ class EmailManager {
 			'student_cancel_enrollment'       => array( 'student_name', 'course_name', 'expected_processing_time' ),
 			'student_assignment_graded'       => array( 'student_name', 'course_name', 'assignment_name', 'status' ),
 			'student_quiz_graded'             => array( 'student_name', 'course_name', 'quiz_name' ),
+			'student_exam_results_released'   => array( 'student_name', 'exam_name' ),
+			'student_at_risk_nudge'           => array( 'student_name', 'sender_name', 'reasons' ),
+			'instructor_assignment_comment'   => array( 'student_name', 'course_name', 'assignment_name', 'commenter_name', 'comment' ),
+			'student_assignment_comment'      => array( 'student_name', 'course_name', 'assignment_name', 'commenter_name', 'comment' ),
 		);
 	}
 
@@ -93,9 +109,29 @@ class EmailManager {
 				'label'       => __( 'Assignment name', 'ohmylms' ),
 				'description' => __( 'Title of the assignment.', 'ohmylms' ),
 			),
+			'exam_name'                => array(
+				'label'       => __( 'Exam name', 'ohmylms' ),
+				'description' => __( 'Title of the exam whose results were released.', 'ohmylms' ),
+			),
 			'status'                   => array(
 				'label'       => __( 'Result', 'ohmylms' ),
 				'description' => __( 'Passed or Failed.', 'ohmylms' ),
+			),
+			'sender_name'              => array(
+				'label'       => __( 'Sender name', 'ohmylms' ),
+				'description' => __( 'Display name of the teacher or administrator who sent the nudge.', 'ohmylms' ),
+			),
+			'reasons'                  => array(
+				'label'       => __( 'Reasons', 'ohmylms' ),
+				'description' => __( 'Why the learner was flagged, for example "Inactive 9 days · 2 overdue items".', 'ohmylms' ),
+			),
+			'commenter_name'           => array(
+				'label'       => __( 'Commenter name', 'ohmylms' ),
+				'description' => __( 'Display name of the person who wrote the comment.', 'ohmylms' ),
+			),
+			'comment'                  => array(
+				'label'       => __( 'Comment', 'ohmylms' ),
+				'description' => __( 'The comment text (the first 500 characters).', 'ohmylms' ),
 			),
 			'expected_processing_time' => array(
 				'label'       => __( 'Processing time', 'ohmylms' ),
@@ -127,7 +163,12 @@ class EmailManager {
 			'course_name'     => __( 'Introduction to Algebra', 'ohmylms' ),
 			'quiz_name'       => __( 'Chapter 1 Quiz', 'ohmylms' ),
 			'assignment_name' => __( 'Essay on Linear Equations', 'ohmylms' ),
+			'exam_name'       => __( 'End of Term Mathematics Exam', 'ohmylms' ),
 			'status'          => __( 'Passed', 'ohmylms' ),
+			'sender_name'     => __( 'Ms. Rivera', 'ohmylms' ),
+			'reasons'         => __( 'Inactive 9 days · 2 overdue items', 'ohmylms' ),
+			'commenter_name'  => __( 'Ms. Rivera', 'ohmylms' ),
+			'comment'         => __( 'Good start. Show the working for question 3.', 'ohmylms' ),
 		);
 	}
 
@@ -206,6 +247,16 @@ class EmailManager {
 			return isset( $stored[ $key ] ) && is_scalar( $stored[ $key ] ) ? (string) $stored[ $key ] : '';
 		};
 
+		$saved          = self::stored( $email_id );
+		$default_values = array();
+		$customized     = array();
+		$has_suggestion = array_key_exists( 'course_suggestion_text', $defaults );
+		foreach ( self::TEXT_FIELDS as $field ) {
+			$default                  = isset( $defaults[ $field ] ) && is_scalar( $defaults[ $field ] ) ? (string) $defaults[ $field ] : '';
+			$default_values[ $field ] = 'course_suggestion_text' === $field && ! $has_suggestion ? null : $default;
+			$customized[ $field ]     = array_key_exists( $field, $saved ) && ! self::is_default( $field, $saved[ $field ], $default );
+		}
+
 		return array(
 			'id'                     => $email_id,
 			'title'                  => (string) $basic['title'],
@@ -221,7 +272,106 @@ class EmailManager {
 			'course_suggestion_text' => array_key_exists( 'course_suggestion_text', $defaults ) ? $text( 'course_suggestion_text' ) : null,
 			'recipient_email'        => self::normalize_recipients( isset( $stored['recipient_email'] ) ? $stored['recipient_email'] : array() ),
 			'tags'                   => $tags,
+			'defaults'               => $default_values,
+			'customized'             => $customized,
 		);
+	}
+
+	/**
+	 * What is stored for an email: only what an administrator changed.
+	 *
+	 * @param string $email_id Email id.
+	 * @return array
+	 */
+	private static function stored( $email_id ) {
+		$stored = get_option( Emails::OPTION_PREFIX . $email_id, array() );
+		return is_array( $stored ) ? $stored : array();
+	}
+
+	/**
+	 * Whether a text value is the default, compared as stored: sanitized the way a save would.
+	 *
+	 * @param string $field    Field name.
+	 * @param mixed  $value    Stored or submitted value.
+	 * @param string $fallback Default text in the current locale.
+	 * @return bool
+	 */
+	private static function is_default( $field, $value, $fallback ) {
+		if ( ! is_scalar( $value ) ) {
+			return false;
+		}
+		$value = (string) $value;
+		if ( $value === $fallback ) {
+			return true;
+		}
+		return self::normalize_text( $field, $value ) === self::normalize_text( $field, $fallback );
+	}
+
+	/**
+	 * A text value in the form a save stores it.
+	 *
+	 * @param string $field Field name.
+	 * @param string $value Value.
+	 * @return string
+	 */
+	private static function normalize_text( $field, $value ) {
+		if ( in_array( $field, array( 'subject', 'heading', 'button_text' ), true ) ) {
+			return self::sanitize_line( $value );
+		}
+		if ( 'button_link' === $field ) {
+			return trim( $value );
+		}
+		return trim( self::sanitize_html( $value ) );
+	}
+
+	/**
+	 * Remove the text fields that equal the defaults of the given locales, so they are translated again
+	 * when sent. Other settings (`enable`, recipients) are kept. Idempotent.
+	 *
+	 * @param string   $email_id Email id.
+	 * @param string[] $locales  Locales whose defaults count as untouched, e.g. `en_US` and `mn`.
+	 * @return string[] Names of the fields removed.
+	 */
+	public static function forget_defaults( $email_id, array $locales ) {
+		$email  = self::instance( $email_id );
+		$stored = self::stored( $email_id );
+		if ( null === $email || ! array_intersect( self::TEXT_FIELDS, array_keys( $stored ) ) ) {
+			return array();
+		}
+		$removed = array();
+		foreach ( array_unique( $locales ) as $locale ) {
+			$defaults = RecipientLocale::in_locale(
+				$locale,
+				static function () use ( $email ) {
+					return $email->default_settings();
+				}
+			);
+			foreach ( self::TEXT_FIELDS as $field ) {
+				if ( array_key_exists( $field, $stored ) && array_key_exists( $field, $defaults ) && self::is_default( $field, $stored[ $field ], (string) $defaults[ $field ] ) ) {
+					unset( $stored[ $field ] );
+					$removed[] = $field;
+				}
+			}
+		}
+		if ( $removed ) {
+			self::store( $email_id, $stored );
+		}
+		return $removed;
+	}
+
+	/**
+	 * Write what is stored for an email; nothing left deletes the option.
+	 *
+	 * @param string $email_id Email id.
+	 * @param array  $stored   Values to keep.
+	 * @return void
+	 */
+	private static function store( $email_id, array $stored ) {
+		if ( $stored ) {
+			update_option( Emails::OPTION_PREFIX . $email_id, $stored, false );
+		} else {
+			delete_option( Emails::OPTION_PREFIX . $email_id );
+		}
 	}
 
 	/**
@@ -440,6 +590,10 @@ class EmailManager {
 			if ( ! array_key_exists( $field, $input ) ) {
 				continue;
 			}
+			if ( self::is_reset( $field, $input[ $field ] ) ) {
+				$patch[ $field ] = null;
+				continue;
+			}
 			$value = self::sanitize_line( $input[ $field ] );
 			if ( $rule[1] && '' === $value ) {
 				return self::error(
@@ -476,6 +630,10 @@ class EmailManager {
 					array( 'field' => $field )
 				);
 			}
+			if ( self::is_reset( $field, $input[ $field ] ) ) {
+				$patch[ $field ] = null;
+				continue;
+			}
 			$value = trim( self::sanitize_html( (string) $input[ $field ] ) );
 			if ( $rule[1] && '' === trim( wp_strip_all_tags( $value ) ) && false === stripos( $value, '<img' ) ) {
 				return self::error(
@@ -496,8 +654,8 @@ class EmailManager {
 		}
 
 		if ( array_key_exists( 'button_link', $input ) ) {
-			$link = trim( (string) $input['button_link'] );
-			if ( '' !== $link && ( mb_strlen( $link ) > self::MAX_LINK || ! self::is_http_url( $link ) ) ) {
+			$link = null === $input['button_link'] ? null : trim( (string) $input['button_link'] );
+			if ( null !== $link && '' !== $link && ( mb_strlen( $link ) > self::MAX_LINK || ! self::is_http_url( $link ) ) ) {
 				return self::error(
 					'ohmylms_email_invalid_field',
 					__( 'The button link must be a full http or https address.', 'ohmylms' ),
@@ -557,7 +715,21 @@ class EmailManager {
 	}
 
 	/**
-	 * Save a validated patch over the stored settings.
+	 * Whether a submitted text value asks for the default: `null` for any text field, or an empty value
+	 * for a field that cannot be empty.
+	 *
+	 * @param string $field Field name.
+	 * @param mixed  $value Submitted value.
+	 * @return bool
+	 */
+	private static function is_reset( $field, $value ) {
+		return null === $value || ( in_array( $field, self::REQUIRED_FIELDS, true ) && is_scalar( $value ) && '' === trim( (string) $value ) );
+	}
+
+	/**
+	 * Save a validated patch. Only what differs from the defaults is stored: text equal to its default
+	 * in the language of this request (the language the administrator saw it in) is removed, so it
+	 * stays translatable; `null` in the patch removes a field. Other stored settings are kept.
 	 *
 	 * @param string $email_id Email id.
 	 * @param array  $patch    Result of {@see self::sanitize_patch()}.
@@ -568,8 +740,21 @@ class EmailManager {
 		if ( null === $email ) {
 			return null;
 		}
-		$stored = Emails::get_template_settings( $email_id, $email->default_settings() );
-		update_option( Emails::OPTION_PREFIX . $email_id, array_merge( $stored, $patch ), false );
+		$defaults = $email->default_settings();
+		$stored   = self::stored( $email_id );
+		foreach ( $patch as $key => $value ) {
+			if ( null === $value ) {
+				unset( $stored[ $key ] );
+			} else {
+				$stored[ $key ] = $value;
+			}
+		}
+		foreach ( self::TEXT_FIELDS as $field ) {
+			if ( array_key_exists( $field, $stored ) && isset( $defaults[ $field ] ) && is_scalar( $defaults[ $field ] ) && self::is_default( $field, $stored[ $field ], (string) $defaults[ $field ] ) ) {
+				unset( $stored[ $field ] );
+			}
+		}
+		self::store( $email_id, $stored );
 		return self::get( $email_id );
 	}
 
@@ -690,12 +875,16 @@ class EmailManager {
 		if ( null === $email ) {
 			return new WP_Error( 'ohmylms_email_not_found', __( 'Email not found.', 'ohmylms' ), array( 'status' => 404 ) );
 		}
-		$settings = Emails::get_template_settings( $email_id, $email->default_settings() );
+		$defaults = $email->default_settings();
+		$settings = Emails::get_template_settings( $email_id, $defaults );
 		$patch    = self::sanitize_patch( $email_id, $draft );
 		if ( is_wp_error( $patch ) ) {
 			return $patch;
 		}
-		return array_merge( $settings, $patch );
+		foreach ( $patch as $key => $value ) {
+			$settings[ $key ] = null === $value ? ( isset( $defaults[ $key ] ) ? $defaults[ $key ] : '' ) : $value;
+		}
+		return $settings;
 	}
 
 	/**
@@ -850,6 +1039,22 @@ class EmailManager {
 						)
 					),
 				);
+			case 'student_at_risk_nudge':
+				return array(
+					'emails/at-risk-nudge',
+					array_merge( $common, array( 'button_url' => StudentsEmail\AtRiskNudge::button_url( $settings ) ) ),
+				);
+			case 'student_exam_results_released':
+				return array(
+					'emails/student-exam-results-released',
+					array_merge( $common, array( 'button_url' => (string) $settings['button_link'] ) ),
+				);
+			case 'instructor_assignment_comment':
+			case 'student_assignment_comment':
+				return array(
+					'emails/assignment-comment',
+					array_merge( $common, array( 'button_url' => ! empty( $settings['button_link'] ) ? (string) $settings['button_link'] : home_url( '/' ) ) ),
+				);
 			case 'student_assignment_graded':
 				return array(
 					'emails/student-assignment-graded',
@@ -928,7 +1133,7 @@ class EmailManager {
 			if ( is_wp_error( $settings ) ) {
 				return $settings;
 			}
-			$settings = array_merge( $settings, self::loose_text_fields( $draft ) );
+			$settings = array_merge( $settings, self::loose_text_fields( $draft, self::instance( $email_id )->default_settings() ) );
 		}
 
 		$email_settings = Emails::get_email_settings();
@@ -969,18 +1174,21 @@ class EmailManager {
 	/**
 	 * Sanitize the text fields of a draft without validating their tags (used when a preview reports unknown tags).
 	 *
-	 * @param array $draft Draft fields.
+	 * @param array $draft    Draft fields.
+	 * @param array $defaults Default settings of the email (used for fields the draft resets).
 	 * @return array
 	 */
-	private static function loose_text_fields( array $draft ) {
+	private static function loose_text_fields( array $draft, array $defaults ) {
 		$fields = array();
-		foreach ( array( 'subject', 'heading', 'button_text' ) as $field ) {
-			if ( isset( $draft[ $field ] ) ) {
-				$fields[ $field ] = self::sanitize_line( $draft[ $field ] );
+		foreach ( array( 'subject', 'heading', 'button_text', 'additional_content', 'footer_text', 'course_suggestion_text' ) as $field ) {
+			if ( ! array_key_exists( $field, $draft ) ) {
+				continue;
 			}
-		}
-		foreach ( array( 'additional_content', 'footer_text', 'course_suggestion_text' ) as $field ) {
-			if ( isset( $draft[ $field ] ) ) {
+			if ( self::is_reset( $field, $draft[ $field ] ) ) {
+				$fields[ $field ] = isset( $defaults[ $field ] ) ? $defaults[ $field ] : '';
+			} elseif ( in_array( $field, array( 'subject', 'heading', 'button_text' ), true ) ) {
+				$fields[ $field ] = self::sanitize_line( $draft[ $field ] );
+			} else {
 				$fields[ $field ] = self::sanitize_html( (string) $draft[ $field ] );
 			}
 		}
@@ -1042,26 +1250,38 @@ class EmailManager {
 			);
 		}
 
-		$rendered = self::preview( $email_id, $draft );
-		if ( is_wp_error( $rendered ) ) {
-			return $rendered;
-		}
-		if ( $rendered['unknown_tags'] ) {
-			return self::error(
-				'ohmylms_email_unknown_tags',
-				/* translators: %s: comma separated list of tags. */
-				sprintf( __( 'This email does not support these merge tags: %s', 'ohmylms' ), implode( ', ', $rendered['unknown_tags'] ) ),
-				array( 'tags' => $rendered['unknown_tags'] )
-			);
-		}
+		$mail = RecipientLocale::run(
+			$user,
+			static function () use ( $email_id, $draft, $user, $key ) {
+				$rendered = self::preview( $email_id, $draft );
+				if ( is_wp_error( $rendered ) ) {
+					return $rendered;
+				}
+				if ( $rendered['unknown_tags'] ) {
+					return self::error(
+						'ohmylms_email_unknown_tags',
+						/* translators: %s: comma separated list of tags. */
+						sprintf( __( 'This email does not support these merge tags: %s', 'ohmylms' ), implode( ', ', $rendered['unknown_tags'] ) ),
+						array( 'tags' => $rendered['unknown_tags'] )
+					);
+				}
 
-		set_transient( $key, time() + self::TEST_INTERVAL, self::TEST_INTERVAL );
+				set_transient( $key, time() + self::TEST_INTERVAL, self::TEST_INTERVAL );
 
-		/* translators: %s: email subject. */
-		$subject = sprintf( __( '[Test] %s', 'ohmylms' ), $rendered['subject'] );
-		$body    = '<html><body>' . $rendered['html'] . '</body></html>';
-		$sent    = wp_mail( $user->user_email, $subject, $body, self::mail_headers( Emails::get_email_settings() ) );
-		if ( ! $sent ) {
+				/* translators: %s: email subject. */
+				$subject = sprintf( __( '[Test] %s', 'ohmylms' ), $rendered['subject'] );
+				$body    = '<html><body>' . $rendered['html'] . '</body></html>';
+				return array(
+					'subject' => $subject,
+					'sent'    => wp_mail( $user->user_email, $subject, $body, self::mail_headers( Emails::get_email_settings() ) ),
+				);
+			}
+		);
+		if ( is_wp_error( $mail ) ) {
+			return $mail;
+		}
+		$subject = $mail['subject'];
+		if ( ! $mail['sent'] ) {
 			delete_transient( $key );
 			return new WP_Error( 'ohmylms_email_send_failed', __( 'WordPress could not send the test email. Check the site mail configuration.', 'ohmylms' ), array( 'status' => 500 ) );
 		}

@@ -16,7 +16,7 @@ try {
     $now = new DateTimeImmutable('now', new DateTimeZone('Asia/Ulaanbaatar'));
     $week = $now->modify('-' . ((int) $now->format('N') - 1) . ' days')->setTime(0, 0)->setTimezone(new DateTimeZone('UTC'));
     $term = wp_insert_term('Understanding fractions', \OhMyLMS\Skills\Taxonomy::NAME); $skill_id = $term['term_id'];
-    $wpdb->insert(Schema::table('student_skill_state'), ['student_id' => $user, 'term_id' => $skill_id, 'level' => 'attempted', 'review_due' => 1, 'evidence_count' => 3, 'independent_correct' => 2, 'families' => 2, 'score' => 0.6, 'last_evidence_at' => $week->format('Y-m-d H:i:s'), 'updated_at' => $week->format('Y-m-d H:i:s')]);
+    $wpdb->insert(Schema::table('student_skill_state'), ['student_id' => $user, 'term_id' => $skill_id, 'level' => 'attempted', 'review_due' => 1, 'evidence_count' => 3, 'independent_correct' => 2, 'families' => 2, 'accuracy' => 0.6, 'mastery' => 60, 'last_evidence_at' => $week->format('Y-m-d H:i:s'), 'updated_at' => $week->format('Y-m-d H:i:s')]);
     foreach ([$user, $users['other']] as $owner) {
         $wpdb->insert(Schema::table('practice_sessions'), ['uuid' => wp_generate_uuid4(), 'student_id' => $owner, 'mode' => 'skill', 'term_id' => $skill_id, 'policy' => '{}', 'status' => 'active', 'started_at' => $week->format('Y-m-d H:i:s')]);
         $session = (int) $wpdb->insert_id; $sessions[] = $session;

@@ -11,7 +11,7 @@ Membership plans combine individual courses, curriculum items (including everyth
 
 The Courses step restores all saved selections and previews the currently included courses with their matching sources. POST `/ohmylms/v1/membership/course-preview` computes unsaved selections without changing enrollments and requires the existing membership-editor permission.
 
-The Courses step also provides a curriculum mindmap with expandable branches and the published courses linked to each item (`GET curriculum/outline?courses=1`). The mindmap and the curriculum picker share the same selection; selecting a parent highlights inherited child items and updates the preview. Its reusable UI is in `assets/src/extensions/mindmap/`; `features/memberships/CurriculumMindmap.jsx` contains the inclusion rules. Future curriculum and skill editors should reuse the shared mindmap.
+The plan editor is the typed app's `#/memberships` screen (`assets/src/app/features/memberships/`). The curriculum mindmap of the recovered editor (`assets/src/extensions/mindmap/`, `CurriculumMindmap.jsx`) was deleted at the cutover ([CUTOVER.md](CUTOVER.md)); `GET curriculum/outline?courses=1` still returns the outline with linked courses for a future picker.
 
 The explicit `products` selection remains separate from `course_curriculum`, `course_bundles` and `excluded_courses`. Metadata uses `_products`, `_course_curriculum`, `_course_bundles` and `_excluded_courses`. `Membership::get_products('edit')` reads explicit choices for editing/persistence; its default view resolves current rules for checkout, course counts and member-facing lists. Omitted fields preserve existing selections.
 
@@ -25,7 +25,7 @@ Independent course purchases, manual enrollments and other memberships are separ
 
 Course categories and tags were replaced by the curriculum and Course Bundles. A plan saved before that may still hold category or tag rules (`_course_categories`, `_course_tags`). They are **not dropped**, because dropping them would revoke the enrollments they grant. They still resolve (`CourseSelection::resolve` accepts them next to the new rules), are shown by name in a warning in the plan editor (`legacy_rules` in the plan payload) and count in the course preview. They can only be **removed**: a request that adds a category or tag ID the plan does not already hold is rejected with `membership_legacy_rules`. Remove one once its courses are covered by curriculum items or bundles.
 
-Checks: `php tests/php/membership-selection-unit.php`, `php tests/php/placement-integration.php`, `node --test tests/js/membership-selection.test.mjs`, `npm test`, and `npm run build`.
+Checks: `php tests/php/membership-selection-unit.php`, `php tests/php/placement-integration.php`, `npm test`, `npm run test:app` and `npm run build`.
 
 ## Free access through Sale price
 
@@ -33,7 +33,7 @@ In plan Details, set Sale price to 0 and select Free until. An optional Sale sta
 
 Free signup requires an authenticated, nonce-protected request and an active published plan. It creates a tracked membership grant and the plan's course access, without an order, signup fee, payment or recurring subscription. Standard checkout rejects active free promotions so stale carts cannot charge for them. Students must explicitly purchase a plan after free access ends.
 
-Cron and authenticated request-time checks expire the tracked grant. Course revocation is scoped to the user and plan, preserves paid upgrades and other active grants, and retries database failures. No automatic charge occurs. Calendar checks: `php tests/php/membership-free-sale-unit.php` and `node --test tests/js/memberships.test.mjs`.
+Cron and authenticated request-time checks expire the tracked grant. Course revocation is scoped to the user and plan, preserves paid upgrades and other active grants, and retries database failures. No automatic charge occurs. Calendar checks: `php tests/php/membership-free-sale-unit.php`.
 
 Course Bundles are retired. Their navigation, course/membership pickers, learner catalog listing and public filter are removed. Old bundle screen URLs open Curriculum. The legacy REST fields and resolver argument remain accepted, but bundle selections no longer grant access; an administrator request resynchronizes existing plan enrollments once.
 

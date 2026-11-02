@@ -57,7 +57,6 @@ if ( ! empty( $ohmylms_player_preview['single_question'] ) ) {
 	$timer    = 0;
 }
 
-$paper_content      = $settings['paper_content'] ?? ( $attempt_context ? array() : \OhMyLMS\Quiz\PaperPresentation::content( get_the_ID() ) );
 $paper_presentation = 'paper' === ( $settings['presentation'] ?? '' );
 $paper_settings     = $paper_presentation ? \OhMyLMS\Exams\PaperSettings::sanitize( $settings['paper'] ?? array() ) : null;
 $player_template    = \OhMyLMS\Quiz\PlayerTemplates::resolve( $settings['player_template'] ?? \OhMyLMS\Quiz\PlayerTemplates::DEFAULT_TEMPLATE );
@@ -83,7 +82,7 @@ if ( $paper_presentation || ! empty( $ohmylms_player_preview['single_question'] 
 }
 $layout_class             = '';
 $questions_per_group      = '';
-$totalGroups              = '';
+$total_groups             = '';
 $supported_question_count = 0;
 $supported_question_types = apply_filters( 'ohmylms_supported_question_types', array_keys( \OhMyLMS\Extensions\Registry::all( 'question' ) ) );
 foreach ( $questions as $index => $question ) {
@@ -120,15 +119,15 @@ if ( 'all_questions_in_one_page' === $quiz_layout ) {
 	foreach ( $questions as $question ) {
 		if ( ! in_array( $question['settings']['type'], apply_filters( 'ohmylms_supported_question_types', array_keys( \OhMyLMS\Extensions\Registry::all( 'question' ) ) ), true ) ) {
 			continue; }
-		$page = (int) ( $question['page'] ?? 0 );
-		if ( 0 === $ordinal || $ordinal - $group_start >= $questions_per_group || ( null !== $previous_page && $page !== $previous_page ) ) {
+		$question_page = (int) ( $question['page'] ?? 0 );
+		if ( 0 === $ordinal || $ordinal - $group_start >= $questions_per_group || ( null !== $previous_page && $question_page !== $previous_page ) ) {
 			$page_starts[ $ordinal ] = count( $page_starts ) + 1;
 			$group_start             = $ordinal;
 		}
-		$previous_page = $page;
+		$previous_page = $question_page;
 		++$ordinal;
 	}
-	$totalGroups = count( $page_starts ); // Calculate the total number of groups.
+	$total_groups = count( $page_starts ); // Calculate the total number of groups.
 
 } else {
 	$layout_class = 'ohmylms-one-question-per-page';
@@ -150,6 +149,8 @@ $questions                = array_values(
 $supported_question_count = count( $questions );
 // Paper View shows the editor's paper; the questions follow its order so the player's numbers match it.
 $paper_student = $paper_presentation ? \OhMyLMS\Quiz\PaperPresentation::student( get_the_ID(), (array) $settings, $ohmylms_player_preview['paper_items'] ?? null ) : null;
+$paper_entries = array();
+$paper_boxes   = array();
 if ( $paper_student ) {
 	$paper_order = array_flip( \OhMyLMS\Quiz\PaperPresentation::order( $paper_student['items'] ) );
 	usort(
@@ -158,9 +159,10 @@ if ( $paper_student ) {
 			return ( $paper_order[ (int) $a['id'] ] ?? PHP_INT_MAX ) <=> ( $paper_order[ (int) $b['id'] ] ?? PHP_INT_MAX );
 		}
 	);
+	$paper_entries = \OhMyLMS\Quiz\PaperPresentation::entries( $paper_student );
 }
 if ( 'number_of_questions_per_page' === $quiz_layout ) {
-	$totalGroups = count( $page_starts );
+	$total_groups = count( $page_starts );
 }
 ob_start();
 
@@ -170,7 +172,7 @@ ob_start();
 <input type="hidden" class="ohmylms_quiz_id" value="<?php echo esc_attr( get_the_ID() ); ?>">
 <input type="hidden" class="quiz_attempt_id" value="<?php echo esc_attr( $attempt['id'] ); ?>">
 
-<section class="ohmylms-quiz ohmylms-player-template-<?php echo esc_attr( $player_template ); ?> <?php echo esc_attr( $layout_class ); ?><?php echo $paper_presentation ? ' ohmylms-paper-form is-font-' . esc_attr( $paper_settings['font'] ) : ''; ?>" data-player-template="<?php echo esc_attr( $player_template ); ?>"
+<section class="ohmylms-quiz ohmylms-player-template-<?php echo esc_attr( $player_template ); ?> <?php echo esc_attr( $layout_class ); ?><?php echo $paper_presentation ? ' ohmylms-paper-form has-paper-sheet is-font-' . esc_attr( $paper_settings['font'] ) : ''; ?>" data-player-template="<?php echo esc_attr( $player_template ); ?>"
 <?php
 if ( $attempt_context ) {
 	?>
@@ -255,9 +257,9 @@ if ( $attempt_context ) {
 					?>
 					<p><?php esc_html_e( 'Some answers require manual grading.', 'ohmylms' ); ?></p><?php } ?>
 				<?php
-				foreach ( $preview_result['errors'] as $error ) {
+				foreach ( $preview_result['errors'] as $preview_error ) {
 					?>
-					<p><?php echo esc_html( $error ); ?></p><?php } ?>
+					<p><?php echo esc_html( $preview_error ); ?></p><?php } ?>
 				<?php
 				if ( ! empty( $preview_result['entries'] ) ) {
 					if ( ! empty( $preview_result['hidden'] ) ) {
@@ -286,8 +288,8 @@ if ( $attempt_context ) {
 			<?php
 				printf(
 					/* translators: %s: text value. */
-					__( 'Your quiz submission time has expired. <a href="%s">Please try again.</a>', 'ohmylms' ),
-					get_the_permalink()
+					wp_kses_post( __( 'Your quiz submission time has expired. <a href="%s">Please try again.</a>', 'ohmylms' ) ),
+					esc_url( get_the_permalink() )
 				);
 			?>
 		</div>
@@ -334,7 +336,7 @@ if ( $attempt_context ) {
 	</div> -->
 
 		<?php
-		$player_total_pages = max( 1, 'all_questions_in_one_page' === $quiz_layout ? 1 : ( 'number_of_questions_per_page' === $quiz_layout ? $totalGroups : $supported_question_count ) );
+		$player_total_pages = max( 1, 'all_questions_in_one_page' === $quiz_layout ? 1 : ( 'number_of_questions_per_page' === $quiz_layout ? $total_groups : $supported_question_count ) );
 		$player_sections    = array();
 		foreach ( $questions as $section_index => $section_question ) {
 			$player_sections[ $section_index + 1 ] = (string) ( $section_question['section'] ?? '' );
@@ -348,6 +350,9 @@ if ( $attempt_context ) {
 				'sections'           => $player_sections,
 				'paper_presentation' => $paper_presentation,
 				'question_count'     => $supported_question_count,
+				'paper_outline'      => $paper_student ? \OhMyLMS\Quiz\PaperPresentation::outline( $paper_entries, $questions ) : array(),
+				'quiz_id'            => get_the_ID(),
+				'attempt_id'         => (int) $attempt['id'],
 			)
 		);
 		?>
@@ -362,12 +367,11 @@ if ( $attempt_context ) {
 		);
 		?>
 		<div class="ohmylms-quiz-form">
-			<?php if ( $paper_student ) { ?>
-				<script type="application/json" class="ohmylms-paper-student-data"><?php echo wp_json_encode( $paper_student, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE ); ?></script>
-			<?php } ?>
 			<input type="hidden" name="quiz_attempt_id" value="<?php echo esc_attr( $attempt['id'] ); ?>">
+			<?php if ( ! $paper_student ) { ?>
 			<div class="ohmylms-container">
 				<div class="ohmylms-quiz-form-wrapper">
+			<?php } ?>
 					<?php
 					if ( ! $questions ) {
 						?>
@@ -388,10 +392,6 @@ if ( $attempt_context ) {
 						}
 
 						++$count;
-						if ( $paper_presentation ) {
-							echo wp_kses_post( $paper_content[ $question['id'] ] ?? '' );
-						}
-
 
 						// Check if layout grouped question and we're at the start of a new group.
 						if ( 'number_of_questions_per_page' === $quiz_layout && isset( $page_starts[ $count - 1 ] ) ) {
@@ -400,35 +400,24 @@ if ( $attempt_context ) {
 								echo '</div>';
 							}
 							// Start a new group div.
-							$groupNumber = $page_starts[ $count - 1 ];
-							echo "<div class='ohmylms-question-group question-group-{$groupNumber} " . ( 1 == $groupNumber ? 'active' : '' ) . "'>";
+							$group_number = $page_starts[ $count - 1 ];
+							echo "<div class='ohmylms-question-group question-group-" . (int) $group_number . ' ' . ( 1 == $group_number ? 'active' : '' ) . "'>";
 						}
 						?>
 
 						<?php
-						if ( ! empty( $question['section'] ) && ( $question['section'] !== ( $previous_section ?? null ) ) ) {
+						if ( ! $paper_student && ! empty( $question['section'] ) && ( ( $previous_section ?? null ) !== $question['section'] ) ) {
 							$previous_section = $question['section'];
 							?>
 							<h2 class="ohmylms-quiz-section-title"><?php echo esc_html( $question['section'] ); ?></h2>
 						<?php } ?>
-						<div data-question-id="<?php echo esc_attr( $question['id'] ); ?>" class="ohmylms-quiz-box question-<?php echo esc_attr( $count ); ?> <?php echo esc_attr( ( 'one_question_per_page' === $quiz_layout && 1 == $count ) ? 'active' : '' ); ?>">
-							<?php
-							\OhMyLMS\Quiz\PlayerTemplates::part(
-								'question-meta',
-								$player_template,
-								array(
-									'ordinal'        => $ohmylms_player_preview['ordinal'] ?? $count,
-									'question_count' => $ohmylms_player_preview['question_count'] ?? $supported_question_count,
-									'marks'          => max( 0, (float) ( $question['settings']['score']['value'] ?? 0 ) ),
-									'section'        => (string) ( $question['section'] ?? '' ),
-									'paper'          => $paper_settings,
-								)
-							);
-							?>
-
+						<?php
+						// The paper sheet places each box where its question prints, so boxes are collected first.
+						ob_start();
+						?>
 							<div class="question-box">
 								<p class="the-question question-type-<?php echo esc_attr( $question['settings']['type'] ); ?>">
-									<?php echo \OhMyLMS\Assessment\InlineBlanks::render( $question, $attempt ); ?>
+									<?php echo \OhMyLMS\Assessment\InlineBlanks::render( $question, $attempt ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- InlineBlanks::render() escapes its output. ?>
 
 									<?php if ( ! empty( $question['settings']['required'] ) && $question['settings']['required'] ) { ?>
 										<span class="required">*</span>
@@ -438,7 +427,7 @@ if ( $attempt_context ) {
 								</p>
 
 								<?php if ( ! empty( $question['description'] ) && ( $question['settings']['type'] ?? '' ) !== 'structured' ) { ?>
-									<div class="ohmylms-question-block-content"><?php echo apply_filters( 'the_content', $question['description'] ); ?></div>
+									<div class="ohmylms-question-block-content"><?php echo apply_filters( 'the_content', $question['description'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Filtered post content (the_content). ?></div>
 								<?php } ?>
 								<?php if ( ! empty( $question_image ) ) { ?>
 									<img src="<?php echo esc_url( $question_image ); ?>" alt="question image" class="question-image">
@@ -453,8 +442,32 @@ if ( $attempt_context ) {
 									</video>
 								<?php } ?>
 							</div>
-
+						<?php
+						$statement_box = ob_get_clean();
+						$paper_head    = $paper_student ? \OhMyLMS\Quiz\PaperPresentation::box_head( $paper_entries[ (int) $question['id'] ] ?? null, $question, $attempt, $paper_settings, $statement_box, $count ) : null;
+						if ( $paper_student ) {
+							ob_start();
+						}
+						?>
+						<div data-question-id="<?php echo esc_attr( $question['id'] ); ?>" class="ohmylms-quiz-box question-<?php echo esc_attr( $count ); ?> <?php echo esc_attr( ( 'one_question_per_page' === $quiz_layout && 1 == $count ) ? 'active' : '' ); ?><?php echo $paper_head ? esc_attr( ' ' . implode( ' ', $paper_head['classes'] ) ) : ''; ?>">
 							<?php
+							if ( $paper_head ) {
+								echo $paper_head['html']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- PaperRenderer escapes its fields; the statement box is the template's own output.
+							}
+							\OhMyLMS\Quiz\PlayerTemplates::part(
+								'question-meta',
+								$player_template,
+								array(
+									'ordinal'        => $ohmylms_player_preview['ordinal'] ?? $count,
+									'question_count' => $ohmylms_player_preview['question_count'] ?? $supported_question_count,
+									'marks'          => max( 0, (float) ( $question['settings']['score']['value'] ?? 0 ) ),
+									'section'        => (string) ( $question['section'] ?? '' ),
+									'paper'          => $paper_settings,
+								)
+							);
+							if ( ! $paper_head || ! $paper_head['statement'] ) {
+								echo $statement_box; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Rendered above by this template.
+							}
 
 							if ( empty( $question['frozen'] ) && isset( $question['settings']['randomize'] ) && $question['settings']['randomize'] && is_array( $question['questions'] ) ) {
 								shuffle( $question['questions'] );
@@ -463,7 +476,10 @@ if ( $attempt_context ) {
 							if ( $paper_presentation && 'multiple-choice' === $question['settings']['type'] ) {
 								echo '<p>' . esc_html__( 'Select all that apply.', 'ohmylms' ) . '</p>';
 							}
-							\OhMyLMS\Extensions\QuestionTypes::render( $question, $attempt );
+							// Printed choices carry the answer fields themselves.
+							if ( ! $paper_head || ! $paper_head['choices'] ) {
+								\OhMyLMS\Extensions\QuestionTypes::render( $question, $attempt );
+							}
 							?>
 							<?php if ( ! empty( $question['settings']['required'] ) ) : ?>
 								<span class="required-question"><?php esc_html_e( 'The question must be answered', 'ohmylms' ); ?></span>
@@ -471,18 +487,23 @@ if ( $attempt_context ) {
 						</div>
 
 						<?php
+						if ( $paper_student ) {
+							$paper_boxes[ (int) $question['id'] ] = ob_get_clean();
+						}
 						// Checked if layout grouped question and close the last group div after the last question.
 						if ( 'number_of_questions_per_page' === $quiz_layout && $count === $supported_question_count ) {
 							echo '</div>';
 						}
 					}
-					if ( $paper_presentation ) {
-						echo wp_kses_post( $paper_content['end'] ?? '' );
+					if ( $paper_student ) {
+						echo \OhMyLMS\Quiz\PaperPresentation::sheet( $paper_student, $paper_boxes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- PaperRenderer escapes its fields; the boxes are this template's output.
 					}
 					?>
 
+			<?php if ( ! $paper_student ) { ?>
 				</div>
 			</div>
+			<?php } ?>
 		</div>
 
 		<div class="ohmylms-quiz-footer">
@@ -519,17 +540,17 @@ if ( $attempt_context ) {
 							// ------start grouped questions------
 							$layout_class = 'ohmylms-grouped-questions';
 
-							if ( 1 < $totalGroups ) {
+							if ( 1 < $total_groups ) {
 								?>
-									<button type="button" class="ohmylms-button ohmylms-previous-quiz-group outline" current-group="1" previous-group="" total-group="<?php echo esc_attr( $totalGroups ); ?>" disabled >
+									<button type="button" class="ohmylms-button ohmylms-previous-quiz-group outline" current-group="1" previous-group="" total-group="<?php echo esc_attr( $total_groups ); ?>" disabled >
 									<?php echo esc_html__( 'Previous', 'ohmylms' ); ?>
 									</button>
 									<?php
 							}
 
-							if ( 1 < $totalGroups ) {
+							if ( 1 < $total_groups ) {
 								?>
-									<button type="button" class="ohmylms-button ohmylms-next-quiz-group" current-group="1" next-group="2" total-group="<?php echo esc_attr( $totalGroups ); ?>">
+									<button type="button" class="ohmylms-button ohmylms-next-quiz-group" current-group="1" next-group="2" total-group="<?php echo esc_attr( $total_groups ); ?>">
 									<?php echo esc_html__( 'Next', 'ohmylms' ); ?>
 									</button>
 
@@ -595,6 +616,7 @@ if ( $attempt_context ) {
 </section>
 <?php
 $duration = max( 0, (int) round( $timer * 60 ) );
+// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped -- Interactivity::quiz() adds the JSON-encoded context through WP_HTML_Tag_Processor to this template's escaped output.
 echo \OhMyLMS\Extensions\Interactivity::quiz(
 	ob_get_clean(),
 	array(
@@ -606,7 +628,7 @@ echo \OhMyLMS\Extensions\Interactivity::quiz(
 		'layout'            => $quiz_layout,
 		'page'              => 1,
 		'perPage'           => max( 1, (int) $questions_per_group ),
-		'totalPages'        => max( 1, 'all_questions_in_one_page' === $quiz_layout ? 1 : ( 'number_of_questions_per_page' === $quiz_layout ? $totalGroups : $supported_question_count ) ),
+		'totalPages'        => max( 1, 'all_questions_in_one_page' === $quiz_layout ? 1 : ( 'number_of_questions_per_page' === $quiz_layout ? $total_groups : $supported_question_count ) ),
 		'errors'            => (object) array(),
 		'answered'          => (object) array(),
 		'questionOfLabel'   => /* translators: %1$d: number; %2$d: number. */
@@ -624,4 +646,5 @@ echo \OhMyLMS\Extensions\Interactivity::quiz(
 		'expiryNonce'       => wp_create_nonce( 'quiz_exit_submission' ),
 		'submissionError'   => __( 'Submission failed. Your answers remain on this page. Please press Submit to retry.', 'ohmylms' ),
 	)
-); // phpcs:ignore WordPress.Security.EscapeOutput -- templates escape their own fields.
+);
+// phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped

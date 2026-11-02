@@ -1,4 +1,3 @@
-/** @jsx createElement */
 import { createElement, useEffect, useRef, useState } from '@wordpress/element';
 import {
 	createBlock,
@@ -16,12 +15,17 @@ import {
 	ToggleControl,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { RichContentControl } from '../math/RichContentControl';
+import {
+	MathVariables,
+	RichContentControl,
+	loadMath,
+	mathEnabled,
+} from '../math/public.mjs';
 import { BankAnswerFields } from './BankAnswerFields';
 import { MatchTableGridEditor } from './MatchTableGridEditor';
 import { choiceModePatch } from './choiceModel.mjs';
 import { questionTypePatch, QUESTION_BLOCK_TYPES } from './questionBlocks.mjs';
-import { nativeQuestionTypes } from '../learning/nativeAuthoring.mjs';
+import { nativeQuestionTypes } from '../learning/public.mjs';
 import { QuestionOptionsBar } from './QuestionOptionsBar';
 import { QuestionTypeMenu } from './QuestionTypeMenu';
 import { VariableChips, variableNames } from './VariableChips';
@@ -33,18 +37,19 @@ import {
 	editorDeliveries,
 	fromQuestionBlock,
 } from './questionSource.mjs';
-import { BankPicker } from '../question-bank/BankPicker';
-import { PaperInserter } from '../paper/PaperInserter';
+import { BankPicker } from '../question-bank/public.mjs';
+import { PaperInserter, usePaperView } from '../paper/public.mjs';
 import { TemplatePanel } from './TemplatePanel';
 import { defaultTemplate } from './templateModel.mjs';
-import { MathVariables } from '../math/MathInput';
 import {
 	questionAnswerPatch,
 	questionPrompt,
 	questionPromptPatch,
 } from './questionPrompt.mjs';
-import { loadMath, mathEnabled } from '../math/loader.mjs';
-import { usePaperView } from '../paper/PaperCanvas';
+
+/** @typedef {import('./editorTypes').Data} Data */
+/** @typedef {import('./editorTypes').OnPatch} OnPatch */
+/** @typedef {import('./editorTypes').EditorComponent} EditorComponent */
 
 export const MULTIPLE_CHOICE_BLOCK = 'ohmylms/shared-multiple-choice';
 
@@ -53,6 +58,10 @@ export const MULTIPLE_CHOICE_BLOCK = 'ohmylms/shared-multiple-choice';
  * @return {number[]} Question IDs.
  */
 function blockQuestionIds() {
+	/**
+	 * @param {Data} block Block.
+	 * @return {number[]} Question IDs.
+	 */
 	const collect = ( block ) =>
 		block.attributes?.questionId
 			? [ block.attributes.questionId ]
@@ -62,14 +71,14 @@ function blockQuestionIds() {
 
 /**
  * Shared authoring controls. Assessment data stays in the versioned question writer.
- * @param root0
- * @param root0.question
- * @param root0.onChange
- * @param root0.onApprove
- * @param root0.onDuplicate
- * @param root0.onRemove
- * @param root0.allowWritten
- * @param root0.readOnly
+ * @param {Object}     root0
+ * @param {Data}       root0.question
+ * @param {OnPatch}    [root0.onChange]     Required unless readOnly.
+ * @param {() => void} [root0.onApprove]
+ * @param {() => void} [root0.onDuplicate]
+ * @param {() => void} [root0.onRemove]
+ * @param {boolean}    [root0.allowWritten]
+ * @param {boolean}    [root0.readOnly]
  */
 export function MultipleChoiceFields( {
 	question,
@@ -80,10 +89,11 @@ export function MultipleChoiceFields( {
 	onDuplicate,
 	onRemove,
 } ) {
-	const root = useRef( null );
+	const root = useRef( /** @type {HTMLFieldSetElement|null} */ ( null ) );
 	const [ variablesOpen, setVariablesOpen ] = useState( false );
 	useEffect( () => {
 		let disposed = false;
+		/** @type {(() => void)|undefined} */
 		let cleanup;
 		if ( mathEnabled() ) {
 			loadMath()
@@ -122,7 +132,7 @@ export function MultipleChoiceFields( {
 								compact
 								value={ questionPrompt( question ) }
 								onChange={ ( value ) =>
-									onChange(
+									onChange?.(
 										questionPromptPatch( question, value )
 									)
 								}
@@ -152,7 +162,7 @@ export function MultipleChoiceFields( {
 											]
 								}
 								onChange={ ( type ) =>
-									onChange(
+									onChange?.(
 										[
 											'single-choice',
 											'multiple-choice',
@@ -176,7 +186,7 @@ export function MultipleChoiceFields( {
 						<VariableChips
 							names={ variableNames( question.settings ) }
 							onPick={ ( name ) =>
-								onChange(
+								onChange?.(
 									questionPromptPatch(
 										question,
 										insertIntoStatement(
@@ -220,7 +230,7 @@ export function MultipleChoiceFields( {
 									},
 								] }
 								onChange={ ( layout ) =>
-									onChange( {
+									onChange?.( {
 										settings: {
 											...question.settings,
 											match_layout: layout,
@@ -273,7 +283,7 @@ export function MultipleChoiceFields( {
 									<MatchTableGridEditor
 										value={ question.settings }
 										onChange={ ( patch ) =>
-											onChange( {
+											onChange?.( {
 												settings: {
 													...question.settings,
 													...patch,
@@ -290,8 +300,10 @@ export function MultipleChoiceFields( {
 										type={ question.settings.type }
 										options={ question.questions || [] }
 										settings={ question.settings }
-										onChange={ ( patch ) =>
-											onChange(
+										onChange={ (
+											/** @type {Data} */ patch
+										) =>
+											onChange?.(
 												questionAnswerPatch(
 													question,
 													patch
@@ -335,7 +347,7 @@ export function MultipleChoiceFields( {
 								}
 								checked={ !! question.settings.required }
 								onChange={ ( required ) =>
-									onChange( {
+									onChange?.( {
 										settings: {
 											...question.settings,
 											required,
@@ -356,7 +368,7 @@ export function MultipleChoiceFields( {
 									onChange={ ( enabled ) => {
 										const { template, ...settings } =
 											question.settings;
-										onChange( {
+										onChange?.( {
 											settings: enabled
 												? {
 														...settings,
@@ -396,7 +408,9 @@ export function MultipleChoiceFields( {
 								>
 									<TemplatePanel
 										question={ question }
-										onChange={ onChange }
+										onChange={
+											/** @type {OnPatch} */ ( onChange )
+										}
 										readOnly={ readOnly }
 									/>
 								</Modal>
@@ -418,7 +432,11 @@ export function MultipleChoiceFields( {
 									<>
 										<QuestionOptionsBar
 											question={ question }
-											onChange={ onChange }
+											onChange={
+												/** @type {OnPatch} */ (
+													onChange
+												)
+											}
 											hideRequired
 											hideRandomize={ [
 												'short-text',
@@ -439,7 +457,7 @@ export function MultipleChoiceFields( {
 														.partial_credit
 												}
 												onChange={ ( partialCredit ) =>
-													onChange( {
+													onChange?.( {
 														settings: {
 															...question.settings,
 															partial_credit:
@@ -473,12 +491,13 @@ export function MultipleChoiceFields( {
 
 /**
  * Register the question block in the native lesson and quiz editors.
- * @param LessonEdit
+ * @param {EditorComponent} LessonEdit
  */
 export function registerMultipleChoiceBlock( LessonEdit ) {
 	if ( getBlockType( MULTIPLE_CHOICE_BLOCK ) ) {
 		return;
 	}
+	/** @param {Data} props Block edit properties. */
 	function Edit( props ) {
 		const blockProps = useBlockProps( {
 			className: `ohmylms-shared-choice-block${
@@ -494,7 +513,7 @@ export function registerMultipleChoiceBlock( LessonEdit ) {
 		const { replaceBlocks } = useDispatch( 'core/block-editor' );
 		const [ picking, setPicking ] = useState( false );
 		const paper = usePaperView();
-		const choose = ( source ) => {
+		const choose = ( /** @type {string} */ source ) => {
 			const step = fromQuestionBlock( source, { postType } );
 			if ( step.action === 'player' ) {
 				replaceBlocks(
@@ -532,10 +551,14 @@ export function registerMultipleChoiceBlock( LessonEdit ) {
 				{ content }
 				{ picking && (
 					<BankPicker
-						quizId={ props.context?.postId }
+						quizId={
+							postType === 'ohmylms-quiz'
+								? props.context?.postId
+								: 0
+						}
 						existingIds={ blockQuestionIds() }
 						onClose={ () => setPicking( false ) }
-						onPick={ ( ids ) => {
+						onPick={ ( /** @type {number[]} */ ids ) => {
 							// Questions picked for a quiz become its slots, in place of this blank card.
 							replaceBlocks(
 								props.clientId,

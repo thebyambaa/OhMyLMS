@@ -28,10 +28,9 @@ final class QuizPlayerBlock {
 	 */
 	private static $inline_quiz = 0;
 
-	/** Register block, editor metadata endpoint and player navigation. */
+	/** Register block and player navigation. The REST endpoints are {@see Rest\QuizPlayerController}. */
 	public static function init() {
 		add_action( 'init', array( __CLASS__, 'register' ) );
-		add_action( 'rest_api_init', array( __CLASS__, 'register_routes' ) );
 		add_action( 'template_redirect', array( __CLASS__, 'document' ), 20 );
 		add_filter( 'wp_redirect', array( __CLASS__, 'redirect' ), 10 );
 		add_filter( 'ohmylms_quiz_interactivity_context', array( __CLASS__, 'player_context' ) );
@@ -99,8 +98,7 @@ final class QuizPlayerBlock {
 	 */
 	private static function request_id() {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only player navigation; existing form handlers validate mutation nonces.
-		$value = isset( $_GET['ohmylms_quiz_embed'] ) ? wp_unslash( $_GET['ohmylms_quiz_embed'] ) : 0;
-		return is_scalar( $value ) ? absint( $value ) : 0;
+		return isset( $_GET['ohmylms_quiz_embed'] ) && is_scalar( $_GET['ohmylms_quiz_embed'] ) ? absint( wp_unslash( $_GET['ohmylms_quiz_embed'] ) ) : 0;
 	}
 
 	/**
@@ -128,9 +126,9 @@ final class QuizPlayerBlock {
 				'error'      => '',
 			)
 		);
-		$region  = 'ohmylms-quiz-player-' . ++self::$instance;
+		$region  = 'ohmylms-quiz-player-' . ( ++self::$instance );
 		ob_start();
-		echo '<div ' . get_block_wrapper_attributes( array( 'class' => 'ohmylms-page ohmylms-inline-quiz' ) ) . ' data-wp-interactive="ohmylms/quiz" data-wp-router-region="' . esc_attr( $region ) . '" ' . wp_interactivity_data_wp_context( $context ) . '>';
+		echo '<div ' . get_block_wrapper_attributes( array( 'class' => 'ohmylms-page ohmylms-inline-quiz' ) ) . ' data-wp-interactive="ohmylms/quiz" data-wp-router-region="' . esc_attr( $region ) . '" ' . wp_interactivity_data_wp_context( $context ) . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core helpers escape the attributes.
 		echo '<p role="alert" data-wp-text="context.error" data-wp-bind--hidden="!context.error" hidden></p>';
 		if ( ! is_user_logged_in() ) {
 			echo '<p>' . esc_html__( 'Log in to take this quiz.', 'ohmylms' ) . '</p><a href="' . esc_url( wp_login_url( get_permalink() ) ) . '">' . esc_html__( 'Log in', 'ohmylms' ) . '</a>';
@@ -142,12 +140,12 @@ final class QuizPlayerBlock {
 				$previous_post     = $GLOBALS['post'] ?? null;
 				self::$inline_quiz = $quiz_id;
 				try {
-					$GLOBALS['post'] = get_post( $quiz_id );
+					$GLOBALS['post'] = get_post( $quiz_id ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- The shared quiz template reads the global post; restored below.
 					setup_postdata( $GLOBALS['post'] );
 					self::player( $quiz_id, $access );
 				} finally {
 					self::$inline_quiz = 0;
-					$GLOBALS['post']   = $previous_post;
+					$GLOBALS['post']   = $previous_post; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Restores the original global post.
 					if ( $previous_post ) {
 						setup_postdata( $previous_post );
 					}
@@ -169,57 +167,6 @@ final class QuizPlayerBlock {
 			'inlineEndpoint'  => rest_url( 'ohmylms/v1/quiz-player/quizzes/' . $quiz_id . '/attempt' ),
 			'restNonce'       => wp_create_nonce( 'wp_rest' ),
 			'submissionError' => __( 'Could not update the quiz. Your answers remain here. Please retry.', 'ohmylms' ),
-		);
-	}
-
-	/** Register a metadata-only picker, restricted to content authors. */
-	public static function register_routes() {
-		register_rest_route(
-			'ohmylms/v1',
-			'/quiz-player/quizzes/(?P<id>\d+)/attempt',
-			array(
-				'methods'             => 'POST',
-				'permission_callback' => static function () {
-					return is_user_logged_in(); },
-				'callback'            => array( __CLASS__, 'mutate' ),
-				'args'                => array(
-					'id'              => array(
-						'type'    => 'integer',
-						'minimum' => 1,
-					),
-					'operation'       => array(
-						'type'     => 'string',
-						'enum'     => array( 'start', 'submit', 'exit', 'timeout' ),
-						'required' => true,
-					),
-					'quiz_attempt_id' => array(
-						'type'    => 'integer',
-						'minimum' => 0,
-						'default' => 0,
-					),
-				),
-			)
-		);
-		register_rest_route(
-			'ohmylms/v1',
-			'/quiz-player/quizzes',
-			array(
-				'methods'             => 'GET',
-				'permission_callback' => static function () {
-					return AccessPolicy::can_author();
-				},
-				'callback'            => array( __CLASS__, 'choices' ),
-				'args'                => array(
-					'search'  => array(
-						'type'              => 'string',
-						'sanitize_callback' => 'sanitize_text_field',
-					),
-					'include' => array(
-						'type'    => 'integer',
-						'minimum' => 1,
-					),
-				),
-			)
 		);
 	}
 
@@ -308,11 +255,11 @@ final class QuizPlayerBlock {
 	 * @return array Player context.
 	 */
 	public static function player_context( $context ) {
-		if ( self::$inline_quiz && self::$inline_quiz === (int) ( $context['quizId'] ?? 0 ) ) {
+		if ( self::$inline_quiz && (int) ( $context['quizId'] ?? 0 ) === self::$inline_quiz ) {
 			return array_merge( $context, self::inline_context( self::$inline_quiz ) );
 		}
 		$quiz_id = self::request_id();
-		if ( $quiz_id && $quiz_id === (int) ( $context['quizId'] ?? 0 ) ) {
+		if ( $quiz_id && (int) ( $context['quizId'] ?? 0 ) === $quiz_id ) {
 			$context['returnUrl'] = self::url( $quiz_id );
 		}
 		return $context;
@@ -329,7 +276,7 @@ final class QuizPlayerBlock {
 			wp_die( esc_html__( 'This quiz is unavailable.', 'ohmylms' ), '', array( 'response' => 404 ) );
 		}
 		show_admin_bar( false );
-		$GLOBALS['post'] = get_post( $quiz_id );
+		$GLOBALS['post'] = get_post( $quiz_id ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Standalone player document for this quiz; the request exits afterwards.
 		setup_postdata( $GLOBALS['post'] );
 		// Register scripts before rendering the shared template, so head styles and footer modules are available.
 		wp_enqueue_scripts();
@@ -394,13 +341,12 @@ final class QuizPlayerBlock {
 				<p role="status"><?php esc_html_e( 'Your last attempt has been submitted.', 'ohmylms' ); ?></p>
 				<?php
 				$feedback = ! \OhMyLMS\Assessment\Schema::ready() || \OhMyLMS\Assessment\AssessmentSettings::feedback_visible( $latest['quiz_attempt_id'] );
-				if ( $feedback && '' !== $review ) {
-					// The review below opens with the score.
-				} elseif ( $feedback ) {
+				// The review below opens with the score.
+				if ( $feedback && '' === $review ) {
 					$basis = \OhMyLMS\Assessment\AttemptReport::basis( $latest['quiz_attempt_id'], $quiz );
 					// translators: 1: Earned quiz marks, 2: Total available marks.
 					echo '<p>' . esc_html( sprintf( __( 'Score: %1$s / %2$s', 'ohmylms' ), \OhMyLMS\Assessment\Scoring::display( $latest['total_achieved_marks'] ?? 0 ), \OhMyLMS\Assessment\Scoring::display( $basis['max'] ) ) ) . '</p>';
-				} else {
+				} elseif ( ! $feedback ) {
 					echo '<p>' . esc_html__( 'Results have not been released yet.', 'ohmylms' ) . '</p>';
 				}
 				?>

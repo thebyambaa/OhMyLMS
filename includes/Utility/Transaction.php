@@ -24,22 +24,23 @@ final class Transaction {
 	/** Run $work inside one transaction and return its result. Exceptions roll back and are rethrown.
 	 *
 	 * @param callable $work Work.
+	 * @throws \Throwable When $work throws; the transaction is rolled back first.
 	 */
 	public static function run( callable $work ) {
 		global $wpdb;
-		if ( self::$depth === 0 ) {
+		if ( 0 === self::$depth ) {
 			$wpdb->query( 'START TRANSACTION' ); }
 		++self::$depth;
 		try {
 			$result = $work();
 		} catch ( \Throwable $error ) {
 			--self::$depth;
-			if ( self::$depth === 0 ) {
+			if ( 0 === self::$depth ) {
 				$wpdb->query( 'ROLLBACK' ); }
 			throw $error;
 		}
 		--self::$depth;
-		if ( self::$depth === 0 ) {
+		if ( 0 === self::$depth ) {
 			$wpdb->query( 'COMMIT' ); }
 		return $result;
 	}

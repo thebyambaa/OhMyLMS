@@ -34,58 +34,57 @@ final class LessonJourney {
 	}
 
 	/**
-	 * Link through the existing course overview route.
+	 * Fragment of a unit's section on the course overview; anchors follow unit position.
 	 *
-	 * @param int    $course_id Course ID.
-	 * @param string $lesson_id Lesson UUID.
-	 * @return string
+	 * @param array $outline Assigned outline.
+	 * @param int   $unit_id Unit (chapter) ID.
+	 * @return string `#hub-unit-N`, or empty when the outline does not list the unit.
 	 */
-	public static function url( $course_id, $lesson_id ) {
-		return add_query_arg( 'hub_lesson', $lesson_id, PlayerContext::overview_url( $course_id ) );
+	public static function unit_anchor( array $outline, $unit_id ) {
+		foreach ( array_values( $outline['units'] ) as $index => $unit ) {
+			if ( (int) $unit['id'] === (int) $unit_id ) {
+				return '#hub-unit-' . ( $index + 1 );
+			}
+		}
+		return '';
 	}
 
 	/**
-	 * Resolve a lesson only in the enrolled learner's assigned publication.
+	 * Where to continue from a unit: its first open activity, else the first open one in a later unit,
+	 * else the course challenge. A unit the outline does not list continues from the first unit.
 	 *
-	 * @param array  $outline Assigned outline.
-	 * @param string $lesson_id Lesson UUID.
-	 * @return array|\WP_Error
+	 * @param array $outline Assigned outline.
+	 * @param int   $unit_id Unit (chapter) ID to continue from.
+	 * @param array $skip    Activity to leave out, such as the practice the learner just finished.
+	 * @return array|null `item`, `unit` (null for the course challenge) and `same_unit`, or null when nothing is open.
 	 */
-	public static function find( array $outline, $lesson_id ) {
-		if ( ! empty( $outline['enrolled'] ) && empty( $outline['locked'] ) && is_string( $lesson_id ) && wp_is_uuid( $lesson_id ) && 'publish' === get_post_status( $outline['id'] ) ) {
-			foreach ( $outline['units'] as $unit ) {
-				foreach ( $unit['groups'] ?? array() as $lesson ) {
-					if ( $lesson['id'] !== $lesson_id ) {
-						continue;
-					}
-					$next = null;
-					foreach ( $lesson['items'] as $item ) {
-						if ( ! empty( $item['available'] ) && empty( $item['complete'] ) ) {
-							$next = $item;
-							break;
-						}
-					}
-					return $lesson + array(
-						'unit'   => $unit,
-						'next'   => $next,
-						'url'    => self::url( $outline['id'], $lesson_id ),
-						'skills' => array_values(
-							array_filter(
-								$outline['skills'] ?? array(),
-								static function ( $skill ) use ( $lesson_id ) {
-									return in_array( $lesson_id, $skill['group_ids'] ?? array( $skill['group_id'] ), true );
-								}
-							)
-						),
+	public static function continue_from( array $outline, $unit_id, array $skip = array() ) {
+		$open    = static function ( $item ) use ( $skip ) {
+			return $item && $item !== $skip && ! empty( $item['available'] ) && empty( $item['complete'] );
+		};
+		$reached = '' === self::unit_anchor( $outline, $unit_id );
+		foreach ( $outline['units'] as $unit ) {
+			$same    = (int) $unit['id'] === (int) $unit_id;
+			$reached = $reached || $same;
+			foreach ( $reached ? $unit['items'] : array() as $item ) {
+				if ( $open( $item ) ) {
+					return array(
+						'item'      => $item,
+						'unit'      => $unit,
+						'same_unit' => $same,
 					);
 				}
 			}
 		}
-		return new \WP_Error( 'ohmylms_lesson_unavailable', __( 'This lesson is not available. Enroll in the course to open its published lessons.', 'ohmylms' ), array( 'status' => 404 ) );
+		return $open( $outline['challenge'] ?? null ) ? array(
+			'item'      => $outline['challenge'],
+			'unit'      => null,
+			'same_unit' => false,
+		) : null;
 	}
 
 	/**
-	 * Resolve adjacent available activities and the current lesson for the player.
+	 * Resolve adjacent available activities for the player.
 	 *
 	 * @param array  $outline Assigned outline.
 	 * @param int    $current Content or skill ID.
@@ -93,13 +92,9 @@ final class LessonJourney {
 	 * @return array
 	 */
 	public static function activity( array $outline, $current, $kind ) {
-		$items   = array();
-		$lessons = array();
+		$items = array();
 		foreach ( $outline['units'] as $unit ) {
 			$items = array_merge( $items, $unit['items'] );
-			foreach ( $unit['groups'] ?? array() as $lesson ) {
-				$lessons[ $lesson['id'] ] = $lesson + array( 'url' => self::url( $outline['id'], $lesson['id'] ) );
-			}
 		}
 		if ( ! empty( $outline['challenge'] ) && ! in_array( $outline['challenge'], $items, true ) ) {
 			$items[] = $outline['challenge'];
@@ -125,7 +120,6 @@ final class LessonJourney {
 			}
 			return array(
 				'current'  => $item,
-				'lesson'   => $lessons[ $item['group_id'] ?? '' ] ?? null,
 				'previous' => $previous,
 				'next'     => $next,
 			);

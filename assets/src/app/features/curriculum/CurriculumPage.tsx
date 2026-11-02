@@ -10,6 +10,11 @@ import {
 import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
+import { useListQuery } from '../../components/listQuery';
+import {
+	PageTitleAction,
+	PageTitleActions,
+} from '../../layout/PageTitleActions';
 import { normalizeApiError } from '../../lib/api';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
 import { useRequest } from '../../hooks/useRequest';
@@ -17,11 +22,12 @@ import {
 	itemPath,
 	moveItem,
 	parentChoices,
-	readTree,
+	readWorkspace,
 	saveItem,
 	type CurriculumItem,
 	type ItemInput,
 } from './api';
+import { DeleteItemDialog } from './DeleteItemDialog';
 
 const empty: ItemInput = {
 	name: '',
@@ -30,17 +36,34 @@ const empty: ItemInput = {
 	code: '',
 	version: '',
 	is_syllabus: false,
+	icon: '',
 };
+const NO_FILTER = { s: '' };
+
+/**
+ * Curriculum (Curriculum › Syllabuses): the curriculum tree, filtered by the address's `s`, with the
+ * item editor. "Add curriculum item" switches the editor to a new item.
+ */
 export default function CurriculumPage() {
 	const load = useCallback(
-		( signal: AbortSignal ) => readTree( signal ),
+		( signal: AbortSignal ) => readWorkspace( signal ),
 		[]
 	);
 	const request = useRequest( load );
 	const [ editing, setEditing ] = useState< CurriculumItem | null >( null );
 	const [ input, setInput ] = useState< ItemInput >( empty );
 	const [ parent, setParent ] = useState( 0 );
-	const [ search, setSearch ] = useState( '' );
+	const filter = useListQuery( NO_FILTER );
+	const search = filter.values.s;
+	const setSearch = ( value: string ) =>
+		filter.set( { s: value }, { replace: true } );
+	const form = useRef< HTMLFormElement >( null );
+	const [ focusForm, setFocusForm ] = useState( 0 );
+	useEffect( () => {
+		if ( focusForm ) {
+			form.current?.querySelector< HTMLInputElement >( 'input' )?.focus();
+		}
+	}, [ focusForm ] );
 	const [ busy, setBusy ] = useState( false );
 	const [ error, setError ] = useState( '' );
 	const [ message, setMessage ] = useState( '' );
@@ -48,6 +71,7 @@ export default function CurriculumPage() {
 	const [ switchTo, setSwitchTo ] = useState< {
 		item: CurriculumItem | null;
 	} | null >( null );
+	const [ deleting, setDeleting ] = useState< CurriculumItem | null >( null );
 	const dirty = JSON.stringify( input ) !== baseline;
 	const guard = useUnsavedChangesGuard( dirty );
 	const operation = useRef< AbortController | null >( null );
@@ -63,6 +87,7 @@ export default function CurriculumPage() {
 						code: item.code,
 						version: item.version,
 						is_syllabus: item.is_syllabus,
+						icon: item.icon,
 					}
 				: empty
 		);
@@ -77,6 +102,7 @@ export default function CurriculumPage() {
 							code: item.code,
 							version: item.version,
 							is_syllabus: item.is_syllabus,
+							icon: item.icon,
 						}
 					: empty
 			)
@@ -117,7 +143,8 @@ export default function CurriculumPage() {
 			}
 		}
 	}
-	const items = request.data ?? [];
+	const items = request.data?.items ?? [];
+	const icons = request.data?.icons ?? [];
 	const choices = [
 		{ value: '0', label: __( 'Top level', 'ohmylms' ) },
 		...parentChoices( items, editing?.id ?? 0 ).map( ( item ) => ( {
@@ -127,16 +154,17 @@ export default function CurriculumPage() {
 	];
 	return (
 		<section aria-label={ __( 'Curriculum', 'ohmylms' ) }>
-			<h1>{ __( 'Curriculum', 'ohmylms' ) }</h1>
-			<p>
-				<Link to="/content-hub/courses">
-					{ __( 'Open courses', 'ohmylms' ) }
-				</Link>{ ' ' }
-				·{ ' ' }
-				<Link to="/content-hub/skills">
-					{ __( 'Open skills', 'ohmylms' ) }
-				</Link>
-			</p>
+			<PageTitleActions>
+				<PageTitleAction
+					disabled={ busy }
+					onClick={ () => {
+						choose( null );
+						setFocusForm( ( current ) => current + 1 );
+					} }
+				>
+					{ __( 'Add curriculum item', 'ohmylms' ) }
+				</PageTitleAction>
+			</PageTitleActions>
 			{ request.loading && (
 				<p role="status">{ __( 'Loading curriculum…', 'ohmylms' ) }</p>
 			) }
@@ -212,6 +240,7 @@ export default function CurriculumPage() {
 					: __( 'New curriculum item', 'ohmylms' ) }
 			</h2>
 			<form
+				ref={ form }
 				onSubmit={ ( event ) => {
 					event.preventDefault();
 					void run( ( signal ) =>
@@ -259,6 +288,21 @@ export default function CurriculumPage() {
 							setInput( { ...input, version } )
 						}
 					/>
+					<SelectControl
+						label={ __( 'Icon', 'ohmylms' ) }
+						value={ input.icon }
+						options={ [
+							{
+								value: '',
+								label: __( 'Default for this kind', 'ohmylms' ),
+							},
+							...icons.map( ( icon ) => ( {
+								value: icon.id,
+								label: icon.label,
+							} ) ),
+						] }
+						onChange={ ( icon ) => setInput( { ...input, icon } ) }
+					/>
 					<CheckboxControl
 						label={ __( 'This item is a syllabus', 'ohmylms' ) }
 						checked={ input.is_syllabus }
@@ -285,9 +329,19 @@ export default function CurriculumPage() {
 						{ __( 'Save item', 'ohmylms' ) }
 					</Button>
 					{ editing && (
-						<Button onClick={ () => choose( null ) }>
-							{ __( 'New item', 'ohmylms' ) }
-						</Button>
+						<>
+							<Button onClick={ () => choose( null ) }>
+								{ __( 'New item', 'ohmylms' ) }
+							</Button>
+							<Button
+								variant="secondary"
+								isDestructive
+								disabled={ dirty }
+								onClick={ () => setDeleting( editing ) }
+							>
+								{ __( 'Delete…', 'ohmylms' ) }
+							</Button>
+						</>
 					) }
 				</fieldset>
 			</form>
@@ -317,6 +371,20 @@ export default function CurriculumPage() {
 						) }
 					</p>
 				</fieldset>
+			) }
+			{ deleting && (
+				<DeleteItemDialog
+					item={ deleting }
+					onClose={ () => setDeleting( null ) }
+					onDeleted={ () => {
+						setDeleting( null );
+						edit( null );
+						request.retry();
+						setMessage(
+							__( 'Curriculum item deleted.', 'ohmylms' )
+						);
+					} }
+				/>
 			) }
 			{ switchTo && (
 				<Modal

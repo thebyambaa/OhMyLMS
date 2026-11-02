@@ -14,6 +14,7 @@ import { normalizeApiError } from '../../lib/api';
 import { updateMembership } from './api';
 import { CourseSelector } from './CourseSelector';
 import { Members } from './Members';
+import { MembershipExtensionSettings } from './MembershipExtensionSettings';
 import {
 	formFromMembership,
 	isDirty,
@@ -23,7 +24,7 @@ import {
 	validateForm,
 } from './model';
 import { useMembershipEditor } from './useMembershipEditor';
-import { useUnsavedChangesGuard } from './useUnsavedChangesGuard';
+import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
 import type { FormErrors, FormState } from './types';
 
 function routeId( value: string | undefined ): number | null {
@@ -136,12 +137,29 @@ export default function MembershipEditorPage() {
 		);
 		setMessage( null );
 	};
+	const updateExtension = (
+		extensionId: string,
+		next: Record< string, unknown >
+	) => {
+		setForm( ( current ) =>
+			current
+				? {
+						...current,
+						extension_settings: {
+							...current.extension_settings,
+							[ extensionId ]: next,
+						},
+					}
+				: current
+		);
+		setMessage( null );
+	};
 	const invalid = ( key: string ) => ( errors[ key ] ? true : undefined );
 	const described = ( key: string ) =>
 		errors[ key ] ? `oml-mem-${ key }-error` : undefined;
 
 	async function save() {
-		if ( ! form || ! options || ! plan || operation.current ) {
+		if ( ! form || ! saved || ! options || ! plan || operation.current ) {
 			return;
 		}
 		const problems = validateForm( form, options );
@@ -161,7 +179,7 @@ export default function MembershipEditorPage() {
 		try {
 			const result = await updateMembership(
 				plan.id,
-				toInput( form, options.currency.decimals ),
+				toInput( form, options.currency.decimals, saved ),
 				controller.signal
 			);
 			if ( controller.signal.aborted ) {
@@ -453,6 +471,19 @@ export default function MembershipEditorPage() {
 						}
 					/>
 				</fieldset>
+
+				<MembershipExtensionSettings
+					plan={ {
+						id: plan.id,
+						name: saved.name,
+						status: saved.status,
+					} }
+					namespaces={ options.extension_settings }
+					values={ form.extension_settings }
+					errors={ errors }
+					disabled={ busy }
+					onChange={ updateExtension }
+				/>
 
 				<Button
 					type="submit"

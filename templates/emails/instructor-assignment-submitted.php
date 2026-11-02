@@ -4,6 +4,7 @@
  *
  * @package OhMyLMS
  */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -64,7 +65,7 @@ $cta_btn_position    = $email_settings['ohmylms_email_button_possition'] ?? 'cen
 																	</thead>
 																	<tbody>
 																		<?php foreach ( $digest_items as $i => $item ) : ?>
-																			<tr style="<?php echo $i % 2 === 0 ? '' : 'background: #F9FAFB;'; ?>">
+																			<tr style="<?php echo 0 === $i % 2 ? '' : 'background: #F9FAFB;'; ?>">
 																				<td style="padding: 12px 20px; border-bottom: 1px solid #EBECED; font-size: 14px; color: <?php echo esc_attr( $email_text_color ); ?>;"><?php echo esc_html( $item['student_name'] ); ?></td>
 																				<td style="padding: 12px 20px; border-bottom: 1px solid #EBECED; font-size: 14px; color: <?php echo esc_attr( $email_text_color ); ?>;"><?php echo esc_html( $item['assignment_title'] ); ?></td>
 																				<td style="padding: 12px 20px; border-bottom: 1px solid #EBECED; font-size: 14px; color: #7A8B9A;"><?php echo esc_html( $item['time'] ); ?></td>

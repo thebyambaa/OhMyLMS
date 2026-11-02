@@ -62,7 +62,7 @@ final class ReviewLines {
 						}
 					)
 				);
-				return self::token_texts( $settings, $chosen );
+				return array_merge( array( self::hot_text_passage( $settings, $chosen ) ), self::token_texts( $settings, $chosen ) );
 			case 'match-table-grid':
 				return self::grid_lines( $settings, $given, true );
 			case 'labeling':
@@ -297,6 +297,40 @@ final class ReviewLines {
 			}
 		}
 		return $map;
+	}
+
+	/**
+	 * The passage with each option marked: ✓ correct pick, ✗ wrong pick, ○ missed correct option.
+	 *
+	 * @param array    $settings Hot text settings.
+	 * @param string[] $chosen   Picked token IDs.
+	 * @return string
+	 */
+	public static function hot_text_passage( array $settings, array $chosen ) {
+		$texts = array();
+		$marks = array();
+		foreach ( (array) ( $settings['tokens'] ?? array() ) as $token ) {
+			$marks[]                                  = '[[' . ( $token['id'] ?? '' ) . ']]';
+			$texts[ (string) ( $token['id'] ?? '' ) ] = (string) ( $token['text'] ?? '' );
+		}
+		$key    = array_map( 'strval', (array) ( $settings['correct'] ?? array() ) );
+		$chosen = array_map( 'strval', $chosen );
+		return (string) preg_replace_callback(
+			'/\[\[([A-Za-z0-9_-]+)\]\]/',
+			static function ( $found ) use ( $texts, $key, $chosen ) {
+				$id = $found[1];
+				if ( ! isset( $texts[ $id ] ) ) {
+					return $found[0];
+				}
+				$picked = in_array( $id, $chosen, true );
+				$right  = in_array( $id, $key, true );
+				if ( $picked ) {
+					return '[' . ( $right ? '✓ ' : '✗ ' ) . $texts[ $id ] . ']';
+				}
+				return $right ? '[○ ' . $texts[ $id ] . ']' : $texts[ $id ];
+			},
+			is_string( $settings['passage'] ?? null ) && '' !== trim( $settings['passage'] ) ? $settings['passage'] : implode( ' ', $marks )
+		);
 	}
 
 	/**

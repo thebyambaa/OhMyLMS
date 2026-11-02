@@ -23,6 +23,7 @@ class AssignmentHookHandler extends HookHandler {
 	public function register_hooks() {
 		add_action( 'ohmylms_rest_insert_assignment', array( $this, 'link_assignment_with_chapter' ), 10, 2 );
 		add_action( 'ohmylms_rest_delete_assignment', array( $this, 'unlink_chapter_from_assignment' ), 10 );
+		\OhMyLMS\Assignment\Comments::init();
 	}
 
 

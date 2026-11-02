@@ -297,6 +297,8 @@ describe( 'helpers', () => {
 		expect( tabFromParam( 'account-and-privacy' ) ).toBe(
 			'account-and-privacy'
 		);
+		expect( tabFromParam( 'payment-gateways' ) ).toBe( 'payment-gateways' );
+		expect( tabFromParam( 'mcp' ) ).toBe( 'mcp' );
 		expect( tabFromParam( 'bogus' ) ).toBe( 'general' );
 		expect( tabFromParam( null ) ).toBe( 'general' );
 	} );

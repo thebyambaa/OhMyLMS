@@ -2,6 +2,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import { ApiError } from '../../lib/api';
 import type {
 	AccessType,
+	CertificateAssignment,
 	Course,
 	CourseDetail,
 	CourseInput,
@@ -11,11 +12,14 @@ import type {
 	FormErrors,
 	FormState,
 	Level,
-	MediaImage,
 	Option,
 	PriceType,
 	WritableStatus,
 } from './types';
+import { createValidators } from '../../lib/validation';
+
+const { text } = createValidators( invalidResponse );
+export const { record, positiveId } = createValidators( invalidResponse );
 
 export const STATUSES: readonly CourseStatus[] = [
 	'draft',
@@ -73,26 +77,6 @@ export function invalidResponse(): ApiError {
 	} );
 }
 
-/**
- * Narrow an unknown value to a plain object or fail with an invalid response.
- *
- * @param value Parsed JSON.
- * @return The object.
- */
-export function record( value: unknown ): Record< string, unknown > {
-	if ( ! value || 'object' !== typeof value || Array.isArray( value ) ) {
-		throw invalidResponse();
-	}
-	return value as Record< string, unknown >;
-}
-
-function text( value: unknown ): string {
-	if ( 'string' !== typeof value ) {
-		throw invalidResponse();
-	}
-	return value;
-}
-
 function nullableText( value: unknown ): string | null {
 	return null === value ? null : text( value );
 }
@@ -114,23 +98,6 @@ function oneOf< T extends string >( value: unknown, allowed: readonly T[] ): T {
 
 function list( value: unknown ): unknown[] {
 	if ( ! Array.isArray( value ) ) {
-		throw invalidResponse();
-	}
-	return value;
-}
-
-/**
- * Validate a positive integer identifier.
- *
- * @param value Candidate id.
- * @return The id.
- */
-export function positiveId( value: unknown ): number {
-	if (
-		'number' !== typeof value ||
-		! Number.isSafeInteger( value ) ||
-		value < 1
-	) {
 		throw invalidResponse();
 	}
 	return value;
@@ -194,6 +161,30 @@ function parseDuration( value: unknown ): Duration | null {
 }
 
 /**
+ * Validate the certificate assignment of a course.
+ *
+ * @param value Parsed JSON.
+ * @return The assigned template (0 for none) and the templates the user may assign.
+ */
+export function parseCertificateAssignment(
+	value: unknown
+): CertificateAssignment {
+	const item = record( value );
+	return {
+		course_id: positiveId( item.course_id ),
+		certificate_id: count( item.certificate_id ),
+		choices: list( item.choices ).map( ( choice ) => {
+			const row = record( choice );
+			return {
+				id: positiveId( row.id ),
+				title: text( row.title ),
+				status: text( row.status ),
+			};
+		} ),
+	};
+}
+
+/**
  * Validate a listed course.
  *
  * @param value Parsed JSON.
@@ -208,6 +199,8 @@ export function parseCourse( value: unknown ): Course {
 		slug: text( item.slug ),
 		status: oneOf( item.status, STATUSES ),
 		permalink: text( item.permalink ),
+		preview_url:
+			undefined === item.preview_url ? '' : text( item.preview_url ),
 		author_id: count( item.author_id ),
 		author_name: text( item.author_name ),
 		level: oneOf( item.level, LEVELS ),
@@ -302,29 +295,6 @@ export function parseOptions( value: unknown ): CourseOptions {
 			upload_files: boolean( abilities.upload_files ),
 			builder_url: text( abilities.builder_url ),
 		},
-	};
-}
-
-/**
- * Validate an item of the core media endpoint.
- *
- * @param value Parsed JSON.
- * @return The image.
- */
-export function parseMedia( value: unknown ): MediaImage {
-	const item = record( value );
-	const details = item.media_details
-		? record( item.media_details )
-		: ( {} as Record< string, unknown > );
-	const sizes = details.sizes ? record( details.sizes ) : {};
-	const thumb = sizes.thumbnail ? record( sizes.thumbnail ) : null;
-	const url = text( item.source_url );
-	const title = item.title ? record( item.title ) : {};
-	return {
-		id: positiveId( item.id ),
-		url,
-		thumbnail_url: thumb ? text( thumb.source_url ) : url,
-		title: 'string' === typeof title.rendered ? title.rendered : '',
 	};
 }
 

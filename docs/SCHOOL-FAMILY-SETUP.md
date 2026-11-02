@@ -95,9 +95,10 @@ Where it happens today:
   work with completion and overdue counts for each class. **Review submissions** (School workspace → Reports)
   shows written submissions with the student's files; teachers grade and give feedback there. Access needs both a
   current class relationship and an explicit distribution of that activity, and file downloads check the same.
-- **Creating** an assignment ("Assign learning") is in the platform class editor in wp-admin and through the
-  REST route `POST ohmylms/v1/school/classes/{id}/assignments`. The hub does not have a create-assignment form
-  for teachers yet; confirm this gap before relying on teachers to assign work from the hub.
+- **Creating** an assignment ("Assign work") is in the Account Hub class editor in wp-admin (Class work) and
+  through the REST route `POST ohmylms/v1/account-hub/classes/{id}/assignments` (platform and school
+  administrators). The hub does not have a create-assignment form for teachers yet; confirm this gap before
+  relying on teachers to assign work from the hub.
 - **Gradebook** (School workspace) shows quiz and assignment grades per student with weighted totals and a full
   class CSV download. Manual grade overrides stay in the platform Account Hub course gradebook and are separate
   from school assessment grades.
@@ -109,9 +110,17 @@ Where it happens today:
   the same private password-reset process.
 - **Reports** show assigned and completed work, overdue counts and stored skill summaries by class, and export CSV with
   names escaped against spreadsheet formula injection.
-- **Academic years** can be archived and their active class definitions copied to a new year after a preview. New classes
-  start with empty rosters; promotion is an explicit staff action. Managed-student recovery is
-  available in People.
+- **Academic years** roll over in the Account Hub (school › Year rollover): after a preview, each class of the old year is
+  archived and, by a grade map (`7` → `8`; an empty grade means the class leaves), a next-year class is created with the
+  promoted students; course enrolments that a class roster granted follow them, those of leaving classes are cancelled.
+  Applying the same preview twice changes nothing more. The hub School workspace rollover still copies classes with empty
+  rosters. Managed-student recovery is available in People.
+- **Schools** can be archived (reversible; closed to staff, students and families) and, once archived, deleted
+  permanently by a site administrator after typing the school name. Deleting removes the school's classes, rosters,
+  memberships, guardian links, invitations and distributed work and cancels roster-granted enrolments; it never deletes
+  a user account.
+- A **sample school** (two classes, six made-up students, a teacher, a school administrator and a parent) can be added
+  from the Account Hub Schools list for exploration and removed again with one click.
 - Schools, class membership and guardian access use separate tables, so removing a roster member never deletes purchases
   or learning records.
 
@@ -148,8 +157,10 @@ authorization needs real credentials and an allowed callback origin.
 
 ## Development and rollback
 
-PHP is in `includes/Schools/` (services, REST under `ohmylms/v1/school/`), `includes/Family/` and the hub classes in
-`includes/Student/`; templates are in `templates/student-hub/`; the wp-admin React app is `assets/src/features/schools/`.
+PHP is in `includes/Schools/` (services), `includes/Rest/V1/AccountHub*Controller.php` (REST under
+`ohmylms/v1/account-hub/`, see [api/account-hub.md](api/account-hub.md); only View as stays under `ohmylms/v1/school/`),
+`includes/Family/` and the hub classes in `includes/Student/`; templates are in `templates/student-hub/`; the wp-admin
+screens are the Account Hub in `assets/src/app/features/account-hub/`.
 Run from the plugin directory:
 
 ```sh

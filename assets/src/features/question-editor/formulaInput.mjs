@@ -4,19 +4,29 @@
  * server turns into a number when it issues the question.
  */
 
+/** @typedef {import('./editorTypes').Data} Data */
+
+/**
+ * @typedef {Object} FormulaInputProps
+ * @property {'text'}                 type      Plain text, so a formula can be typed.
+ * @property {'decimal'}              inputMode Numeric keyboard on touch devices.
+ * @property {number|string}          value     Shown value.
+ * @property {(text: string) => void} onChange  Receives the typed text.
+ */
+
 /**
  * Props for a text input holding a number or a {{formula}}.
  *
  * @param {number|string|undefined}                  value    Stored value.
  * @param {(value: number|string|undefined) => void} onChange Receives a number, a formula string, or undefined when empty.
- * @param {Object}                                   extra    Extra input props, spread last.
- * @return {Object} Input props.
+ * @param {Data}                                     extra    Extra input props, spread last.
+ * @return {FormulaInputProps} Input props.
  */
 export const numberOrFormula = ( value, onChange, extra = {} ) => ( {
 	type: 'text',
 	inputMode: 'decimal',
 	value: value ?? '',
-	onChange: ( text ) => {
+	onChange: ( /** @type {string} */ text ) => {
 		if ( text === '' ) {
 			onChange( undefined );
 		} else if ( text.includes( '{' ) ) {
@@ -35,8 +45,8 @@ export const numberOrFormula = ( value, onChange, extra = {} ) => ( {
  *
  * @param {number|string|undefined}                  value    Stored value.
  * @param {(value: number|string|undefined) => void} onChange Receives a number, a formula string, or 0 when empty.
- * @param {Object}                                   extra    Extra input props.
- * @return {Object} Input props.
+ * @param {Data}                                     extra    Extra input props.
+ * @return {FormulaInputProps} Input props.
  */
 export const toleranceOrFormula = ( value, onChange, extra = {} ) =>
 	numberOrFormula(

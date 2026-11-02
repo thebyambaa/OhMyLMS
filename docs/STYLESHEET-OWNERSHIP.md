@@ -1,6 +1,6 @@
 # Stylesheet ownership (roadmap step 7)
 
-The table below records the 29 October 2026 snapshot on `main`; see the 30 October cleanup below for subsequent changes. Sizes are uncompressed bytes of the files in the plugin directory. Nothing here claims a speed-up; page-load timing was not measured.
+The table below records the 29 October 2026 snapshot on `main`; see the 30 October cleanup and the 31 October legacy admin deletion below for subsequent changes. Sizes are uncompressed bytes of the files in the plugin directory. Nothing here claims a speed-up; page-load timing was not measured.
 
 ## Who owns what
 
@@ -13,12 +13,11 @@ The table below records the 29 October 2026 snapshot on `main`; see the 30 Octob
 | Learner `checkout` / `thankyou` / `account` / `membership` | `frontend/*.css` | 36,512 / 12,995 / 84,565 / 8,352 | `assets/src/frontend/scss/{checkout,thankyou,dashboard,membership}` | |
 | Learner RTL | `frontend/rtl.css` | 1,209 | `assets/src/frontend/scss/rtl` | Only when `is_rtl()` |
 | Learner, other features | `student-hub.css` 49,070, `quiz-player-templates.css` 43,298, `practice.css` 23,752, `paper.css` 21,618, `student-dashboard.css` 17,373, and about 30 smaller files | | Each feature's PHP class enqueues its own | Referenced from `includes/` or `templates/` |
-| Public compatibility URLs | `assets/css/style.css`, `style-rtl.css` | 476,556 / 1,215 | Generated from the same SCSS by `tools/build-frontend-styles.mjs` | Not enqueued by the plugin. Kept for integrations that request the old URLs |
-| Admin application, shell | `admin-design-system.css` 17,002 (plus inline variables from `DesignSystem.php`), `tailwind.css` 22,069, `global.css` 596 (all wp-admin, LMS menu) | | `Design/DesignSystem.php`, `Assets/AdminAssets.php` | |
-| Admin application, main layer | `assets/dist/css/admin/oml-main-*.css` (and the `ohmylms.css` fallback) | 1,430,902 across 144 modules | `assets/src/design-system/admin`, plus three vendor modules in `assets/src/admin-styles` | Of this, email editor 654,046, automations 394,457 and email shell 69,440 are vendor (Arco, email builder) and load on demand |
-| Admin application, UI layer | `assets/css/oml-ui-*.css` (and the `admin-ui.css` fallback) | 77,274 across 140 modules | `assets/src/design-system/admin` | |
-| Admin application, RTL | `oml-rtl-*.css` | 4,968 | same | Only when `is_rtl()` |
-| Admin application, always requested on the app screen | `question-editor.css` 17,672, plus nine feature files (`question-stage`, `quiz-design`, `quiz-overview`, `course-objectives`, `skill-matrix`, `course-editor-ux`, `course-outline-editor`, `subject-profiles`, `library-curriculum`) totalling 55,727 | | `Design/Tokens.php::enqueue_admin()` | Printed as deferred slots and filled by `admin-styles.js` |
+| Retired compatibility URLs | `assets/css/style.css`, `style-rtl.css` | was 476,556 / 1,215 | deleted in 1.2.22 (see [below](#compatibility-bundle-removed-1222)) | Not enqueued by the plugin; listed in `retiredAssets` |
+| Admin shell | `admin-design-system.css` 17,002 (plus inline variables from `DesignSystem.php`), `global.css` 596 (all wp-admin, LMS menu) | | `Design/DesignSystem.php`, `Assets/AdminAssets.php` | |
+| Admin app (`page=ohmylms-app`) | `assets/dist/admin/admin-app*.css` and its feature chunks | | `assets/src/app/styles`, feature CSS in `assets/src/app` | Built by Webpack; see [ARCHITECTURE.md](ARCHITECTURE.md) |
+| Retired legacy admin (`page=ohmylms`) | `assets/dist/css/admin/oml-{main,rtl}-*.css`, `assets/css/oml-ui-*.css`, `admin-ui.css`, `tailwind.css`, the `admin-styles.js` loader | was 1,430,902 + 77,274 + 4,968 + 22,069 | deleted 31 October 2026 (see below) | |
+| Question editing styles | `question-editor.css` 17,672, plus nine feature files (`question-stage`, `quiz-design`, `quiz-overview`, `course-objectives`, `skill-matrix`, `course-editor-ux`, `course-outline-editor`, `subject-profiles`, `library-curriculum`) totalling 55,727 | | `Design/Tokens.php::enqueue_admin()` | Were requested on the legacy screen; re-targeted with that screen check |
 | Gutenberg editor | `assets/blocks/css/*`, `question-editor.css` and `paper.css` (native lesson editor) | | `Blocks/BlocksManager.php`, `Learning/NativeLessonEditor.php` | WordPress's own editor styles are not copied |
 
 ## WordPress core styles
@@ -47,7 +46,7 @@ Earlier in step 7 (commit `5d4cbc26` and predecessors), measured from git: front
 
 ## Public selectors kept
 
-All `.ohmylms-*` frontend classes used by `templates/`, Elementor, Bricks and add-ons, including `.ohmylms-button`, `.ohmylms-form-group`, `.ohmylms-progressbar*` and the `.ohmylms-page` scope, stay in the shared component styles and page modules. The old `style.css` and `style-rtl.css` URLs still work. No class was deleted in this step.
+All `.ohmylms-*` frontend classes used by `templates/`, Elementor, Bricks and add-ons, including `.ohmylms-button`, `.ohmylms-form-group`, `.ohmylms-progressbar*` and the `.ohmylms-page` scope, stay in the shared component styles and page modules. The old `style.css` and `style-rtl.css` URLs worked until 1.2.22, which deleted them. No class was deleted in this step.
 
 ## Cleanup verified 30 October 2026
 
@@ -70,6 +69,58 @@ admin compatibility CSS shrank by 947 bytes (1,430,902 to 1,429,955); the course
 Validation: 35 relevant browser checks, nine focused Node checks, 364 PHP design-token checks,
 PHP admin-style registration checks, CSS lint and the modified loader's JavaScript lint passed.
 
+## Legacy admin CSS deleted (31 October 2026)
+
+The recovered admin was deleted, so the build of its stylesheets went with it:
+
+| Removed | Files | Bytes |
+| --- | ---: | ---: |
+| `assets/src/design-system/admin/*.css` (main, UI and RTL modules); `public-selectors.json` stays for `stylelint.config.mjs` | 281 | 439,092 |
+| `assets/src/admin-styles/` (module manifest and the email shell, email editor and automations vendor modules) | 4 | 1,161,090 |
+| `assets/src/static/css/tailwind.css` and its manifest entry (only `toplevel_page_ohmylms` loaded it) | 1 | 22,069 |
+| `tools/build-admin-styles.mjs`, `tools/modularize-admin-css.mjs`, `tools/modularize-admin-overrides.mjs`, `assets/js/admin-styles.js`, `tests/js/admin-styles.test.mjs`, `tests/browser/admin-styles.spec.cjs`, `tests/fixtures/admin-styles/` | 7 | |
+
+Front-end SCSS, `oml-ui.css`, the learner CSS, block styles, theme-support CSS and the app's own CSS are unchanged.
+The shipped outputs (`assets/dist/css/admin`, `assets/dist/css/chunks`, `assets/css/oml-ui-*.css`, `admin-ui.css`,
+`tailwind.css`) and their PHP handles are removed by the build and PHP steps of [CUTOVER.md](CUTOVER.md).
+
+## WordPress list tables and admin colour scheme (31 October 2026)
+
+- App lists render `WP_List_Table` markup through `assets/src/ui/ListTable.jsx`; wp-admin's own
+  `list-tables.css` (part of the `wp-admin` style bundle on every admin page) styles them. The app adds no
+  list-table CSS beyond one alignment rule in `assets/src/app/styles/app.css`.
+- `admin-design-system.css` rules moved from `body.oml-ds` to `body.oml-ds-branded`, so they apply only for a
+  branded Design system preset; under the default WordPress preset plugin screens use WordPress's styles
+  and the user's admin colour scheme. The `.ohmylms-ds-*` rules for the Design system tab are unscoped as before.
+- One-off inline values in app components (earnings chart colours, email and certificate preview frames,
+  summary-card spacing, level chips, pre-wrapped notes, the design-system swatch) moved to token-based
+  classes in `app.css` and `admin-design-system.css`; `check:architecture` now rejects raw colours in
+  `assets/src/app` ([DESIGN-TOKENS](DESIGN-TOKENS.md)).
+
+## Learner colours
+
+Authored learner colours live in `assets/src/frontend/scss` and use `--oml-*` (previous hex only as a `var()` fallback). `tools/build-frontend-styles.mjs` compiles that SCSS into the page modules in `assets/css/frontend` only; the generated compatibility bundle `assets/css/style.css` / `style-rtl.css` (483,294 bytes at its last regeneration; the October snapshot's 476,556 was that same generated file, not a separate palette) was removed in 1.2.22. Exceptions that stay literal are listed in `tools/learner-colour-allowlist.json` (star artwork, select chevrons, one notice glyph, two-paint icons). The video player keeps its fixed media palette. Exam-print colours are in `paper.css`, not this SCSS.
+
+## Compatibility bundle removed (1.2.22)
+
+The plugin never enqueued the compatibility bundle; it existed so old theme or add-on URLs kept working. It is gone:
+
+| Removed | Bytes |
+| --- | ---: |
+| `assets/css/style.css` + `style.css.map` | 483,294 + 607,248 |
+| `assets/css/style-rtl.css` + `style-rtl.css.map` | 1,130 + 1,713 |
+
+- `tools/build-frontend-styles.mjs` no longer compiles them; it writes only `assets/css/frontend/*.css`, `modules.json`
+  and `modules.php` (`modules.json` never listed them). `tests/js/frontend-styles.test.mjs` checks that they are not
+  emitted and not on disk.
+- Both are in `retiredAssets` of `assets/src/manifest.json`, like the retired `assets/dist/frontend/*.js`: the build
+  and `sync-admin-assets.mjs` delete any stale copy and its `.map`, and URLs are not rewritten, so an old request gets
+  a 404 (on the local nginx site, WordPress's 404 page, exactly as for `assets/dist/frontend/ohmylms.js`). `sync-admin-assets.mjs` no longer copies them and `build-assets.mjs` lost its skip list.
+- `stylelint.config.mjs` no longer lists them; `tests/fixtures/quiz-inline.php` links `frontend/core.css` and
+  `lesson.css` instead.
+- Themes that linked `style.css` should depend on the `ohmylms-frontend` style handle (it pulls the page modules of
+  the current request) or add groups with `ohmylms_frontend_style_groups`; RTL is the `rtl` group.
+
 ## Remaining optimization boundaries
 
 - Feature modules retain their ordered cascade slots. Further request-count reduction needs a
@@ -77,8 +128,5 @@ PHP admin-style registration checks, CSS lint and the modified loader's JavaScri
 - The nine feature styles are already assigned lazy groups by `AdminAssets::defer_feature_style()`.
   They load when their corresponding content or explicit feature loader requires them, rather than
   being treated as unconditional application CSS.
-- `assets/src/static/dist/css/admin/ohmylms.css` remains a selector/parity test input.
-  `assets/dist/css/chunks/355.css` remains an email-editor dependency. Neither should be deleted
-  without replacing its consumer.
 - The Sass build still uses legacy `@import` because some partials share placeholder extensions.
   A future Sass module migration must preserve those dependencies and the existing cascade.

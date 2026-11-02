@@ -155,6 +155,7 @@ final class CourseFromSyllabus {
 				$route = new \WP_REST_Request( 'POST', '/ohmylms/v1/courses' );
 				$route->set_body_params(
 					array(
+						'title'             => $name,
 						'name'              => $name,
 						'status'            => 'draft',
 						'course_type'       => 'self-paced',

@@ -72,7 +72,7 @@ final class AttemptItems {
 			if ( ! $version_id && ! empty( $slot['pool'] ) ) {
 				$version_id = Pools::draw( $slot['pool'], $seed, $used, $attempt_id );
 				if ( ! $version_id ) {
-					throw new ErrorException( new \WP_Error( 'quiz_pool_shortage', __( 'This assessment cannot be started: a random question pool has run out of eligible questions. Please tell your teacher.', 'ohmylms' ), array( 'status' => 409 ) ) );
+					throw new ErrorException( new \WP_Error( 'quiz_pool_shortage', __( 'This assessment cannot be started: a random question pool has run out of eligible questions. Please tell your teacher.', 'ohmylms' ), array( 'status' => 409 ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Carries the WP_Error returned to the caller; the message is not output here.
 				}
 			}
 			$snapshot = VersionPublisher::snapshot( $version_id );
@@ -162,7 +162,8 @@ final class AttemptItems {
 	 */
 	public static function context( $attempt_id ) {
 		global $wpdb;
-		return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE attempt_id=%d', Schema::table( 'attempt_context' ), (int) $attempt_id ), ARRAY_A ) ?: null;
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE attempt_id=%d', Schema::table( 'attempt_context' ), (int) $attempt_id ), ARRAY_A );
+		return $row ? $row : null;
 	}
 
 	/**
@@ -184,8 +185,10 @@ final class AttemptItems {
 		global $wpdb;
 		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE attempt_id=%d ORDER BY position', Schema::table( 'attempt_items' ), (int) $attempt_id ), ARRAY_A );
 		foreach ( $rows as &$row ) {
-			$row['option_order'] = json_decode( $row['option_order'], true ) ?: array();
-			$row['display']      = json_decode( $row['display'], true ) ?: array();
+			$option_order        = json_decode( $row['option_order'], true );
+			$display             = json_decode( $row['display'], true );
+			$row['option_order'] = $option_order ? $option_order : array();
+			$row['display']      = $display ? $display : array();
 			$row['response']     = null === $row['response'] ? null : json_decode( $row['response'], true );
 		}
 		return $rows;

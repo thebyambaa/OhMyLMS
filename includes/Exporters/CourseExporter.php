@@ -32,7 +32,7 @@ class CourseExporter {
 	 */
 	public function __construct( $course_ids ) {
 		if ( empty( $course_ids ) || ! is_array( $course_ids ) ) {
-			throw new \Exception( __( 'Invalid course IDs. Provide an array of course IDs.', 'ohmylms' ) );
+			throw new \Exception( __( 'Invalid course IDs. Provide an array of course IDs.', 'ohmylms' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Plain text returned as REST error data.
 		}
 
 		$this->course_ids = $course_ids;
@@ -69,7 +69,7 @@ class CourseExporter {
 		header( 'Content-Disposition: attachment; filename="courses-export.json"' );
 		header( 'Content-Length: ' . strlen( $json_data ) );
 		// Output the JSON data.
-		echo $json_data;
+		echo $json_data; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON file download body.
 		exit;
 	}
 
@@ -185,18 +185,19 @@ class CourseExporter {
 		$chapters = array();
 
 		// Fetch chapters for the course.
-		$chapter_query = $wpdb->prepare(
-			'
+		$chapter_results = $wpdb->get_results(
+			$wpdb->prepare(
+				'
             SELECT * 
             FROM %i
             WHERE course_id = %d 
             ORDER BY order_number ASC
         ',
-			$wpdb->prefix . 'ohmylms_chapter_relationship',
-			$course_id
+				$wpdb->prefix . 'ohmylms_chapter_relationship',
+				$course_id
+			),
+			ARRAY_A
 		);
-
-		$chapter_results = $wpdb->get_results( $chapter_query, ARRAY_A );
 
 		foreach ( $chapter_results as $chapter ) {
 			$chapter_id   = $chapter['chapter_id'];
@@ -210,18 +211,19 @@ class CourseExporter {
 			}
 
 			// Fetch contents for each chapter.
-			$content_query = $wpdb->prepare(
-				'
+			$content_results = $wpdb->get_results(
+				$wpdb->prepare(
+					'
                 SELECT * 
                 FROM %i
                 WHERE chapter_id = %d 
                 ORDER BY order_number ASC
             ',
-				$wpdb->prefix . 'ohmylms_content_relationship',
-				$chapter_id
+					$wpdb->prefix . 'ohmylms_content_relationship',
+					$chapter_id
+				),
+				ARRAY_A
 			);
-
-			$content_results = $wpdb->get_results( $content_query, ARRAY_A );
 
 			$contents = array();
 
@@ -240,18 +242,19 @@ class CourseExporter {
 					$quiz_questions = array();
 					if ( 'ohmylms-quiz' === $content_post->post_type ) {
 						// Fetch questions for the quiz.
-						$questions_query = $wpdb->prepare(
-							'
+						$question_results = $wpdb->get_results(
+							$wpdb->prepare(
+								'
                             SELECT * 
                             FROM %i
                             WHERE quiz_id = %d 
                             ORDER BY order_number ASC
                         ',
-							$wpdb->prefix . 'ohmylms_quiz_questions_relationship',
-							$content_id
+								$wpdb->prefix . 'ohmylms_quiz_questions_relationship',
+								$content_id
+							),
+							ARRAY_A
 						);
-
-						$question_results = $wpdb->get_results( $questions_query, ARRAY_A );
 
 						foreach ( $question_results as $question ) {
 							$question_id   = $question['question_id'];
@@ -261,33 +264,35 @@ class CourseExporter {
 								$question_meta = get_post_meta( $question_id );
 
 								// Fetch answers for the question.
-								$answers_query = $wpdb->prepare(
-									'
+								$answers_results = $wpdb->get_results(
+									$wpdb->prepare(
+										'
                                     SELECT * 
                                     FROM %i
                                     WHERE question_id = %d 
                                     ORDER BY order_number ASC
                                 ',
-									$wpdb->prefix . 'ohmylms_question_answers',
-									$question_id
+										$wpdb->prefix . 'ohmylms_question_answers',
+										$question_id
+									),
+									ARRAY_A
 								);
-
-								$answers_results = $wpdb->get_results( $answers_query, ARRAY_A );
 
 								$answers = array();
 								foreach ( $answers_results as $answer ) {
 									// Fetch answer metadata.
-									$answer_meta_query = $wpdb->prepare(
-										'
+									$answer_meta_results = $wpdb->get_results(
+										$wpdb->prepare(
+											'
                                         SELECT * 
                                         FROM %i
                                         WHERE answer_id = %d
                                     ',
-										$wpdb->prefix . 'ohmylms_question_answermeta',
-										$answer['id']
+											$wpdb->prefix . 'ohmylms_question_answermeta',
+											$answer['id']
+										),
+										ARRAY_A
 									);
-
-									$answer_meta_results = $wpdb->get_results( $answer_meta_query, ARRAY_A );
 
 									$meta = array();
 									foreach ( $answer_meta_results as $meta_entry ) {

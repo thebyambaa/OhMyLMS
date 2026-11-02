@@ -247,6 +247,10 @@
 				"items": "integer >= 1",
 				"maxItems": 200,
 				"uniqueItems": true
+			},
+			"extension_settings": {
+				"type": "object",
+				"note": "{ <extension id>: object } for ids registered for the membership context; each validated by its own schema and replaced as a whole; omitted ids are kept"
 			}
 		},
 		"Membership": {
@@ -273,6 +277,7 @@
 			"curriculum_item_ids": "integer[] (edit)",
 			"course_count": "integer",
 			"member_count": "integer",
+			"extension_settings": "{ <extension id>: object } (edit)",
 			"created_at": "string",
 			"updated_at": "string"
 		},
@@ -295,7 +300,8 @@
 			"statuses": "{ value, label }[]",
 			"billing_periods": "{ value, label }[]",
 			"currency": "{ code, symbol, position, decimals }",
-			"limits": "{ max_courses, max_curriculum_items, max_price, max_name }"
+			"limits": "{ max_courses, max_curriculum_items, max_price, max_name }",
+			"extension_settings": "string[] (extension ids registered for the membership context)"
 		}
 	},
 	"errorCodes": {
@@ -303,7 +309,8 @@
 			"rest_invalid_param",
 			"rest_missing_callback_param",
 			"ohmylms_membership_invalid_page",
-			"ohmylms_membership_exists"
+			"ohmylms_membership_exists",
+			"ohmylms_membership_invalid_extension_settings"
 		],
 		"401/403": [
 			"ohmylms_membership_cannot_view",

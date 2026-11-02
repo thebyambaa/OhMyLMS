@@ -30,7 +30,8 @@ final class Banks {
 	 */
 	public static function get( $bank_id ) {
 		global $wpdb;
-		return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id=%d', Schema::table( 'qb_banks' ), (int) $bank_id ), ARRAY_A ) ?: null;
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id=%d', Schema::table( 'qb_banks' ), (int) $bank_id ), ARRAY_A );
+		return $row ? $row : null;
 	}
 
 	/**
@@ -117,7 +118,7 @@ final class Banks {
 			return true; }
 		if ( 'use' === $permission && 'site' === $bank['visibility'] && user_can( $user_id, 'edit_posts' ) ) {
 			return true; }
-		$levels       = array_keys(
+		$levels = array_keys(
 			array_filter(
 				self::LEVELS,
 				static function ( $level ) use ( $permission ) {
@@ -125,8 +126,7 @@ final class Banks {
 				}
 			)
 		);
-		$placeholders = implode( ',', array_fill( 0, count( $levels ), '%s' ) );
-		return (bool) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . Schema::table( 'qb_grants' ) . " WHERE bank_id=%d AND user_id=%d AND permission IN ($placeholders)", array_merge( array( (int) $bank_id, (int) $user_id ), $levels ) ) );
+		return (bool) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE bank_id=%d AND user_id=%d AND permission IN (' . implode( ',', array_fill( 0, count( $levels ), '%s' ) ) . ')', array_merge( array( Schema::table( 'qb_grants' ), (int) $bank_id, (int) $user_id ), $levels ) ) );
 	}
 
 	/**

@@ -9,7 +9,7 @@ final class Bootstrap {
 	 * Init for Bootstrap.
 	 */
 	public static function init() {
-		add_action( 'rest_api_init', array( TabPreferences::class, 'register_routes' ) );
+		add_action( 'rest_api_init', array( __CLASS__, 'register_routes' ) );
 		QuestionTypes::register_defaults();
 		QuestionTypes::register_math();
 		QuestionTypes::register_interactive();
@@ -27,6 +27,7 @@ final class Bootstrap {
 				)
 			);
 		}
+		Registry::mark_core();
 		do_action( 'ohmylms_register_extensions' );
 		add_filter(
 			'ohmylms_supported_question_types',
@@ -43,33 +44,8 @@ final class Bootstrap {
 			100
 		);
 		add_shortcode( 'ohmylms_activity', array( __CLASS__, 'activity' ) );
-		add_action(
-			'rest_api_init',
-			static function () {
-				register_rest_route(
-					'ohmylms/v1',
-					'/extensions',
-					array(
-						'methods'             => 'GET',
-						'permission_callback' => static function () {
-							return current_user_can( 'edit_posts' );},
-						'callback'            => static function () {
-							return rest_ensure_response(
-								array_merge(
-									Registry::manifest(),
-									array(
-										'apiVersion' => 1,
-										'settings'   => Settings::manifest(),
-									)
-								)
-							);},
-					)
-				);
-			}
-		);
 		Editor::init();
 		\OhMyLMS\AI\AdminPage::init();
-		\OhMyLMS\AI\AssistantController::init();
 		add_action(
 			'ohmylms_lesson_completed',
 			static function ( $lesson, $course, $student ) {
@@ -100,6 +76,14 @@ final class Bootstrap {
 			10,
 			3
 		);
+	}
+	/**
+	 * Register the extension manifest, extension settings and tab preference routes.
+	 */
+	public static function register_routes() {
+		( new Rest\TabPreferencesController() )->register_routes();
+		( new Rest\ExtensionSettingsController() )->register_routes();
+		( new Rest\ExtensionsController() )->register_routes();
 	}
 	/**
 	 * Activity for Bootstrap.

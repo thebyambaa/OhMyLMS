@@ -184,7 +184,7 @@ try {
 					)
 				);
 				puzzle_check( ! is_wp_error( $written ), 'Puzzle save failed: ' . ( is_wp_error( $written ) ? $written->get_error_message() : '' ) );
-				$request = new WP_REST_Request( 'POST', '/ohmylms/v1/question-bank/' . $written['id'] . '/approve' );
+				$request = new WP_REST_Request( 'POST', '/ohmylms/v1/questions/' . $written['id'] . '/approve' );
 				puzzle_check( 200 === rest_do_request( $request )->get_status(), 'Puzzle approval failed.' );
 				$player_settings = QuestionPlayerBlock::settings( array( 'questionIds' => array( $written['id'] ) ) );
 				$placement       = array(

@@ -53,7 +53,7 @@ final class Bootstrap {
 	 * @param mixed $taxonomy Taxonomy.
 	 */
 	public static function term_deleted( $term_id, $tt_id, $taxonomy ) {
-		if ( $taxonomy !== Taxonomy::NAME || ! Schema::ready() ) {
+		if ( Taxonomy::NAME !== $taxonomy || ! Schema::ready() ) {
 			return; }
 		Links::remove_object( 'skill', $term_id );
 		SkillMappings::remove_skill( $term_id );

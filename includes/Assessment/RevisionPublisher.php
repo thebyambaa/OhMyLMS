@@ -71,7 +71,8 @@ final class RevisionPublisher {
 			$version = self::slot_version( $quiz_id, (int) $link['id'] );
 			if ( is_wp_error( $version ) ) {
 				return $version; }
-			$question_settings = json_decode( $version['settings'], true ) ?: array();
+			$question_settings = json_decode( $version['settings'], true );
+			$question_settings = $question_settings ? $question_settings : array();
 			$figure_check      = \OhMyLMS\ExamImport\FigureContent::publishable( $question_settings );
 			if ( is_wp_error( $figure_check ) ) {
 				return $figure_check;
@@ -275,7 +276,8 @@ final class RevisionPublisher {
 		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id=%d', Schema::table( 'quiz_revisions' ), (int) $revision_id ), ARRAY_A );
 		if ( ! $row ) {
 			return null; }
-		$row['settings'] = json_decode( $row['settings'], true ) ?: array();
+		$settings        = json_decode( $row['settings'], true );
+		$row['settings'] = $settings ? $settings : array();
 		$row['slots']    = self::slots( (int) $row['id'] );
 		return $row;
 	}
@@ -290,6 +292,21 @@ final class RevisionPublisher {
 		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE revision_id=%d ORDER BY slot_no', Schema::table( 'quiz_revision_slots' ), (int) $revision_id ), ARRAY_A );
 		foreach ( $rows as &$row ) {
 			$row['pool'] = $row['pool'] ? json_decode( $row['pool'], true ) : null; }
+		return $rows;
+	}
+
+	/**
+	 * Revisions of a quiz, newest first, each with the number of attempts that used it.
+	 *
+	 * @param int $quiz_id Quiz ID.
+	 * @return array
+	 */
+	public static function history( $quiz_id ) {
+		global $wpdb;
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT id, revision_no, kind, total_marks, status, created_by, created_at FROM %i WHERE quiz_id=%d ORDER BY revision_no DESC', Schema::table( 'quiz_revisions' ), (int) $quiz_id ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh revision list for the editor.
+		foreach ( $rows as &$row ) {
+			$row['attempts'] = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE revision_id=%d', Schema::table( 'attempt_context' ), (int) $row['id'] ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh attempt count per revision.
+		}
 		return $rows;
 	}
 

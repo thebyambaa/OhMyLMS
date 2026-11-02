@@ -386,11 +386,11 @@ const clean = ( value ) =>
  * `line` is the row's number in the sheet, counting the header. Merged-cell exports leave repeated
  * content and group cells empty: with `fillDown` an empty one takes the value above, but only on a
  * row that carries a skill, and a group only continues within the same content.
- * @param records
- * @param roles
- * @param root0
- * @param root0.header
- * @param root0.fillDown
+ * @param          records
+ * @param          roles
+ * @param {Object} root0
+ * @param          [root0.header]
+ * @param          [root0.fillDown]
  */
 export function buildRows(
 	records,

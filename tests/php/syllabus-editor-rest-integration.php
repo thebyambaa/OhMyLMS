@@ -19,6 +19,7 @@ use OhMyLMS\Curriculum\Comparison;
 use OhMyLMS\Curriculum\Items;
 use OhMyLMS\Curriculum\Syllabus;
 use OhMyLMS\Curriculum\SyllabusCourse;
+use OhMyLMS\Curriculum\SyllabusSettings;
 use OhMyLMS\Learning\Catalog;
 use OhMyLMS\Learning\CourseProgram;
 use OhMyLMS\Skills\Taxonomy;
@@ -404,6 +405,247 @@ try {
 		'Detach placement.'
 	);
 	syllabus_check( (bool) get_term( $skill_id, Taxonomy::NAME ) && ! is_wp_error( get_term( $skill_id, Taxonomy::NAME ) ), 'Detachment preserves the library skill.' );
+
+	$snapshot = syllabus_request( 'GET', $syllabus_path )->get_data();
+	syllabus_check( isset( $snapshot['settings']['categories'] ) && array_key_exists( 'version', $snapshot['syllabus'] ) && is_array( $snapshot['requirements'] ), 'The editor read carries the source, profile and course requirements.' );
+	syllabus_check( count( $snapshot['requirements'] ) === Catalog::summary( $course_id )['skills'], 'Every mirrored outcome is listed as a requirement.' );
+	$required_skill = $snapshot['requirements'][0]['term_id'];
+	$before         = CourseProgram::editor( $course_id )['draft']['outcomes'];
+	foreach ( array(
+		array( 'skills' => array() ),
+		array( 'skills' => array( array( 'required' => true ) ) ),
+		array(
+			'skills' => array(
+				array(
+					'term_id' => $required_skill,
+					'target'  => 'expert',
+				),
+			),
+		),
+		array(
+			'skills' => array(
+				array(
+					'term_id' => $required_skill,
+					'extra'   => 1,
+				),
+			),
+		),
+		array(
+			'skills' => array(
+				array(
+					'term_id'  => $shared_id,
+					'required' => true,
+				),
+			),
+		),
+	) as $invalid ) {
+		syllabus_check( 400 === syllabus_command( $syllabus_id, 'set_requirements', $invalid )->get_status(), 'Invalid or foreign requirement change rejected.' );
+	}
+	syllabus_check( CourseProgram::editor( $course_id )['draft']['outcomes'] === $before, 'Rejected requirement changes leave the draft outcomes.' );
+	$required = syllabus_command(
+		$syllabus_id,
+		'set_requirements',
+		array(
+			'skills' => array(
+				array(
+					'term_id'  => $required_skill,
+					'required' => true,
+					'target'   => 'mastered',
+				),
+			),
+		)
+	);
+	syllabus_check( 200 === $required->get_status(), 'Require a skill at Mastered.' );
+	$requirement = wp_list_filter( $required->get_data()['requirements'], array( 'term_id' => $required_skill ) );
+	$requirement = reset( $requirement );
+	syllabus_check( $requirement && true === $requirement['required'] && 'mastered' === $requirement['target'], 'The response reports the new requirement and target.' );
+	$outcome = wp_list_filter( CourseProgram::editor( $course_id )['draft']['outcomes'], array( 'term_id' => $required_skill ) );
+	$outcome = reset( $outcome );
+	syllabus_check( ! empty( $outcome['required'] ) && 'mastered' === $outcome['target'] && ! get_post_meta( $course_id, CourseProgram::CURRENT, true ), 'The requirement is saved to the course draft only.' );
+	syllabus_check(
+		200 === syllabus_command(
+			$syllabus_id,
+			'edit_group',
+			array(
+				'group_id' => $first_group,
+				'name'     => $fixture_tag . ' Algebra again',
+				'code'     => 'A',
+			)
+		)->get_status(),
+		'Edit after choosing requirements.'
+	);
+	$outcome = wp_list_filter( CourseProgram::editor( $course_id )['draft']['outcomes'], array( 'term_id' => $required_skill ) );
+	$outcome = reset( $outcome );
+	syllabus_check( ! empty( $outcome['required'] ) && 'mastered' === $outcome['target'], 'Synchronization keeps chosen requirements.' );
+
+	foreach ( array(
+		array( 'categories' => 'Core' ),
+		array( 'version' => str_repeat( 'v', 61 ) ),
+		array( 'subject' => str_repeat( 's', 101 ) ),
+		array( 'name' => '' ),
+		array( 'publish' => true ),
+	) as $invalid ) {
+		syllabus_check( 400 === syllabus_command( $syllabus_id, 'edit_source', $invalid )->get_status(), 'Invalid source change rejected.' );
+	}
+	$source = syllabus_command(
+		$syllabus_id,
+		'edit_source',
+		array(
+			'name'        => $fixture_tag . ' Source',
+			'code'        => '0580',
+			'version'     => '2027 edition',
+			'description' => 'Reviewed source notes',
+			'subject'     => 'Mathematics',
+			'grade'       => 'Grade 10',
+			'language'    => 'English',
+			'categories'  => array( 'Core', ' Extended ', 'Core', '' ),
+		)
+	);
+	syllabus_check( 200 === $source->get_status(), 'Save source details and profile: ' . wp_json_encode( $source->get_data() ) );
+	$item = Items::get( $syllabus_id );
+	syllabus_check( '0580' === $item['code'] && '2027 edition' === $item['version'] && 'Reviewed source notes' === $item['description'], 'Source code, version and description persist.' );
+	syllabus_check( array( 'Core', 'Extended' ) === $source->get_data()['settings']['categories'] && 'Grade 10' === $source->get_data()['settings']['grade'], 'Profile fields are cleaned and returned.' );
+	syllabus_check( $fixture_tag . ' Source' === get_the_title( $course_id ), 'Renaming the syllabus renames its mirrored course.' );
+	$category_group = Syllabus::add_group( $syllabus_id, array( 'name' => 'Extended' ) );
+	$category_skill = Syllabus::create_skill( $syllabus_id, $category_group, array( 'name' => $fixture_tag . ' Extended skill' ) );
+	syllabus_check( ! is_wp_error( $category_skill ), 'Create a skill whose group names a category.' );
+	foreach ( Syllabus::outline( $syllabus_id )['contents'] as $content ) {
+		foreach ( $content['groups'] as $group ) {
+			foreach ( $group['skills'] as $skill ) {
+				$fixture_terms[] = $skill['term_id']; }
+		}
+	}
+	$used = syllabus_command(
+		$syllabus_id,
+		'edit_source',
+		array(
+			'version'    => 'Not saved',
+			'categories' => array( 'Core' ),
+		)
+	);
+	syllabus_check( 409 === $used->get_status(), 'A category used by skills cannot be removed.' );
+	syllabus_check( '2027 edition' === Items::get( $syllabus_id )['version'], 'A refused profile change leaves the source fields.' );
+	$without_course = Items::create(
+		array(
+			'name'        => $fixture_tag . ' Without course',
+			'item_type'   => 'subject',
+			'is_syllabus' => true,
+		)
+	);
+	$fixture_items[] = $without_course['id'];
+	syllabus_check( ! SyllabusCourse::course_id( $without_course['id'] ), 'Fixture syllabus has no course.' );
+	syllabus_check( 404 === syllabus_command( $without_course['id'], 'edit_source', array( 'grade' => 'Grade 9' ) )->get_status(), 'A profile needs the syllabus course.' );
+	syllabus_check( 200 === syllabus_command( $without_course['id'], 'edit_source', array( 'version' => '1' ) )->get_status() && '1' === Items::get( $without_course['id'] )['version'], 'Source fields save without a course.' );
+	Syllabus::add_skill( $without_course['id'], Syllabus::add_group( $without_course['id'], array( 'name' => $fixture_tag . ' Placed' ) ), $required_skill );
+	syllabus_check( 404 === syllabus_command( $without_course['id'], 'set_requirements', array( 'skills' => array( array( 'term_id' => $required_skill ) ) ) )->get_status(), 'Requirements need the syllabus course.' );
+
+	$group_ids     = array_column( Syllabus::outline( $syllabus_id )['contents'][0]['groups'], 'id' );
+	$group_skills  = array_column( Syllabus::outline( $syllabus_id )['contents'][0]['groups'][ array_search( $first_group, $group_ids, true ) ]['skills'], 'term_id' );
+	$held          = syllabus_command( $syllabus_id, 'delete_group', array( 'group_id' => $first_group ) );
+	syllabus_check( $group_skills && 409 === $held->get_status() && 'ohmylms_syllabus_needs_confirmation' === $held->get_data()['code'], 'Deleting a group with skills needs confirmation.' );
+	syllabus_check( (bool) Syllabus::group( $first_group ), 'An unconfirmed deletion keeps the group.' );
+	syllabus_check(
+		404 === syllabus_command(
+			$other_id,
+			'delete_group',
+			array(
+				'group_id' => $first_group,
+				'confirm'  => true,
+			)
+		)->get_status(),
+		'Another syllabus cannot delete this group.'
+	);
+	$deleted = syllabus_command(
+		$syllabus_id,
+		'delete_group',
+		array(
+			'group_id' => $first_group,
+			'confirm'  => true,
+		)
+	);
+	syllabus_check( 200 === $deleted->get_status() && ! Syllabus::group( $first_group ), 'Confirmed deletion removes the group.' );
+	foreach ( $group_skills as $group_skill ) {
+		$term = get_term( $group_skill, Taxonomy::NAME );
+		syllabus_check( $term && ! is_wp_error( $term ), 'Deleting a group keeps its skills in the library.' );
+	}
+	syllabus_check( ! array_intersect( $group_skills, array_map( 'intval', array_column( CourseProgram::editor( $course_id )['draft']['outcomes'], 'term_id' ) ) ), 'Skills of a deleted group leave the course outcomes.' );
+	$empty = Syllabus::add_group( $syllabus_id, array( 'name' => $fixture_tag . ' Empty' ) );
+	syllabus_check( 200 === syllabus_command( $syllabus_id, 'delete_group', array( 'group_id' => $empty ) )->get_status() && ! Syllabus::group( $empty ), 'An empty group deletes without confirmation.' );
+
+	$settings_before = SyllabusSettings::get( $syllabus_id );
+	foreach ( array(
+		array( 'category_styles' => array( 'Core' => array( 'color' => 'red;display:none' ) ) ),
+		array( 'category_styles' => array( 'Core' => array( 'shape' => 'round' ) ) ),
+		array( 'category_styles' => 'Core' ),
+		array( 'category_styles' => array( 'Core' => array( 'icon' => 'not-an-icon' ) ) ),
+	) as $invalid ) {
+		syllabus_check( 400 === syllabus_command( $syllabus_id, 'edit_source', $invalid )->get_status(), 'Invalid category style rejected.' );
+	}
+	$unknown = syllabus_command( $syllabus_id, 'edit_source', array( 'category_styles' => array( 'Unknown' => array( 'icon' => 'book' ) ) ) );
+	syllabus_check( 400 === $unknown->get_status() && 'ohmylms_syllabus_category_unknown' === $unknown->get_data()['code'], 'A style needs an existing category.' );
+	syllabus_check( SyllabusSettings::get( $syllabus_id ) === $settings_before, 'Rejected styles change nothing.' );
+	$styled = syllabus_command(
+		$syllabus_id,
+		'edit_source',
+		array(
+			'category_styles' => array(
+				'Core'     => array(
+					'icon'  => 'calculator',
+					'color' => '#AABBCC',
+				),
+				'Extended' => array( 'icon' => 'book' ),
+			),
+		)
+	);
+	syllabus_check( 200 === $styled->get_status(), 'Save category styles: ' . wp_json_encode( $styled->get_data() ) );
+	syllabus_check(
+		array(
+			'Core'     => array(
+				'icon'  => 'calculator',
+				'color' => '#aabbcc',
+			),
+			'Extended' => array(
+				'icon'  => 'book',
+				'color' => '#6e42d3',
+			),
+		) === $styled->get_data()['settings']['category_styles'],
+		'Styles are stored with lowercase and default colours.'
+	);
+	syllabus_check( 200 === syllabus_command( $syllabus_id, 'edit_source', array( 'category_styles' => array() ) )->get_status() && array() === SyllabusSettings::get( $syllabus_id )['category_styles'], 'Styles can be cleared.' );
+
+	$optional = array();
+	foreach ( SyllabusCourse::requirements( $syllabus_id ) as $requirement ) {
+		$optional[] = array(
+			'term_id'  => $requirement['term_id'],
+			'required' => false,
+		);
+	}
+	syllabus_check( $optional && 200 === syllabus_command( $syllabus_id, 'set_requirements', array( 'skills' => $optional ) )->get_status(), 'Make every syllabus skill optional.' );
+	$publication = syllabus_request( 'GET', 'authoring/courses/' . $course_id . '/publication' );
+	syllabus_check( 200 === $publication->get_status() && in_array( 'Skill-based and blended courses need a required skill outcome.', $publication->get_data()['readiness'], true ), 'Publication readiness reports the missing required skill of the mirrored course.' );
+	syllabus_check(
+		409 === syllabus_request(
+			'POST',
+			'authoring/courses/' . $course_id . '/publication',
+			array(
+				'revision'  => 'stale',
+				'confirmed' => true,
+			)
+		)->get_status(),
+		'Publishing a stale preview is refused.'
+	);
+	$refused = syllabus_request(
+		'POST',
+		'authoring/courses/' . $course_id . '/publication',
+		array(
+			'revision'  => $publication->get_data()['revision'],
+			'confirmed' => true,
+		)
+	);
+	syllabus_check( 400 <= $refused->get_status() && 'draft' === get_post_status( $course_id ) && ! get_post_meta( $course_id, CourseProgram::CURRENT, true ), 'A mirrored course with nothing required cannot publish.' );
+	wp_set_current_user( $fixture_users['author'] );
+	syllabus_check( 400 < syllabus_request( 'GET', 'authoring/courses/' . $course_id . '/publication' )->get_status(), 'Authors cannot preview the mirrored course publication.' );
+	wp_set_current_user( $fixture_users['administrator'] );
 	echo "Syllabus editor integration: $checks checks passed.\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CLI test count.
 } finally {
 	wp_set_current_user( $fixture_users['administrator'] ?? 0 );

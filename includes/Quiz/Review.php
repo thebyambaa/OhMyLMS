@@ -10,6 +10,7 @@ use OhMyLMS\Assessment\AttemptItems;
 use OhMyLMS\Assessment\ErrorException;
 use OhMyLMS\Assessment\GradeEvents;
 use OhMyLMS\Assessment\Grader;
+use OhMyLMS\Assessment\Rubric;
 use OhMyLMS\Assessment\Schema;
 use OhMyLMS\Assessment\Scoring;
 use OhMyLMS\Assessment\Structured;
@@ -33,8 +34,9 @@ final class Review {
 	 * @param mixed  $attempt_id Attempt identifier.
 	 * @param array  $marks Marks.
 	 * @param string $reason Reason.
+	 * @param array  $rubrics Question ID => points by rubric criterion ID, for questions graded with their rubric.
 	 */
-	public static function save( $quiz_id, $attempt_id, array $marks, $reason = '' ) {
+	public static function save( $quiz_id, $attempt_id, array $marks, $reason = '', array $rubrics = array() ) {
 		global $wpdb;
 		if ( ! GradingPolicy::can_grade( $quiz_id ) ) {
 			return new \WP_Error( 'quiz_permission', 'You cannot grade this quiz.', array( 'status' => rest_authorization_required_code() ) );
@@ -48,10 +50,10 @@ final class Review {
 		$changed  = array();
 		try {
 			$result = Transaction::run(
-				static function () use ( $wpdb, $quiz_id, $attempt_id, $marks, $reviewer, $reason, &$changed ) {
+				static function () use ( $wpdb, $quiz_id, $attempt_id, $marks, $reviewer, $reason, $rubrics, &$changed ) {
 					$attempt = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id=%d AND quiz_id=%d FOR UPDATE', $wpdb->prefix . 'ohmylms_quiz_attempts', $attempt_id, $quiz_id ), ARRAY_A );
 					if ( ! $attempt || ! in_array( $attempt['status'], array( 'in-review', 'completed' ), true ) ) {
-						throw new ErrorException( new \WP_Error( 'quiz_attempt', 'Submitted attempt unavailable.', array( 'status' => 409 ) ) );
+						throw new ErrorException( new \WP_Error( 'quiz_attempt', 'Submitted attempt unavailable.', array( 'status' => 409 ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Carries a WP_Error out of the transaction; never output.
 					}
 					$rows        = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE quiz_attempt_id=%d', $wpdb->prefix . 'ohmylms_quiz_attempts_answers', $attempt_id ), ARRAY_A );
 					$by_question = array_column( $rows, null, 'question_id' );
@@ -59,7 +61,7 @@ final class Review {
 						// Structured questions may be marked per part: [part_id => marks].
 						$sum = is_array( $mark ) ? array_sum( array_map( 'floatval', array_filter( $mark, 'is_numeric' ) ) ) : $mark;
 						if ( ! isset( $by_question[ $id ] ) || ! is_numeric( $sum ) || ! is_finite( (float) $sum ) || $sum < 0 || $sum > $by_question[ $id ]['question_marks'] + 0.00005 || ( is_array( $mark ) && count( array_filter( $mark, 'is_numeric' ) ) !== count( $mark ) ) ) {
-							throw new ErrorException( new \WP_Error( 'quiz_marks', 'Invalid question or marks.', array( 'status' => 422 ) ) );
+							throw new ErrorException( new \WP_Error( 'quiz_marks', 'Invalid question or marks.', array( 'status' => 422 ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Carries a WP_Error out of the transaction; never output.
 						}
 					}
 					$context = AttemptItems::context( $attempt_id );
@@ -69,6 +71,12 @@ final class Review {
 						foreach ( AttemptItems::items( $attempt_id ) as $item ) {
 							$items[ (int) $item['question_id'] ] = $item;
 						}
+					}
+					// Rubric scores are checked against the rubric the learner was delivered.
+					$scores = array();
+					foreach ( $rubrics as $id => $points ) {
+						$snapshot      = isset( $items[ $id ], $marks[ $id ] ) ? AttemptItems::snapshot( $items[ $id ] ) : null;
+						$scores[ $id ] = ErrorException::raise( Rubric::check_scores( $snapshot ? Rubric::criteria( $snapshot->get_settings() ) : array(), $points, $marks[ $id ] ?? null, (float) ( $by_question[ $id ]['question_marks'] ?? 0 ), $id ) );
 					}
 					$total   = 0.0;
 					$pending = false;
@@ -84,13 +92,26 @@ final class Review {
 								if ( $version && in_array( $version['type'], array( 'structured', 'passage' ), true ) ) {
 									$distribution = self::distribute_parts( $attempt_id, $item, ( AttemptItems::snapshot( $item ) ? AttemptItems::snapshot( $item )->get_settings() : array() ), $marks[ $id ], (float) $row['question_marks'], $policy );
 									if ( is_wp_error( $distribution ) ) {
-										throw new ErrorException( $distribution );
+										throw new ErrorException( $distribution ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Carries a WP_Error out of the transaction; never output.
 									}
 									$part_marks   = $distribution['parts'];
 									$marks[ $id ] = $distribution['total'];
 								}
 							}
-							$row['achive_mark']          = Scoring::manual( $marks[ $id ], $row['question_marks'], $policy );
+							$row['achive_mark'] = Scoring::manual( $marks[ $id ], $row['question_marks'], $policy );
+							if ( isset( $scores[ $id ] ) && abs( (float) $row['achive_mark'] - (float) $marks[ $id ] ) > Rubric::POINTS_TOLERANCE ) {
+								ErrorException::raise(
+									new \WP_Error(
+										'ohmylms_grade_rubric_total',
+										'This attempt awards whole marks, so a rubric score must come to whole marks.',
+										array(
+											'status'      => 422,
+											'question_id' => $id,
+											'expected'    => (float) $row['achive_mark'],
+										)
+									)
+								);
+							}
 							$row['is_manually_reviewed'] = 1;
 							$row['is_correct']           = $row['achive_mark'] > 0 && $row['achive_mark'] >= $row['question_marks'] ? 1 : 0;
 							if ( $wpdb->update( $wpdb->prefix . 'ohmylms_quiz_attempts_answers', array_intersect_key( $row, array_flip( array( 'achive_mark', 'is_manually_reviewed', 'is_correct' ) ) ), array( 'id' => $row['id'] ) ) === false ) {
@@ -111,7 +132,8 @@ final class Review {
 									),
 									array( 'id' => (int) $item['id'] )
 								);
-								$weights = \OhMyLMS\Assessment\Structured::weights( json_decode( VersionPublisher::version( $item['version_id'] )['settings'], true ) ?: array() );
+								$settings = json_decode( VersionPublisher::version( $item['version_id'] )['settings'], true );
+								$weights  = \OhMyLMS\Assessment\Structured::weights( $settings ? $settings : array() );
 								foreach ( $part_marks as $part_id => $awarded ) {
 									$current = self::current_part( $attempt_id, (int) $item['id'], $part_id );
 									if ( $current && abs( (float) $current['awarded'] - $awarded ) < 0.00005 && 'manual' === $current['grader'] ) {
@@ -145,7 +167,7 @@ final class Review {
 										'grade_event_id' => $event_id,
 									);
 								}
-							} elseif ( $item && ( $differs || 'needs-review' === $item['status'] ) ) {
+							} elseif ( $item && ( $differs || 'needs-review' === $item['status'] || ( isset( $scores[ $id ] ) && GradeEvents::rubric( GradeEvents::current( 'quiz', (int) $attempt_id, (int) $item['id'] ) ) !== $scores[ $id ] ) ) ) {
 								$max      = (float) $row['question_marks'];
 								$fraction = $max > 0 ? min( 1, (float) $row['achive_mark'] / $max ) : 0;
 								$wpdb->update(
@@ -174,6 +196,7 @@ final class Review {
 										'grader'      => 'manual',
 										'reviewer_id' => $reviewer,
 										'reason'      => $reason,
+										'rubric'      => $scores[ $id ] ?? null,
 									)
 								);
 								$changed[] = array(
@@ -280,7 +303,8 @@ final class Review {
 	 */
 	private static function current_part( $attempt_id, $item_id, $part_id ) {
 		global $wpdb;
-		return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE source_type=\'quiz\' AND source_id=%d AND item_id=%d AND part_id=%s AND superseded_by=0 ORDER BY id DESC LIMIT 1', Schema::table( 'grade_events' ), $attempt_id, $item_id, (string) $part_id ), ARRAY_A ) ?: null;
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE source_type=\'quiz\' AND source_id=%d AND item_id=%d AND part_id=%s AND superseded_by=0 ORDER BY id DESC LIMIT 1', Schema::table( 'grade_events' ), $attempt_id, $item_id, (string) $part_id ), ARRAY_A );
+		return $row ? $row : null;
 	}
 
 	/**

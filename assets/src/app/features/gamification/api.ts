@@ -7,7 +7,6 @@ import {
 	levelPayload,
 	parseBadge,
 	parseLevel,
-	parseMedia,
 	parseOptions,
 	parseSection,
 } from './model';
@@ -18,7 +17,6 @@ import type {
 	GamificationOptions,
 	Level,
 	LevelDraft,
-	MediaImage,
 	SectionId,
 	SectionMap,
 } from './types';
@@ -180,32 +178,4 @@ export async function deleteBadge(
 	if ( ! result || true !== ( result as { deleted?: unknown } ).deleted ) {
 		throw invalidResponse();
 	}
-}
-
-/**
- * Search the media library for badge images through the core REST route.
- *
- * @param search Search text.
- * @param page   Page number.
- * @param signal Cancels the request.
- * @return Validated images and totals.
- */
-export function listMedia(
-	search: string,
-	page: number,
-	signal?: AbortSignal
-): Promise< Collection< MediaImage > > {
-	return getCollection( '/wp/v2/media', parseMedia, {
-		signal,
-		query: {
-			search,
-			page,
-			per_page: 12,
-			media_type: 'image',
-			mime_type: 'image/jpeg,image/png,image/gif,image/webp',
-			orderby: 'date',
-			order: 'desc',
-			_fields: 'id,source_url,mime_type,title,media_details',
-		},
-	} );
 }

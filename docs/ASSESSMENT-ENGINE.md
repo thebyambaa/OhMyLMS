@@ -26,7 +26,7 @@ and practice or inline checks never touch course completion.
 | Ticket | Delivered | Main code |
 |---|---|---|
 | A01 | Isolated test site restored (`tools/create-test-site.py` renamed to ohmylms identifiers); pre-existing rename bug fixed (two completion hooks shared a name and crashed quiz completion) | `tools/`, `includes/Extensions/Bootstrap.php` |
-| A02 | Object-level authorization for every question/quiz route and nested write; foreign option IDs rejected; reports scoped to their own quiz | `QuestionBank/AccessPolicy.php`, `QuestionBank/DraftWriter.php`, `Rest/V1/QuestionController.php`, `Rest/V1/QuizController.php` |
+| A02 | Object-level authorization for every question/quiz route and nested write; foreign option IDs rejected; reports scoped to their own quiz | `QuestionBank/AccessPolicy.php`, `QuestionBank/DraftWriter.php`, `Rest/V1/QuestionsController.php`, `Rest/V1/QuizQuestionsController.php` |
 | A03 | Atomic nested saves with per-child errors; stale-save conflict (409); editor save-generation guard keeps edits made during a save; delete split into remove-from-quiz / archive / delete-unused | `DraftWriter.php`, `QuestionBank/Usage.php`, `features/quiz-editor/useQuizEditor.js`, `model.mjs` |
 | A04 | Question UUIDs, immutable content-hashed versions, resumable migration with inventory | `QuestionBank/VersionPublisher.php`, `Assessment/Migration.php`, `Assessment/Schema.php` |
 | A05 | Quiz revisions and slots; per-attempt frozen items (seeded order, opaque option tokens); snapshot-aware graders; versioned reports | `Assessment/RevisionPublisher.php`, `AttemptItems.php`, `Grader.php`, `AttemptReport.php`, `Quiz/Submission.php`, `Quiz/Review.php`, quiz templates |
@@ -133,13 +133,13 @@ scoring policy they started with: `legacy-int` (whole points, as before) or `dec
 
 | Route | Who | Purpose |
 |---|---|---|
-| `question-bank` (GET), `question-bank/{id}` | authors | Search/filter; detail with versions, skill map, usage |
-| `question-bank/{id}/approve|archive|restore|duplicate` | per policy | Lifecycle; duplicate with `quiz_id` swaps the reference |
-| `question-bank/versions/{version}` | users of the question | Frozen version |
+| `questions` (GET), `questions/{id}` | authors; editors of the question for the item | Search/filter; editor view; delete ([questions](api/questions.md)) |
+| `questions/{id}/approve|archive|restore|duplicate` | per policy | Lifecycle |
+| `questions/{id}/versions`, `questions/{id}/versions/{version}` | editors of the question | History; frozen version content |
 | `question-banks`, `question-banks/{id}`, `…/grants` | owner/admin | Banks and sharing |
-| `quiz/{id}/questions` (POST), `quiz/{id}/questions/{q}` (DELETE), `…/pin` | quiz editors | Place by reference, remove from quiz, pin a version |
+| `quizzes/{id}/questions` and `…/new`, `…/order`, `…/{q}`, `…/{q}/pin`, `…/{q}/marks`, `…/sections`, `…/pools` | quiz editors | Place by reference, create in place, reorder, remove, pin, marks, sections, random pools, all with a revision check ([quizzes](api/quizzes.md)) |
 | `quiz/{id}/revisions` (GET/POST) | quiz editors | History; publish |
-| `quiz/{id}/assessment-settings`, `quiz/{id}/pools` | quiz editors | Exam settings; random pools |
+| `quiz/{id}/assessment-settings` | quiz editors | Exam settings |
 | `quiz/{id}/preview`, `…/preview/grade` | quiz editors | Non-recording preview |
 | `attempts/{id}`, `attempts/{id}/responses` | the attempt's learner | Resume; autosave |
 | `skills`, `skills/{id}`, `skills/{id}/lessons`, `skills/{id}/courses`, `skills/link-targets`, `question/{id}/skills` | authors | Catalogue and lesson/course/question mappings |
@@ -149,6 +149,25 @@ scoring policy they started with: `legacy-int` (whole points, as before) or `dec
 
 Existing question/quiz routes are unchanged in shape; `quiz/{id}` updates now also return
 `saved_ids`, and questions include `modified`, `uuid`, `version`, `readonly`.
+
+### Previewing a quiz on the site
+
+Opening a quiz from the editor's Preview button runs the real quiz page. Administrators and the
+quiz's author are always previewing (`Submission::is_preview()`), enrolled or not; any other user
+who can edit the quiz previews until they enrol. Students never preview. Attempts have no limit
+and leave no record. The in-progress attempt exists only while the quiz is open (a reload resumes
+it); on submit, exit or timeout it is graded, summarised for the quiz page (a one-hour transient,
+shown once as "Last preview result"), and erased. No grade or evidence events are written, the
+lesson is not completed, and none of the `ohmylms_*` attempt/quiz events fire, so instructors get
+no email and webhooks, achievements and automations are not triggered.
+
+When an author opens their own quiz, attempts and completion recorded by earlier versions (which
+treated their testing as a learner's) are cleared, along with a course completion that depended on
+them; an attempt in progress is kept. Other people's quizzes are previewed but never wiped. Skill
+evidence written by those earlier versions is not removed. A site that wants enrolled staff recorded
+as learners can return `false` from the `ohmylms_quiz_is_preview` filter
+(`$preview, $quiz_id, $user_id`).
+Checked by `php tests/php/quiz-preview-unit.php` and `php tests/php/restrict-access-unit.php`.
 
 ## Release switches
 
@@ -197,7 +216,8 @@ Roll back with the switches, not by reinstalling older plugin code. The rollback
 ```sh
 OHMYLMS_TEST_CREDENTIALS=/path/test-credentials.json php tests/php/assessment-integration.php authoring versioning bank deadlines evidence math completion
 php tests/assessment-unit.php
-node --test tests/js/assessment.test.mjs tests/js/question-bank.test.mjs tests/js/quizzes.test.mjs tests/js/quiz-reports.test.mjs
+node --test tests/js/assessment.test.mjs tests/js/question-bank.test.mjs
+npm run test:app
 ```
 
 Latest run: 306 integration checks (phases above plus `completion`), 49 unit checks, `php tests/unit.php`,
@@ -249,6 +269,13 @@ performance report.
 - Structured questions: teachers can mark each part in the grading screen (sent as
   `part_marks`) or enter a whole-question mark (automatic parts keep their scores, the rest goes
   to written parts). Choice-type parts are not supported.
+- Short and long text questions may carry a teacher-only rubric (`settings.rubric`, criteria with points
+  and optional levels; `Assessment\Rubric`), frozen with the version and never delivered to learners.
+  The grading screen scores each criterion and fills in the question's marks from the total (scaled
+  when the quiz overrides the marks). `Review::save()` checks the breakdown against the delivered rubric
+  and stores it with the manual grade event (`grade_events.rubric`, schema version 6), so regrades keep
+  the earlier breakdowns in the history; marks, evidence, manual and pending grading behave as before.
+  Learners see it with their marked answers only when feedback is visible.
 - Pool feasibility is checked greedily across pools; unusual overlaps may be reported short.
 - Not built: symbolic equivalence, follow-through marking, Moodle XML import/export,
   generators, PDF/mark-scheme export. (Quiz files, bulk import, exam PDF import and AI-drafted

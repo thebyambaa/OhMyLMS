@@ -5,7 +5,6 @@
  * @package OhMyLMS
  */
 
-
 /**
  * Is ohmylms for Conditional-functions.
  */

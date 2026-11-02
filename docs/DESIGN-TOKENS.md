@@ -5,14 +5,46 @@ saved Design system palette, spacing, roundness and font. Settings > Design syst
 
 | Context | Values come from | Emitted by | Selector |
 | --- | --- | --- | --- |
-| Plugin admin screens | Settings > Design system (`ohmylms_design_system`) | `DesignSystem::css()` | `body.oml-ds` |
-| Learner pages | The same `ohmylms_design_system` settings | `Tokens::frontend_css()` | `:root` |
+| Plugin admin screens | The user's WordPress admin colour scheme under the default WordPress preset (`DesignSystem::admin_colors()`); otherwise Settings > Design system (`ohmylms_design_system`) | `DesignSystem::css()` | `body.oml-ds` |
+| Learner pages | The saved `ohmylms_design_system` palette | `Tokens::frontend_css()` | `:root` |
 
-Both call `DesignSystem::variables( $colors, $button_radius, $density )`, so derived shades (`-hover`,
+Both call `DesignSystem::variables( $colors, $button_radius, $density, $font )`, so derived shades (`-hover`,
 `-active`, `-soft`, `-rgb`, `on-*`), radii, button heights and the 4px spacing scale are computed
-identically. The default is Khan on both sides. A saved Classic or custom preset applies to both sides,
-including density and radius. `ohmylms_font_family` supplies the shared font; the historical `inherit`
-value now means the default system stack so the two contexts do not choose different fonts.
+identically. The default preset is WordPress: admin screens take `--oml-*` from the admin colour scheme
+(theme colour on WordPress's neutrals, 2px radius) and leave `--wp-admin-theme-color` to WordPress; learner
+pages keep the Khan Academy palette that preset stores. A saved Khan Academy, Classic or custom preset
+applies to both sides, including density and radius. The font is the one value each side chooses
+separately (see [Fonts](#fonts)).
+
+## Fonts
+
+Settings > Fonts (`#/settings?tab=fonts`, REST `/ohmylms/v1/settings/fonts`, see
+[the settings API](api/settings.md#fonts)) holds two options. Both are allow-listed by
+`Tokens::font_choices()`, on save (REST schema `enum` and a `sanitize_option_*` filter) and on read
+(`Tokens::font()` falls back to the default), so `--oml-font-family` only ever holds a known stack.
+
+| Option | Choices | Default | Emitted by | Applies to |
+| --- | --- | --- | --- | --- |
+| `ohmylms_font_family` (learner font) | `inherit` (Theme font), `system`, a web font | `inherit` | `Tokens::frontend_css()` at `:root` | Learner pages |
+| `ohmylms_admin_font_family` (admin font) | `system`, a web font | `system` | `DesignSystem::css()` at `body.oml-ds` | Plugin admin screens only |
+
+- Web fonts are `Tokens::FONTS` (Inter, Roboto, Open Sans, Noto Sans, Montserrat, Nunito, PT Sans,
+  Fira Sans, Rubik), all with Cyrillic coverage; `system` is `Tokens::SYSTEM_STACK`, the stack WordPress
+  admin uses. A web font is `"<name>", <system stack>`.
+- **Theme font** declares no `--oml-font-family` (and so leaves the `--ohmylms-font-family` alias
+  undefined) and adds no font rule. `font-family: var(--oml-font-family)` is then invalid at computed
+  time and inherits the theme's font, including on buttons and inputs; `var(--ohmylms-font-family, <fallback>)`
+  uses its fallback, so a stylesheet that wants the theme's font writes `var(--oml-font-family, inherit)`.
+  Any other learner choice declares the variable and sets it on `.ohmylms-page`, `.ohmylms-schools`,
+  `.ohmylms-practice`, `.ohmylms-inline-check`, `.ohmylms-skill-progress` and `.ohmylms-quiz`.
+- The admin font is applied by `admin-design-system.css` under every preset to `#wpbody`, WordPress
+  component controls and modals/popovers on `body.oml-ds` screens (code fields and icon fonts excluded);
+  branded presets also set it on `body`. Other wp-admin screens never see it.
+- Loading: the Google Fonts stylesheet the plugin has always used (`Tokens::font_url()`), and only where
+  the font is used. The learner font (`ohmylms-font`) is enqueued only on requests that queue an
+  `ohmylms-*` stylesheet (checked after `wp_enqueue_scripts` and again before late footer styles, for
+  shortcodes and blocks); the admin font (`ohmylms-admin-font`) only on plugin admin screens.
+  `system` and Theme font load nothing.
 
 Compatibility: legacy color option names remain accepted by `Tokens::color()` as aliases of the
 shared palette. The older `--ohmylms-*` names also remain aliases, reapplied in dark scopes. Their
@@ -78,7 +110,31 @@ The visual gallery and its screenshot tests are `tests/browser/ui-gallery.spec.c
   starts closed; open it from a button with `data-oml-dialog-open="settings"`. Content HTML must already
   be escaped. React dialogs remain in their original theme scope; no portal loses inherited tokens.
 - `Table` accepts a visible `caption`, native table children, `striped` and `compact`; the caption also
-  names its keyboard-scrollable region. Use native header `scope` and `aria-sort` for sortable columns.
+  names its keyboard-scrollable region and the table carries WordPress's `widefat` (and `striped`) classes.
+  Use it for detail and matrix tables; lists use `ListTable`. Use native header `scope` and `aria-sort` for
+  sortable columns.
+- `ListTable` (`assets/src/ui/ListTable.jsx`, typed in `ListTable.d.ts`) prints `WP_List_Table` markup over
+  REST data, so wp-admin's own `list-tables.css` styles it: `.subsubsub` views (`views`, with counts where
+  known), `p.search-box` (`search`), `.tablenav.top/.bottom` with the bulk-actions select and Apply
+  (`bulkActions`), filters and a Filter button (`filters`, `onFilter`; `filterLabel={ null }` when filters
+  apply on change), `table.wp-list-table.widefat.fixed.striped.table-view-list` with `thead`/`tfoot`,
+  sortable headers (`.sortable`/`.sorted asc|desc`, the sorting indicators, `aria-sort` and "Sort
+  ascending." link text, a "Table ordered by …" description), the check column (`isSelectable`, controlled
+  `selected`), `.row-actions` on the primary column, the `.toggle-row` responsive button (with
+  `aria-expanded`), `.no-items` and `.tablenav-pages` (first/previous/current-of-total/next/last and
+  `.displaying-num`). Row actions are buttons, links or a ready `render` element (a router `Link`); they
+  are visually hidden until the row is hovered or a control in the primary cell has focus (`.visible`),
+  and stay in the tab order, as in WordPress. Search and Filter submit one form, like `posts-filter`.
+  `ListTableSelect` / `ListTableInput` are the filter controls (native control, screen-reader label).
+
+## No raw colours in the app
+
+`npm run check:architecture` fails on hex, `rgb()`/`rgba()` and `hsl()`/`hsla()` literals in
+`assets/src/app/**/*.css` and in the strings of `assets/src/app/**/*.tsx` (comments, tests, `href`/`to`
+fragments and `.ts` model files are not checked). Use WordPress classes, `@wordpress/components`,
+`var(--wp-admin-theme-color)` or the `--oml-*` tokens. Justified exceptions go in the `rawColours`
+section of `tools/architecture-allowlist.json` as `{ "file", "value", "reason" }`; today the only entry is
+the example colour in the Branding tab's help text.
   PHP `Ui::table( $headers, $rows, $args )` escapes all text cells and accepts the same caption/modifiers.
 - `EmptyState` accepts a title, description and optional action children. PHP `Ui::empty_state( $title,
   $args )` escapes the title/description and accepts caller-escaped `actions_html`. It does not announce
@@ -91,8 +147,32 @@ the shared tab classes with `aria-current` rather than pretending to be local AR
 Authored frontend SCSS compiles to nine page modules through `tools/build-frontend-styles.mjs`.
 `FrontendStyles` registers shared components and the groups required by each request;
 `ohmylms_frontend_style_groups` lets integrations request additional groups explicitly.
-The generated `style.css` and `style-rtl.css` URLs remain compatibility outputs and are not loaded
-alongside those modules. The ordered admin feature modules are built from
+The generated compatibility bundle `style.css` / `style-rtl.css` was removed in 1.2.22
+([STYLESHEET-OWNERSHIP](STYLESHEET-OWNERSHIP.md#compatibility-bundle-removed-1222)).
+Edit `assets/src/frontend/scss` and regenerate with `tools/build-frontend-styles.mjs`. Do not hand-edit
+`assets/css/frontend/**`.
+
+## Learner SCSS colours
+
+`npm run lint:css` rejects new raw colours in `assets/src/frontend/scss`. `color-no-hex`, `color-named`
+and the `rgb`/`rgba`/`hsl`/`hsla` ban apply, with one allowance: a previous hex may appear only as the
+fallback of a design token, for example `color: var(--oml-primary, #1865f2)`. A page that does not emit
+the token keeps that previous colour; a learner page resolves the token from the saved palette. Use
+`--oml-primary`, `--oml-text`, `--oml-heading`, `--oml-muted`, `--oml-border`, `--oml-surface`,
+`--oml-background`, `--oml-danger`, `--oml-success`, `--oml-warning`, `--oml-link` and `--oml-on-primary`.
+Use an `--ohmylms-*` alias only in a file that already uses that family.
+
+Single-colour icons use a white SVG mask (`--icon-mask`) plus `background-color: var(--oml-*, <previous>)`, so the
+palette can restyle them. `#fff` / `#000` inside that mask are the silhouette, not a brand colour.
+`ohmylms/no-raw-svg-colour` (`tools/stylelint-learner-colours.mjs`) rejects any other colour inside an
+SVG data URI unless `tools/learner-colour-allowlist.json` lists that file and value. The list is for
+values that cannot follow one token: star-rating artwork, select chevrons painted behind the control's
+text, a notice glyph that shares its box with a surface disc, and two-paint lesson-type icons. This
+SCSS has no chart series and no exam-print colours (`assets/css/paper.css` is separate). The video
+player partial is outside the rule: its fixed media palette is documented on that file and owned with
+the player. The generated `assets/css/frontend/**` stays ignored. `assets/css/oml-ui.css` stays on the stricter rule, with no hex fallbacks.
+
+The ordered admin feature modules are built from
 `assets/src/design-system/admin`; edit authored sources rather than hashed outputs. Video controls retain a documented fixed media palette over arbitrary footage. Status text
 has separate contrast-adjusted `--oml-{success,warning,danger,info}-text` tokens for soft backgrounds.
 

@@ -4,6 +4,7 @@ namespace OhMyLMS\Learning;
 use OhMyLMS\Assessment\Schema as AssessmentSchema;
 use OhMyLMS\Skills\Mastery;
 use OhMyLMS\Skills\Taxonomy;
+use OhMyLMS\Utility\Lock;
 use OhMyLMS\Utility\Transaction;
 
 defined( 'ABSPATH' ) || exit;
@@ -115,7 +116,7 @@ final class CompletionPolicy {
 		if ( $terms && AssessmentSchema::ready() ) {
 			$ids = implode( ',', $terms );
 			if ( $program['recognize_prior'] && ! $program['evidence_days'] ) {
-				$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . AssessmentSchema::table( 'student_skill_state' ) . " WHERE student_id=%d AND term_id IN ($ids)", $student_id ), ARRAY_A );
+				$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE student_id=%d AND term_id IN (' . implode( ',', array_fill( 0, count( $terms ), '%d' ) ) . ')', array_merge( array( AssessmentSchema::table( 'student_skill_state' ), $student_id ), $terms ) ), ARRAY_A );
 				foreach ( $rows as $row ) {
 					$skills[ (int) $row['term_id'] ] = $row; }
 			} else {
@@ -143,6 +144,7 @@ final class CompletionPolicy {
 					$bound   = $wpdb->get_var( $wpdb->prepare( 'SELECT bound_at FROM %i WHERE enrollment_id=%d', Schema::table( 'enrollments' ), $enrollment['id'] ) );
 					array_push( $args, $bound, $course_id );
 				}
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Trusted table names, an integer id list and fixed fragments that use placeholders.
 				$rows    = $wpdb->get_results( $wpdb->prepare( 'SELECT e.* FROM ' . AssessmentSchema::table( 'skill_evidence' ) . ' e LEFT JOIN ' . AssessmentSchema::table( 'practice_sessions' ) . " p ON p.id=e.source_id AND e.source_type IN ('practice','inline') LEFT JOIN {$wpdb->prefix}ohmylms_quiz_attempts a ON a.id=e.source_id AND e.source_type='quiz' WHERE e.student_id=%d AND e.term_id IN ($ids) AND e.role='primary' AND e.superseded=0 $where ORDER BY e.evidence_at,e.id", $args ), ARRAY_A );
 				$grouped = array();
 				foreach ( $rows as $row ) {
@@ -162,7 +164,7 @@ final class CompletionPolicy {
 					$credits[ $term ] = $credit + array( 'counts' => $counts );
 				}
 			}
-			$pending = (bool) $wpdb->get_var( $wpdb->prepare( 'SELECT o.id FROM ' . AssessmentSchema::table( 'evidence_outbox' ) . ' o JOIN ' . AssessmentSchema::table( 'grade_events' ) . ' g ON g.id=o.grade_event_id JOIN ' . AssessmentSchema::table( 'qb_version_skills' ) . " s ON s.version_id=g.version_id WHERE g.student_id=%d AND s.term_id IN ($ids) AND o.status IN ('pending','failed') LIMIT 1", $student_id ) );
+			$pending = (bool) $wpdb->get_var( $wpdb->prepare( 'SELECT o.id FROM %i o JOIN %i g ON g.id=o.grade_event_id JOIN %i s ON s.version_id=g.version_id WHERE g.student_id=%d AND s.term_id IN (' . implode( ',', array_fill( 0, count( $terms ), '%d' ) ) . ") AND o.status IN ('pending','failed') LIMIT 1", array_merge( array( AssessmentSchema::table( 'evidence_outbox' ), AssessmentSchema::table( 'grade_events' ), AssessmentSchema::table( 'qb_version_skills' ), $student_id ), $terms ) ) );
 		}
 		$blocked = get_post_status( $course_id ) !== 'publish';
 		$result  = self::evaluate( $program, $activities, $skills, $assessments, $pending || $blocked );
@@ -237,8 +239,7 @@ final class CompletionPolicy {
 						)
 					) ) {
 						throw new \RuntimeException( 'Award write failed' ); }
-					if ( $wpdb->update(
-						$wpdb->prefix . 'ohmylms_user_enrollment',
+					if ( \OhMyLMS\Student\Enrollments::update(
 						array(
 							'progress' => 'completed',
 							'end_date' => current_time( 'mysql' ),
@@ -274,5 +275,46 @@ final class CompletionPolicy {
 				$ratios[] = 100 * $dimension['met'] / $dimension['total']; }
 		}
 		return $ratios ? min( 99, (int) floor( min( $ratios ) ) ) : 0;
+	}
+
+	/**
+	 * Mark a lesson complete for an enrolment, then award the course and pick the next action. Runs under
+	 * the enrolment's activity lock, so a repeated request records one completion and fires
+	 * `ohmylms_lesson_completed` once.
+	 *
+	 * @param int $student_id    Learner.
+	 * @param int $course_id     Course.
+	 * @param int $enrollment_id Enrolment of the learner in the course.
+	 * @param int $content_id    Lesson.
+	 * @return array|\WP_Error Award state plus `next_action`.
+	 */
+	public static function complete_lesson( $student_id, $course_id, $enrollment_id, $content_id ) {
+		global $wpdb;
+		$table = $wpdb->prefix . 'ohmylms_user_progress';
+		$key   = 'ohmylms_activity_' . $enrollment_id;
+		if ( ! Lock::acquire( $key, 3 ) ) {
+			return CourseProgram::error( __( 'Please retry completing the lesson.', 'ohmylms' ), 409 ); }
+		try {
+			$existing = $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE enrollment_id=%d AND content_id=%d AND status=\'completed\'', $table, $enrollment_id, $content_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh read under the lock.
+			if ( ! $existing ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Progress table has no API; written under the lock.
+				if ( ! $wpdb->insert(
+					$table,
+					array(
+						'enrollment_id' => $enrollment_id,
+						'content_id'    => $content_id,
+						'content_type'  => ohmylms_get_lesson( $content_id )->get_type(),
+						'status'        => 'completed',
+						'start_date'    => current_time( 'mysql' ),
+					)
+				) ) {
+					return CourseProgram::error( __( 'Could not save lesson completion.', 'ohmylms' ), 500 ); }
+				\OhMyLMS\DataStores\StudentStore::clear_learning_cache( $student_id, $course_id );
+				do_action( 'ohmylms_lesson_completed', $content_id, $course_id, $student_id );
+			}
+			$result = self::award( $student_id, $course_id );
+			return is_wp_error( $result ) ? $result : $result + array( 'next_action' => LearningPath::next( $result ) );
+		} finally {
+			Lock::release( $key ); }
 	}
 }

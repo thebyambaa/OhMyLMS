@@ -1,10 +1,8 @@
-# Course outline publishing
+# Course outline publication contract
 
-The existing course Content screen now offers **Preview draft outline**. It saves any unsaved course edits first, then displays the saved unit titles, descriptions, numbers, lesson groups and activities in draft order. **Publish changes** publishes that reviewed revision through the existing learning-program readiness checks.
+See [Learning Architecture](LEARNING-ARCHITECTURE.md) for current authoring and retained activation behavior. The structure preview/publish endpoints below remain compatibility APIs. The typed app uses its own [reviewed publication panel](api/course-authoring.md), which also publishes the course post; ordinary typed outline saves remain drafts.
 
-Saving unit edits does not change the learner outline. Publishing creates a new program version containing a `units` snapshot: existing chapter IDs, names, descriptions and author labels, in native relationship order. Client-supplied unit snapshots are ignored; the server captures the authored records. Group IDs, placement IDs, reusable content IDs and assessment contracts are unchanged.
-
-Existing learners keep their assigned program by default. The explicit **Apply to existing learners who have not completed the course** option uses the existing enrollment upgrade policy; completed learners stay on their previous version. New enrollments receive the current publication. Publishing an outline does not change the WordPress course's draft/published visibility status.
+Published programs snapshot unit metadata and requirements; shared resource bodies remain live. Structure publication alone does not change the course post visibility. Existing enrollments remain pinned unless explicitly upgraded; completed history is retained.
 
 ## API
 
@@ -12,7 +10,7 @@ Existing learners keep their assigned program by default. The explicit **Apply t
 - `POST /ohmylms/v1/courses/{id}/structure/publish` publishes the saved draft. Send the reviewed `revision` (or revision header) and optional boolean `apply_existing`. Missing/stale revisions, readiness failures and authorization failures leave the publication unchanged.
 - Existing learning-program and Content Hub publish endpoints also capture unit snapshots. Their successful response contracts remain available with the additive `units` field on programs.
 
-The dashboard sends the revision from the displayed preview explicitly. A newer request in the same tab cannot silently substitute its token for the reviewed snapshot. Authors must reload the preview and review again after a conflict.
+Clients must send the revision from their displayed preview explicitly. A newer request in the same tab cannot silently substitute its token for the reviewed snapshot. Authors must reload the preview and review again after a conflict.
 
 ## Storage and readers
 
@@ -24,10 +22,4 @@ This versions outline metadata and the existing program. Shared lesson bodies, q
 
 ## Verification
 
-- Shared structure integration: 61 checks, including draft isolation across the learner hub and legacy getters/lists, preview, stale publication, immutable prior versions, enrollment pinning/upgrades, completed learner protection, readiness failures and anonymous access denial.
-- Existing learning-model tests: 37 checks; structure tools: 295; syllabus: 56; unit-number rules: 17.
-- Browser: existing dashboard saves, two-tab conflict, draft preview and explicit publish.
-- JavaScript suite: 584 passed, one skipped. Build succeeded with the existing two webpack size warnings.
-- New PHP services/controller/tests and the new React component pass targeted WordPress standards checks. Repository-wide PHP/JavaScript/CSS/formatting findings remain visible in the normal checks; no blanket baseline was introduced.
-
-The next architecture step is subjects and course browsing, followed by a more coherent unit/lesson authoring presentation.
+Structure publication is covered by `tests/php/course-structure-integration.php`; typed publication by the course-authoring/settings integration suites and `PublicationPanel.test.tsx`. Use the environment guards documented in those suites.

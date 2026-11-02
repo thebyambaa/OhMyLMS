@@ -47,12 +47,8 @@ class Ajax {
 			'signup',
 			'checkout',
 			'purchase_membership',
-			'loadmore',
-			'lesson_access_nonce',
-			'search_filter',
 			'apply_coupon',
 			'remove_coupon',
-			'download_certificate_from_email',
 			'calculate_tax',
 			'resend_verification',
 		);
@@ -68,8 +64,6 @@ class Ajax {
 			'student_cover_image_delete',
 			'lesson_completed',
 			'save_assignment_submission_file',
-			'drop_course',
-			'download_certificate',
 			'save_remaining_time',
 			'quiz_exit_submission',
 			'cancel_membership',
@@ -139,7 +133,12 @@ class Ajax {
 
 		$membership_id = ohmylms_clean( wp_unslash( $_POST['membership_id'] ?? '' ) );
 		if ( \OhMyLMS\Membership\FreeSale::active( ohmylms_get_membership( absint( $membership_id ) ) ) ) {
-			wp_send_json( array( 'status' => 'success', 'redirect_url' => \OhMyLMS\Student\Hub::url( 'membership', 'plans' ) ) );
+			wp_send_json(
+				array(
+					'status'       => 'success',
+					'redirect_url' => \OhMyLMS\Student\Hub::url( 'membership', 'plans' ),
+				)
+			);
 		}
 		ecommerce()->membership()->request_membership( $membership_id );
 		die();
@@ -162,39 +161,71 @@ class Ajax {
 			wp_send_json_error( array( 'message' => __( 'Invalid request. Please refresh the page and try again.', 'ohmylms' ) ) );
 		}
 
-		if ( isset( $_POST['membership_id'] ) ) {
-			self::handle_membership_add_to_cart();
-		}
 		// phpcs:disable WordPress.Security.NonceVerification.Missing
+		$quantity = empty( $_POST['quantity'] ) ? 1 : absint( $_POST['quantity'] );
+		if ( isset( $_POST['membership_id'] ) ) {
+			$result = self::add_membership_to_cart( absint( $_POST['membership_id'] ), $quantity );
+			wp_send_json( $result['body'], $result['status'] );
+		}
 		if ( ! isset( $_POST['course_id'] ) ) {
 			return;
 		}
-		$course_id     = absint( $_POST['course_id'] ?? 0 );
-		$quantity      = empty( $_POST['quantity'] ) ? 1 : absint( $_POST['quantity'] );
+		$result = self::add_course_to_cart(
+			absint( $_POST['course_id'] ?? 0 ),
+			$quantity,
+			isset( $_POST['purchase_by'] ) ? ohmylms_clean( wp_unslash( $_POST['purchase_by'] ) ) : ''
+		);
+		// phpcs:enable
+		wp_send_json( $result['body'], $result['status'] );
+	}
+
+	/**
+	 * Cart answer shared by the AJAX action and `POST ohmylms-commerce/v1/cart/items`.
+	 *
+	 * @param array $body   Response body (`status`, `message`, `redirect_url`).
+	 * @param int   $status HTTP status.
+	 * @return array{status:int, body:array}
+	 */
+	private static function cart_answer( array $body, $status = 200 ): array {
+		return array(
+			'status' => $status,
+			'body'   => $body,
+		);
+	}
+
+	/**
+	 * Add a course to the cart. Callers verify their own nonce.
+	 *
+	 * @param int    $course_id   Course.
+	 * @param int    $quantity    Quantity.
+	 * @param string $purchase_by `point` for a bonus-points purchase.
+	 * @return array{status:int, body:array}
+	 */
+	public static function add_course_to_cart( $course_id, $quantity = 1, $purchase_by = '' ): array {
 		$course_status = get_post_status( $course_id );
 
 		$course = ohmylms_get_course( $course_id );
-		if ( ! $course->is_purchasable() ) {
-			$response = array(
-				'status'  => 'error',
-				'message' => __( 'Sorry! This course is not purchasable.', 'ohmylms' ),
+		if ( ! $course || ! $course->is_purchasable() ) {
+			return self::cart_answer(
+				array(
+					'status'  => 'error',
+					'message' => __( 'Sorry! This course is not purchasable.', 'ohmylms' ),
+				)
 			);
-
-			wp_send_json( $response );
 		}
 
 		if ( ! $course->is_in_stock() ) {
-			$response = array(
-				'status'  => 'error',
-				'message' => __( 'Sorry! The number of enrolled students has reached its limit.', 'ohmylms' ),
+			return self::cart_answer(
+				array(
+					'status'  => 'error',
+					'message' => __( 'Sorry! The number of enrolled students has reached its limit.', 'ohmylms' ),
+				)
 			);
-
-			wp_send_json( $response );
 		}
 
 		$checkout_url = ohmylms_get_checkout_url();
 		if ( ! $checkout_url ) {
-			wp_send_json(
+			return self::cart_answer(
 				array(
 					'status'  => 'error',
 					'message' => __( 'Enrollment is temporarily unavailable. Please contact the site administrator.', 'ohmylms' ),
@@ -206,20 +237,20 @@ class Ajax {
 		// Not logged in + guest checkout disabled → redirect to checkout which has its own login form.
 		if ( ! is_user_logged_in() && ! ohmylms_is_guest_purchase_enabled() ) {
 			// Store course in a short-lived cookie so it can be added to cart after login/verification.
-			setcookie( 'ohmylms_pending_course', (string) $course_id, time() + 3600, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), false );
-			wp_send_json(
+			if ( ! headers_sent() ) {
+				setcookie( 'ohmylms_pending_course', (string) $course_id, time() + 3600, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), false );
+			}
+			return self::cart_answer(
 				array(
 					'status'       => 'success',
 					'redirect_url' => $checkout_url,
 					'message'      => __( 'Please log in to complete your purchase.', 'ohmylms' ),
 				)
 			);
-			return;
 		}
 
 		$redirect_url = add_query_arg( 'nocache', time(), $checkout_url );
 		$cart_meta    = array();
-		$purchase_by  = isset( $_POST['purchase_by'] ) ? ohmylms_clean( wp_unslash( $_POST['purchase_by'] ) ) : '';
 
 		if ( 'point' === $purchase_by ) {
 			$cart_meta['purchase_by'] = 'point';
@@ -229,25 +260,21 @@ class Ajax {
 
 			do_action( 'ohmylms_ajax_added_to_cart', $course_id );
 
-			$response = array(
-				'status'       => 'success',
-				'redirect_url' => $redirect_url,
-				'message'      => __( 'Successfully added to cart.', 'ohmylms' ),
+			return self::cart_answer(
+				array(
+					'status'       => 'success',
+					'redirect_url' => $redirect_url,
+					'message'      => __( 'Successfully added to cart.', 'ohmylms' ),
+				)
 			);
+		}
 
-			wp_send_json( $response );
-
-		} else {
-
-			// If there was an error adding to the cart, redirect to the product page to show any errors.
-			$response = array(
+		return self::cart_answer(
+			array(
 				'status'  => 'error',
 				'message' => __( 'Add to cart failed.', 'ohmylms' ),
-			);
-
-			wp_send_json( $response );
-		}
-		// phpcs:enable
+			)
+		);
 	}
 
 
@@ -264,6 +291,16 @@ class Ajax {
 			define( 'DONOTCACHEPAGE', true );
 		}
 
+		if ( ! check_ajax_referer( 'ohmylms-process_checkout', 'ohmylms-process-checkout-nonce', false ) ) {
+			wp_send_json(
+				array(
+					'result'  => 'failure',
+					'message' => esc_html__( 'Your checkout session expired. Reload the page and try again.', 'ohmylms' ),
+					'reload'  => true,
+				)
+			);
+		}
+
 		ecommerce()->checkout()->process_checkout();
 		die();
 	}
@@ -272,111 +309,149 @@ class Ajax {
 	 * Handle the signup action via AJAX.
 	 *
 	 * @since 1.0.0
-	 * @throws \Exception When the operation cannot be completed.
 	 */
 	public static function signup() {
+		$response = self::signup_response();
+		if ( null !== $response ) {
+			wp_send_json( $response );
+		}
+	}
+
+	/**
+	 * Answer for an expired or missing form nonce (cached pages keep old nonces).
+	 *
+	 * @return array{status:string, message:string}
+	 */
+	private static function expired_form_response(): array {
+		return array(
+			'status'  => 'error',
+			'message' => __( 'Your session has expired. Please reload the page and try again.', 'ohmylms' ),
+		);
+	}
+
+	/**
+	 * Same-site redirect target posted with an auth form.
+	 *
+	 * @param string $fallback URL when nothing (or an external URL) was posted.
+	 * @return string
+	 */
+	private static function posted_redirect( $fallback ) {
+		$posted = isset( $_POST['redirect_to'] ) ? esc_url_raw( wp_unslash( $_POST['redirect_to'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Callers verify the form nonce.
+		return $posted ? wp_validate_redirect( $posted, $fallback ) : $fallback;
+	}
+
+	/**
+	 * Create an account from the posted sign-up form. Shared by the `ohmylms_signup` action and the
+	 * form post without JavaScript ({@see \OhMyLMS\Extensions\AuthForms::handle_post()}).
+	 *
+	 * @return array|null `{ status: success|pending_verification|error, message, redirect_url? }`;
+	 *                    null when the request carries no sign-up fields.
+	 * @throws \Exception When the operation cannot be completed (caught here).
+	 */
+	public static function signup_response() {
 		$nonce_value = isset($_REQUEST['ohmylms-signup-nonce']) ? ohmylms_clean( wp_unslash( $_REQUEST['ohmylms-signup-nonce'] )) : ''; // @codingStandardsIgnoreLine.
 		$valid_nonce = wp_verify_nonce( $nonce_value, 'ohmylms-signup' );
-		if ( isset( $_POST['email'], $_POST['password'] ) && $valid_nonce ) {
-			try {
-				$validation_error = new \WP_Error();
+		if ( ! isset( $_POST['email'], $_POST['password'] ) ) {
+			return null;
+		}
+		if ( ! $valid_nonce ) {
+			return self::expired_form_response();
+		}
+		try {
+			$validation_error = new \WP_Error();
 
-				if ( $validation_error->get_error_code() ) {
-					\OhMyLMS\Commerce\ohmylmse_add_notice( $validation_error->get_error_message(), 'error', array() );
-					\OhMyLMS\Commerce\ohmylmse_print_notices( true );
-					throw new \Exception( '<strong>' . __( 'Error:', 'ohmylms' ) . '</strong> ' . $validation_error->get_error_message() );
-				}
-
-				$email        = sanitize_email( wp_unslash( $_POST['email'] ) );
-				$password     = ohmylms_clean( wp_unslash( $_POST['password'] ) );
-				$first_name   = ! empty( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
-				$last_name    = ! empty( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '';
-				$display_name = trim( $first_name . ' ' . $last_name );
-
-				$student_role = function_exists( 'ohmylms_get_assignable_student_role' ) ? ohmylms_get_assignable_student_role() : 'subscriber';
-
-				$user_data = array(
-					'user_login'   => $email,
-					'user_email'   => $email,
-					'user_pass'    => $password,
-					'first_name'   => $first_name,
-					'last_name'    => $last_name,
-					'display_name' => $display_name ? $display_name : '',
-					'role'         => $student_role,
-					'user_status'  => 1,
-				);
-
-				$user_id = wp_insert_user( $user_data );
-
-				if ( is_wp_error( $user_id ) ) {
-					\OhMyLMS\Commerce\ohmylmse_add_notice( $user_id->get_error_message(), 'error', array() );
-					\OhMyLMS\Commerce\ohmylmse_print_notices( true );
-					throw new \Exception( $user_id->get_error_message() );
-				}
-
-				$user = new \WP_User( $user_id );
-				$user->set_role( $student_role );
-
-				$phone   = ! empty( $_POST['phone'] ) ? ohmylms_clean( wp_unslash( $_POST['phone'] ) ) : '';
-				$country = ! empty( $_POST['country'] ) ? ohmylms_clean( wp_unslash( $_POST['country'] ) ) : '';
-				if ( $phone || $country ) {
-					$student = new \OhMyLMS\Data\Student( $user_id );
-					if ( $phone ) {
-						$student->set_phone( $phone );
-					}
-					if ( $country ) {
-						$student->set_country( $country );
-					}
-					$student->save();
-				}
-
-				$pending_redirect = isset( $_POST['redirect_to'] ) && ! empty( $_POST['redirect_to'] )
-					? esc_url_raw( wp_unslash( $_POST['redirect_to'] ) )
-					: '';
-
-				if ( \OhMyLMS\Services\EmailVerificationService::is_required() ) {
-					\OhMyLMS\Services\EmailVerificationService::generate_and_send( $user_id );
-					if ( $pending_redirect ) {
-						update_user_meta( $user_id, '_ohmylms_post_verification_redirect', $pending_redirect );
-					}
-				}
-
-				$creds = array(
-					'user_login'    => $email,
-					'user_password' => $password,
-					'remember'      => true,
-				);
-
-				$user = wp_signon( $creds, is_ssl() );
-
-				$redirect_url = $pending_redirect ? $pending_redirect : ohmylms_get_dashboard_url();
-
-				if ( is_wp_error( $user ) ) {
-					\OhMyLMS\Commerce\ohmylmse_add_notice( $user->get_error_message(), 'error', array() );
-				} else {
-					if ( \OhMyLMS\Services\EmailVerificationService::is_required() ) {
-						$response = array(
-							'status'  => 'pending_verification',
-							'message' => __( 'Account created! Please check your inbox and verify your email before accessing your courses.', 'ohmylms' ),
-						);
-					} else {
-						$response = array(
-							'status'       => 'success',
-							'redirect_url' => $redirect_url,
-							'message'      => __( 'Successfully logged in.', 'ohmylms' ),
-						);
-					}
-
-					wp_send_json( $response );
-				}
-			} catch ( \Exception $e ) {
-				$response = array(
-					'status'  => 'error',
-					'message' => $e->getMessage(),
-				);
-				do_action( 'ohmylms_signup_failed' );
-				wp_send_json( $response );
+			if ( $validation_error->get_error_code() ) {
+				\OhMyLMS\Commerce\ohmylmse_add_notice( $validation_error->get_error_message(), 'error', array() );
+				\OhMyLMS\Commerce\ohmylmse_print_notices( true );
+				throw new \Exception( '<strong>' . __( 'Error:', 'ohmylms' ) . '</strong> ' . $validation_error->get_error_message() );
 			}
+
+			$email        = sanitize_email( wp_unslash( $_POST['email'] ) );
+			$password     = ohmylms_clean( wp_unslash( $_POST['password'] ) );
+			$first_name   = ! empty( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
+			$last_name    = ! empty( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '';
+			$display_name = trim( $first_name . ' ' . $last_name );
+
+			$student_role = function_exists( 'ohmylms_get_assignable_student_role' ) ? ohmylms_get_assignable_student_role() : 'subscriber';
+
+			$user_data = array(
+				'user_login'   => $email,
+				'user_email'   => $email,
+				'user_pass'    => $password,
+				'first_name'   => $first_name,
+				'last_name'    => $last_name,
+				'display_name' => $display_name ? $display_name : '',
+				'role'         => $student_role,
+				'user_status'  => 1,
+			);
+
+			$user_id = wp_insert_user( $user_data );
+
+			if ( is_wp_error( $user_id ) ) {
+				\OhMyLMS\Commerce\ohmylmse_add_notice( $user_id->get_error_message(), 'error', array() );
+				\OhMyLMS\Commerce\ohmylmse_print_notices( true );
+				throw new \Exception( $user_id->get_error_message() );
+			}
+
+			$user = new \WP_User( $user_id );
+			$user->set_role( $student_role );
+
+			$phone   = ! empty( $_POST['phone'] ) ? ohmylms_clean( wp_unslash( $_POST['phone'] ) ) : '';
+			$country = ! empty( $_POST['country'] ) ? ohmylms_clean( wp_unslash( $_POST['country'] ) ) : '';
+			if ( $phone || $country ) {
+				$student = new \OhMyLMS\Data\Student( $user_id );
+				if ( $phone ) {
+					$student->set_phone( $phone );
+				}
+				if ( $country ) {
+					$student->set_country( $country );
+				}
+				$student->save();
+			}
+
+			$pending_redirect = self::posted_redirect( '' );
+
+			if ( \OhMyLMS\Services\EmailVerificationService::is_required() ) {
+				\OhMyLMS\Services\EmailVerificationService::generate_and_send( $user_id );
+				if ( $pending_redirect ) {
+					update_user_meta( $user_id, '_ohmylms_post_verification_redirect', $pending_redirect );
+				}
+			}
+
+			$creds = array(
+				'user_login'    => $email,
+				'user_password' => $password,
+				'remember'      => true,
+			);
+
+			$user = wp_signon( $creds, is_ssl() );
+
+			$redirect_url = $pending_redirect ? $pending_redirect : ohmylms_get_dashboard_url();
+
+			if ( is_wp_error( $user ) ) {
+				// The account exists; only the automatic sign-in failed.
+				return array(
+					'status'  => 'error',
+					'message' => $user->get_error_message(),
+				);
+			}
+			if ( \OhMyLMS\Services\EmailVerificationService::is_required() ) {
+				return array(
+					'status'  => 'pending_verification',
+					'message' => __( 'Account created! Please check your inbox and verify your email before accessing your courses.', 'ohmylms' ),
+				);
+			}
+			return array(
+				'status'       => 'success',
+				'redirect_url' => $redirect_url,
+				'message'      => __( 'Successfully logged in.', 'ohmylms' ),
+			);
+		} catch ( \Exception $e ) {
+			do_action( 'ohmylms_signup_failed' );
+			return array(
+				'status'  => 'error',
+				'message' => $e->getMessage(),
+			);
 		}
 	}
 
@@ -385,364 +460,101 @@ class Ajax {
 	 * Handle the login action via AJAX.
 	 *
 	 * @since 1.0.0
-	 * @throws \Exception When the operation cannot be completed.
 	 */
 	public static function login() {
+		$response = self::login_response();
+		if ( null !== $response ) {
+			wp_send_json( $response );
+		}
+	}
+
+	/**
+	 * Sign in with the posted login form. Shared by the `ohmylms_login` action and the form post
+	 * without JavaScript ({@see \OhMyLMS\Extensions\AuthForms::handle_post()}). Authentication
+	 * plugins (captcha, rate limits) keep working through `wp_signon()`'s `authenticate` filter.
+	 *
+	 * @return array|null `{ status: success|error, message, redirect_url? }`; null when the request
+	 *                    carries no login fields.
+	 * @throws \Exception When the operation cannot be completed (caught here).
+	 */
+	public static function login_response() {
 		$nonce_value = isset($_REQUEST['ohmylms-login-nonce']) ? ohmylms_clean( wp_unslash( $_REQUEST['ohmylms-login-nonce'] )) : ''; // @codingStandardsIgnoreLine.
 		$valid_nonce = wp_verify_nonce( $nonce_value, 'ohmylms-login' );
-		if ( isset( $_POST['username'], $_POST['password'] ) && $valid_nonce ) {
-			try {
-				$creds = array(
-					'user_login'    => trim( wp_unslash( $_POST['username'] ) ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-					'user_password' => ohmylms_clean( wp_unslash( $_POST['password'] ) ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
-					'remember'      => isset( $_POST['rememberme'] ) ? ohmylms_clean( wp_unslash( $_POST['rememberme'] ) ) : '', // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-				);
-
-				$validation_error = new \WP_Error();
-
-				if ( $validation_error->get_error_code() ) {
-					\OhMyLMS\Commerce\ohmylmse_add_notice( $validation_error->get_error_message(), 'error', array() );
-					\OhMyLMS\Commerce\ohmylmse_print_notices( true );
-					throw new \Exception( '<strong>' . __( 'Error:', 'ohmylms' ) . '</strong> ' . $validation_error->get_error_message() );
-				}
-
-				if ( empty( $creds['user_login'] ) ) {
-					$message = __( 'Username is required.', 'ohmylms' );
-					\OhMyLMS\Commerce\ohmylmse_add_notice( $message, 'error', array() );
-					\OhMyLMS\Commerce\ohmylmse_print_notices( true );
-					throw new \Exception( '<strong>' . __( 'Error:', 'ohmylms' ) . '</strong> ' . __( 'Username is required.', 'ohmylms' ) );
-				}
-
-				// On multisite, ensure user exists on current site, if not add them before allowing login.
-				if ( is_multisite() ) {
-					$user_data = get_user_by( is_email( $creds['user_login'] ) ? 'email' : 'login', $creds['user_login'] );
-
-					if ( $user_data && ! is_user_member_of_blog( $user_data->ID, get_current_blog_id() ) ) {
-						add_user_to_blog( get_current_blog_id(), $user_data->ID, function_exists( 'ohmylms_get_assignable_student_role' ) ? ohmylms_get_assignable_student_role() : 'subscriber' );
-					}
-				}
-
-				// Peform the login.
-				$user = wp_signon( $creds, is_ssl() );
-
-				$redirect_url = isset( $_POST['redirect_to'] ) && ! empty( $_POST['redirect_to'] )
-					? esc_url_raw( wp_unslash( $_POST['redirect_to'] ) )
-					: ohmylms_get_dashboard_url();
-
-				if ( ! empty( $_POST['isCheckoutLogin'] ) ) {
-					$redirect_url = ohmylms_get_checkout_url();
-				}
-
-				// If a course purchase was initiated before login, always redirect to checkout.
-				if ( ! empty( $_COOKIE['ohmylms_pending_course'] ) ) {
-					$redirect_url = ohmylms_get_checkout_url();
-				}
-
-				if ( ! $redirect_url || ! is_string( $redirect_url ) ) {
-					$redirect_url = ohmylms_get_page_permalink( 'student_profile' );
-				}
-
-				if ( is_wp_error( $user ) ) {
-					\OhMyLMS\Commerce\ohmylmse_add_notice( $user->get_error_message(), 'error', array() );
-					\OhMyLMS\Commerce\ohmylmse_print_notices( true );
-					throw new \Exception( $user->get_error_message() );
-				} else {
-					$response = array(
-						'status'       => 'success',
-						'message'      => __( 'Successfully logged in.', 'ohmylms' ),
-						'redirect_url' => $redirect_url,
-					);
-
-					wp_send_json( $response );
-				}
-			} catch ( \Exception $e ) {
-				\OhMyLMS\Commerce\ohmylmse_add_notice( wp_strip_all_tags( $e->getMessage() ), 'error', array() );
-				do_action( 'ohmylms_login_failed' );
-				$messages = \OhMyLMS\Commerce\ohmylmse_print_notices( true );
-				$response = array(
-					'status'  => 'error',
-					'message' => isset( $messages ) ? $messages : '',
-				);
-				wp_send_json( $response );
-			}
+		if ( ! isset( $_POST['username'], $_POST['password'] ) ) {
+			return null;
 		}
-	}
-
-
-	/**
-	 * Handle the load more action via AJAX.
-	 *
-	 * @since 1.0.0
-	 */
-	public static function loadmore() {
-		check_ajax_referer( 'load_more_nonce', 'nonce' );
-
-		if ( isset( $_POST['page'] ) ) {
-			$paged = isset( $_POST['page'] ) ? absint( $_POST['page'] ) : 1;
-
-			if ( isset( $_POST['posts_per_page'] ) ) {
-				$posts_per_page = absint( $_POST['posts_per_page'] );
-			} else {
-				$posts_per_page = get_option( 'ohmylms_courses_per_page', 10 );
-			}
-			// Collect filter parameters if present.
-			$args = array(
-				'post_type'      => OHMYLMS_COURSE_CPT,
-				'paged'          => $paged,
-				'posts_per_page' => $posts_per_page,
-				'post_status'    => 'publish',
+		if ( ! $valid_nonce ) {
+			return self::expired_form_response();
+		}
+		try {
+			$creds = array(
+				'user_login'    => trim( wp_unslash( $_POST['username'] ) ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+				'user_password' => ohmylms_clean( wp_unslash( $_POST['password'] ) ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+				'remember'      => isset( $_POST['rememberme'] ) ? ohmylms_clean( wp_unslash( $_POST['rememberme'] ) ) : '', // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			);
-			// The category and tag filters now filter by curriculum item and course bundle.
-			$item_ids   = array();
-			$bundle_ids = array();
 
-			// Check for filter parameters.
-			if ( ! empty( $_POST['filter_type'] ) ) {
-				$filter_type = sanitize_text_field( wp_unslash( $_POST['filter_type'] ) );
+			$validation_error = new \WP_Error();
 
-				if ( isset( $_POST['category_slug'] ) && is_array( $_POST['category_slug'] ) ) {
-					$category_slugs = array_map( 'sanitize_text_field', wp_unslash( $_POST['category_slug'] ) );
-					$item_ids       = \OhMyLMS\Curriculum\Placement::ids_from_slugs( $category_slugs, 'item' );
-				}
-				if ( isset( $_POST['price_slug'] ) && is_array( $_POST['price_slug'] ) ) {
-					$price_slugs          = array_map( 'sanitize_text_field', wp_unslash( $_POST['price_slug'] ) );
-					$args['meta_query'][] = array(
-						'key'     => '_price_type',
-						'value'   => $price_slugs,
-						'compare' => 'IN',
-					);
-				}
+			if ( $validation_error->get_error_code() ) {
+				\OhMyLMS\Commerce\ohmylmse_add_notice( $validation_error->get_error_message(), 'error', array() );
+				\OhMyLMS\Commerce\ohmylmse_print_notices( true );
+				throw new \Exception( '<strong>' . __( 'Error:', 'ohmylms' ) . '</strong> ' . $validation_error->get_error_message() );
+			}
 
-				if ( isset( $_POST['level_slug'] ) && is_array( $_POST['level_slug'] ) ) {
-					$level_slugs          = array_map( 'sanitize_text_field', wp_unslash( $_POST['level_slug'] ) );
-					$args['meta_query'][] = array(
-						'key'     => '_level',
-						'value'   => $level_slugs,
-						'compare' => 'IN',
-					);
-				}
-				if ( isset( $_POST['tag_slug'] ) && is_array( $_POST['tag_slug'] ) ) {
-					$tag_slugs  = array_map( 'sanitize_text_field', wp_unslash( $_POST['tag_slug'] ) );
-					$bundle_ids = \OhMyLMS\Curriculum\Placement::ids_from_slugs( $tag_slugs, 'bundle' );
-				}
-				if ( ! empty( $_POST['search_term'] ) ) {
-					$args['s'] = sanitize_text_field( wp_unslash( $_POST['search_term'] ) );
-				}
-				if ( ! empty( $_POST['sort_by'] ) ) {
-					$sort_by = sanitize_text_field( wp_unslash( $_POST['sort_by'] ) );
-					if ( 'max_price' === $sort_by ) {
-						$args['meta_key'] = '_price';
-						$args['orderby']  = 'meta_value_num';
-						$args['order']    = 'DESC';
-					} elseif ( 'min_price' === $sort_by ) {
-						$args['meta_key'] = '_price';
-						$args['orderby']  = 'meta_value_num';
-						$args['order']    = 'ASC';
-					} elseif ( 'rating' === $sort_by ) {
-						$args['meta_key'] = '_average_rating';
-						$args['orderby']  = 'meta_value_num';
-						$args['order']    = 'DESC';
-					} elseif ( 'review' === $sort_by ) {
-						$args['meta_key'] = '_review_count';
-						$args['orderby']  = 'meta_value_num';
-						$args['order']    = 'DESC';
-					} elseif ( 'date' === $sort_by ) {
-						$args['orderby'] = 'date';
-						$args['order']   = 'DESC';
-					}
+			if ( empty( $creds['user_login'] ) ) {
+				$message = __( 'Username is required.', 'ohmylms' );
+				\OhMyLMS\Commerce\ohmylmse_add_notice( $message, 'error', array() );
+				\OhMyLMS\Commerce\ohmylmse_print_notices( true );
+				throw new \Exception( '<strong>' . __( 'Error:', 'ohmylms' ) . '</strong> ' . __( 'Username is required.', 'ohmylms' ) );
+			}
+
+			// On multisite, ensure user exists on current site, if not add them before allowing login.
+			if ( is_multisite() ) {
+				$user_data = get_user_by( is_email( $creds['user_login'] ) ? 'email' : 'login', $creds['user_login'] );
+
+				if ( $user_data && ! is_user_member_of_blog( $user_data->ID, get_current_blog_id() ) ) {
+					add_user_to_blog( get_current_blog_id(), $user_data->ID, function_exists( 'ohmylms_get_assignable_student_role' ) ? ohmylms_get_assignable_student_role() : 'subscriber' );
 				}
 			}
 
-			$args  = \OhMyLMS\Curriculum\Placement::narrow_query( $args, $item_ids, $bundle_ids );
-			$query = new \WP_Query( $args );
+			// Peform the login.
+			$user = wp_signon( $creds, is_ssl() );
 
-			if ( $query->have_posts() ) :
-				while ( $query->have_posts() ) :
-					$query->the_post();
-					ohmylms_get_template( 'content-course' ); // Load the post template.
-				endwhile;
-			endif;
+			$redirect_url = self::posted_redirect( ohmylms_get_dashboard_url() );
 
-			wp_reset_postdata();
-		}
+			if ( ! empty( $_POST['isCheckoutLogin'] ) ) {
+				$redirect_url = ohmylms_get_checkout_url();
+			}
 
-		die(); // Always die after handling the request.
-	}
+			// If a course purchase was initiated before login, always redirect to checkout.
+			if ( ! empty( $_COOKIE['ohmylms_pending_course'] ) ) {
+				$redirect_url = ohmylms_get_checkout_url();
+			}
 
-	/**
-	 * Search filter for Ajax.
-	 */
-	public static function search_filter() {
-		check_ajax_referer( 'search_filter_nonce', 'nonce' );
+			if ( ! $redirect_url || ! is_string( $redirect_url ) ) {
+				$redirect_url = ohmylms_get_page_permalink( 'student_profile' );
+			}
 
-		if ( ! isset( $_POST['page'] ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid request.', 'ohmylms' ) ) );
-			return;
-		}
-
-		$paged       = intval( $_POST['page'] );
-		$filter_type = isset( $_POST['filter_type'] ) ? sanitize_text_field( wp_unslash( $_POST['filter_type'] ) ) : '';
-
-		$price_slugs    = array();
-		$level_slugs    = array();
-		$tag_slugs      = array();
-		$category_slugs = array();
-		$search_term    = '';
-		$sort_by        = '';
-
-		// Collect filter parameters.
-		if ( isset( $_POST['category_slug'] ) && is_array( $_POST['category_slug'] ) ) {
-			$category_slugs = array_map( 'sanitize_text_field', wp_unslash( $_POST['category_slug'] ) );
-		}
-
-		if ( isset( $_POST['price_slug'] ) && is_array( $_POST['price_slug'] ) ) {
-			$price_slugs = array_map( 'sanitize_text_field', wp_unslash( $_POST['price_slug'] ) );
-		}
-
-		if ( isset( $_POST['level_slug'] ) && is_array( $_POST['level_slug'] ) ) {
-			$level_slugs = array_map( 'sanitize_text_field', wp_unslash( $_POST['level_slug'] ) );
-		}
-
-		if ( $level_slugs && is_array( $level_slugs ) && in_array( 'all', $level_slugs, true ) ) {
-			$level_slugs = array();
-		}
-
-		if ( isset( $_POST['tag_slug'] ) && is_array( $_POST['tag_slug'] ) ) {
-			$tag_slugs = array_map( 'sanitize_text_field', wp_unslash( $_POST['tag_slug'] ) );
-		}
-
-		if ( ! empty( $_POST['search_term'] ) ) {
-			$search_term = sanitize_text_field( wp_unslash( $_POST['search_term'] ) );
-		}
-
-		if ( ! empty( $_POST['sort_by'] ) ) {
-			$sort_by = sanitize_text_field( wp_unslash( $_POST['sort_by'] ) );
-		}
-
-		// Base query arguments.
-		$args = array(
-			'post_type'      => OHMYLMS_COURSE_CPT,
-			'paged'          => $paged,
-			'posts_per_page' => get_option( 'ohmylms_courses_per_page', 10 ),
-			'post_status'    => 'publish',
-		);
-
-		// Add search term.
-		if ( $search_term ) {
-			$args['s'] = $search_term;
-		}
-
-		// Initialize meta_query and tax_query arrays.
-		$meta_query = array();
-		$tax_query  = array();
-
-		// Add meta queries for filters.
-		if ( ! empty( $price_slugs ) ) {
-			$meta_query[] = array(
-				'key'     => '_price_type',
-				'value'   => $price_slugs,
-				'compare' => 'IN',
+			if ( is_wp_error( $user ) ) {
+				\OhMyLMS\Commerce\ohmylmse_add_notice( $user->get_error_message(), 'error', array() );
+				\OhMyLMS\Commerce\ohmylmse_print_notices( true );
+				throw new \Exception( $user->get_error_message() );
+			}
+			return array(
+				'status'       => 'success',
+				'message'      => __( 'Successfully logged in.', 'ohmylms' ),
+				'redirect_url' => $redirect_url,
+			);
+		} catch ( \Exception $e ) {
+			\OhMyLMS\Commerce\ohmylmse_add_notice( wp_strip_all_tags( $e->getMessage() ), 'error', array() );
+			do_action( 'ohmylms_login_failed' );
+			$messages = \OhMyLMS\Commerce\ohmylmse_print_notices( true );
+			return array(
+				'status'  => 'error',
+				'message' => isset( $messages ) ? $messages : '',
 			);
 		}
-
-		if ( ! empty( $level_slugs ) ) {
-			$meta_query[] = array(
-				'key'     => '_level',
-				'value'   => $level_slugs,
-				'compare' => 'IN',
-			);
-		}
-
-		// Category and tag filters are curriculum item and course bundle filters; they are applied
-		// below, once the remaining query arguments are built.
-		$item_ids   = \OhMyLMS\Curriculum\Placement::ids_from_slugs( $category_slugs, 'item' );
-		$bundle_ids = \OhMyLMS\Curriculum\Placement::ids_from_slugs( $tag_slugs, 'bundle' );
-
-		// Set relations for multiple queries.
-		if ( count( $meta_query ) > 1 ) {
-			$meta_query['relation'] = 'AND';
-		}
-
-		if ( count( $tax_query ) > 1 ) {
-			$tax_query['relation'] = 'AND';
-		}
-
-		// Add queries to args if they exist.
-		if ( ! empty( $meta_query ) ) {
-			$args['meta_query'] = $meta_query;
-		}
-
-		if ( ! empty( $tax_query ) ) {
-			$args['tax_query'] = $tax_query;
-		}
-
-		// Apply sorting logic.
-		if ( 'max_price' === $sort_by ) {
-			$args['meta_key'] = '_price';
-			$args['orderby']  = 'meta_value_num';
-			$args['order']    = 'DESC';
-		} elseif ( 'min_price' === $sort_by ) {
-			$args['meta_key'] = '_price';
-			$args['orderby']  = 'meta_value_num';
-			$args['order']    = 'ASC';
-		} elseif ( 'rating' === $sort_by ) {
-			$args['meta_key'] = '_average_rating';
-			$args['orderby']  = 'meta_value_num';
-			$args['order']    = 'DESC';
-		} elseif ( 'review' === $sort_by ) {
-			$args['meta_key'] = '_review_count';
-			$args['orderby']  = 'meta_value_num';
-			$args['order']    = 'DESC';
-		} elseif ( 'date' === $sort_by ) {
-			$args['orderby'] = 'date';
-			$args['order']   = 'DESC';
-		}
-
-		$args = \OhMyLMS\Curriculum\Placement::narrow_query( $args, $item_ids, $bundle_ids );
-
-		// Handle different filter types.
-		if ( 'category' === $filter_type ) {
-			$GLOBALS['category'] = isset( $category_slugs[0] ) ? $category_slugs[0] : null;
-
-			$query         = new \WP_Query( $args );
-			$courses_count = $query->found_posts;
-
-			if ( $query->have_posts() ) {
-				ohmylms_get_template_part( 'content', 'course-carousel' );
-			}
-			wp_reset_postdata();
-		} else {
-			// Normal filtering.
-			$query                    = new \WP_Query( $args );
-			$courses_count            = $query->found_posts;
-			$GLOBALS['courses_count'] = $courses_count;
-
-			if ( $query->have_posts() ) {
-				while ( $query->have_posts() ) :
-					$query->the_post();
-					ohmylms_get_template( 'content-course' );
-				endwhile;
-			} else {
-				// Show empty state.
-				echo '<div class="no-courses-found">';
-				echo '</div>';
-			}
-			wp_reset_postdata();
-		}
-
-		die();
 	}
-
-
-	/**
-	 * Filter for Ajax.
-	 *
-	 * @param mixed $slug Slug.
-	 */
-	private function filter( $slug ) {
-	}
-
-
 
 	/**
 	 * Upload an image via AJAX.
@@ -762,7 +574,18 @@ class Ajax {
 		// Check if a file is uploaded.
 		if ( isset( $_FILES['file']['error'] ) && UPLOAD_ERR_OK === absint( $_FILES['file']['error'] ) ) {
 			// Process the file upload.
-			$uploaded_file = wp_handle_upload( $_FILES['file'], array( 'test_form' => false ) );
+			$uploaded_file = wp_handle_upload(
+				$_FILES['file'],
+				array(
+					'test_form' => false,
+					'mimes'     => array(
+						'jpg|jpeg|jpe' => 'image/jpeg',
+						'png'          => 'image/png',
+						'gif'          => 'image/gif',
+						'webp'         => 'image/webp',
+					),
+				)
+			);
 
 			if ( isset( $uploaded_file['url'] ) ) {
 				$student_id = get_current_user_id();
@@ -778,7 +601,7 @@ class Ajax {
 				$student->save();
 				wp_send_json_success( array( 'url' => $uploaded_file['url'] ) );
 			} else {
-				wp_send_json_error( array( 'message' => 'Upload failed' ) );
+				wp_send_json_error( array( 'message' => isset( $uploaded_file['error'] ) ? (string) $uploaded_file['error'] : __( 'Upload failed.', 'ohmylms' ) ) );
 			}
 		} else {
 			wp_send_json_error( array( 'message' => 'No file uploaded' ) );
@@ -906,10 +729,41 @@ class Ajax {
 	 */
 	public static function lesson_completed() {
 		check_ajax_referer( 'lesson_completed_nonce', 'nonce' );
-		$lesson_id             = ohmylms_clean( wp_unslash( $_POST['lesson_id'] ?? '' ) );
-		$course_id             = ohmylms_get_course_by_content_id( $lesson_id );
-		$student_id            = get_current_user_id();
-		$student               = new Student( $student_id );
+		$lesson_id  = ohmylms_clean( wp_unslash( $_POST['lesson_id'] ?? '' ) );
+		$student_id = get_current_user_id();
+		$student    = new Student( $student_id );
+		// Enrolment, drip, prerequisites and the sequential lock, as the lesson page applies them.
+		$course_id = \OhMyLMS\Learning\LessonGate::check_completion( (int) $lesson_id, $student_id );
+		if ( is_wp_error( $course_id ) ) {
+			wp_send_json_error(
+				array(
+					'status'  => 'error',
+					'code'    => $course_id->get_error_code(),
+					'message' => $course_id->get_error_message(),
+				),
+				(int) $course_id->get_error_data()['status']
+			);
+		}
+		if ( \OhMyLMS\Assignment\Delivery::completed( $student_id, (int) $lesson_id ) ) {
+			wp_send_json_success(
+				array(
+					'status'            => 'success',
+					'already_completed' => true,
+					'next_content_link' => ohmylms_get_next_content_permalink( $lesson_id ),
+					'message'           => __( 'This lesson is already completed.', 'ohmylms' ),
+				)
+			);
+		}
+		if ( ! \OhMyLMS\Learning\VideoCompletion::satisfied( $student_id, (int) $lesson_id ) ) {
+			wp_send_json_error(
+				array(
+					'status'  => 'error',
+					'code'    => 'ohmylms_lesson_video_not_watched',
+					/* translators: %d: percentage. */
+					'message' => sprintf( __( 'Watch at least %d%% of the video to complete this lesson.', 'ohmylms' ), \OhMyLMS\Learning\VideoCompletion::rule( (int) $lesson_id )['percent'] ),
+				)
+			);
+		}
 		$progress_content_id   = $student->complete_lesson( $lesson_id, $course_id );
 		$get_next_content_link = ohmylms_get_next_content_permalink( $lesson_id );
 		if ( $progress_content_id ) {
@@ -930,8 +784,7 @@ class Ajax {
 					// Get current date with WordPress timezone.
 					$current_date = current_time( 'mysql' ); // Format: Y-m-d H:i:s
 					// Update end_date in the table.
-					$wpdb->update(
-						$table_name,
+					\OhMyLMS\Student\Enrollments::update(
 						array( 'end_date' => $current_date ),
 						array(
 							'user_id'   => $student_id,
@@ -961,176 +814,6 @@ class Ajax {
 				)
 			);
 		}
-	}
-
-
-	/**
-	 * Handle the lesson completed action via AJAX.
-	 *
-	 * @since 1.0.0
-	 */
-	public static function drop_course() {
-		check_ajax_referer( 'course_drop_nonce', 'nonce' );
-		$course_id  = ohmylms_clean( wp_unslash( $_POST['course_id'] ?? '' ) );
-		$student_id = get_current_user_id();
-
-		$enrollment_data = array(
-			'status'     => 'dropped',
-			'progress'   => 'stop',
-			'start_date' => current_time( 'mysql' ),
-		);
-
-		$where = array(
-			'course_id' => $course_id,
-			'user_id'   => $student_id,
-		);
-
-		$student = new \OhMyLMS\Data\Student( $student_id );
-		if ( $student && $student->maybe_enrolled( $course_id ) ) {
-			global $wpdb;
-			$enrollment_table = $wpdb->prefix . 'ohmylms_user_enrollment';
-			$updated          = $wpdb->update(
-				$enrollment_table,
-				$enrollment_data,
-				$where
-			);
-
-			if ( false !== $updated ) {
-				wp_send_json_success(
-					array(
-						'status'  => 'success',
-						'message' => __( 'Course dropped successfully.', 'ohmylms' ),
-					)
-				);
-			} else {
-				wp_send_json_error(
-					array(
-						'status'  => 'error',
-						'message' => __( 'Failed to drop the course.', 'ohmylms' ),
-					)
-				);
-			}
-		}
-
-		wp_send_json_error(
-			array(
-				'status'  => 'error',
-				'message' => __( 'Course drop failed.', 'ohmylms' ),
-			)
-		);
-	}
-
-	/**
-	 * Handle the lesson completed action via AJAX.
-	 *
-	 * @since 1.0.0
-	 */
-	public static function download_certificate() {
-		check_ajax_referer( 'download_certificate_nonce', 'nonce' );
-		$certificate_id = ohmylms_clean( wp_unslash( $_POST['certificate_id'] ?? '' ) );
-		$course_id      = ohmylms_clean( wp_unslash( $_POST['course_id'] ?? '' ) );
-		$student_id     = get_current_user_id();
-		$certificate    = ohmylms_get_certificate( $certificate_id );
-		$course         = ohmylms_get_course( $course_id );
-		$student        = new \OhMyLMS\Data\Student( $student_id );
-		$html           = $certificate->get_html_contents();
-
-		global $wpdb;
-		$table_name = $wpdb->prefix . 'ohmylms_user_enrollment';
-
-		$end_date = $wpdb->get_var(
-			$wpdb->prepare( 'SELECT end_date FROM %i WHERE user_id = %d AND course_id = %d', $table_name, $student_id, $course_id )
-		);
-
-		if ( $html ) {
-			wp_send_json_success(
-				array(
-					'status'       => 'success',
-					'html'         => $html,
-					'course_name'  => $course ? $course->get_name() : '',
-					'student_name' => $student ? $student->get_name() : '',
-					'date'         => $end_date ? date( 'F j, Y', strtotime( $end_date ) ) : '',
-					'message'      => __( 'Get certificate successfully.', 'ohmylms' ),
-				)
-			);
-		} else {
-			wp_send_json_error(
-				array(
-					'status'  => 'error',
-					'message' => __( 'Lesson completion failed.', 'ohmylms' ),
-				)
-			);
-		}
-	}
-
-
-	/**
-	 * Handle the lesson completed action via AJAX.
-	 *
-	 * @since 1.0.0
-	 */
-	public static function download_certificate_from_email() {
-		check_ajax_referer( 'download_certificate_nonce', 'nonce' );
-		$certificate_data = ohmylms_clean( wp_unslash( $_POST['certificate_data'] ?? '' ) );
-
-		// Base64 decode the encrypted data.
-		$decoded_data = base64_decode( $certificate_data );
-
-		// Separate the cipher text and the IV.
-		list($cipher_text, $iv) = explode( '::', $decoded_data, 2 );
-
-		// Decrypt the cipher text using the same encryption algorithm and key.
-		$decrypted_data = openssl_decrypt( $cipher_text, 'aes-128-cbc', 'ohmylms-certificate-key', 0, $iv );
-
-		if ( false !== $decrypted_data ) {
-			// Parse the decrypted data into an associative array.
-			parse_str( $decrypted_data, $parsed_data );
-
-			// Extract the individual values.
-			$certificate_id = $parsed_data['certificate_id'] ?? null;
-			$student_id     = $parsed_data['student_id'] ?? null;
-			$course_id      = $parsed_data['course_id'] ?? null;
-
-			$certificate = ohmylms_get_certificate( $certificate_id );
-			if ( $certificate && $student_id && $course_id ) {
-				$course  = ohmylms_get_course( $course_id );
-				$student = new \OhMyLMS\Data\Student( $student_id );
-				$html    = $certificate->get_html_contents();
-
-				global $wpdb;
-				$table_name = $wpdb->prefix . 'ohmylms_user_enrollment';
-
-				$end_date = $wpdb->get_var(
-					$wpdb->prepare( 'SELECT end_date FROM %i WHERE user_id = %d AND course_id = %d', $table_name, $student_id, $course_id )
-				);
-
-				if ( $html ) {
-					wp_send_json_success(
-						array(
-							'status'       => 'success',
-							'html'         => $html,
-							'course_name'  => $course ? $course->get_name() : '',
-							'student_name' => $student ? $student->get_name() : '',
-							'date'         => $end_date ? date( 'F j, Y', strtotime( $end_date ) ) : '',
-							'message'      => __( 'Get certificate successfully.', 'ohmylms' ),
-						)
-					);
-				} else {
-					wp_send_json_error(
-						array(
-							'status'  => 'error',
-							'message' => __( 'Lesson completion failed.', 'ohmylms' ),
-						)
-					);
-				}
-			}
-		}
-		wp_send_json_error(
-			array(
-				'status'  => 'error',
-				'message' => __( 'Lesson completion failed.', 'ohmylms' ),
-			)
-		);
 	}
 
 
@@ -1168,6 +851,19 @@ class Ajax {
 		if ( ! $assignment->get_id() ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid assignment.', 'ohmylms' ) ) );
 		}
+
+		// Enrolment, the drip release and the prerequisites are checked here, before any upload is stored.
+		$allowed = \OhMyLMS\Assignment\Delivery::check_submission( $assignment->get_id(), $student->get_id() );
+		if ( is_wp_error( $allowed ) ) {
+			wp_send_json_error(
+				array(
+					'message' => $allowed->get_error_message(),
+					'code'    => $allowed->get_error_code(),
+				)
+			);
+		}
+		$resolved_course = (int) ohmylms_get_course_by_content_id( $assignment->get_id(), $student->get_id() );
+		$course_id       = $resolved_course ? $resolved_course : absint( $course_id );
 
 		if ( ! $assignment->get_allow_upload_files() ) {
 			wp_send_json_error( array( 'message' => __( 'File uploads are not allowed for this assignment.', 'ohmylms' ) ) );
@@ -1249,61 +945,63 @@ class Ajax {
 
 
 	/**
-	 * Handle membership add to cart for Ajax.
+	 * Add a membership plan to the cart. Callers verify their own nonce.
+	 *
+	 * @param int $membership_id Membership.
+	 * @param int $quantity      Quantity.
+	 * @return array{status:int, body:array}
 	 */
-	private static function handle_membership_add_to_cart(): void {
-		check_ajax_referer( 'add-to-cart', 'nonce' );
-		// Prevent caching of cart operations.
-		nocache_headers();
-
+	public static function add_membership_to_cart( $membership_id, $quantity = 1 ): array {
 		if ( ! ohmylms_is_pro() ) {
-			$response = array(
-				'status'  => 'error',
-				'message' => __( 'Sorry! This membership is only available in OhMyLMS.', 'ohmylms' ),
+			return self::cart_answer(
+				array(
+					'status'  => 'error',
+					'message' => __( 'Sorry! This membership is only available in OhMyLMS.', 'ohmylms' ),
+				)
 			);
-			wp_send_json( $response );
 		}
 
-		$membership_id     = absint( $_POST['membership_id'] ?? 0 );
-		$quantity          = empty( $_POST['quantity'] ) ? 1 : absint( $_POST['quantity'] );
 		$membership_status = get_post_status( $membership_id );
 		if ( \OhMyLMS\Membership\FreeSale::active( ohmylms_get_membership( $membership_id ) ) ) {
-			wp_send_json( array( 'status' => 'success', 'redirect_url' => \OhMyLMS\Student\Hub::url( 'membership', 'plans' ) ) );
+			return self::cart_answer(
+				array(
+					'status'       => 'success',
+					'redirect_url' => \OhMyLMS\Student\Hub::url( 'membership', 'plans' ),
+				)
+			);
 		}
 
 		$membership = ohmylms_get_membership( $membership_id );
 		if ( ! $membership || ! $membership->is_purchasable() ) {
-			$response = array(
-				'status'  => 'error',
-				'message' => __( 'Sorry! This membership is not purchasable.', 'ohmylms' ),
+			return self::cart_answer(
+				array(
+					'status'  => 'error',
+					'message' => __( 'Sorry! This membership is not purchasable.', 'ohmylms' ),
+				)
 			);
-
-			wp_send_json( $response );
 		}
 
 		if ( false !== ecommerce()->cart->add_to_cart( $membership_id, $quantity ) && 'publish' === $membership_status ) {
 			do_action( 'ohmylms_ajax_added_to_cart', $membership_id );
 
 			// Add cache-busting parameter to redirect URL.
-			$checkout_url                 = get_permalink( ohmylms_get_page_id( 'checkout' ) );
-			$redirect_url_with_cache_bust = add_query_arg( 'nocache', time(), $checkout_url );
+			$checkout_url = get_permalink( ohmylms_get_page_id( 'checkout' ) );
 
-			$response = array(
-				'status'       => 'success',
-				'redirect_url' => $redirect_url_with_cache_bust,
-				'message'      => __( 'Successfully added to cart.', 'ohmylms' ),
+			return self::cart_answer(
+				array(
+					'status'       => 'success',
+					'redirect_url' => add_query_arg( 'nocache', time(), $checkout_url ),
+					'message'      => __( 'Successfully added to cart.', 'ohmylms' ),
+				)
 			);
+		}
 
-			wp_send_json( $response );
-		} else {
-			// If there was an error adding to the cart, redirect to the product page to show any errors.
-			$response = array(
+		return self::cart_answer(
+			array(
 				'status'  => 'error',
 				'message' => __( 'Add to cart failed.', 'ohmylms' ),
-			);
-
-			wp_send_json( $response );
-		}
+			)
+		);
 	}
 
 
@@ -1321,36 +1019,29 @@ class Ajax {
 
 		check_ajax_referer( 'save_remaining_time', 'nonce' );
 
-		$content_id = ohmylms_clean( wp_unslash( $_POST['content_id'] ?? '' ) );
-		$student_id = get_current_user_id();
-		$assignment = ohmylms_get_assignment( $content_id );
-		if ( ! $assignment ) {
-			return;
+		$content_id = absint( $_POST['content_id'] ?? 0 );
+		if ( OHMYLMS_ASSIGNMENT_CPT !== get_post_type( $content_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid assignment.', 'ohmylms' ) ), 404 );
 		}
-		$is_enabled_time_limit = $assignment->get_enable_time_limit();
-		if ( ! $is_enabled_time_limit ) {
-			return;
+		// The gate of a submission, then the deadline is stored once; starting again never adds time.
+		$timer = \OhMyLMS\Assignment\Delivery::start_timer( $content_id, get_current_user_id() );
+		if ( is_wp_error( $timer ) ) {
+			wp_send_json_error(
+				array(
+					'code'    => $timer->get_error_code(),
+					'message' => $timer->get_error_message(),
+				),
+				(int) $timer->get_error_data()['status']
+			);
 		}
-
-		$time_limit        = $assignment->get_time_limit();
-		$time_limit_type   = strtolower( $assignment->get_time_limit_type() );
-		$key               = '_ohmylms_deadline_' . $student_id . '_' . $content_id . '_';
-		$existing_deadline = get_option( $key );
-
-		if ( ! $existing_deadline ) {
-			// No deadline is set, so calculate it from the current time.
-			$current_datetime = new \DateTime( 'now', new \DateTimeZone( wp_timezone_string() ) ); // Use WordPress timezone.
-			$interval_spec    = "P{$time_limit}" . strtoupper( substr( $time_limit_type, 0, 1 ) ); // Example: P2D (2 days), P2M (2 months), P2W (2 weeks).
-
-			try {
-				$current_datetime->add( new \DateInterval( $interval_spec ) );
-				$new_deadline = $current_datetime->format( 'Y-m-d H:i:s' ); // Format for storage.
-				update_option( "_ohmylms_deadline_{$student_id}_{$content_id}_", $new_deadline );
-			} catch ( \Exception $e ) {
-				wp_send_json_error( array( 'message' => __( 'Error calculating deadline.', 'ohmylms' ) ) );
-			}
-		}
-		wp_send_json_success( array( 'message' => __( 'Deadline saved successfully.', 'ohmylms' ) ) );
+		wp_send_json_success(
+			array(
+				'message'        => __( 'Deadline saved successfully.', 'ohmylms' ),
+				'deadline'       => $timer['deadline'],
+				'deadline_label' => $timer['deadline_label'],
+				'remaining'      => $timer['remaining'],
+			)
+		);
 	}
 
 
@@ -1361,7 +1052,7 @@ class Ajax {
 		check_ajax_referer( 'quiz_exit_submission', 'nonce' );
 		$quiz_id    = absint( $_POST['content_id'] ?? 0 );
 		$attempt_id = absint( $_POST['attempt_id'] ?? 0 );
-		$answers    = wp_unslash( $_POST['attempt'][ $attempt_id ]['quiz_question'] ?? array() );
+		$answers    = wp_unslash( $_POST['attempt'][ $attempt_id ]['quiz_question'] ?? array() ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Answers are graded raw; each question type validates its own answer shape.
 		if ( ! is_array( $answers ) ) {
 			wp_send_json_error( array( 'message' => 'Invalid answers' ), 400 );
 		}
@@ -1382,18 +1073,31 @@ class Ajax {
 			wp_send_json_error( array( 'message' => __( 'This feature is only available in OhMyLMS.', 'ohmylms' ) ) );
 		}
 
+		$current_user_id = get_current_user_id();
 		$subscription_id = absint( $_POST['subscription_id'] ?? 0 );
-		$membership_id   = absint( $_POST['membership_id'] ?? 0 );
-		$order_id        = absint( $_POST['order_id'] ?? 0 );
-		$subscription    = ohmylms_ecommerce_get_subscription( $subscription_id );
-		$membership      = ohmylms_get_membership( $membership_id );
-		$student_id      = absint( $_POST['student_id'] ?? 0 );
+		$subscription    = $current_user_id && $subscription_id ? ohmylms_ecommerce_get_subscription( $subscription_id ) : null;
+		// The student, membership and order come from the subscription record, never from the request.
+		$student_id    = $subscription ? absint( $subscription->get_student_id() ) : 0;
+		$membership_id = $subscription ? absint( $subscription->get_membership_id() ) : 0;
+		$order_id      = $subscription ? absint( $subscription->get_original_order_id() ) : 0;
+		$posted_order  = absint( $_POST['order_id'] ?? 0 );
+		$order_sub_id  = absint( get_post_meta( $posted_order, '_subscription_id', true ) );
+		if ( $posted_order && $order_sub_id === $subscription_id ) {
+			$order_id = $posted_order;
+		}
+		if ( ! $student_id || ( $student_id !== $current_user_id && ! current_user_can( 'manage_options' ) ) ) {
+			wp_send_json_error( array( 'message' => __( 'You cannot cancel this membership.', 'ohmylms' ) ), 403 );
+		}
+		$membership = ohmylms_get_membership( $membership_id );
+		if ( ! $membership ) {
+			wp_send_json_error( array( 'message' => __( 'Membership not found.', 'ohmylms' ) ), 404 );
+		}
 		$membership->cancel_enrollment( $student_id, $order_id );
 		$subscription->set_status( 'cancelled' );
 		$subscription->set_schedule_next_payment_date( '' );
 		$subscription->set_schedule_end_date( '' );
 		$subscription->save();
-		$user_id = $student_id ? absint( $student_id ) : get_current_user_id();
+		$user_id = $current_user_id;
 		if ( $user_id ) {
 			$user = get_user_by( 'id', $user_id );
 			if ( $user && $user->exists() ) {
@@ -1411,72 +1115,6 @@ class Ajax {
 			\OhMyLMS\Commerce\SubscriptionManager::add_subscription_note( $subscription_id, __( 'Subscription status changed to Cancelled.', 'ohmylms' ) );
 		}
 		wp_send_json_success( array( 'message' => __( 'Cancel membership successfully.', 'ohmylms' ) ) );
-	}
-
-
-	/**
-	 * Check lesson access via AJAX.
-	 *
-	 * @since 1.0.0
-	 * @return void
-	 */
-	public static function lesson_access_nonce() {
-		check_ajax_referer( 'lesson_access_nonce', 'nonce' );
-		$lesson_id = absint( $_GET['lesson_id'] ?? 0 );
-		$student   = new Student( get_current_user_id() );
-		$post      = get_post( $lesson_id );
-
-		$prerequisites = null;
-		if ( 'ohmylms-lesson' === $post->post_type ) {
-			$lesson_obj    = ohmylms_get_lesson( $post->ID );
-			$prerequisites = method_exists( $lesson_obj, 'get_prerequisites' ) ? $lesson_obj->get_prerequisites() : '';
-		}
-
-		if ( 'ohmylms-assignment' === $post->post_type ) {
-			$assignment_obj = ohmylms_get_assignment( $post->ID );
-			$prerequisites  = $assignment_obj->get_prerequisites();
-		}
-
-		// Check prerequisites settings.
-		if ( is_array( $prerequisites ) && ! empty( $prerequisites ) && ! empty( $prerequisites['enable'] ) && ! empty( $prerequisites['data'] ) && $prerequisites['enable'] ) {
-			$prerequisites_met      = true;
-			$incomplete_course_name = '';
-			foreach ( $prerequisites['data'] as $prerequisite ) {
-				if ( ! $student->maybe_completed( $prerequisite['value'] ) ) {
-					$prerequisites_met      = false;
-					$incomplete_course_name = $prerequisite['label'];
-					break;
-				}
-			}
-
-			if ( ! $prerequisites_met ) {
-				wp_send_json_success(
-					array(
-						'permission'             => false,
-						'incomplete_course_name' => $incomplete_course_name,
-						'message'                => __( 'You can access this lesson.', 'ohmylms' ),
-					)
-				);
-			}
-		}
-
-		// Sequential mode gate for the React lesson player.
-		$seq_course_id = ohmylms_get_course_id_by_content_id( $lesson_id );
-		if ( $seq_course_id && apply_filters( 'ohmylms_is_lesson_sequentially_locked', false, $lesson_id, $seq_course_id, get_current_user_id() ) ) {
-			wp_send_json_success(
-				array(
-					'permission' => false,
-					'message'    => __( 'You must complete the previous lesson before accessing this content.', 'ohmylms' ),
-				)
-			);
-		}
-
-		wp_send_json_success(
-			array(
-				'permission' => true,
-				'message'    => __( 'You can access this lesson.', 'ohmylms' ),
-			)
-		);
 	}
 
 	/**
@@ -1536,9 +1174,20 @@ class Ajax {
 		$watched_duration = isset( $_POST['watched_duration'] ) ? floatval( $_POST['watched_duration'] ) : 0;
 		$total_duration   = isset( $_POST['total_duration'] ) ? floatval( $_POST['total_duration'] ) : 0;
 		$last_position    = isset( $_POST['last_position'] ) ? floatval( $_POST['last_position'] ) : 0;
+		// Watched spans of the ohmylms/video player, merged server-side with the learner's earlier ones.
+		$intervals = isset( $_POST['segments'] ) ? \OhMyLMS\Learning\VideoCompletion::parse_intervals( sanitize_text_field( wp_unslash( $_POST['segments'] ) ) ) : null;
 
 		if ( ! $lesson_id ) {
 			wp_send_json_error( array( 'message' => __( 'Missing lesson ID.', 'ohmylms' ) ) );
+		}
+		if ( \OhMyLMS\Learning\LessonPreview::previewing( $user_id, $lesson_id ) ) {
+			wp_send_json_error(
+				array(
+					'code'    => 'ohmylms_lesson_preview',
+					'message' => __( 'Preview — nothing is recorded.', 'ohmylms' ),
+				),
+				409
+			);
 		}
 
 		// SECURITY: Derive course_id from lesson_id server-side to prevent manipulation
@@ -1568,24 +1217,22 @@ class Ajax {
 		}
 
 		// Save progress.
-		$result = $tracker->save_progress( $user_id, $lesson_id, $course_id, $watched_duration, $total_duration, $last_position );
+		$result = $tracker->save_progress( $user_id, $lesson_id, $course_id, $watched_duration, $total_duration, $last_position, $intervals );
 
 		if ( $result ) {
 			$progress = $tracker->get_progress( $user_id, $lesson_id );
 
-			// Auto-complete lesson if threshold reached.
-			if ( $progress && $progress->is_completed ) {
-				$tracker->mark_lesson_complete( $user_id, $lesson_id, $course_id );
-			}
-
+			// A watched video does not complete the lesson here: the player then asks ohmylms_lesson_completed,
+			// which applies the lesson gate and the watched-percentage rule and fires the completion hooks.
 			wp_send_json_success(
 				array(
-					'message'  => __( 'Progress saved successfully.', 'ohmylms' ),
-					'progress' => array(
+					'message'          => __( 'Progress saved successfully.', 'ohmylms' ),
+					'progress'         => array(
 						'watched_duration' => $progress->watched_duration,
 						'watch_percentage' => $progress->watch_percentage,
 						'is_completed'     => (bool) $progress->is_completed,
 					),
+					'lesson_completed' => \OhMyLMS\Assignment\Delivery::completed( $user_id, $lesson_id ),
 				)
 			);
 		} else {
@@ -1696,7 +1343,8 @@ class Ajax {
 	 * Accessible to both logged-in users (resend for self) and guests (resend by email).
 	 */
 	public static function resend_verification(): void {
-		$redirect_base = ohmylms_get_dashboard_url() ?: home_url( '/' );
+		$redirect_base = ohmylms_get_dashboard_url();
+		$redirect_base = $redirect_base ? $redirect_base : home_url( '/' );
 		$is_json       = isset( $_REQUEST['format'] ) && 'json' === $_REQUEST['format'];
 
 		$nonce = isset( $_REQUEST['nonce'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['nonce'] ) ) : '';

@@ -358,14 +358,13 @@ try {
 	ok( 1 === count( $response->get_data() ) && $course_b === $response->get_data()[0]['course_id'], 'enrolment search by course title' );
 	$response = call_api( 'GET', '/' . $alice . '/enrollments', array( 'progress' => 'completed' ) );
 	ok( 0 === count( $response->get_data() ) && '0' === $response->get_headers()['X-WP-Total'], 'completed filter is empty before completion' );
-	$wpdb->update(
-		$wpdb->prefix . 'ohmylms_user_enrollment',
+	\OhMyLMS\Student\Enrollments::update(
 		array(
 			'progress' => 'completed',
 			'end_date' => current_time( 'mysql' ),
 		),
 		array( 'id' => $enrollment_id )
-	); // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment
+	);
 	$response = call_api( 'GET', '/' . $alice . '/enrollments', array( 'progress' => 'completed' ) );
 	ok( 1 === count( $response->get_data() ) && 100 === $response->get_data()[0]['percent_complete'] && null !== $response->get_data()[0]['completed_at'], 'completed enrolment is 100 percent with a date' );
 	ok( 400 === call_api( 'GET', '/' . $alice . '/enrollments', array( 'progress' => 'later' ) )->get_status(), 'invalid progress filter' );
@@ -414,25 +413,24 @@ try {
 	ok( 400 === call_api( 'POST', '/' . $bob, array( 'blocked' => 'maybe' ) )->get_status(), 'blocked must be boolean' );
 	$self = call_api( 'POST', '/' . $admin, array( 'blocked' => true ) );
 	ok( in_array( $self->get_status(), array( 404, 422 ), true ) && 'yes' !== get_user_meta( $admin, '_ohmylms_banned_student', true ), 'an administrator cannot be blocked' );
-	$wpdb->insert(
-		$wpdb->prefix . 'ohmylms_user_enrollment',
+	\OhMyLMS\Student\Enrollments::create(
 		array(
 			'user_id'    => $admin,
 			'course_id'  => $course_b,
 			'status'     => 'enrolled',
 			'progress'   => 'running',
 			'start_date' => current_time( 'mysql' ),
-		)
+		),
+		array( 'source' => 'manual' )
 	);
 	$self = call_api( 'POST', '/' . $admin, array( 'blocked' => true ) );
 	ok( 422 === $self->get_status() && 'ohmylms_student_protected' === $self->get_data()['code'], 'an enrolled administrator cannot be blocked (422)' );
-	$wpdb->delete(
-		$wpdb->prefix . 'ohmylms_user_enrollment',
+	\OhMyLMS\Student\Enrollments::delete(
 		array(
 			'user_id'   => $admin,
 			'course_id' => $course_b,
 		)
-	); // phpcs:ignore WordPress.Arrays.MultipleStatementAlignment
+	);
 
 	// Unenrol.
 	$response = call_api( 'DELETE', '/' . $alice . '/enrollments/' . $course_a );
@@ -467,10 +465,10 @@ try {
 		foreach ( $leftovers as $leftover ) {
 			$wpdb->delete( $wpdb->prefix . 'ohmylms_user_progress', array( 'enrollment_id' => (int) $leftover ), array( '%d' ) );
 		}
-		$wpdb->delete( $wpdb->prefix . 'ohmylms_user_enrollment', array( 'user_id' => $user_id ), array( '%d' ) );
+		\OhMyLMS\Student\Enrollments::delete( array( 'user_id' => (int) $user_id ), array( '%d' ) );
 	}
 	foreach ( $course_ids as $course_id ) {
-		$wpdb->delete( $wpdb->prefix . 'ohmylms_user_enrollment', array( 'course_id' => $course_id ), array( '%d' ) );
+		\OhMyLMS\Student\Enrollments::delete( array( 'course_id' => (int) $course_id ), array( '%d' ) );
 		wp_delete_post( $course_id, true );
 	}
 	if ( isset( $page_id ) && $page_id && ! is_wp_error( $page_id ) ) {

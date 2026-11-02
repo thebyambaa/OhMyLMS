@@ -14,6 +14,10 @@ defined( 'ABSPATH' ) || exit();
 
 
 <h1 class="student-name">
-	<?php printf( /* translators: %s: text value. */
-	__( 'Welcome, %s', 'ohmylms' ), $user->display_name ); ?>
+	<?php
+	printf( /* translators: %s: text value. */
+		esc_html__( 'Welcome, %s', 'ohmylms' ),
+		esc_html( $user->display_name )
+	);
+	?>
 </h1>

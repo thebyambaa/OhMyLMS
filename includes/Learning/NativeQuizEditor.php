@@ -237,13 +237,13 @@ final class NativeQuizEditor {
 	}
 
 	/**
-	 * Existing quiz editor remains available beside Gutenberg.
+	 * The quiz's screen in the admin app, beside Gutenberg.
 	 *
 	 * @param int $quiz_id Quiz ID.
-	 * @return string Existing authoring URL.
+	 * @return string Authoring URL.
 	 */
 	public static function form_url( $quiz_id ) {
-		return admin_url( 'admin.php?page=ohmylms' ) . '#/quiz-edit/' . absint( $quiz_id );
+		return \OhMyLMS\Admin\LegacyRoutes::app_url( '/quizzes/' . absint( $quiz_id ) );
 	}
 
 	/**

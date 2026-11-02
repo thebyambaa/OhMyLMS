@@ -15,6 +15,20 @@ import {
 	normalizeLayout,
 } from './tabLayout.mjs';
 import { tabPreferences } from './tabPreferences';
+
+/** @typedef {import('./tabLayout.mjs').TabLayout} TabLayout */
+/** @typedef {import('./tabLayout.mjs').TabGroup} TabGroup */
+/** @typedef {import('./tabLayout.mjs').TabBlock} TabBlock */
+/** @typedef {{ type: 'tab' | 'group', id: string }} DragItem */
+
+/**
+ * @typedef {Object} MovableTab
+ * @property {string} id     Tab id.
+ * @property {string} [href] Link target.
+ * @property {string} [path] Hash route, used when there is no href.
+ */
+
+/** @type {( node: unknown ) => string} */
 const textLabel = ( node ) =>
 	( () => {
 		if ( typeof node === 'string' || typeof node === 'number' ) {
@@ -23,8 +37,25 @@ const textLabel = ( node ) =>
 		if ( Array.isArray( node ) ) {
 			return node.map( textLabel ).join( '' );
 		}
-		return textLabel( node?.props?.children || '' );
+		return textLabel(
+			/** @type {{ props?: { children?: unknown } } | null | undefined} */ (
+				node
+			)?.props?.children || ''
+		);
 	} )();
+/**
+ * Tabs the user can reorder and group; the layout is saved per user and scope.
+ *
+ * @param {Object}                                    props               Component properties.
+ * @param {string}                                    props.scope         Preference scope.
+ * @param {MovableTab[]}                              props.tabs          Tabs.
+ * @param {Record<string, import('react').ReactNode>} props.labels        Tab labels by id.
+ * @param {string}                                    props.active        Active tab id.
+ * @param {string}                                    [props.label]       Accessible navigation name.
+ * @param {( id: string ) => void}                    [props.onChange]    Select a tab instead of following its link.
+ * @param {string}                                    [props.className]   Extra classes.
+ * @param {'horizontal' | 'vertical'}                 [props.orientation] Drop-side axis.
+ */
 export function MovableTabs( {
 	scope,
 	tabs,
@@ -40,9 +71,11 @@ export function MovableTabs( {
 	const store = tabPreferences( scope, ids );
 	const [ state, setState ] = useState( store.read );
 	const [ editing, setEditing ] = useState( false );
-	const [ dragging, setDragging ] = useState( null );
-	const [ over, setOver ] = useState( null );
-	const drag = useRef( null );
+	const [ dragging, setDragging ] = useState(
+		/** @type {DragItem | null} */ ( null )
+	);
+	const [ over, setOver ] = useState( /** @type {string | null} */ ( null ) );
+	const drag = useRef( /** @type {DragItem | null} */ ( null ) );
 	const suppressClick = useRef( false );
 	const layout = normalizeLayout( state.layout, ids );
 	const { status } = state;
@@ -50,7 +83,12 @@ export function MovableTabs( {
 		setState( store.read() );
 		return store.subscribe( setState );
 	}, [ store ] );
+	/** @param {TabLayout} next */
 	const save = ( next ) => store.save( next );
+	/**
+	 * @param {string}            id
+	 * @param {Partial<TabGroup>} patch
+	 */
 	const updateGroup = ( id, patch ) =>
 		save( {
 			...layout,
@@ -63,6 +101,10 @@ export function MovableTabs( {
 					: group
 			),
 		} );
+	/**
+	 * @param {import('react').DragEvent} event
+	 * @param {DragItem}                  item
+	 */
 	const startDrag = ( event, item ) => {
 		drag.current = item;
 		suppressClick.current = true;
@@ -75,6 +117,11 @@ export function MovableTabs( {
 		setDragging( null );
 		setOver( null );
 	};
+	/**
+	 * @param {import('react').DragEvent} event
+	 * @param {string | null}             target  Tab id, block id, or null for outside all groups.
+	 * @param {string | null}             blockId Block id of the target.
+	 */
 	const drop = ( event, target, blockId ) => {
 		event.preventDefault();
 		event.stopPropagation();
@@ -94,7 +141,12 @@ export function MovableTabs( {
 		);
 		endDrag();
 	};
+	/**
+	 * @param {string | null} target
+	 * @param {string | null} blockId
+	 */
 	const dropProps = ( target, blockId ) => ( {
+		/** @param {import('react').DragEvent} event */
 		onDragOver( event ) {
 			if ( drag.current ) {
 				event.preventDefault();
@@ -102,10 +154,17 @@ export function MovableTabs( {
 				setOver( target );
 			}
 		},
+		/** @param {import('react').DragEvent} event */
 		onDrop: ( event ) => drop( event, target, blockId ),
 	} );
+	/**
+	 * @param {string}   id
+	 * @param {TabBlock} block
+	 */
 	const renderTab = ( id, block ) => {
-		const tab = tabs.find( ( item ) => item.id === id );
+		const tab = /** @type {MovableTab} */ (
+			tabs.find( ( item ) => item.id === id )
+		);
 		return (
 			<a
 				key={ id }
@@ -199,8 +258,11 @@ export function MovableTabs( {
 								} }
 								onClick={ () => {
 									if ( ! suppressClick.current ) {
-										updateGroup( block.group.id, {
-											collapsed: ! block.group.collapsed,
+										const group = /** @type {TabGroup} */ (
+											block.group
+										);
+										updateGroup( group.id, {
+											collapsed: ! group.collapsed,
 										} );
 									}
 									suppressClick.current = false;

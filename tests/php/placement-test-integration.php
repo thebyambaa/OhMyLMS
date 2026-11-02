@@ -42,10 +42,10 @@ try {
 		$terms[] = $id;
 		update_term_meta( $id, '_ohmylms_public_practice', 1 );
 		for ( $n = 1; $n <= 2; $n++ ) {
-			$created = rest( 'POST', 'question', array( 'name' => "$name q$n $tag", 'description' => "$name $n?", 'settings' => array( 'type' => 'single-choice', 'hint' => '<p>A hint</p>', 'score' => array( 'enabled' => true, 'value' => 1 ) ), 'questions' => array( array( 'answer' => 'Right', 'is_correct' => 1, 'order_number' => 1 ), array( 'answer' => 'Wrong', 'is_correct' => 0, 'order_number' => 2 ) ), 'skills' => array( 'p1' => array( 'primary' => $id ) ), 'bank' => array( 'family_id' => "pl-$id-$n" ) ) );
+			$created = rest( 'POST', 'questions', array( 'name' => "$name q$n $tag", 'description' => "$name $n?", 'settings' => array( 'type' => 'single-choice', 'hint' => '<p>A hint</p>', 'score' => array( 'enabled' => true, 'value' => 1 ) ), 'options' => array( array( 'answer' => 'Right', 'is_correct' => true, 'order_number' => 1 ), array( 'answer' => 'Wrong', 'is_correct' => false, 'order_number' => 2 ) ), 'skills' => array( 'p1' => array( 'primary' => $id ) ), 'bank' => array( 'family_id' => "pl-$id-$n" ) ) );
 			ok( 201 === $created->get_status(), 'question created: ' . wp_json_encode( $created->get_data() ) );
 			$posts[] = (int) $created->get_data()['id'];
-			ok( 200 === rest( 'POST', 'question-bank/' . $created->get_data()['id'] . '/approve' )->get_status(), 'question approved' );
+			ok( 200 === rest( 'POST', 'questions/' . $created->get_data()['id'] . '/approve' )->get_status(), 'question approved' );
 		}
 		return $id;
 	};

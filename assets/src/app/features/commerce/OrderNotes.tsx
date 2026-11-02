@@ -4,7 +4,7 @@ import { __ } from '@wordpress/i18n';
 import { addNote } from './api';
 import { useNotes } from './hooks';
 import { NOTE_MAX_LENGTH, formatDate, validateNote } from './model';
-import { useOperation } from './useOperation';
+import { useOperation } from '../../hooks/useOperation';
 
 /**
  * Plain text notes of one order, with a form to add one.
@@ -54,9 +54,7 @@ export function OrderNotes( { orderId }: { orderId: number } ) {
 				<ul aria-label={ __( 'Order notes', 'ohmylms' ) }>
 					{ notes.data.map( ( note ) => (
 						<li key={ note.id }>
-							<p style={ { whiteSpace: 'pre-wrap' } }>
-								{ note.content }
-							</p>
+							<p className="ohmylms-pre-wrap">{ note.content }</p>
 							<small>
 								{ note.added_by }
 								{ ' · ' }

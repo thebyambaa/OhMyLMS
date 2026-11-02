@@ -176,10 +176,10 @@ if ( $engagement_visible ) {
 				<div class="profile-social-links">
 					<h5 class="profile-section-title"><?php echo esc_html__( 'Social Links', 'ohmylms' ); ?></h5>
 					<div class="social-links-list">
-						<?php foreach ( $social_links as $link ) : ?>
-							<?php if ( ! empty( $link['label'] ) && ! empty( $link['url'] ) ) : ?>
-								<a href="<?php echo esc_url( $link['url'] ); ?>" target="_blank" rel="noopener noreferrer" class="social-link">
-									<?php echo esc_html( $link['label'] ); ?>
+						<?php foreach ( $social_links as $social_link ) : ?>
+							<?php if ( ! empty( $social_link['label'] ) && ! empty( $social_link['url'] ) ) : ?>
+								<a href="<?php echo esc_url( $social_link['url'] ); ?>" target="_blank" rel="noopener noreferrer" class="social-link">
+									<?php echo esc_html( $social_link['label'] ); ?>
 								</a>
 							<?php endif; ?>
 						<?php endforeach; ?>
@@ -191,8 +191,16 @@ if ( $engagement_visible ) {
 		<?php if ( $next_level_name ) : ?>
 			<div class="ohmylms-progress-section">
 				<div class="ohmylms-progress-header">
-					<span class="ohmylms-progress-label"><?php echo esc_html( sprintf( /* translators: %s: text value. */
-					__( 'Progress to %s', 'ohmylms' ), $next_level_name ) ); ?></span>
+					<span class="ohmylms-progress-label">
+					<?php
+					echo esc_html(
+						sprintf( /* translators: %s: text value. */
+							__( 'Progress to %s', 'ohmylms' ),
+							$next_level_name
+						)
+					);
+					?>
+					</span>
 				</div>
 				<ul class="ohmylms-level-conditions">
 					<?php
@@ -203,8 +211,19 @@ if ( $engagement_visible ) {
 							'completed_courses' => __( 'Completed courses', 'ohmylms' ),
 						);
 						?>
-						<li><?php echo esc_html( sprintf( /* translators: %1$s: text value; %2$s: text value; %3$s: text value; %4$s: text value. */
-						__( '%1$s: %2$s · requirement %3$s %4$s', 'ohmylms' ), $labels[ $rule['type'] ] ?? '', $rule['current'], $rule['operator'], $rule['required'] ) ); ?></li>
+						<li>
+						<?php
+						echo esc_html(
+							sprintf( /* translators: %1$s: text value; %2$s: text value; %3$s: text value; %4$s: text value. */
+								__( '%1$s: %2$s · requirement %3$s %4$s', 'ohmylms' ),
+								$labels[ $rule['type'] ] ?? '',
+								$rule['current'],
+								$rule['operator'],
+								$rule['required']
+							)
+						);
+						?>
+						</li>
 					<?php } ?>
 				</ul>
 				<div class="ohmylms-progress-bar">

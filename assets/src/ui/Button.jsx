@@ -2,17 +2,21 @@ import { createElement } from '@wordpress/element';
 import { buttonClass } from './button.mjs';
 
 /**
+ * @typedef {Object} ButtonProps
+ * @property {string}                    [variant]   primary, secondary (default), tertiary or danger.
+ * @property {string}                    [size]      sm, md (default) or lg.
+ * @property {boolean}                   [block]     Full width.
+ * @property {string}                    [className] Additional classes.
+ * @property {boolean}                   [disabled]  Disabled; links get aria-disabled.
+ * @property {string}                    [href]      Renders a link.
+ * @property {import('react').ReactNode} [children]  Content.
+ */
+
+/**
  * Shared button. Renders an <a> when href is given, otherwise a <button> (type="button" unless set).
  * Styles are assets/css/oml-ui.css, loaded on plugin admin screens and by Ui::enqueue() on learner pages.
  *
- * @param {Object}  props
- * @param {string}  props.variant   primary, secondary (default), tertiary or danger.
- * @param {string}  props.size      sm, md (default) or lg.
- * @param {boolean} props.block     Full width.
- * @param           props.className
- * @param {boolean} props.disabled  Disabled; links get aria-disabled.
- * @param           props.href
- * @param           props.children
+ * @param {ButtonProps & Record<string, unknown>} props Other props pass to the element.
  */
 export function Button( {
 	variant,

@@ -18,15 +18,9 @@ export function SummaryCards( {
 	label?: string;
 } ) {
 	return (
-		<ul aria-label={ label } style={ { listStyle: 'none', padding: 0 } }>
+		<ul aria-label={ label } className="ohmylms-summary-cards">
 			{ cards.map( ( card ) => (
-				<li
-					key={ card.key }
-					style={ {
-						display: 'inline-block',
-						margin: '0 12px 12px 0',
-					} }
-				>
+				<li key={ card.key }>
 					<Card>
 						<CardBody>
 							<div>{ card.label }</div>

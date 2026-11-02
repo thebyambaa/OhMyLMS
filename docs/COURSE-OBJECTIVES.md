@@ -1,6 +1,6 @@
-# Course syllabus objectives
+# Course syllabus objective references
 
-An ordinary course's Content editor includes **Syllabus Objectives** below the course information. Authors browse existing syllabuses by name, code, edition, grade and subject, filter objectives by topic or search their full wording, and add selected targets. Selections survive filtering and switching syllabuses. Already-added references are disabled. The table shows live objective wording, source context, existing course content connections and removal controls. These changes save independently of the course Save button.
+See [Learning Architecture](LEARNING-ARCHITECTURE.md) for alignment versus outcomes and the current author workflow. This document retains the source-reference API contract; the recovered editor panel is not the current typed UI.
 
 The source records are existing curriculum syllabus items and skill terms. `_ohmylms_course_objectives` stores only `{syllabus_id, term_id}` pairs, up to 200 per course. The pair identifies a mapping because a skill may be placed in several syllabuses. Nothing is copied and no learning program, mastery rule, official objective or learner evidence is changed. Syllabus-owned courses retain their existing workspace and mirroring behavior; this panel is for ordinary courses referencing syllabus objectives.
 
@@ -32,9 +32,9 @@ visible WordPress filename findings, like the other MCP classes; no filename rul
 
 `includes/Curriculum/CourseObjectives.php` intentionally follows the existing namespace-to-file autoloader. Its two WordPress filename findings remain visible; renaming it requires an autoloader migration. The course-scoped relationship query is prepared and intentionally uncached so editor refreshes show current native placements; PHPCS reports its two direct-query warnings. No rule is suppressed.
 
-The objective panel and picker are separate components sharing source labels and identity helpers. Their styles live in `assets/css/course-objectives.css`, loaded by the admin design enqueuer. Coverage batches skill taxonomy reads and indexes draft attachment links rather than scanning every attachment for each content item. Objective components and helpers pass ESLint and their dedicated stylesheet passes Stylelint. Source contracts and the production build are also checked.
+Coverage batches skill taxonomy reads and indexes draft attachment links rather than scanning every attachment for each content item. The objective panel and picker of the recovered course editor, their stylesheet (`course-objectives.css`), JavaScript tests and browser spec were deleted at the cutover ([CUTOVER.md](CUTOVER.md)); the PHP service and REST routes remain.
 
-Run `node --test tests/js/course-objectives.test.mjs tests/js/courses.test.mjs tests/js/course-organization.test.mjs`, `tests/php/course-objectives-integration.php` and `tests/browser/course-objectives.spec.cjs`. Database/browser checks require the isolated `ohmylms_source_test` installation and external `OHMYLMS_TEST_CREDENTIALS`; fixtures clean up their own records. Browser checks cover search, retained selections, failed-save recovery, persistence, connection details, removal, and desktop/mobile layouts.
+Run `tests/php/course-objectives-integration.php`. It requires the isolated `ohmylms_source_test` installation and external `OHMYLMS_TEST_CREDENTIALS`; fixtures clean up their own records.
 
 Verified on 2026-10-15: database/REST integration and browser acceptance checks pass. Production assets were rebuilt and synchronized; webpack retains its two math-runtime size warnings. All 1,608 source files parse and 236 component contracts validate. The integration fixture has no PHPCS errors and two CLI file-I/O warnings (local credentials input and STDOUT output).
 

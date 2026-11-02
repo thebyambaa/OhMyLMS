@@ -178,32 +178,12 @@ abstract class Assets {
 	}
 
 	/**
-	 * Localize script mrm for Assets.
-	 *
-	 * @param mixed $handle Handle.
-	 */
-	public function localize_script_MRM( $handle ) {
-		if ( ! in_array( $handle, $this->localized_scripts, true ) && wp_script_is( $handle ) ) {
-			$data = $this->get_script_data( $handle );
-
-			if ( ! $data ) {
-				return;
-			}
-
-			$name = 'MRM_Vars';
-			wp_localize_script( $handle, $name, apply_filters( $name, $data ) );
-		}
-	}
-
-	/**
 	 * Localize scripts only when enqueued.
 	 */
 	public function localize_printed_scripts() {
 		foreach ( $this->scripts as $handle ) {
 			$this->localize_script( $handle );
 		}
-
-		$this->localize_script_MRM( 'ohmylms' );
 	}
 
 	/**

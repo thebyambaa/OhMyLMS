@@ -14,6 +14,13 @@ vi.mock( './api', () => ( {
 	restoreCourse: vi.fn(),
 	deleteCourse: vi.fn(),
 } ) );
+vi.mock( '../syllabus/public', () => ( {
+	CourseFromSyllabusDialog: ( { onClose }: { onClose: () => void } ) => (
+		<div role="dialog" aria-label="Create a course from a syllabus">
+			<button onClick={ onClose }>Close generator</button>
+		</div>
+	),
+} ) );
 
 function renderPage() {
 	return render(
@@ -52,7 +59,7 @@ describe( 'CoursesPage', () => {
 		);
 		const table = await screen.findByRole( 'table', { name: 'Courses' } );
 		const rows = within( table ).getAllByRole( 'row' );
-		expect( rows ).toHaveLength( 3 );
+		expect( rows ).toHaveLength( 4 );
 		const first = within( rows[ 1 ]! );
 		expect(
 			first.getByRole( 'link', { name: 'Algebra I' } )
@@ -66,7 +73,27 @@ describe( 'CoursesPage', () => {
 		const second = within( rows[ 2 ]! );
 		expect( second.getByText( 'Draft' ) ).toBeInTheDocument();
 		expect( second.getByText( 'Free' ) ).toBeInTheDocument();
-		expect( screen.getByText( '2 courses found.' ) ).toBeInTheDocument();
+		expect( screen.getAllByText( '2 courses found.' )[ 0 ] ).toHaveClass(
+			'displaying-num'
+		);
+	} );
+	it( 'opens the course-from-syllabus workflow without creating anything', async () => {
+		const user = userEvent.setup();
+		renderPage();
+		await screen.findByRole( 'table', { name: 'Courses' } );
+		await user.click(
+			screen.getByRole( 'button', { name: 'Create from syllabus' } )
+		);
+		expect(
+			await screen.findByRole( 'dialog', {
+				name: 'Create a course from a syllabus',
+			} )
+		).toBeInTheDocument();
+		expect( api.createCourse ).not.toHaveBeenCalled();
+		await user.click(
+			screen.getByRole( 'button', { name: 'Close generator' } )
+		);
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
 	} );
 	it( 'shows an empty state', async () => {
 		vi.mocked( api.listCourses ).mockResolvedValue( {
@@ -115,7 +142,8 @@ describe( 'CoursesPage', () => {
 		renderPage();
 		await screen.findByRole( 'table', { name: 'Courses' } );
 		await user.type( screen.getByLabelText( 'Search courses' ), ' alg ' );
-		await user.selectOptions( screen.getByLabelText( 'Status' ), 'draft' );
+		await user.click( screen.getByRole( 'link', { name: 'Draft' } ) );
+		await screen.findByRole( 'table', { name: 'Courses' } );
 		await user.selectOptions( screen.getByLabelText( 'Price' ), 'paid' );
 		await user.type(
 			screen.getByLabelText( 'Created from' ),
@@ -125,9 +153,7 @@ describe( 'CoursesPage', () => {
 			screen.getByLabelText( 'Created until' ),
 			'2026-02-01'
 		);
-		await user.click(
-			screen.getByRole( 'button', { name: 'Apply filters' } )
-		);
+		await user.click( screen.getByRole( 'button', { name: 'Filter' } ) );
 		await waitFor( () =>
 			expect( api.listCourses ).toHaveBeenLastCalledWith(
 				1,
@@ -165,7 +191,9 @@ describe( 'CoursesPage', () => {
 		const user = userEvent.setup();
 		renderPage();
 		await screen.findByRole( 'table', { name: 'Courses' } );
-		await user.click( screen.getByRole( 'button', { name: 'Next page' } ) );
+		const next = screen.getAllByRole( 'link', { name: 'Next page' } )[ 0 ]!;
+		expect( next ).toHaveAttribute( 'href', '/courses?page=2' );
+		await user.click( next );
 		await waitFor( () =>
 			expect( api.listCourses ).toHaveBeenLastCalledWith(
 				2,
@@ -173,6 +201,32 @@ describe( 'CoursesPage', () => {
 				expect.any( AbortSignal )
 			)
 		);
+	} );
+	it( 'reads the list state from the address and links views to addresses', async () => {
+		render(
+			<MemoryRouter
+				initialEntries={ [ '/courses?status=draft&s=geo&page=3' ] }
+			>
+				<Routes>
+					<Route path="/courses" element={ <CoursesPage /> } />
+				</Routes>
+			</MemoryRouter>
+		);
+		await screen.findByRole( 'table', { name: 'Courses' } );
+		expect( api.listCourses ).toHaveBeenLastCalledWith(
+			3,
+			expect.objectContaining( { search: 'geo', status: 'draft' } ),
+			expect.any( AbortSignal )
+		);
+		expect( screen.getByLabelText( 'Search courses' ) ).toHaveValue(
+			'geo'
+		);
+		expect(
+			screen.getByRole( 'link', { name: 'Published' } )
+		).toHaveAttribute( 'href', '/courses?status=publish&s=geo' );
+		expect(
+			screen.getByRole( 'link', { name: /^Draft/ } )
+		).toHaveAttribute( 'aria-current', 'page' );
 	} );
 
 	describe( 'create', () => {
@@ -371,12 +425,8 @@ describe( 'CoursesPage', () => {
 			vi.mocked( api.deleteCourse ).mockResolvedValue( undefined );
 			const user = userEvent.setup();
 			renderPage();
-			await user.selectOptions(
-				screen.getByLabelText( 'Status' ),
-				'trash'
-			);
 			await user.click(
-				screen.getByRole( 'button', { name: 'Apply filters' } )
+				await screen.findByRole( 'link', { name: 'Trash' } )
 			);
 			const table = await screen.findByRole( 'table', {
 				name: 'Courses',
@@ -440,12 +490,8 @@ describe( 'CoursesPage', () => {
 			);
 			const user = userEvent.setup();
 			renderPage();
-			await user.selectOptions(
-				screen.getByLabelText( 'Status' ),
-				'trash'
-			);
 			await user.click(
-				screen.getByRole( 'button', { name: 'Apply filters' } )
+				await screen.findByRole( 'link', { name: 'Trash' } )
 			);
 			await user.click(
 				await screen.findByRole( 'button', {

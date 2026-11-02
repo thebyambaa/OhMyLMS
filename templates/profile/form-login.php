@@ -4,12 +4,13 @@
  *
  * @package OhMyLMS
  */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
 
 $args = array(
-	'redirect_to' => isset( $_GET['redirect_to'] ) ? $_GET['redirect_to'] : '',
+	'redirect_to' => isset( $_GET['redirect_to'] ) ? esc_url_raw( wp_unslash( $_GET['redirect_to'] ) ) : '',
 );
 
 ?>

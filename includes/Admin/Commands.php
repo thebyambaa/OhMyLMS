@@ -51,7 +51,8 @@ final class Commands {
 	/**
 	 * Commands the current user may use.
 	 *
-	 * @return array[] name, label, route (a hash route inside the admin app), keywords and kind (go or action).
+	 * @return array[] name, label, page (admin page slug), tab, route (the app route), url (its address),
+	 *                 keywords and kind (go or action). Commands that name their own page have no tab or url.
 	 */
 	public static function all() {
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -74,20 +75,41 @@ final class Commands {
 		/**
 		 * Filters the OhMyLMS command palette commands.
 		 *
-		 * @param array[] $commands name, label, route, keywords, kind. The route is a hash route such as
-		 *                          /content-hub/exams?action=new.
+		 * @param array[] $commands name, label, route, keywords, kind and optionally page. The route is a
+		 *                          legacy hash route such as /content-hub/exams?action=new; without a
+		 *                          page it opens the address LegacyRoutes maps it to.
 		 */
 		$commands = (array) apply_filters( 'ohmylms_admin_commands', $commands );
-		return array_values(
-			array_filter(
-				$commands,
-				static function ( $command ) {
-					return is_array( $command )
-						&& ! empty( $command['name'] ) && ! empty( $command['label'] )
-						&& isset( $command['route'] ) && 0 === strpos( (string) $command['route'], '/' );
-				}
-			)
+		$commands = array_filter(
+			$commands,
+			static function ( $command ) {
+				return is_array( $command )
+					&& ! empty( $command['name'] ) && ! empty( $command['label'] )
+					&& isset( $command['route'] ) && 0 === strpos( (string) $command['route'], '/' );
+			}
 		);
+		return array_values( array_map( array( __CLASS__, 'with_target' ), $commands ) );
+	}
+
+	/**
+	 * Point a command at the screen that serves its route: the page, tab, app route and address of the
+	 * screen LegacyRoutes maps the legacy route to (the Dashboard when unmapped). A command that names its
+	 * own `page` is left as it is.
+	 *
+	 * @param array $command Command with a legacy hash route.
+	 * @return array Command with `page` (admin page slug), `tab`, the app route and `url` (the address).
+	 */
+	private static function with_target( array $command ) {
+		if ( ! empty( $command['page'] ) ) {
+			$command['page'] = sanitize_key( $command['page'] );
+			return $command;
+		}
+		$target           = LegacyRoutes::target( $command['route'] );
+		$command['page']  = $target['page'];
+		$command['tab']   = $target['tab'];
+		$command['route'] = $target['route'];
+		$command['url']   = $target['url'];
+		return $command;
 	}
 
 	/**

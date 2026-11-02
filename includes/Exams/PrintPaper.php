@@ -22,7 +22,7 @@ defined( 'ABSPATH' ) || exit;
  */
 final class PrintPaper {
 	const QUERY  = 'ohmylms_print';
-	const SCRIPT = 'ohmylms-paper-print';
+	const MODULE = 'ohmylms/paper-print';
 	const STYLE  = 'ohmylms-paper';
 
 	/** Serve the print page before the theme renders anything. */
@@ -73,7 +73,7 @@ final class PrintPaper {
 	 * @param int    $id      Quiz ID.
 	 * @param bool   $answers Whether to include answer keys the current user may see.
 	 * @param string $version Paper version letter.
-	 * @return array[] Items for the print bundle.
+	 * @return array[] Items for PaperRenderer.
 	 */
 	public static function items( $id, $answers, $version = 'A' ) {
 		$questions = array();
@@ -383,43 +383,71 @@ final class PrintPaper {
 			wp_die( esc_html__( 'You cannot print this exam.', 'ohmylms' ), '', array( 'response' => 403 ) );
 		}
 		$variant = isset( $_GET['variant'] ) ? sanitize_key( wp_unslash( $_GET['variant'] ) ) : 'paper';
-		$variant = in_array( $variant, self::VARIANTS, true ) ? $variant : 'paper';
-		$key     = in_array( $variant, array( 'key', 'sheet-key' ), true );
-		$quiz    = ohmylms_get_quiz( $id );
-		$paper   = PaperSettings::sanitize( $quiz->get_settings()['paper'] ?? array() );
-		$version = isset( $_GET['version'] ) ? strtoupper( sanitize_key( wp_unslash( $_GET['version'] ) ) ) : 'A';
-		$index   = array_search( $version, self::VERSIONS, true );
-		$version = false !== $index && $index < $paper['versions'] ? $version : 'A';
-		$data    = array(
-			'title'     => $quiz->get_name(),
-			'variant'   => $variant,
-			'version'   => $version,
-			'settings'  => $paper,
-			'items'     => self::items( $id, $key, $version ),
-			'timeLimit' => array(
-				'value' => (float) ( $quiz->get_settings()['time_limit']['value'] ?? 0 ),
-				'type'  => sanitize_key( (string) ( $quiz->get_settings()['time_limit']['type'] ?? 'minutes' ) ),
-			),
-			'autoPrint' => isset( $_GET['print'] ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Verified above.
-		);
+		$version = isset( $_GET['version'] ) ? sanitize_key( wp_unslash( $_GET['version'] ) ) : 'A';
 		nocache_headers();
 		header( 'X-Robots-Tag: noindex, nofollow' );
 		show_admin_bar( false );
+		echo self::document( $id, $variant, $version, isset( $_GET['print'] ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped, WordPress.Security.NonceVerification.Recommended -- The document escapes its own fields; the nonce is verified above.
+		exit;
+	}
 
-		$asset = require OHMYLMS_DIR . '/assets/dist/admin/paper-print.asset.php';
+	/**
+	 * The print page document: the paper, answer key, answer sheet or marking sheet as printable HTML.
+	 * Only the optional Print button needs script; math typesets where the paper has any.
+	 *
+	 * @param int    $id         Quiz ID; the caller checks access.
+	 * @param string $variant    One of VARIANTS.
+	 * @param string $version    Requested version letter.
+	 * @param bool   $auto_print Whether to open the print dialog once the paper is ready.
+	 * @return string HTML document.
+	 */
+	public static function document( $id, $variant = 'paper', $version = 'A', $auto_print = false ) {
+		$variant  = in_array( $variant, self::VARIANTS, true ) ? $variant : 'paper';
+		$key      = in_array( $variant, array( 'key', 'sheet-key' ), true );
+		$quiz     = ohmylms_get_quiz( $id );
+		$settings = $quiz->get_settings();
+		$paper    = PaperSettings::sanitize( $settings['paper'] ?? array() );
+		$version  = PaperModel::version( $version, $paper );
+		// Versions B to D shuffle questions before numbering, so numbers follow the printed order.
+		$items   = PaperModel::version_items( self::items( $id, $key, $version ), $version );
+		$context = array(
+			'title'      => $quiz->get_name(),
+			'time_limit' => array(
+				'value' => (float) ( $settings['time_limit']['value'] ?? 0 ),
+				'type'  => sanitize_key( (string) ( $settings['time_limit']['type'] ?? 'minutes' ) ),
+			),
+			'settings'   => $paper,
+			'version'    => $version,
+			'answers'    => $key,
+		);
+		$banner  = array(
+			'key'       => __( 'Answer key', 'ohmylms' ),
+			'sheet-key' => __( 'Marking sheet', 'ohmylms' ),
+		)[ $variant ] ?? '';
+		$sheet   = '';
+		if ( '' !== $banner ) {
+			/* translators: 1: answer key or marking sheet, 2: version letter. */
+			$sheet .= '<p class="ohmylms-print-key-banner">' . esc_html( $paper['versions'] > 1 ? sprintf( __( '%1$s: version %2$s', 'ohmylms' ), $banner, $version ) : $banner ) . '</p>';
+		}
+		if ( ! $items ) {
+			$sheet .= '<p>' . esc_html__( 'This exam has no questions yet.', 'ohmylms' ) . '</p>';
+		}
+		$sheet .= in_array( $variant, array( 'sheet', 'sheet-key' ), true ) ? PaperRenderer::answer_sheet( $items, $context ) : PaperRenderer::document( $items, $context );
+
 		wp_register_style( self::STYLE, plugins_url( 'assets/css/paper.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/paper.css' ) );
 		wp_add_inline_style( self::STYLE, ':root{' . \OhMyLMS\Design\Tokens::frontend_oml_vars() . '}' . \OhMyLMS\Design\Tokens::frontend_dark_css() );
 		\OhMyLMS\Design\Ui::enqueue();
-		$dependencies = $asset['dependencies'];
-		if ( \OhMyLMS\Assessment\MathLive::enabled() ) {
+		$styles  = array( self::STYLE, \OhMyLMS\Design\Ui::STYLE_HANDLE, 'ohmylms-figures' );
+		$scripts = array( 'ohmylms-figures' );
+		if ( \OhMyLMS\Assessment\MathLive::enabled() && PaperRenderer::has_math( $sheet ) ) {
 			// This runs before wp_enqueue_scripts, where the math scripts are normally registered.
 			\OhMyLMS\Assessment\MathLive::configure();
-			// The loader script provides the math configuration that loads the runtime on demand.
-			$dependencies[] = 'ohmylms-mathlive-loader';
-			wp_enqueue_style( 'ohmylms-mathlive', plugins_url( 'assets/css/mathlive.css', OHMYLMS_FILE ), array(), '0.111.1' );
+			\OhMyLMS\Assessment\MathLive::enqueue_style();
+			$styles[]  = 'ohmylms-mathlive';
+			$scripts[] = 'ohmylms-mathlive-loader';
 		}
-		wp_register_script( self::SCRIPT, plugins_url( 'assets/dist/admin/paper-print.js', OHMYLMS_FILE ), $dependencies, $asset['version'], true );
-		wp_set_script_translations( self::SCRIPT, 'ohmylms' );
+		wp_register_script_module( self::MODULE, plugins_url( 'assets/interactivity/paper-print.js', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/interactivity/paper-print.js' ) );
+		wp_enqueue_script_module( self::MODULE );
 		$labels = array(
 			'paper'     => '%s',
 			/* translators: %s: exam title. */
@@ -434,6 +462,7 @@ final class PrintPaper {
 			/* translators: 1: page title, 2: version letter. */
 			$title = sprintf( __( '%1$s (version %2$s)', 'ohmylms' ), $title, $version );
 		}
+		ob_start();
 		?>
 <!doctype html>
 <html <?php language_attributes(); ?>>
@@ -443,17 +472,18 @@ final class PrintPaper {
 <meta name="robots" content="noindex,nofollow">
 <title><?php echo esc_html( $title ); ?></title>
 		<?php
-		wp_print_styles( array( self::STYLE, \OhMyLMS\Design\Ui::STYLE_HANDLE, 'ohmylms-mathlive', 'ohmylms-figures' ) );
+		wp_print_styles( $styles );
 		// The CSS is built only from sanitized enumerations, integers and an escaped CSS string.
 		printf( '<style id="ohmylms-print-page">%s</style>', self::page_css( $paper ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- See above.
 		?>
 </head>
-<body class="ohmylms-print-page is-<?php echo esc_attr( $data['variant'] ); ?><?php echo 'serif' === $paper['font'] ? ' is-serif' : ''; ?>">
-<div class="ohmylms-print-toolbar" role="toolbar" aria-label="<?php esc_attr_e( 'Print', 'ohmylms' ); ?>">
+<body class="ohmylms-print-page is-<?php echo esc_attr( $variant ); ?><?php echo 'serif' === $paper['font'] ? ' is-serif' : ''; ?>"<?php echo $auto_print ? ' data-auto-print' : ''; ?>>
+<div class="ohmylms-print-toolbar" role="toolbar" aria-label="<?php esc_attr_e( 'Print', 'ohmylms' ); ?>" data-preparing="<?php esc_attr_e( 'Preparing the paper…', 'ohmylms' ); ?>" data-ready="<?php esc_attr_e( 'Ready to print.', 'ohmylms' ); ?>">
 	<a class="ohmylms-print-back" href="<?php echo esc_url( (string) get_edit_post_link( $id, 'raw' ) ); ?>"><?php esc_html_e( '← Back to the exam', 'ohmylms' ); ?></a>
 	<span class="ohmylms-print-toolbar-title"><?php echo esc_html( $title ); ?></span>
-	<span class="ohmylms-print-status" role="status"><?php esc_html_e( 'Preparing the paper…', 'ohmylms' ); ?></span>
+	<span class="ohmylms-print-status" role="status"></span>
 		<?php
+		// The button needs the print module; without script the browser's own Print still works.
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::button() escapes its attributes and label.
 		echo \OhMyLMS\Design\Ui::button(
 			__( 'Print', 'ohmylms' ),
@@ -461,18 +491,22 @@ final class PrintPaper {
 				'variant'  => 'primary',
 				'class'    => 'ohmylms-print-button',
 				'disabled' => true,
+				'attrs'    => array( 'hidden' => 'hidden' ),
 			)
 		);
 		?>
 </div>
-<main id="ohmylms-print-root" class="ohmylms-print-sheet"></main>
-<script type="application/json" id="ohmylms-print-data"><?php echo wp_json_encode( $data, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE ); ?></script>
+<main id="ohmylms-print-root" class="ohmylms-print-sheet" data-ohmylms-latex>
+		<?php echo $sheet; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- PaperRenderer escapes its fields and filters content with wp_kses_post(). ?>
+</main>
 		<?php
-		wp_print_scripts( array( self::SCRIPT, 'ohmylms-figures' ) );
+		wp_print_scripts( $scripts );
+		wp_script_modules()->print_import_map();
+		wp_script_modules()->print_enqueued_script_modules();
 		?>
 </body>
 </html>
 		<?php
-		exit;
+		return (string) ob_get_clean();
 	}
 }

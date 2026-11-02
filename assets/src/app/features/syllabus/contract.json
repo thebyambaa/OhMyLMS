@@ -7,11 +7,14 @@
 		"add_group",
 		"edit_group",
 		"move_group",
+		"delete_group",
 		"create_skill",
 		"edit_skill",
 		"attach_skill",
 		"move_skill",
 		"detach_skill",
+		"edit_source",
+		"set_requirements",
 		"sync_course",
 		"import"
 	],
@@ -23,6 +26,16 @@
 		"reviewField": "review_revision",
 		"conflictStatus": 409
 	},
+	"courseFromSyllabus": {
+		"sources": "/courses/from-syllabus",
+		"preview": "/courses/from-syllabus/{id}",
+		"create": "/courses/from-syllabus",
+		"maximumSkills": 200,
+		"reviewField": "revision",
+		"conflictStatus": 409
+	},
+	"publication": "/authoring/courses/{course}/publication",
+	"extensionSlot": "syllabus.skill.resources",
 	"publishes": false,
 	"documentation": "docs/api/syllabus-authoring.md"
 }

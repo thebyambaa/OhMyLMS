@@ -14,6 +14,7 @@ use OhMyLMS\Skills\SubjectProfiles;
 use OhMyLMS\AI\Client;
 use OhMyLMS\AI\Settings as AiSettings;
 use OhMyLMS\Skills\Taxonomy;
+use OhMyLMS\Utility\Lock;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -50,10 +51,10 @@ final class AiAnalysis {
 	const HINT_GLOSS   = '_ohmylms_ai_gloss';
 	const SOURCE_AI    = 'ai';
 	const ORDER_ACCEPT = array(
-		'new_skill' => 0,
-		'mapping'   => 1,
-		'placement' => 2,
-		'link'      => 3,
+		'new_skill'    => 0,
+		'mapping'      => 1,
+		'placement'    => 2,
+		'link'         => 3,
 		// Course skills create or reuse skills on their own; nothing waits for them.
 		'course_skill' => 0,
 	);
@@ -170,7 +171,7 @@ final class AiAnalysis {
 		global $wpdb;
 		$run_id = (int) $run_id;
 		$lock   = 'ohmylms-ai-analysis-' . md5( $wpdb->prefix ) . '-' . $run_id;
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', $lock ) ) ) {
+		if ( ! Lock::acquire( $lock, 0 ) ) {
 			return self::run( $run_id );
 		}
 		try {
@@ -227,7 +228,7 @@ final class AiAnalysis {
 			}
 			return self::run( $run_id );
 		} finally {
-			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+			Lock::release( $lock );
 		}
 	}
 
@@ -378,6 +379,40 @@ final class AiAnalysis {
 		if ( ! $ids ) {
 			return array();
 		}
+		// Two reviewers deciding the same suggestion would apply it twice; decisions run one at a time.
+		return Lock::with(
+			'ohmylms-ai-review-' . md5( $wpdb->prefix ),
+			10,
+			static function () use ( $ids, $action, $overrides ) {
+				return self::review_locked( $ids, $action, $overrides );
+			},
+			static function () use ( $ids ) {
+				return array_combine(
+					$ids,
+					array_map(
+						static function ( $id ) {
+							return array(
+								'id'    => $id,
+								'error' => __( 'Another review is being saved. Try again.', 'ohmylms' ),
+							);
+						},
+						$ids
+					)
+				);
+			}
+		);
+	}
+
+	/**
+	 * Decide suggestions while holding the review lock; rows are read inside it.
+	 *
+	 * @param int[]  $ids       Suggestion IDs.
+	 * @param string $action    accept or reject.
+	 * @param array  $overrides Suggestion ID => changes.
+	 * @return array
+	 */
+	private static function review_locked( array $ids, $action, array $overrides ) {
+		global $wpdb;
 		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE id IN (' . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')', array_merge( array( self::suggestions_table() ), $ids ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- One placeholder per ID.
 		// New skills first, so mappings to them can follow in the same review.
 		usort(

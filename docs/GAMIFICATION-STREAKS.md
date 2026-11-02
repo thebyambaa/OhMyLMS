@@ -40,7 +40,7 @@ Additive schema version `1`, recorded in `ohmylms_streak_schema`:
 
 All four use InnoDB and primary keys enforcing the identities. Installation is idempotent, verifies columns/storage engines, and runs when streaks are enabled. No existing achievement/progress table is rewritten and no historical streak is invented.
 
-Authenticated `GET /ohmylms/v1/engagement/streak` returns the caller's state and daily history (7 dates by default, up to 366 with `history_days`). Authenticated `PUT` changes only the caller's timezone. The REST cookie nonce protections apply normally. Admin settings use the existing engagement settings endpoint with group `streak`.
+Authenticated `GET /ohmylms/v1/engagement/streak` returns the caller's state and daily history (7 dates by default, up to 366 with `history_days`). Authenticated `PUT` changes only the caller's timezone. The REST cookie nonce protections apply normally. Admin settings use the engagement settings endpoint with group `streak` (schema-validated partial updates; contract in [api/gamification.md](api/gamification.md#streak-xp-score-and-mastery-settings)); the new admin app edits them at `#/gamification?tab=streaks`.
 
 ## Enable and rollback
 

@@ -1,17 +1,19 @@
 import { createPlayerState } from './state.js';
 import { validate } from './validation.js';
-import { loadMath, mathEnabled } from '../../src/features/math/loader.mjs';
+import { loadMath, mathEnabled } from '../math-api.js';
+/** @typedef {import('./state.js').QuizContext} QuizContext */
+
 /**
  * Construct the player against a runtime; registration belongs to index.js.
- * @param root0
- * @param root0.getContext
- * @param root0.getElement
- * @param root0.withSyncEvent
- * @param root0.withScope
- * @param root0.isAnswered
- * @param root0.emit
- * @param root0.expire
- * @param root0.inlineSubmit
+ * @param {Object}                                                                              root0               Runtime.
+ * @param {() => QuizContext}                                                                   root0.getContext    `@wordpress/interactivity` getContext.
+ * @param {() => {ref: HTMLElement|null}}                                                       root0.getElement    `@wordpress/interactivity` getElement.
+ * @param {(callback: (event: Event) => void) => (event: Event) => void}                        root0.withSyncEvent `@wordpress/interactivity` withSyncEvent.
+ * @param {(callback: () => void) => () => void}                                                root0.withScope     `@wordpress/interactivity` withScope.
+ * @param {(root: Element, type: string|null|undefined) => boolean}                             root0.isAnswered    SDK `isAnswered()`.
+ * @param {(root: EventTarget, name: string, detail?: Object, cancelable?: boolean) => boolean} root0.emit          SDK `emit()`.
+ * @param {() => unknown}                                                                       root0.expire        Store `expire` action.
+ * @param {(form: HTMLFormElement, operation: string) => unknown}                               root0.inlineSubmit  Store `inlineSubmit` action.
  */
 export function createQuizPlayer( {
 	getContext,
@@ -23,22 +25,30 @@ export function createQuizPlayer( {
 	expire,
 	inlineSubmit,
 } ) {
+	/** @type {WeakMap<Element, boolean>} */
 	const roots = new WeakMap();
 	// Which questions hold an answer, so the step button can switch between Skip and Next. Only the
 	// one-question-per-page layout shows that button, so no other layout tracks it.
+	/** @param {Element} box Question box. */
 	const holdsAnswer = ( box ) => {
 		const type = box
 			.querySelector( '.is-required' )
 			?.getAttribute( 'question-type' );
 		return type ? isAnswered( box, type ) : false;
 	};
+	/** @param {QuizContext} context Player context. */
 	const tracksAnswers = ( context ) =>
 		context.layout === 'one_question_per_page' || context.paperPresentation;
 	// Every question once, when the quiz mounts.
+	/**
+	 * @param {Element}     root    Quiz root.
+	 * @param {QuizContext} context Player context.
+	 */
 	const scanAnswered = ( root, context ) => {
 		if ( ! tracksAnswers( context ) ) {
 			return;
 		}
+		/** @type {Object<string, boolean>} */
 		const answered = {};
 		root.querySelectorAll( '.ohmylms-quiz-box' ).forEach(
 			( box, index ) => {
@@ -48,6 +58,11 @@ export function createQuizPlayer( {
 		context.answered = answered;
 	};
 	// Only the question that changed.
+	/**
+	 * @param {Element}     root    Quiz root.
+	 * @param {QuizContext} context Player context.
+	 * @param {Element}     input   Changed field.
+	 */
 	const markAnswered = ( root, context, input ) => {
 		const number = Number( context.questionNumber );
 		if ( ! tracksAnswers( context ) || ! number ) {
@@ -64,14 +79,20 @@ export function createQuizPlayer( {
 		}
 	};
 	// Exam palette bookkeeping: which questions the learner has opened.
+	/** @param {QuizContext} context Player context. */
 	const visit = ( context ) => {
 		context.visited = {
 			...context.visited,
 			[ context.page ]: true,
 		};
 	};
+	/** @return {HTMLElement} Quiz root of the directive's element (actions run inside it). */
 	const rootOf = () =>
-		getElement().ref.closest( '[data-wp-interactive="ohmylms/quiz"]' );
+		/** @type {HTMLElement} */ (
+			/** @type {HTMLElement} */ ( getElement().ref ).closest(
+				'[data-wp-interactive="ohmylms/quiz"]'
+			)
+		);
 	return {
 		state: createPlayerState( getContext ),
 		actions: {
@@ -86,7 +107,9 @@ export function createQuizPlayer( {
 				const box = boxes.find(
 					( item, index ) => ! c.answered[ index + 1 ]
 				);
-				const target = box || root.querySelector( '.quiz-submit' );
+				const target = /** @type {HTMLElement|null} */ (
+					box || root.querySelector( '.quiz-submit' )
+				);
 				if ( target ) {
 					target.setAttribute( 'tabindex', '-1' );
 					target.focus();
@@ -181,13 +204,18 @@ export function createQuizPlayer( {
 				if ( ! box ) {
 					return;
 				}
-				box.querySelectorAll(
-					'input:not([type=hidden]),textarea,select'
-				).forEach( ( field ) => {
+				/** @type {Array<HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement>} */ ( [
+					...box.querySelectorAll(
+						'input:not([type=hidden]),textarea,select'
+					),
+				] ).forEach( ( field ) => {
 					if ( field.matches( '[type=checkbox],[type=radio]' ) ) {
-						field.checked = false;
+						/** @type {HTMLInputElement} */ ( field ).checked =
+							false;
 					} else if ( field.matches( 'select' ) ) {
-						field.selectedIndex = 0;
+						/** @type {HTMLSelectElement} */ (
+							field
+						).selectedIndex = 0;
 					} else {
 						field.value = '';
 					}
@@ -202,7 +230,9 @@ export function createQuizPlayer( {
 						} )
 					);
 				} );
-				box.querySelectorAll( 'math-field' ).forEach( ( field ) => {
+				/** @type {Array<Element & {value: string}>} */ ( [
+					...box.querySelectorAll( 'math-field' ),
+				] ).forEach( ( field ) => {
 					field.value = '';
 				} );
 				c.answered = {
@@ -270,11 +300,14 @@ export function createQuizPlayer( {
 			} ),
 			submit: withSyncEvent( ( event ) => {
 				event.stopPropagation();
-				const exit = [
+				const form = /** @type {HTMLFormElement} */ ( event.target );
+				const exit = /** @type {Array<string|undefined>} */ ( [
 					'ohmylms-quiz-exit-submission',
 					'ohmylms-quiz-preview-exit',
-				].includes(
-					event.target.querySelector( '[name=action]' )?.value
+				] ).includes(
+					/** @type {HTMLInputElement|null} */ (
+						form.querySelector( '[name=action]' )
+					)?.value
 				);
 				const c = getContext();
 				const root = rootOf();
@@ -315,19 +348,22 @@ export function createQuizPlayer( {
 				c.submitting = true;
 				if ( c.inlineEndpoint ) {
 					event.preventDefault();
-					inlineSubmit( event.target, exit ? 'exit' : 'submit' );
+					inlineSubmit( form, exit ? 'exit' : 'submit' );
 				}
 			} ),
 			answerChanged: withSyncEvent( ( event ) => {
 				event.stopPropagation();
-				const input = event.target;
+				const input =
+					/** @type {HTMLInputElement|HTMLTextAreaElement} */ (
+						event.target
+					);
 				const limit = Number( input.getAttribute( 'data-limit' ) );
 				if ( limit > 0 && input.value.length > limit ) {
 					input.value = input.value.slice( 0, limit );
 				}
-				const hint = input.parentElement.querySelector(
-					'.ohmylms-character-limit-hints'
-				);
+				const hint = /** @type {HTMLElement} */ (
+					input.parentElement
+				).querySelector( '.ohmylms-character-limit-hints' );
 				if ( hint && limit > 0 ) {
 					hint.textContent = `${ input.value.length }/${ limit }`;
 				}
@@ -358,20 +394,25 @@ export function createQuizPlayer( {
 				event.stopPropagation();
 				getContext().exitOpen = false;
 			} ),
+			/** @param {KeyboardEvent} event Keydown. */
 			escape( event ) {
 				if ( event.key === 'Escape' ) {
 					getContext().exitOpen = false;
 				}
 			},
+			/** @param {Event} event Click. */
 			outside( event ) {
 				if (
-					! event.target.closest(
-						'.quiz-alert-wrapper,.quiz-page-close'
+					! (
+						/** @type {Element} */ ( event.target ).closest(
+							'.quiz-alert-wrapper,.quiz-page-close'
+						)
 					)
 				) {
 					getContext().exitOpen = false;
 				}
 			},
+			/** @return {Generator<unknown, void, unknown>} Runtime-driven steps. */
 			*expire() {
 				const c = getContext();
 				if ( c.submitting ) {
@@ -379,9 +420,11 @@ export function createQuizPlayer( {
 				}
 				c.submitting = true;
 				const root = rootOf();
-				const form = root
-					.querySelector( '.ohmylms-quiz-form' )
-					.closest( 'form' );
+				const form = /** @type {HTMLFormElement} */ (
+					/** @type {Element} */ (
+						root.querySelector( '.ohmylms-quiz-form' )
+					).closest( 'form' )
+				);
 				if ( c.inlineEndpoint ) {
 					yield inlineSubmit( form, 'timeout' );
 					return;
@@ -390,18 +433,25 @@ export function createQuizPlayer( {
 					HTMLFormElement.prototype.submit.call( form );
 					return;
 				}
-				const body = new URLSearchParams( new FormData( form ) );
+				const body = new URLSearchParams(
+					/** @type {?} */ ( new FormData( form ) )
+				);
 				body.set( 'action', 'ohmylms_quiz_exit_submission' );
-				body.set( 'content_id', c.quizId );
-				body.set( 'attempt_id', c.attemptId );
+				body.set( 'content_id', String( c.quizId ) );
+				body.set( 'attempt_id', String( c.attemptId ) );
 				body.set( 'nonce', c.expiryNonce );
 				try {
-					const response = yield fetch( c.ajaxUrl, {
-						method: 'POST',
-						credentials: 'same-origin',
-						body,
-					} );
-					const result = yield response.json();
+					const response = /** @type {Response} */ (
+						yield fetch( c.ajaxUrl, {
+							method: 'POST',
+							credentials: 'same-origin',
+							body,
+						} )
+					);
+					const result =
+						/** @type {{success?: boolean, data?: {url?: string}}} */ (
+							yield response.json()
+						);
 					if (
 						! response.ok ||
 						! result.success ||
@@ -425,7 +475,7 @@ export function createQuizPlayer( {
 		},
 		callbacks: {
 			mount() {
-				const root = getElement().ref;
+				const root = /** @type {HTMLElement} */ ( getElement().ref );
 				if ( roots.has( root ) ) {
 					return;
 				}
@@ -434,12 +484,14 @@ export function createQuizPlayer( {
 				if (
 					mathEnabled() &&
 					( root.querySelector( '.ohmylms-expression-input' ) ||
-						root.textContent.includes( '[[ohmylms-math:' ) )
+						root.textContent.includes( '[[ohmylms-math:' ) ||
+						/\\[([]|\$\S/.test( root.textContent ) )
 				) {
 					loadMath()
 						.then( ( runtime ) => runtime.renderContent( root ) )
 						.catch( () => {} );
 				}
+				/** @type {number|undefined} */
 				let timer;
 				const scopedExpire = withScope( () => expire() );
 				if ( c.timed ) {

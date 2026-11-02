@@ -8,6 +8,22 @@ export interface MergeTag {
 	description: string;
 }
 
+/** Text fields an administrator can customize; the others keep their translated default. */
+export type TextField =
+	| 'subject'
+	| 'heading'
+	| 'additional_content'
+	| 'button_text'
+	| 'button_link'
+	| 'footer_text'
+	| 'course_suggestion_text';
+
+/** Default text of each field in the administrator's language; `course_suggestion_text` is `null` when the email has none. */
+export type EmailDefaults = Record<
+	Exclude< TextField, 'course_suggestion_text' >,
+	string
+> & { course_suggestion_text: string | null };
+
 /** One system email as the REST API returns it. */
 export interface EmailTemplate {
 	id: string;
@@ -25,6 +41,10 @@ export interface EmailTemplate {
 	course_suggestion_text: string | null;
 	recipient_email: string[];
 	tags: MergeTag[];
+	/** What each field is when it is not customized. */
+	defaults: EmailDefaults;
+	/** Whether each field holds saved text (sent as written) instead of the translated default. */
+	customized: Record< TextField, boolean >;
 }
 
 /** Fields the editor changes. */
@@ -42,12 +62,10 @@ export interface EmailDraft {
 
 export type DraftField = keyof EmailDraft;
 
-/** Request body of the update, preview and test routes. */
+/** Request body of the update, preview and test routes. `null` for a text field means "use the default". */
 export type EmailInput = Partial<
-	Omit<
-		EmailTemplate,
-		'id' | 'title' | 'description' | 'tags' | 'recipient_type'
-	>
+	Pick< EmailTemplate, 'enabled' | 'recipient_email' > &
+		Record< TextField, string | null >
 >;
 
 export type ButtonPosition = 'left' | 'center' | 'right';

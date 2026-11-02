@@ -7,14 +7,17 @@ function feature( overrides: Partial< FeatureDefinition > ): FeatureDefinition {
 		id: 'x',
 		title: 'X',
 		path: '/x',
+		group: 'content',
+		tab: 'x',
 		component: lazy( () => Promise.resolve( { default: () => null } ) ),
 		...overrides,
 	};
 }
 
 describe( 'feature registry', () => {
-	it( 'registers the home demo feature and is itself valid', () => {
-		expect( features.map( ( item ) => item.id ) ).toContain( 'home' );
+	it( 'is itself valid, with the Dashboard first and no demo home screen', () => {
+		expect( features[ 0 ]?.id ).toBe( 'dashboard' );
+		expect( features.map( ( item ) => item.id ) ).not.toContain( 'home' );
 		expect( findRegistryProblems( features ) ).toEqual( [] );
 	} );
 
@@ -31,6 +34,25 @@ describe( 'feature registry', () => {
 			'Duplicate feature path "/a".',
 			'Feature "b" must have an absolute path without wildcards.',
 			'Feature "c" must have an absolute path without wildcards.',
+		] );
+	} );
+
+	it( 'reports addresses that cannot work', () => {
+		expect(
+			findRegistryProblems( [
+				feature( { id: 'no-tab', path: '/a', tab: undefined } ),
+				feature( { id: 'dash-tab', path: '/b', group: 'dashboard' } ),
+				feature( { id: 'slot', path: '/c/:id/:view' } ),
+				feature( {
+					id: 'mapped',
+					path: '/d/:id/:tab?',
+					params: { tab: 'view' },
+				} ),
+			] )
+		).toEqual( [
+			'Feature "no-tab" needs a tab, except on the Dashboard.',
+			'Feature "dash-tab" needs a tab, except on the Dashboard.',
+			'Feature "slot" must map its ":view" parameter in params.',
 		] );
 	} );
 

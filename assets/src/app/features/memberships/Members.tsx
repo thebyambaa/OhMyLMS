@@ -1,10 +1,9 @@
 import { Notice } from '@wordpress/components';
-import { useState } from '@wordpress/element';
+import { useCallback } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
-import { Table } from '../../../ui/Table';
-import { Pagination } from '../../components/Pagination';
+import { ListTable } from '../../../ui/ListTable';
+import { usePagedList } from '../../hooks/usePagedList';
 import { listMembers } from './api';
-import { usePagedList } from './usePagedList';
 
 /**
  * Read-only, paged list of the people on a plan. Membership is changed where it is sold (checkout and
@@ -14,11 +13,12 @@ import { usePagedList } from './usePagedList';
  * @param props.id Plan id.
  */
 export function Members( { id }: { id: number } ) {
-	const [ page, setPage ] = useState( 1 );
-	const list = usePagedList(
-		( signal ) => listMembers( id, page, signal ),
-		[ id, page ]
+	const load = useCallback(
+		( page: number, _search: string, signal: AbortSignal ) =>
+			listMembers( id, page, signal ),
+		[ id ]
 	);
+	const list = usePagedList( load, { keepPrevious: true } );
 	const date = ( value: string | null ) =>
 		value ? new Date( value ).toLocaleDateString() : '-';
 	return (
@@ -32,13 +32,20 @@ export function Members( { id }: { id: number } ) {
 			{ list.loading && (
 				<p role="status">{ __( 'Loading members…', 'ohmylms' ) }</p>
 			) }
-			{ ! list.loading && ! list.error && ! list.data.items.length && (
-				<p>{ __( 'This plan has no members yet.', 'ohmylms' ) }</p>
-			) }
-			{ ! list.loading && list.data.items.length > 0 && (
-				<>
-					<p role="status">
-						{ sprintf(
+			{ ! list.loading && ! list.error && (
+				<ListTable
+					caption={ __( 'Plan members', 'ohmylms' ) }
+					rows={ list.data.items }
+					rowKey={ ( member ) => member.id }
+					emptyMessage={ __(
+						'This plan has no members yet.',
+						'ohmylms'
+					) }
+					pagination={ {
+						page: list.page,
+						totalPages: list.data.totalPages,
+						totalItems: list.data.total,
+						itemsLabel: sprintf(
 							/* translators: %d: number of members. */
 							_n(
 								'%d member.',
@@ -47,44 +54,41 @@ export function Members( { id }: { id: number } ) {
 								'ohmylms'
 							),
 							list.data.total
-						) }
-					</p>
-					<Table caption={ __( 'Plan members', 'ohmylms' ) } striped>
-						<thead>
-							<tr>
-								{ [
-									__( 'Name', 'ohmylms' ),
-									__( 'Email', 'ohmylms' ),
-									__( 'Status', 'ohmylms' ),
-									__( 'Started', 'ohmylms' ),
-									__( 'Ends', 'ohmylms' ),
-								].map( ( title ) => (
-									<th key={ title } scope="col">
-										{ title }
-									</th>
-								) ) }
-							</tr>
-						</thead>
-						<tbody>
-							{ list.data.items.map( ( member ) => (
-								<tr key={ member.id }>
-									<th scope="row">{ member.display_name }</th>
-									<td>{ member.email }</td>
-									<td>{ member.status }</td>
-									<td>{ date( member.start_date ) }</td>
-									<td>{ date( member.end_date ) }</td>
-								</tr>
-							) ) }
-						</tbody>
-					</Table>
-				</>
+						),
+						onChange: list.setPage,
+					} }
+					columns={ [
+						{
+							id: 'name',
+							label: __( 'Name', 'ohmylms' ),
+							primary: true,
+							render: ( member ) => (
+								<strong>{ member.display_name }</strong>
+							),
+						},
+						{
+							id: 'email',
+							label: __( 'Email', 'ohmylms' ),
+							render: ( member ) => member.email,
+						},
+						{
+							id: 'status',
+							label: __( 'Status', 'ohmylms' ),
+							render: ( member ) => member.status,
+						},
+						{
+							id: 'start',
+							label: __( 'Started', 'ohmylms' ),
+							render: ( member ) => date( member.start_date ),
+						},
+						{
+							id: 'end',
+							label: __( 'Ends', 'ohmylms' ),
+							render: ( member ) => date( member.end_date ),
+						},
+					] }
+				/>
 			) }
-			<Pagination
-				page={ page }
-				pages={ list.data.totalPages }
-				busy={ list.loading }
-				onChange={ setPage }
-			/>
 		</section>
 	);
 }

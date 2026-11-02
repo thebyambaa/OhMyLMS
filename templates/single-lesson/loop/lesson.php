@@ -25,15 +25,15 @@ $get_type   = $lesson->get_type();
 $is_active  = $lesson_id == $current_id ? 'active' : '';
 
 
-$type = $lesson->get_type();
+$lesson_type = $lesson->get_type();
 
 $content_type = get_post_meta( $lesson_id, '_content_type', true );
 
 if ( 'session' === $content_type ) {
-	$type = 'session';
+	$lesson_type = 'session';
 }
 
-switch ( $type ) {
+switch ( $lesson_type ) {
 	case 'video':
 		$icon_class = 'type-video';
 		break;
@@ -65,8 +65,8 @@ if ( $_course_id && function_exists( 'apply_filters' ) ) {
 
 <li class="lesson-item 
 <?php
-echo $icon_class . ' ';
-echo $is_active;
+echo esc_attr( $icon_class ) . ' ';
+echo esc_attr( $is_active );
 ?>
 <?php echo esc_attr( $is_lesson_locked ? ' lesson-locked' : '' ); ?>">
 	<a href="<?php echo esc_url( $is_lesson_locked ? '#' : esc_url( $lesson->get_permalink() ) ); ?>"

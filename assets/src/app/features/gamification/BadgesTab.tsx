@@ -1,6 +1,7 @@
 import { Button, Notice, Spinner } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
+import { ListTable } from '../../../ui/ListTable';
 import { BadgeEditor } from './BadgeEditor';
 import { ConfirmDelete } from './ConfirmDelete';
 import { ToggleField } from './fields';
@@ -87,112 +88,87 @@ export function BadgesTab( {
 							{ __( 'Add badge', 'ohmylms' ) }
 						</Button>
 					</p>
-					{ 0 === resource.items.length ? (
-						<p>
-							{ __(
-								'No badges yet. Add a badge and choose when learners earn it.',
-								'ohmylms'
-							) }
-						</p>
-					) : (
-						<table className="widefat striped">
-							<caption className="screen-reader-text">
-								{ __( 'Badges', 'ohmylms' ) }
-							</caption>
-							<thead>
-								<tr>
-									<th scope="col">
-										{ __( 'Badge', 'ohmylms' ) }
-									</th>
-									<th scope="col">
-										{ __( 'Awarded when', 'ohmylms' ) }
-									</th>
-									<th scope="col">
-										{ __( 'Learners', 'ohmylms' ) }
-									</th>
-									<th scope="col">
-										{ __( 'Actions', 'ohmylms' ) }
-									</th>
-								</tr>
-							</thead>
-							<tbody>
-								{ resource.items.map( ( badge ) => (
-									<tr key={ badge.slug }>
-										<th scope="row">
-											{ badge.image_url && (
-												<img
-													src={ badge.image_url }
-													alt=""
-													width={ 32 }
-													height={ 32 }
-												/>
-											) }{ ' ' }
-											<span
-												style={ { color: badge.color } }
-											>
-												{ badge.name }
-											</span>
-										</th>
-										<td>
-											{ 'streak' === badge.award_source
-												? __(
-														'By a learning streak milestone',
-														'ohmylms'
+					<ListTable
+						caption={ __( 'Badges', 'ohmylms' ) }
+						rows={ resource.items }
+						rowKey={ ( badge ) => badge.slug }
+						fixed={ false }
+						emptyMessage={ __(
+							'No badges yet. Add a badge and choose when learners earn it.',
+							'ohmylms'
+						) }
+						columns={ [
+							{
+								id: 'badge',
+								label: __( 'Badge', 'ohmylms' ),
+								primary: true,
+								render: ( badge ) => (
+									<strong>
+										{ badge.image_url && (
+											<img
+												src={ badge.image_url }
+												alt=""
+												width={ 32 }
+												height={ 32 }
+											/>
+										) }{ ' ' }
+										<span style={ { color: badge.color } }>
+											{ badge.name }
+										</span>
+									</strong>
+								),
+							},
+							{
+								id: 'criteria',
+								label: __( 'Awarded when', 'ohmylms' ),
+								render: ( badge ) =>
+									'streak' === badge.award_source
+										? __(
+												'By a learning streak milestone',
+												'ohmylms'
+											)
+										: badge.criteria
+												.map( ( criterion ) =>
+													describeCriterion(
+														criterion,
+														options?.metrics ?? []
 													)
-												: badge.criteria
-														.map( ( criterion ) =>
-															describeCriterion(
-																criterion,
-																options?.metrics ??
-																	[]
-															)
-														)
-														.join( '; ' ) }
-										</td>
-										<td>{ badge.earned_count }</td>
-										<td>
-											<Button
-												variant="link"
-												onClick={ () =>
-													setDialog( {
-														kind: 'edit',
-														badge,
-													} )
-												}
-												aria-label={ sprintf(
-													/* translators: %s: badge name. */
-													__( 'Edit %s', 'ohmylms' ),
-													badge.name
-												) }
-											>
-												{ __( 'Edit', 'ohmylms' ) }
-											</Button>{ ' ' }
-											<Button
-												variant="link"
-												isDestructive
-												onClick={ () =>
-													setDialog( {
-														kind: 'delete',
-														badge,
-													} )
-												}
-												aria-label={ sprintf(
-													/* translators: %s: badge name. */
-													__(
-														'Delete %s',
-														'ohmylms'
-													),
-													badge.name
-												) }
-											>
-												{ __( 'Delete', 'ohmylms' ) }
-											</Button>
-										</td>
-									</tr>
-								) ) }
-							</tbody>
-						</table>
-					) }
+												)
+												.join( '; ' ),
+							},
+							{
+								id: 'learners',
+								label: __( 'Learners', 'ohmylms' ),
+								className: 'num',
+								render: ( badge ) => badge.earned_count,
+							},
+						] }
+						rowActions={ ( badge ) => [
+							{
+								key: 'edit',
+								label: __( 'Edit', 'ohmylms' ),
+								ariaLabel: sprintf(
+									/* translators: %s: badge name. */
+									__( 'Edit %s', 'ohmylms' ),
+									badge.name
+								),
+								onClick: () =>
+									setDialog( { kind: 'edit', badge } ),
+							},
+							{
+								key: 'delete',
+								label: __( 'Delete', 'ohmylms' ),
+								destructive: true,
+								ariaLabel: sprintf(
+									/* translators: %s: badge name. */
+									__( 'Delete %s', 'ohmylms' ),
+									badge.name
+								),
+								onClick: () =>
+									setDialog( { kind: 'delete', badge } ),
+							},
+						] }
+					/>
 				</>
 			) }
 			{ dialog?.kind === 'edit' && (
