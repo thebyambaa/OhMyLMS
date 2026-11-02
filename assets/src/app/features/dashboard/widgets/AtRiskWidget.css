@@ -54,26 +54,6 @@
 	font-size: 12px;
 }
 
-.ohmylms-app .ohmylms-at-risk__badge {
-	border-radius: var(--oml-radius-control);
-	display: inline-block;
-	font-size: 11px;
-	font-weight: 600;
-	line-height: 1.6;
-	padding: 0 var(--oml-space-2);
-	white-space: nowrap;
-}
-
-.ohmylms-app .ohmylms-at-risk__badge.is-high {
-	background: var(--oml-danger-soft);
-	color: var(--oml-danger-text);
-}
-
-.ohmylms-app .ohmylms-at-risk__badge.is-watch {
-	background: var(--oml-warning-soft);
-	color: var(--oml-warning-text);
-}
-
 .ohmylms-app .ohmylms-at-risk__action {
 	flex: 0 0 auto;
 	text-align: end;

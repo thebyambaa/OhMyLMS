@@ -218,31 +218,45 @@ final class Frontend {
 							setup_postdata( $old_post ); }
 						echo '</article>';
 						if ( ! $item['complete'] ) {
-							?>
-						<button type="button" class="ohmylms-button" data-complete-placement="<?php echo esc_attr( $item['id'] ); ?>"><?php esc_html_e( 'Mark activity complete', 'ohmylms' ); ?></button><p class="ohmylms-learning-message" role="status"></p>
-							<?php
+							$ohmylms_complete_button = \OhMyLMS\Design\Ui::button(
+								__( 'Mark activity complete', 'ohmylms' ),
+								array(
+									'variant' => 'primary',
+									'class'   => 'ohmylms-button',
+									'attrs'   => array( 'data-complete-placement' => (string) $item['id'] ),
+								)
+							);
+							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::button() escapes its label and attributes.
+							echo $ohmylms_complete_button;
+							echo '<p class="ohmylms-learning-message" role="status"></p>';
 						} else {
 							echo '<p>' . esc_html__( 'Activity completed in this course', 'ohmylms' ) . '</p>'; }
 					}
 					break;
 				}
 				if ( ! $found ) {
-					echo '<p>' . esc_html__( 'Learning activity not found.', 'ohmylms' ) . '</p>'; }
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::empty_state() escapes its title.
+					echo \OhMyLMS\Design\Ui::empty_state( __( 'Learning activity not found.', 'ohmylms' ) );
+				}
 			} else {
 				$next = LearningPath::next( $state );
 				if ( $next ) {
-					?>
-				<p><a class="ohmylms-button" href="<?php echo esc_url( $next['url'] ); ?>">
-					<?php
-					echo esc_html(
-						sprintf( /* translators: %s: text value. */
+					echo '<p>';
+					$ohmylms_continue_button = \OhMyLMS\Design\Ui::button(
+						sprintf(
+							/* translators: %s: text value. */
 							__( 'Continue with %s', 'ohmylms' ),
 							$next['name']
+						),
+						array(
+							'variant' => 'primary',
+							'href'    => $next['url'],
+							'class'   => 'ohmylms-button',
 						)
 					);
-					?>
-				</a></p>
-					<?php
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::button() escapes its label and attributes.
+					echo $ohmylms_continue_button;
+					echo '</p>';
 				}
 				if ( 'skill-based' === $program['mode'] ) {
 					self::outcomes( $program, $state['blocked'] ); }

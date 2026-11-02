@@ -1,5 +1,6 @@
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
+import { Badge } from '../../../../ui/Badge';
 import { formatNumber } from '../model';
 import { useWidget } from '../shell/useWidget';
 import { WidgetCard } from '../shell/WidgetCard';
@@ -11,6 +12,13 @@ import type {
 } from './CourseHealthModel';
 import type { DashboardWidgetProps } from './registry';
 import './CourseHealthWidget.css';
+
+function bandTone( band: HealthBand ): 'success' | 'warning' | 'danger' {
+	if ( 'good' === band ) {
+		return 'success';
+	}
+	return 'fair' === band ? 'warning' : 'danger';
+}
 
 const WIDTH = 240;
 const HEIGHT = 140;
@@ -228,11 +236,12 @@ export default function CourseHealthWidget( {
 									return (
 										<tr key={ course.id }>
 											<th scope="row">
-												<span
+												<Badge
+													tone={ bandTone( band ) }
 													className={ `ohmylms-course-health__band is-${ band }` }
 												>
 													{ bandLabel( band ) }
-												</span>{ ' ' }
+												</Badge>{ ' ' }
 												{ course.report ? (
 													<Link to={ course.report }>
 														{ course.title }

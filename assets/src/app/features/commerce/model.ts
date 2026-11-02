@@ -110,6 +110,32 @@ export function statusLabel( status: string ): string {
 	}
 }
 
+/**
+ * Badge tone for an order status. Undefined yields the neutral badge style.
+ *
+ * @param status Status from the API.
+ * @return Tone for `Badge`, or undefined for neutral.
+ */
+export function orderStatusTone(
+	status: string
+): 'success' | 'warning' | 'danger' | 'info' | undefined {
+	switch ( status ) {
+		case 'pending':
+		case 'on-hold':
+			return 'warning';
+		case 'processing':
+			return 'info';
+		case 'completed':
+			return 'success';
+		case 'failed':
+			return 'danger';
+		case 'cancelled':
+		case 'refunded':
+		default:
+			return undefined;
+	}
+}
+
 export function paymentLabel( id: string ): string {
 	switch ( id ) {
 		case 'offline':

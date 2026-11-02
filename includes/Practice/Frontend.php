@@ -91,9 +91,18 @@ final class Frontend {
 		?>
 		<section id="ohmylms-exam" class="ohmylms-guidance-card ohmylms-exam" aria-labelledby="ohmylms-exam-title">
 			<h3 id="ohmylms-exam-title"><?php esc_html_e( 'Preparing for', 'ohmylms' ); ?></h3>
-			<?php if ( $error ) { ?>
-				<p class="ohmylms-exam-error" role="alert"><?php echo esc_html( $error ); ?></p>
-			<?php } ?>
+			<?php
+			if ( $error ) {
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::alert() escapes the message.
+				echo \OhMyLMS\Design\Ui::alert(
+					$error,
+					array(
+						'tone'  => 'danger',
+						'class' => 'ohmylms-exam-error',
+					)
+				);
+			}
+			?>
 			<?php if ( $exam ) { ?>
 				<p class="ohmylms-exam-summary">
 					<strong><?php echo esc_html( $exam['syllabus']['name'] ); ?></strong>
@@ -242,7 +251,20 @@ final class Frontend {
 							);
 							?>
 								</td>
-							<td><a class="ohmylms-button" href="<?php echo esc_url( add_query_arg( 'ohmylms_practice', $skill['id'], home_url( '/' ) ) ); ?>"><?php esc_html_e( 'Practice', 'ohmylms' ); ?></a></td>
+							<td>
+							<?php
+							$ohmylms_practice_button = \OhMyLMS\Design\Ui::button(
+								__( 'Practice', 'ohmylms' ),
+								array(
+									'variant' => 'primary',
+									'href'    => add_query_arg( 'ohmylms_practice', $skill['id'], home_url( '/' ) ),
+									'class'   => 'ohmylms-button',
+								)
+							);
+							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::button() escapes its label and attributes.
+							echo $ohmylms_practice_button;
+							?>
+							</td>
 						</tr>
 					<?php } ?>
 					</tbody>
@@ -254,7 +276,18 @@ final class Frontend {
 					<h3><?php esc_html_e( 'My study note', 'ohmylms' ); ?></h3>
 					<p><?php esc_html_e( 'A short note written by AI about your skills. It explains your levels; it never changes them.', 'ohmylms' ); ?></p>
 					<p class="ohmylms-ai-note-text" role="status" aria-live="polite"></p>
-					<button type="button" class="ohmylms-button"><?php esc_html_e( 'Write my study note', 'ohmylms' ); ?></button>
+					<?php
+					$ohmylms_study_note_button = \OhMyLMS\Design\Ui::button(
+						__( 'Write my study note', 'ohmylms' ),
+						array(
+							'variant' => 'primary',
+							'type'    => 'button',
+							'class'   => 'ohmylms-button',
+						)
+					);
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::button() escapes its label and attributes.
+					echo $ohmylms_study_note_button;
+					?>
 				</div>
 				<?php wp_enqueue_script( 'ohmylms-performance-note', plugins_url( 'assets/js/performance-note.js', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/js/performance-note.js' ), true ); ?>
 			<?php } ?>
@@ -432,9 +465,20 @@ final class Frontend {
 									</p>
 								<?php } ?>
 								<span class="ohmylms-recommendation-links">
-									<?php if ( $item['practice_id'] ) { ?>
-										<a class="ohmylms-button" href="<?php echo esc_url( $practice( $item['practice_id'] ) ); ?>"><?php esc_html_e( 'Practice', 'ohmylms' ); ?></a>
-									<?php } ?>
+									<?php
+									if ( $item['practice_id'] ) {
+										$ohmylms_rec_practice_button = \OhMyLMS\Design\Ui::button(
+											__( 'Practice', 'ohmylms' ),
+											array(
+												'variant' => 'primary',
+												'href'    => $practice( $item['practice_id'] ),
+												'class'   => 'ohmylms-button',
+											)
+										);
+										// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::button() escapes its label and attributes.
+										echo $ohmylms_rec_practice_button;
+									}
+									?>
 									<?php foreach ( $item['lessons'] as $lesson ) { ?>
 										<a href="<?php echo esc_url( $lesson['url'] ); ?>"><?php echo esc_html( $lesson['title'] ); ?></a>
 									<?php } ?>

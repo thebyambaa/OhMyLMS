@@ -1,3 +1,4 @@
+import { Badge } from '../../../ui/Badge';
 import { ListTable } from '../../../ui/ListTable';
 import { Button, Notice } from '@wordpress/components';
 import { useCallback } from '@wordpress/element';
@@ -8,9 +9,18 @@ import { statusViews } from '../../components/listViews';
 import { useRequest } from '../../hooks/useRequest';
 import { getAssignment, listSubmissions } from './api';
 import { formatDate, submissionLabel } from './model';
-import type { SubmissionFilter } from './types';
+import type { Submission, SubmissionFilter } from './types';
 
 const FILTERS: readonly SubmissionFilter[] = [ 'all', 'submitted', 'graded' ];
+
+function submissionStatusTone(
+	status: Submission[ 'status' ]
+): 'warning' | 'success' | undefined {
+	if ( 'submitted' === status ) {
+		return 'warning';
+	}
+	return 'graded' === status ? 'success' : undefined;
+}
 
 function routeId( value: string | undefined ): number | null {
 	return value && /^[1-9]\d*$/.test( value ) ? Number( value ) : null;
@@ -165,7 +175,13 @@ export default function SubmissionsPage() {
 						{
 							id: 'status',
 							label: __( 'Status', 'ohmylms' ),
-							render: ( item ) => submissionLabel( item ),
+							render: ( item ) => (
+								<Badge
+									tone={ submissionStatusTone( item.status ) }
+								>
+									{ submissionLabel( item ) }
+								</Badge>
+							),
 						},
 						{
 							id: 'score',

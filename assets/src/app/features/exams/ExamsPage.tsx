@@ -1,3 +1,4 @@
+import { Badge } from '../../../ui/Badge';
 import { ListTable } from '../../../ui/ListTable';
 import {
 	Button,
@@ -40,12 +41,17 @@ import {
 } from './model';
 import type {
 	DryRunReport,
+	ExamStatus,
 	ImportStart,
 	ImportTarget,
 	StatusFilter,
 } from './types';
 
 type Dialog = 'new' | 'import' | null;
+
+function postStatusTone( status: ExamStatus ): 'success' | undefined {
+	return 'publish' === status ? 'success' : undefined;
+}
 
 const NO_FILTERS: ExamFilters = { search: '', status: 'all' };
 
@@ -529,7 +535,11 @@ export default function ExamsPage() {
 						{
 							id: 'status',
 							label: __( 'Status', 'ohmylms' ),
-							render: ( exam ) => statusLabel( exam.status ),
+							render: ( exam ) => (
+								<Badge tone={ postStatusTone( exam.status ) }>
+									{ statusLabel( exam.status ) }
+								</Badge>
+							),
 						},
 						{
 							id: 'questions',

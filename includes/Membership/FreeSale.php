@@ -81,13 +81,31 @@ final class FreeSale {
 			return;
 		}
 		if ( ! is_user_logged_in() ) {
-			echo '<a class="oml-hub-button ohmylms-button" href="' . esc_url( wp_login_url( Hub::url( 'membership', 'plans' ) ) ) . '">' . esc_html__( 'Sign in for free access', 'ohmylms' ) . '</a>';
+			$ohmylms_signin_button = \OhMyLMS\Design\Ui::button(
+				__( 'Sign in for free access', 'ohmylms' ),
+				array(
+					'variant' => 'primary',
+					'href'    => wp_login_url( Hub::url( 'membership', 'plans' ) ),
+					'class'   => 'oml-hub-button ohmylms-button',
+				)
+			);
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::button() escapes its label and attributes.
+			echo $ohmylms_signin_button;
 			return;
 		}
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		wp_nonce_field( 'ohmylms_free_membership_' . $plan->get_id() );
 		echo '<input type="hidden" name="action" value="ohmylms_free_membership"><input type="hidden" name="membership_id" value="' . esc_attr( $plan->get_id() ) . '">';
-		echo '<button type="submit" class="oml-hub-button ohmylms-button">' . esc_html__( 'Start free access', 'ohmylms' ) . '</button></form>';
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::button() escapes its label and attributes.
+		echo \OhMyLMS\Design\Ui::button(
+			__( 'Start free access', 'ohmylms' ),
+			array(
+				'variant' => 'primary',
+				'type'    => 'submit',
+				'class'   => 'oml-hub-button ohmylms-button',
+			)
+		);
+		echo '</form>';
 		echo '<p>' . esc_html__( 'Access ends on the sale end date. No payment or automatic renewal.', 'ohmylms' ) . '</p>';
 	}
 

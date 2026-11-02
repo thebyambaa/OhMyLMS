@@ -30,8 +30,8 @@
 .theme-blocksy.ohmylms-page .ohmylms-checkout-form-wrapper input[type=password]):focus,
 .theme-blocksy.ohmylms-page .ohmylms-checkout-form-wrapper fieldset.wc-stripe-elements-field:focus,
 .theme-blocksy.ohmylms-page .ohmylms-checkout-form-wrapper .ff-inherit-theme-style .ff-el-form-control:not([size]):not([multiple]):focus {
-    color: #52525b;
-    border-color: #ebebef;
+    color: var(--oml-text, #52525b);
+    border-color: var(--oml-border, #ebebef);
     background-color: transparent;
 }
 

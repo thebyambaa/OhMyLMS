@@ -13,5 +13,5 @@
 .theme-hello-elementor.ohmylms-page .ohmylms-checkout-form-wrapper input[type=url]:focus,
 .theme-hello-elementor.ohmylms-page .ohmylms-checkout-form-wrapper select:focus,
 .theme-hello-elementor.ohmylms-page .ohmylms-checkout-form-wrapper textarea:focus {
-    border-color: #ebebef;
+    border-color: var(--oml-border, #ebebef);
 }

@@ -63,9 +63,18 @@ $order_status  = $order ? $order->get_status() : '';
 								</div>
 
 								<div class="ohmylms-btn-area">
-									<a href="<?php echo esc_url( ohmylms_get_page_permalink( 'checkout' ) ); ?>" class="ohmylms-button">
-										<?php echo esc_html__( 'Return To Checkout', 'ohmylms' ); ?>
-									</a>
+									<?php
+									$ohmylms_checkout_button = \OhMyLMS\Design\Ui::button(
+										__( 'Return To Checkout', 'ohmylms' ),
+										array(
+											'variant' => 'primary',
+											'href'    => ohmylms_get_page_permalink( 'checkout' ),
+											'class'   => 'ohmylms-button',
+										)
+									);
+									// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::button() escapes its label and attributes.
+									echo $ohmylms_checkout_button;
+									?>
 								</div>
 							<?php else : ?>
 								<span class="thakyou-icon">
@@ -110,14 +119,22 @@ $order_status  = $order ? $order->get_status() : '';
 								</div>
 								<?php if ( 'completed' === $order_status ) : ?>
 								<div class="ohmylms-btn-area">
-									<a href="<?php echo esc_url( $dashboard_url ); ?>" class="ohmylms-button">
-										<?php
-										printf( /* translators: %s: text value. */
-											esc_html__( 'Access To Your %s', 'ohmylms' ),
-											esc_html( $item_object_name )
-										);
-										?>
-									</a>
+									<?php
+									$ohmylms_access_button = \OhMyLMS\Design\Ui::button(
+										sprintf(
+											/* translators: %s: text value. */
+											__( 'Access To Your %s', 'ohmylms' ),
+											$item_object_name
+										),
+										array(
+											'variant' => 'primary',
+											'href'    => $dashboard_url,
+											'class'   => 'ohmylms-button',
+										)
+									);
+									// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::button() escapes its label and attributes.
+									echo $ohmylms_access_button;
+									?>
 								</div>
 								<?php endif; ?>
 							<?php endif; ?>

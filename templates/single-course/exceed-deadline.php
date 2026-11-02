@@ -12,8 +12,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-?>
-
-<a href="<?php echo esc_url( '#' ); ?>" class="ohmylms-button ohmylms-button-disabled">
-	<?php echo esc_html__( 'Enrollment Closed', 'ohmylms' ); ?>
-</a>
+// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::button() escapes its label and attributes.
+echo \OhMyLMS\Design\Ui::button(
+	__( 'Enrollment Closed', 'ohmylms' ),
+	array(
+		'variant'  => 'primary',
+		'href'     => '#',
+		'class'    => 'ohmylms-button ohmylms-button-disabled',
+		'disabled' => true,
+	)
+);

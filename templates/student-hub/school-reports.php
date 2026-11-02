@@ -20,7 +20,14 @@ try {
 		$report_class = SchoolReports::classroom( $school_id, $report_class_id );
 	}
 } catch ( \RuntimeException $report_error ) {
-	echo '<p class="oml-hub-notice is-error" role="alert">' . esc_html__( 'This class is not available in this school.', 'ohmylms' ) . '</p>';
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::alert() escapes the message.
+	echo \OhMyLMS\Design\Ui::alert(
+		__( 'This class is not available in this school.', 'ohmylms' ),
+		array(
+			'tone'  => 'danger',
+			'class' => 'oml-hub-notice is-error',
+		)
+	);
 	return;
 }
 ?>

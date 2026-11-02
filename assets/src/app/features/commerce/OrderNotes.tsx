@@ -1,6 +1,7 @@
 import { Button, Notice, TextareaControl } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import { EmptyState } from '../../../ui/EmptyState';
 import { addNote } from './api';
 import { useNotes } from './hooks';
 import { NOTE_MAX_LENGTH, formatDate, validateNote } from './model';
@@ -48,7 +49,7 @@ export function OrderNotes( { orderId }: { orderId: number } ) {
 				<p role="status">{ __( 'Loading notes…', 'ohmylms' ) }</p>
 			) }
 			{ notes.data && ! notes.data.length && (
-				<p>{ __( 'No notes yet.', 'ohmylms' ) }</p>
+				<EmptyState title={ __( 'No notes yet.', 'ohmylms' ) } />
 			) }
 			{ !! notes.data?.length && (
 				<ul aria-label={ __( 'Order notes', 'ohmylms' ) }>

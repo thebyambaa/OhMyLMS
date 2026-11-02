@@ -70,17 +70,26 @@ final class AccessPolicy {
 									<span class="denied-icon">
 										<svg class="ohmylms-verification-icon" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
 									</span>
-									<h4 class="ohmylms-access-denied-title">
-										<?php esc_html_e( 'Please verify your email', 'ohmylms' ); ?>
-									</h4>
-									<p class="ohmylms-access-denied-description">
-										<?php esc_html_e( 'Check your inbox and click the verification link to access course content.', 'ohmylms' ); ?>
-									</p>
-									<p class="ohmylms-verification-resend-row">
-										<a class="ohmylms-verification-resend" href="<?php echo esc_url( $resend_url ); ?>">
-											<?php esc_html_e( 'Resend verification email', 'ohmylms' ); ?>
-										</a>
-									</p>
+									<?php
+									$ohmylms_resend_button = \OhMyLMS\Design\Ui::button(
+										__( 'Resend verification email', 'ohmylms' ),
+										array(
+											'variant' => 'primary',
+											'href'    => $resend_url,
+											'class'   => 'ohmylms-verification-resend',
+										)
+									);
+									$ohmylms_verify_empty  = \OhMyLMS\Design\Ui::empty_state(
+										__( 'Please verify your email', 'ohmylms' ),
+										array(
+											'description'  => __( 'Check your inbox and click the verification link to access course content.', 'ohmylms' ),
+											'actions_html' => $ohmylms_resend_button,
+											'class'        => 'ohmylms-access-denied-empty',
+										)
+									);
+									// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui helpers escape text; resend link URL is escaped.
+									echo $ohmylms_verify_empty;
+									?>
 								</div>
 							</div>
 						</div>

@@ -8,6 +8,7 @@ import {
 } from '@wordpress/components';
 import { useCallback, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
+import { EmptyState } from '../../../ui/EmptyState';
 import { ListTable } from '../../../ui/ListTable';
 import { useOperation } from '../../hooks/useOperation';
 import { useRequest } from '../../hooks/useRequest';
@@ -370,7 +371,9 @@ function Submissions( { item }: { item: SchoolClass } ) {
 						] }
 					/>
 				) : (
-					<p>{ __( 'No written submissions yet.', 'ohmylms' ) }</p>
+					<EmptyState
+						title={ __( 'No written submissions yet.', 'ohmylms' ) }
+					/>
 				) ) }
 			{ open && (
 				<GradeForm

@@ -34,7 +34,7 @@
 
 .theme-woostify.ohmylms-page .ohmylms-course-reviews-form #commentform #comment {
     border-radius: 14px;
-    border: 1px solid #EBECED;
+    border: 1px solid var(--oml-border, #EBECED);
     padding: 14px 20px;
     font-size: 14px;
 }

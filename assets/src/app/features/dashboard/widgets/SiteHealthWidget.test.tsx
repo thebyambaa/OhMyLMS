@@ -125,6 +125,6 @@ describe( 'site health widget', () => {
 		);
 		expect(
 			screen.getByRole( 'progressbar', { name: '1 of 3 done' } )
-		).toHaveAttribute( 'value', '1' );
+		).toHaveAttribute( 'aria-valuenow', '33' );
 	} );
 } );

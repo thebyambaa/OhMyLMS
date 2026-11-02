@@ -18,7 +18,7 @@
     justify-content: center;
     gap: 7px;
     padding: 7px 20px;
-    color: #fff;
+    color: var(--oml-on-primary, #fff);
     border-radius: 10px;
     background-color: var(--ohmylms-primary-color);
     border: 1px solid transparent;
@@ -39,8 +39,8 @@
 .theme-thrive-theme.ohmylms-page .ohmylms-course-reviews-form .comment-form #submit:disabled {
     pointer-events: none;
     cursor: not-allowed;
-    background: #BBCAEC;
-    border-color: #BBCAEC;
+    background: var(--oml-primary-soft, #BBCAEC);
+    border-color: var(--oml-primary-soft, #BBCAEC);
 }
 
 
@@ -50,7 +50,7 @@
     box-sizing: border-box;
 }
 .theme-thrive-theme.ohmylms-page .ohmylms-checkout-form-outer {
-    background-color: #fff;
+    background-color: var(--oml-surface, #fff);
 }
 
 .theme-thrive-theme.ohmylms-page .ohmylms-checkout-form-wrapper {

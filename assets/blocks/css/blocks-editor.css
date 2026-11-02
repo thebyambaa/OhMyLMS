@@ -23,7 +23,7 @@
 }
 
 .ohmylms-checkout-block-preview h4 {
-	color: #1e1e1e;
+	color: var(--oml-heading, #1e1e1e);
 	font-size: 16px;
 	font-weight: 600;
 }
@@ -45,8 +45,8 @@
 }
 
 .ohmylms-checkout-block-preview input:focus {
-	border-color: #007cba !important;
-	box-shadow: 0 0 0 2px rgba(0, 124, 186, 0.1);
+	border-color: var(--oml-focus, #007cba) !important;
+	box-shadow: 0 0 0 2px color-mix(in srgb, var(--oml-focus, #007cba) 10%, transparent);
 }
 
 .ohmylms-checkout-block-preview button:hover {
@@ -77,7 +77,7 @@
 
 /* Category icon */
 .editor-block-list-item-ohmylms .editor-block-list-item-icon {
-	color: #2196F3;
+	color: var(--oml-primary, #2196F3);
 }
 /* Dashboard block in editor */
 .wp-block-ohmylms-dashboard .components-server-side-render,
@@ -92,7 +92,7 @@
 }
 
 .ohmylms-dashboard-block-preview h4 {
-	color: #1e1e1e;
+	color: var(--oml-heading, #1e1e1e);
 	font-size: 16px;
 	font-weight: 600;
 }

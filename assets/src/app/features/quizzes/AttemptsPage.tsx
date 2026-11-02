@@ -1,3 +1,4 @@
+import { Badge } from '../../../ui/Badge';
 import { ListTable } from '../../../ui/ListTable';
 import { Button, Notice } from '@wordpress/components';
 import { useEffect, useState } from '@wordpress/element';
@@ -7,7 +8,16 @@ import { statusViews } from '../../components/listViews';
 import { AttemptReview } from './AttemptReview';
 import { attemptStatusLabel, formatDate, formatMarks } from './model';
 import { useAttempts } from './useAttempts';
-import type { AttemptFilters } from './types';
+import type { AttemptFilters, AttemptStatus } from './types';
+
+function attemptStatusTone(
+	status: AttemptStatus
+): 'info' | 'warning' | 'success' {
+	if ( 'in-progress' === status ) {
+		return 'info';
+	}
+	return 'in-review' === status ? 'warning' : 'success';
+}
 
 function routeId( value: string | undefined ): number | null {
 	return value && /^[1-9]\d*$/.test( value ) ? Number( value ) : null;
@@ -152,8 +162,13 @@ export default function AttemptsPage() {
 						{
 							id: 'status',
 							label: __( 'Status', 'ohmylms' ),
-							render: ( item ) =>
-								attemptStatusLabel( item.status ),
+							render: ( item ) => (
+								<Badge
+									tone={ attemptStatusTone( item.status ) }
+								>
+									{ attemptStatusLabel( item.status ) }
+								</Badge>
+							),
 						},
 						{
 							id: 'score',

@@ -4,6 +4,7 @@ import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
 import { normalizeApiError } from '../../../lib/api';
 import type { ApiError } from '../../../lib/api';
+import { Badge } from '../../../../ui/Badge';
 import { describeWidgetError } from '../shell/errors';
 import { useWidget } from '../shell/useWidget';
 import { WidgetCard } from '../shell/WidgetCard';
@@ -190,11 +191,16 @@ export default function AtRiskWidget( { context }: DashboardWidgetProps ) {
 										) : (
 											<strong>{ learner.name }</strong>
 										) }{ ' ' }
-										<span
-											className={ `ohmylms-at-risk__badge is-${ learner.level }` }
+										<Badge
+											tone={
+												'high' === learner.level
+													? 'danger'
+													: 'warning'
+											}
+											className="ohmylms-at-risk__badge"
 										>
 											{ levelLabel( learner.level ) }
-										</span>
+										</Badge>
 									</span>
 									<span className="ohmylms-at-risk__reasons">
 										{ learner.summary }

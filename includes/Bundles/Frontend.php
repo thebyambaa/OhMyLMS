@@ -137,7 +137,21 @@ final class Frontend {
 								$row['title']
 							);
 							?>
-							<button type="button" class="ohmylms-button" data-bundle-follow="<?php echo esc_attr( (int) $row['id'] ); ?>" aria-label="<?php echo esc_attr( $ohmylms_aria_label ); ?>"><?php esc_html_e( 'Add to my dashboard', 'ohmylms' ); ?></button>
+							<?php
+							$ohmylms_follow_button = \OhMyLMS\Design\Ui::button(
+								__( 'Add to my dashboard', 'ohmylms' ),
+								array(
+									'variant' => 'primary',
+									'class'   => 'ohmylms-button',
+									'attrs'   => array(
+										'data-bundle-follow' => (string) (int) $row['id'],
+										'aria-label' => $ohmylms_aria_label,
+									),
+								)
+							);
+							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::button() escapes its label and attributes.
+							echo $ohmylms_follow_button;
+							?>
 						</li>
 					<?php } ?>
 				</ul>
@@ -296,7 +310,20 @@ final class Frontend {
 					$bundle['title']
 				);
 				?>
-				<button type="button" class="ohmylms-button ohmylms-button-secondary" data-bundle-unfollow="<?php echo esc_attr( (int) $bundle['id'] ); ?>" aria-label="<?php echo esc_attr( $ohmylms_aria_label ); ?>"><?php esc_html_e( 'Remove from dashboard', 'ohmylms' ); ?></button>
+				<?php
+				$ohmylms_unfollow_button = \OhMyLMS\Design\Ui::button(
+					__( 'Remove from dashboard', 'ohmylms' ),
+					array(
+						'class' => 'ohmylms-button ohmylms-button-secondary',
+						'attrs' => array(
+							'data-bundle-unfollow' => (string) (int) $bundle['id'],
+							'aria-label'           => $ohmylms_aria_label,
+						),
+					)
+				);
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::button() escapes its label and attributes.
+				echo $ohmylms_unfollow_button;
+				?>
 			</header>
 			<?php
 			if ( '' !== $bundle['description'] ) {

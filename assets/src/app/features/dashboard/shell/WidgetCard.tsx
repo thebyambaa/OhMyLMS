@@ -2,6 +2,7 @@ import { Button, Notice, Spinner } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import type { ReactNode } from 'react';
 import type { ApiError } from '../../../lib/api';
+import { EmptyState } from '../../../../ui/EmptyState';
 import { describeWidgetError, isWidgetErrorRetryable } from './errors';
 
 /**
@@ -74,7 +75,7 @@ export function WidgetCard( {
 						<Spinner /> { __( 'Loading…', 'ohmylms' ) }
 					</p>
 				) }
-				{ empty ? <p>{ empty }</p> : children }
+				{ empty ? <EmptyState title={ empty } /> : children }
 			</div>
 		</section>
 	);

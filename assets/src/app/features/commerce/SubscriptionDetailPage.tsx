@@ -3,11 +3,14 @@ import { Button, Modal, Notice } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Link, useParams } from 'react-router-dom';
+import { Badge } from '../../../ui/Badge';
+import { EmptyState } from '../../../ui/EmptyState';
 import { normalizeApiError } from '../../lib/api';
 import {
 	formatDate,
 	formatMoney,
 	orderPath,
+	orderStatusTone,
 	parseOrderId,
 	paymentLabel,
 	statusLabel,
@@ -284,7 +287,15 @@ function Subscription( { id }: { id: number } ) {
 									<td>
 										{ formatDate( order.date_created ) }
 									</td>
-									<td>{ statusLabel( order.status ) }</td>
+									<td>
+										<Badge
+											tone={ orderStatusTone(
+												order.status
+											) }
+										>
+											{ statusLabel( order.status ) }
+										</Badge>
+									</td>
 									<td>
 										{ formatMoney(
 											order.total,
@@ -318,7 +329,7 @@ function Subscription( { id }: { id: number } ) {
 						) ) }
 					</ul>
 				) : (
-					<p>{ __( 'No notes yet.', 'ohmylms' ) }</p>
+					<EmptyState title={ __( 'No notes yet.', 'ohmylms' ) } />
 				) }
 			</section>
 

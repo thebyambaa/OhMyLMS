@@ -340,7 +340,16 @@ final class ViewAs {
 				__( 'Viewing and acting as %s', 'ohmylms' ),
 				wp_get_current_user()->display_name
 			)
-		) . ' <button type="button">' . esc_html__( 'Return to admin', 'ohmylms' ) . '</button><span role="alert"></span></div>';
+		);
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::button() escapes its attributes and label.
+		echo ' ' . \OhMyLMS\Design\Ui::button(
+			__( 'Return to admin', 'ohmylms' ),
+			array(
+				'variant' => 'tertiary',
+				'class'   => 'ohmylms-view-as-return',
+			)
+		);
+		echo '<span role="alert"></span></div>';
 		echo '<script>(function(c){const b=document.getElementById("ohmylms-view-as-banner"),x=b.querySelector("button");x.onclick=async function(){x.disabled=true;try{const r=await fetch(c.url,{method:"POST",credentials:"same-origin",headers:{"X-WP-Nonce":c.nonce}}),d=await r.json();if(!r.ok)throw Error(d.message);location.href=d.url;}catch(e){b.querySelector("span").textContent=e.message;x.disabled=false;}};})(' . wp_json_encode( $config, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ) . ');</script>';
 	}
 }

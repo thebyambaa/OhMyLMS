@@ -196,7 +196,16 @@ final class Player {
 		} else {
 			$text = __( 'Your teacher will release the results. You will get an email when they are ready.', 'ohmylms' );
 		}
-		return '<section class="ohmylms-exam-results is-pending" aria-labelledby="ohmylms-exam-results-title" data-exam="' . (int) $id . '"><h2 id="ohmylms-exam-results-title">' . esc_html__( 'Results pending', 'ohmylms' ) . '</h2><p>' . esc_html( $text ) . '</p></section>';
+		return '<section class="ohmylms-exam-results is-pending" aria-labelledby="ohmylms-exam-results-title" data-exam="' . (int) $id . '"><h2 id="ohmylms-exam-results-title">' . esc_html__( 'Results pending', 'ohmylms' ) . '</h2>'
+			. \OhMyLMS\Design\Ui::alert(
+				$text,
+				array(
+					'tone'  => 'info',
+					'role'  => 'status',
+					'class' => 'ohmylms-exam-results-pending',
+				)
+			)
+			. '</section>';
 	}
 
 	/** Serve a private PDF or an exam document with unchanged engine templates. */
@@ -255,12 +264,14 @@ final class Player {
 		wp_enqueue_style( 'ohmylms-exam-player', plugins_url( 'assets/css/exam-player.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/exam-player.css' ) );
 		ob_start();
 		if ( $error ) {
-			echo '<p role="alert">' . esc_html( $error->get_error_message() ) . '</p>';
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::alert() escapes the message.
+			echo \OhMyLMS\Design\Ui::alert( $error->get_error_message(), array( 'tone' => 'danger' ) );
 		}
 		if ( $attempt ) {
 			$access = Submission::access( $quiz_id, get_current_user_id() );
 			if ( is_wp_error( $access ) ) {
-				echo '<p>' . esc_html( $access->get_error_message() ) . '</p>';
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::alert() escapes the message.
+				echo \OhMyLMS\Design\Ui::alert( $access->get_error_message(), array( 'tone' => 'warning' ) );
 			} else {
 				// Exams written in the builder have no source PDF to open.
 				if ( empty( $data['composed'] ) ) {
@@ -271,7 +282,8 @@ final class Player {
 		} else {
 			$attempts = $quiz->get_all_quiz_attempts( get_current_user_id(), $data['course_id'] );
 			if ( $attempts ) {
-				echo '<p role="status">' . esc_html__( 'Your exam has been submitted.', 'ohmylms' ) . '</p>';
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::alert() escapes the message.
+				echo \OhMyLMS\Design\Ui::alert( __( 'Your exam has been submitted.', 'ohmylms' ), array( 'tone' => 'success' ) );
 				usort(
 					$attempts,
 					static function ( $left, $right ) {

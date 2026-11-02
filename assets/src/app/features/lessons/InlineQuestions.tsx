@@ -3,6 +3,7 @@ import { useCallback, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
 import { WidefatTable } from '../../components/WidefatTable';
+import { EmptyState } from '../../../ui/EmptyState';
 import { useRequest } from '../../hooks/useRequest';
 import {
 	listQuestions,
@@ -283,9 +284,12 @@ export default function InlineQuestions( {
 					</tbody>
 				</WidefatTable>
 			) : (
-				<p>
-					{ __( 'This lesson has no inline questions.', 'ohmylms' ) }
-				</p>
+				<EmptyState
+					title={ __(
+						'This lesson has no inline questions.',
+						'ohmylms'
+					) }
+				/>
 			) }
 			<TextControl
 				label={ __( 'Find an approved practice question', 'ohmylms' ) }

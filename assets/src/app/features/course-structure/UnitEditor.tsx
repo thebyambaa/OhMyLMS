@@ -7,6 +7,7 @@ import {
 import { useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
+import { Badge } from '../../../ui/Badge';
 import type { ResourceType } from './api';
 import type { Activity, Unit } from './model';
 import { unitKey } from './reorder';
@@ -221,11 +222,11 @@ export function UnitEditor( {
 									name
 								) }
 							</span>{ ' ' }
-							<span
-								className={ `oml-badge oml-outline-item-type oml-outline-item-type-${ item.type }` }
+							<Badge
+								className={ `oml-outline-item-type oml-outline-item-type-${ item.type }` }
 							>
 								{ TYPE_LABELS[ item.type ]?.() ?? item.type }
-							</span>
+							</Badge>
 							<span className="oml-outline-item-tools">
 								{ units.length > 1 && (
 									<SelectControl< string >

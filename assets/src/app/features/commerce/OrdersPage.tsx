@@ -1,3 +1,4 @@
+import { Badge } from '../../../ui/Badge';
 import {
 	ListTable,
 	ListTableInput,
@@ -14,6 +15,7 @@ import {
 	formatDate,
 	formatMoney,
 	orderPath,
+	orderStatusTone,
 	paymentLabel,
 	statusLabel,
 	validateDateRange,
@@ -233,7 +235,11 @@ export default function OrdersPage() {
 						{
 							id: 'status',
 							label: __( 'Status', 'ohmylms' ),
-							render: ( item ) => statusLabel( item.status ),
+							render: ( item ) => (
+								<Badge tone={ orderStatusTone( item.status ) }>
+									{ statusLabel( item.status ) }
+								</Badge>
+							),
 						},
 						{
 							id: 'payment',

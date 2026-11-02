@@ -10,6 +10,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
+import { EmptyState } from '../../../ui/EmptyState';
 import { useListQuery } from '../../components/listQuery';
 import {
 	PageTitleAction,
@@ -232,7 +233,9 @@ export default function CurriculumPage() {
 					) ) }
 			</ul>
 			{ ! request.loading && ! request.error && ! items.length && (
-				<p>{ __( 'No curriculum items yet.', 'ohmylms' ) }</p>
+				<EmptyState
+					title={ __( 'No curriculum items yet.', 'ohmylms' ) }
+				/>
 			) }
 			<h2>
 				{ editing

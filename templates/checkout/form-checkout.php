@@ -35,7 +35,18 @@ if ( ! is_user_logged_in() && ! $checkout->is_allow_purchase_without_login() ) {
 					)
 				);
 			} else {
-				printf( '<p><a class="ohmylms-button" href="%1$s">%2$s</a></p>', esc_url( wp_login_url( ohmylms_get_checkout_url() ) ), esc_html__( 'Log in', 'ohmylms' ) );
+				echo '<p>';
+				$ohmylms_login_button = \OhMyLMS\Design\Ui::button(
+					__( 'Log in', 'ohmylms' ),
+					array(
+						'variant' => 'primary',
+						'href'    => wp_login_url( ohmylms_get_checkout_url() ),
+						'class'   => 'ohmylms-button',
+					)
+				);
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::button() escapes its label and attributes.
+				echo $ohmylms_login_button;
+				echo '</p>';
 			}
 			?>
 		</div>

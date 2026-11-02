@@ -1,5 +1,6 @@
 import { __, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
+import { Progress } from '../../../../ui/Progress';
 import { useWidget } from '../shell/useWidget';
 import { WidgetCard } from '../shell/WidgetCard';
 import { parseSiteHealth } from './SiteHealthModel';
@@ -86,11 +87,15 @@ export default function SiteHealthWidget( { context }: DashboardWidgetProps ) {
 							</li>
 						) ) }
 					</ul>
-					<progress
+					<Progress
 						className="ohmylms-site-health__progress"
-						value={ data.passed }
-						max={ Math.max( 1, data.total ) }
-						aria-label={ done }
+						value={
+							( data.passed / Math.max( 1, data.total ) ) * 100
+						}
+						label={ done ?? '' }
+						tone={
+							data.passed === data.total ? 'success' : undefined
+						}
 					/>
 				</>
 			) }

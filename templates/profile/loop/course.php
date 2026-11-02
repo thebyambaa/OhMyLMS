@@ -61,15 +61,34 @@ $certificate_url = get_current_user_id() === (int) $student->get_id() ? $student
 
 	<div class="ohmylms-btn-area">
 		<?php if ( $student->is_course_in_progress( $course->get_id() ) || ( $student->maybe_enrolled( $course->get_id() ) && ! $student->is_course_completed( $course->get_id() ) ) ) : ?>
-			<?php if ( $student->get_course_completed_points( $course->get_id() ) > 0 ) : ?>
-				<a href="<?php echo esc_url( $student->get_course_resume_url( $course->get_id() ) ); ?>" class="ohmylms-button" aria-label="Resume course">
-					Resume Course
-				</a>
-			<?php else : ?>
-				<a href="<?php echo esc_url( $student->get_course_resume_url( $course->get_id() ) ); ?>" class="ohmylms-button" aria-label="Resume course">
-					Start Course
-				</a>
-			<?php endif; ?>
+			<?php
+			$resume_url = $student->get_course_resume_url( $course->get_id() );
+			if ( $student->get_course_completed_points( $course->get_id() ) > 0 ) {
+				$ohmylms_resume_button = \OhMyLMS\Design\Ui::button(
+					__( 'Resume Course', 'ohmylms' ),
+					array(
+						'variant' => 'primary',
+						'href'    => $resume_url,
+						'class'   => 'ohmylms-button',
+						'attrs'   => array( 'aria-label' => __( 'Resume course', 'ohmylms' ) ),
+					)
+				);
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::button() escapes its label and attributes.
+				echo $ohmylms_resume_button;
+			} else {
+				$ohmylms_start_button = \OhMyLMS\Design\Ui::button(
+					__( 'Start Course', 'ohmylms' ),
+					array(
+						'variant' => 'primary',
+						'href'    => $resume_url,
+						'class'   => 'ohmylms-button',
+						'attrs'   => array( 'aria-label' => __( 'Resume course', 'ohmylms' ) ),
+					)
+				);
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::button() escapes its label and attributes.
+				echo $ohmylms_start_button;
+			}
+			?>
 		<?php endif; ?>
 
 		<?php if ( $certificate_url ) : ?>
