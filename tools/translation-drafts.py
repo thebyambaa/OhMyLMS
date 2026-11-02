@@ -3,6 +3,11 @@
 
   python tools/translation-drafts.py export --po languages/ohmylms-mn.po --out <dir> [--chunks 8]
   python tools/translation-drafts.py import --po languages/ohmylms-mn.po --drafts <dir>
+  python tools/translation-drafts.py approve --po languages/ohmylms-mn.po
+
+`approve` marks every fuzzy draft as reviewed (clears `fuzzy` and the previous-msgid lines) when its
+translation is complete and keeps the source's {tokens}, HTML tags and printf placeholders; run it after
+a native speaker has read the PO.
 
 `export` writes `glossary.json` (short strings that already have a reviewed translation) and
 `chunk-NN.json` files: [{"key", "msgctxt", "msgid", "msgid_plural", "flags", "references",
@@ -135,6 +140,30 @@ def import_drafts(args):
         print("  rejected", line)
 
 
+def approve(args):
+    po = polib.pofile(args.po)
+    approved = 0
+    problems = []
+    for entry in po:
+        if entry.obsolete or "fuzzy" not in entry.flags:
+            continue
+        sources = [entry.msgid, entry.msgid_plural] if entry.msgid_plural else [entry.msgid]
+        forms = [entry.msgstr_plural.get(0, ""), entry.msgstr_plural.get(1, "")] if entry.msgid_plural else [entry.msgstr]
+        formatted = bool(FORMAT_FLAGS & set(entry.flags))
+        if not all(f.strip() for f in forms) or any(
+            signature(src, formatted) != signature(form, formatted) for src, form in zip(sources, forms)
+        ):
+            problems.append(entry.msgid[:70])
+            continue
+        entry.flags = [f for f in entry.flags if f != "fuzzy"]
+        entry.previous_msgctxt = entry.previous_msgid = entry.previous_msgid_plural = None
+        approved += 1
+    po.save(args.po)
+    print(f"approved {approved} reviewed drafts; {len(problems)} kept fuzzy (empty or placeholder mismatch)")
+    for line in problems[:40]:
+        print("  kept fuzzy", repr(line))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest="command", required=True)
@@ -145,8 +174,10 @@ def main():
     i = sub.add_parser("import")
     i.add_argument("--po", required=True)
     i.add_argument("--drafts", required=True)
+    a = sub.add_parser("approve")
+    a.add_argument("--po", required=True)
     args = parser.parse_args()
-    (export if args.command == "export" else import_drafts)(args)
+    {"export": export, "import": import_drafts, "approve": approve}[args.command](args)
 
 
 if __name__ == "__main__":

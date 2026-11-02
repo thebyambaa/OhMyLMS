@@ -507,6 +507,7 @@ New Gutenberg blocks for Student Dashboard, My Courses, and Student Profile page
 = 1.2.22 =
 🚀 New Features
 
+- Added: The full Mongolian translation is live after a native review (13,819 strings; previously only the admin menu, dashboard, learner pages and checkout were).
 - Added: Mongolian interface language. Learners switch between English and Монгол in the learner header, profile and Student Hub (or with `[ohmylms_language_switcher]`); visitors without a choice follow their browser language. Staff use Users › Profile › Language. The switcher can be turned off in Settings › General.
 - Added: Emails are written in each recipient's language, and an email template stores only the fields an administrator changed (with "Reset to default" per field).
 - Changed: The learner front end runs on the WordPress Interactivity API: catalog search and filters, account and profile, login, sign-up and reviews, the lesson and assignment player, video, carousels, checkout and the exam paper. jQuery and the Slick carousel are no longer loaded on learner pages.
