@@ -199,9 +199,7 @@ describe( 'needs attention widget', () => {
 		);
 		show();
 		expect(
-			await screen.findByText(
-				'Nothing needs your attention right now.'
-			)
+			await screen.findByText( 'Nothing needs your attention right now.' )
 		).toBeInTheDocument();
 		expect(
 			screen.getByText( 'Everything else is on track.' )
