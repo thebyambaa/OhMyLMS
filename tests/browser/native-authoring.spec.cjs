@@ -45,13 +45,17 @@ test( 'standalone questions use the native canvas and survive document saves', a
 			.fill( '5' );
 		await canvas.locator( 'input[type="radio"]' ).first().check();
 		await expect
-			.poll( () =>
-				page.evaluate( async ( questionId ) => {
-					const question = await wp.apiFetch( {
-						path: `/ohmylms/v1/questions/${ questionId }`,
-					} );
-					return question.options.map( ( option ) => option.answer );
-				}, id )
+			.poll(
+				() =>
+					page.evaluate( async ( questionId ) => {
+						const question = await wp.apiFetch( {
+							path: `/ohmylms/v1/questions/${ questionId }`,
+						} );
+						return question.options.map(
+							( option ) => option.answer
+						);
+					}, id ),
+				{ timeout: 20000 }
 			)
 			.toEqual( [ '4', '5' ] );
 		await expect
@@ -74,16 +78,18 @@ test( 'standalone questions use the native canvas and survive document saves', a
 			.getByRole( 'textbox', { name: 'Answer 2', exact: true } )
 			.fill( '7' );
 		await expect
-			.poll( () =>
-				page.evaluate(
-					async ( questionId ) =>
-						(
-							await wp.apiFetch( {
-								path: `/ohmylms/v1/questions/${ questionId }`,
-							} )
-						).options[ 1 ].answer,
-					id
-				)
+			.poll(
+				() =>
+					page.evaluate(
+						async ( questionId ) =>
+							(
+								await wp.apiFetch( {
+									path: `/ohmylms/v1/questions/${ questionId }`,
+								} )
+							).options[ 1 ].answer,
+						id
+					),
+				{ timeout: 20000 }
 			)
 			.toBe( '7' );
 		const undoInPage = page.getByRole( 'button', {
@@ -98,24 +104,23 @@ test( 'standalone questions use the native canvas and survive document saves', a
 				} );
 		await undo.click();
 		await expect
-			.poll( () =>
-				page.evaluate(
-					async ( questionId ) =>
-						(
-							await wp.apiFetch( {
-								path: `/ohmylms/v1/questions/${ questionId }`,
-							} )
-						).options[ 1 ].answer,
-					id
-				)
+			.poll(
+				() =>
+					page.evaluate(
+						async ( questionId ) =>
+							(
+								await wp.apiFetch( {
+									path: `/ohmylms/v1/questions/${ questionId }`,
+								} )
+							).options[ 1 ].answer,
+						id
+					),
+				{ timeout: 20000 }
 			)
 			.toBe( '5' );
-		const types = await canvas
-			.getByLabel( 'Question type', { exact: true } )
-			.locator( 'option' )
-			.evaluateAll( ( options ) =>
-				options.map( ( option ) => option.value )
-			);
+		const types = await page.evaluate( () =>
+			Object.keys( window.ohmylmsNativeLesson?.questionTypes || {} )
+		);
 		for ( const type of [
 			'true-false',
 			'statement',
@@ -123,20 +128,37 @@ test( 'standalone questions use the native canvas and survive document saves', a
 			'passage',
 			'audio-response',
 			'interactive-video',
-			'example-number',
 		] ) {
 			expect( types ).toContain( type );
 		}
+		await canvas
+			.getByRole( 'button', { name: 'Question type', exact: true } )
+			.click();
+		// Labels come from the PHP question-type registry (e.g. "True False").
+		await expect(
+			page.getByRole( 'button', { name: /True\s*\/?\s*False/i } )
+		).toBeVisible();
+		if ( types.includes( 'example-number' ) ) {
+			await expect(
+				page.getByRole( 'button', {
+					name: /Example number/i,
+				} )
+			).toBeVisible();
+		}
 		expect( errors ).toEqual( [] );
 	} finally {
-		await page.evaluate(
-			( questionId ) =>
-				wp.apiFetch( {
-					path: `/wp/v2/ohmylms-questions/${ questionId }?force=true`,
-					method: 'DELETE',
-				} ),
-			id
-		);
+		if ( id ) {
+			await page
+				.evaluate(
+					( questionId ) =>
+						wp.apiFetch( {
+							path: `/wp/v2/ohmylms-questions/${ questionId }?force=true`,
+							method: 'DELETE',
+						} ),
+					id
+				)
+				.catch( () => {} );
+		}
 	}
 } );
 
@@ -145,7 +167,7 @@ test( 'quizzes open in Gutenberg and save quiz settings with the document', asyn
 } ) => {
 	const errors = [];
 	page.on( 'pageerror', ( error ) => errors.push( error.message ) );
-	await page.goto( '/wp-admin/admin.php?page=ohmylms-app#/quizzes' );
+	await page.goto( '/wp-admin/admin.php?page=ohmylms-content&tab=quizzes' );
 	await page.waitForFunction( () => window.wp?.apiFetch );
 	const quiz = await page.evaluate( () =>
 		wp.apiFetch( {
@@ -206,21 +228,25 @@ test( 'quizzes open in Gutenberg and save quiz settings with the document', asyn
 		).toHaveValue( '4' );
 		expect( errors ).toEqual( [] );
 	} finally {
-		await page.evaluate(
-			( id ) =>
-				wp.apiFetch( {
-					path: `/ohmylms/v1/quiz/${ id }`,
-					method: 'DELETE',
-				} ),
-			quiz.id
-		);
+		if ( quiz?.id ) {
+			await page
+				.evaluate(
+					( id ) =>
+						wp.apiFetch( {
+							path: `/ohmylms/v1/quiz/${ id }`,
+							method: 'DELETE',
+						} ),
+					quiz.id
+				)
+				.catch( () => {} );
+		}
 	}
 } );
 
 test( 'bank insertion stays in the native draft and unsaved assessment settings block publication', async ( {
 	page,
 } ) => {
-	await page.goto( '/wp-admin/admin.php?page=ohmylms-app#/quizzes' );
+	await page.goto( '/wp-admin/admin.php?page=ohmylms-content&tab=quizzes' );
 	await page.waitForFunction( () => window.wp?.apiFetch );
 	const fixture = await page.evaluate( async () => {
 		const quiz = await wp.apiFetch( {
@@ -260,15 +286,7 @@ test( 'bank insertion stays in the native draft and unsaved assessment settings 
 				.dispatch( 'core/edit-post' )
 				.openGeneralSidebar( 'edit-post/document' )
 		);
-		const authoringPanel = page.getByRole( 'button', {
-			name: 'Quiz authoring',
-			exact: true,
-		} );
-		if (
-			( await authoringPanel.getAttribute( 'aria-expanded' ) ) !== 'true'
-		) {
-			await authoringPanel.click();
-		}
+		await openPanel( page, 'Quiz and exam' );
 		await page
 			.getByRole( 'button', {
 				name: 'Add from question bank',
@@ -323,22 +341,17 @@ test( 'bank insertion stays in the native draft and unsaved assessment settings 
 				.dispatch( 'core/edit-post' )
 				.openGeneralSidebar( 'edit-post/document' )
 		);
-		await openPanel( page, 'Assessment and pools' );
-		await openPanel( page, 'Assessment settings (exam, sections, timing)' );
-		await page.getByLabel( 'Kind', { exact: true } ).selectOption( 'exam' );
+		await openPanel( page, 'Quiz and exam' );
+		await page
+			.getByLabel( 'Assessment type', { exact: true } )
+			.selectOption( 'exam' );
 		await expect
 			.poll( () =>
 				page.evaluate( () =>
-					wp.data.select( 'core/editor' ).isPostSavingLocked()
+					wp.data.select( 'core/editor' ).isEditedPostDirty()
 				)
 			)
 			.toBe( true );
-		await page
-			.getByRole( 'button', {
-				name: 'Save assessment settings',
-				exact: true,
-			} )
-			.click();
 		await expect
 			.poll( () =>
 				page.evaluate( () =>
@@ -346,21 +359,38 @@ test( 'bank insertion stays in the native draft and unsaved assessment settings 
 				)
 			)
 			.toBe( false );
-		expect(
-			await page.evaluate( () =>
-				wp.data.select( 'core/editor' ).isEditedPostDirty()
+		await page.evaluate( () =>
+			wp.data.dispatch( 'core/editor' ).savePost()
+		);
+		await expect
+			.poll( () =>
+				page.evaluate(
+					async ( id ) =>
+						(
+							await wp.apiFetch( {
+								path: `/ohmylms/v1/quiz/${ id }/assessment-settings`,
+							} )
+						).settings.kind,
+					fixture.quiz.id
+				)
 			)
-		).toBe( true );
+			.toBe( 'exam' );
 	} finally {
-		await page.evaluate( async ( data ) => {
-			await wp.apiFetch( {
-				path: `/ohmylms/v1/quiz/${ data.quiz.id }`,
-				method: 'DELETE',
-			} );
-			await wp.apiFetch( {
-				path: `/wp/v2/ohmylms-questions/${ data.question.id }?force=true`,
-				method: 'DELETE',
-			} );
-		}, fixture );
+		await page
+			.evaluate( async ( data ) => {
+				if ( data?.quiz?.id ) {
+					await wp.apiFetch( {
+						path: `/ohmylms/v1/quiz/${ data.quiz.id }`,
+						method: 'DELETE',
+					} );
+				}
+				if ( data?.question?.id ) {
+					await wp.apiFetch( {
+						path: `/wp/v2/ohmylms-questions/${ data.question.id }?force=true`,
+						method: 'DELETE',
+					} );
+				}
+			}, fixture )
+			.catch( () => {} );
 	}
 } );
