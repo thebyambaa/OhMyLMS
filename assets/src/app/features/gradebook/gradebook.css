@@ -287,21 +287,12 @@
 	min-width: 12rem;
 }
 
-.ohmylms-app .ohmylms-gradebook-bar {
-	background: var(--oml-background);
-	border: 1px solid var(--oml-border);
-	display: inline-block;
-	height: 10px;
+.ohmylms-app .ohmylms-gradebook-skills .ohmylms-gradebook-bar.oml-progress {
+	flex: 0 0 200px;
 	width: 200px;
 }
 
-.ohmylms-app .ohmylms-gradebook-bar__fill {
-	background: var(--wp-admin-theme-color);
-	display: block;
-	height: 100%;
-}
-
-.ohmylms-app .ohmylms-gradebook-bar__fill.is-attempted {
+.ohmylms-app .ohmylms-gradebook-bar.is-attempted .oml-progress-bar {
 	background: var(--oml-warning);
 }
 

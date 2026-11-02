@@ -2,6 +2,8 @@ import { Button } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
+import { EmptyState } from '../../../ui/EmptyState';
+import { Progress } from '../../../ui/Progress';
 import { WidefatTable } from '../../components/WidefatTable';
 import { findLearners, getTranscript } from './api';
 import { CellDialog } from './CellDialog';
@@ -356,18 +358,17 @@ export default function TranscriptPage() {
 										<span className="ohmylms-gradebook-skills__name">
 											{ skill.name }
 										</span>
-										<span
-											className="ohmylms-gradebook-bar"
-											role="img"
-											aria-label={ `${ formatPercent( skill.percent ) }` }
-										>
-											<span
-												className={ `ohmylms-gradebook-bar__fill is-${ skill.level }` }
-												style={ {
-													width: `${ Math.max( 0, Math.min( 100, skill.percent ) ) }%`,
-												} }
-											/>
-										</span>
+										<Progress
+											className={ `ohmylms-gradebook-bar is-${ skill.level }` }
+											value={ skill.percent }
+											label={ `${ skill.name }: ${ formatPercent( skill.percent ) }` }
+											tone={
+												'mastered' === skill.level ||
+												'proficient' === skill.level
+													? 'success'
+													: 'primary'
+											}
+										/>
 										<span>
 											{ data.mastery.levels.find(
 												( level ) =>
@@ -379,9 +380,13 @@ export default function TranscriptPage() {
 								) ) }
 							</ul>
 						) : (
-							<p className="ohmylms-gradebook-muted">
-								{ __( 'No skill evidence yet.', 'ohmylms' ) }
-							</p>
+							<EmptyState
+								className="ohmylms-gradebook-muted"
+								title={ __(
+									'No skill evidence yet.',
+									'ohmylms'
+								) }
+							/>
 						) }
 					</div>
 				</div>

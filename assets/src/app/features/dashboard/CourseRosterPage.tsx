@@ -2,7 +2,9 @@ import { Button, Modal, Notice, TextControl } from '@wordpress/components';
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useParams } from 'react-router-dom';
+import { Badge } from '../../../ui/Badge';
 import { ListTable } from '../../../ui/ListTable';
+import { Progress } from '../../../ui/Progress';
 import { statusViews } from '../../components/listViews';
 import { normalizeApiError } from '../../lib/api';
 import { useCourseStudents } from './hooks';
@@ -20,7 +22,18 @@ import {
 	validateEmail,
 } from './roster';
 import type { ReminderTemplate } from './roster';
-import type { StudentProgressFilter } from './types';
+import type { CourseStudent, StudentProgressFilter } from './types';
+
+function studentStatusBadge( student: CourseStudent ) {
+	const label = studentStatus( student );
+	if ( 'banned' === student.status ) {
+		return <Badge tone="danger">{ label }</Badge>;
+	}
+	if ( 'completed' === student.progress ) {
+		return <Badge tone="success">{ label }</Badge>;
+	}
+	return <Badge tone="info">{ label }</Badge>;
+}
 
 type BulkAction = '' | 'unenroll' | `remind:${ ReminderTemplate }`;
 
@@ -267,13 +280,31 @@ function Roster( { courseId }: { courseId: number } ) {
 						{
 							id: 'status',
 							label: __( 'Status', 'ohmylms' ),
-							render: ( student ) => studentStatus( student ),
+							render: ( student ) =>
+								studentStatusBadge( student ),
 						},
 						{
 							id: 'progress',
 							label: __( 'Progress', 'ohmylms' ),
-							render: ( student ) =>
-								`${ student.percent_complete }%`,
+							render: ( student ) => (
+								<>
+									<Progress
+										value={ student.percent_complete }
+										label={ sprintf(
+											/* translators: %s: student name. */
+											__( 'Progress of %s', 'ohmylms' ),
+											student.name
+										) }
+										tone={
+											'completed' === student.progress
+												? 'success'
+												: 'primary'
+										}
+										style={ { maxWidth: '12rem' } }
+									/>{ ' ' }
+									{ student.percent_complete }%
+								</>
+							),
 						},
 						{
 							id: 'enrolled',

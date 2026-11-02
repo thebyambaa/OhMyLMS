@@ -44,7 +44,7 @@ test('keyboard, click placement, drag placement and restoration keep repeated to
 });
 test('author chips and learner tokens have readable dark text on light backgrounds', async ({ page }) => {
 	await page.addStyleTag({content: ':root{--oml-heading:#1d2327;--oml-subtle:#f6f7f7;--oml-border:#8c8f94}'});
- await page.addStyleTag({path: path.join(base, 'assets/css/question-stage.css')});
+ await page.addStyleTag({path: path.join(base, 'assets/css/question-editor.css')});
  await page.evaluate(() => {
   const editor = document.createElement('div'); editor.className = 'ohmylms-question-authoring toplevel_page_ohmylms'; editor.style.color = '#fff';
   editor.innerHTML = '<span class="ohmylms-blank-answer-chip">Readable answer</span><div class="ohmylms-inline-blank-preview"><button disabled class="components-button is-secondary ohmylms-blank-token is-placed">Placed answer</button></div>'; document.body.append(editor);

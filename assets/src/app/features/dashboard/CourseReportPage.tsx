@@ -2,7 +2,9 @@ import { Notice } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useParams } from 'react-router-dom';
+import { Badge } from '../../../ui/Badge';
 import { ListTable } from '../../../ui/ListTable';
+import { Progress } from '../../../ui/Progress';
 import { statusViews } from '../../components/listViews';
 import { EarningsChart } from './EarningsChart';
 import { useCourseStudents, useRange, useSingleCourseReport } from './hooks';
@@ -17,7 +19,22 @@ import {
 import { RangeFilter } from './RangeFilter';
 import { RequestStatus } from './RequestStatus';
 import { SummaryCards } from './SummaryCards';
-import type { StudentOrderBy, StudentProgressFilter } from './types';
+import type {
+	CourseStudent,
+	StudentOrderBy,
+	StudentProgressFilter,
+} from './types';
+
+function studentStatusBadge( student: CourseStudent ) {
+	const label = studentStatus( student );
+	if ( 'banned' === student.status ) {
+		return <Badge tone="danger">{ label }</Badge>;
+	}
+	if ( 'completed' === student.progress ) {
+		return <Badge tone="success">{ label }</Badge>;
+	}
+	return <Badge tone="info">{ label }</Badge>;
+}
 
 function Students( { courseId }: { courseId: number } ) {
 	const list = useCourseStudents( courseId );
@@ -117,7 +134,8 @@ function Students( { courseId }: { courseId: number } ) {
 						{
 							id: 'status',
 							label: __( 'Status', 'ohmylms' ),
-							render: ( student ) => studentStatus( student ),
+							render: ( student ) =>
+								studentStatusBadge( student ),
 						},
 						{
 							id: 'percent',
@@ -125,14 +143,19 @@ function Students( { courseId }: { courseId: number } ) {
 							sortable: 'desc',
 							render: ( student ) => (
 								<>
-									<progress
-										max={ 100 }
+									<Progress
 										value={ student.percent_complete }
-										aria-label={ sprintf(
+										label={ sprintf(
 											/* translators: %s: student name. */
 											__( 'Progress of %s', 'ohmylms' ),
 											student.name
 										) }
+										tone={
+											'completed' === student.progress
+												? 'success'
+												: 'primary'
+										}
+										style={ { maxWidth: '12rem' } }
 									/>{ ' ' }
 									{ student.percent_complete }%{ ' ' }
 									<span className="description">

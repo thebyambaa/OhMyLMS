@@ -1,6 +1,7 @@
 import { Notice } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
+import { EmptyState } from '../../../ui/EmptyState';
 import { WidefatTable } from '../../components/WidefatTable';
 import { getRollup } from './api';
 import { rollupCsv } from './exports';
@@ -185,7 +186,12 @@ export default function RollupPage() {
 						</tbody>
 					</WidefatTable>
 					{ ! rows.length && (
-						<p>{ __( 'No schools or classes yet.', 'ohmylms' ) }</p>
+						<EmptyState
+							title={ __(
+								'No schools or classes yet.',
+								'ohmylms'
+							) }
+						/>
 					) }
 					<p className="ohmylms-gradebook-muted">
 						{ __(

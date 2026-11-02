@@ -119,8 +119,8 @@ Deviating screens: PHP pages (Skill assessments, Import questions, Schools, xAPI
 ## What changed
 
 - The shared stylesheet restyles `.button*`, `.page-title-action`, `.components-button` (primary, secondary, tertiary, link, destructive, small/large, disabled), Arco `.arco-btn*`, inputs and selects, cards, notices, tables, headings and page padding, with one `:focus-visible` ring.
-- In `admin-ui.css`, `question-editor`, `skill-studio`, `course-objectives`, `skill-matrix`, `quiz-overview`, `quiz-design`, `question-stage`, `admin-assistant`, `syllabus-comparison` and `learning-program`, hard-coded purple hover shades, red, borders, and 4/6/7/8px radii now read the variables (with the old value as fallback, so the files still work off-screen).
-- Those legacy-screen stylesheets (`admin-ui.css` and the others listed) and the Arco/Tailwind styles were deleted with the recovered admin at the cutover ([CUTOVER.md](CUTOVER.md)); the typed app styles itself through `@wordpress/components`, `assets/src/ui` and the `--oml-*` variables.
+- In the pre-cutover `admin-ui.css`, `question-editor`, `skill-studio`, `course-objectives`, `skill-matrix`, `quiz-overview`, `quiz-design`, `question-stage`, `admin-assistant`, `syllabus-comparison` and `learning-program`, hard-coded purple hover shades, red, borders, and 4/6/7/8px radii were pointed at the variables.
+- Those legacy-screen stylesheets (`admin-ui.css`, `quiz-overview.css`, `question-stage.css`, and the others listed) and the Arco/Tailwind styles were deleted with the recovered admin at the cutover ([CUTOVER.md](CUTOVER.md)). The typed app styles itself through `@wordpress/components`, `assets/src/ui` and the `--oml-*` variables. Live question authoring chrome is `assets/css/question-editor.css` (tokens + lint; quiz stage/answer palettes remain documented exceptions).
 
 ## Known gaps
 

@@ -1,5 +1,27 @@
 @import url(./puzzles.css);
 
+/*
+ * Question authoring chrome uses --oml-* tokens. Quiz stage/prompt/answer and
+ * preview option palettes stay fixed behind documented stylelint disables below
+ * (same contract as the former question-stage.css).
+ */
+
+.ohmylms-question-authoring .ohmylms-blank-answer-chip,
+.ohmylms-inline-blank-preview .ohmylms-blank-drop,
+.ohmylms-inline-blank-preview .ohmylms-blank-token {
+	background: var(--oml-subtle);
+	color: var(--oml-heading);
+}
+
+.ohmylms-question-authoring
+	.ohmylms-inline-blank-preview
+	button.ohmylms-blank-token.is-placed:disabled {
+	border: 1px dashed var(--oml-border);
+	background: transparent;
+	color: transparent;
+	opacity: 1;
+}
+
 .ohmylms-type-menu-toggle {
 	justify-content: space-between;
 	max-width: 12rem;
@@ -9,10 +31,10 @@
 }
 
 .ohmylms-type-menu-panel {
-	background: #fff;
-	border: 1px solid #dcdcde;
+	background: var(--oml-surface);
+	border: 1px solid var(--oml-border);
 	border-radius: 8px;
-	box-shadow: 0 8px 24px rgb(0 0 0 / 18%);
+	box-shadow: var(--oml-shadow-md);
 	width: min(32rem, 90vw);
 	max-height: 60vh;
 	padding: 12px;
@@ -45,20 +67,20 @@
 }
 
 .ohmylms-grid-row-number {
-	color: #646970;
+	color: var(--oml-muted);
 	font-size: 13px;
 }
 
 .ohmylms-grid-column-marker {
 	width: 16px;
 	height: 16px;
-	border: 1px solid #a7aaad;
+	border: 1px solid var(--oml-secondary);
 	border-radius: 2px;
 }
 
 .ohmylms-grid-key {
 	margin-top: 16px;
-	color: #50575e;
+	color: var(--oml-muted);
 	font-size: 13px;
 }
 
@@ -73,7 +95,7 @@
 .ohmylms-grid-key-row {
 	margin: 0;
 	padding: 8px;
-	border: 1px solid #dcdcde;
+	border: 1px solid var(--oml-border);
 }
 
 .ohmylms-choice-card {
@@ -98,7 +120,7 @@
 	gap: 12px;
 	margin-top: 12px;
 	padding-top: 8px;
-	border-top: 1px solid #dcdcde;
+	border-top: 1px solid var(--oml-border);
 }
 
 .ohmylms-choice-variables {
@@ -108,7 +130,7 @@
 }
 
 .ohmylms-question-authoring {
-	border: 1px solid #e4dfec;
+	border: 1px solid var(--oml-border);
 }
 
 .ohmylms-question-authoring-footer {
@@ -122,8 +144,8 @@
 	gap: 12px;
 	margin-top: 24px;
 	padding: 16px 0;
-	border-top: 1px solid #e4dfec;
-	background: #fff;
+	border-top: 1px solid var(--oml-border);
+	background: var(--oml-surface);
 }
 
 .ohmylms-editor-field-label {
@@ -144,7 +166,7 @@
 	margin: 12px 0 4px;
 	font-size: 11px;
 	text-transform: uppercase;
-	color: #757575;
+	color: var(--oml-muted);
 }
 
 @media (max-width: 500px) {
@@ -179,7 +201,7 @@
 
 .ohmylms-choice-card-header select {
 	min-height: 50px;
-	border-color: #dcdcde;
+	border-color: var(--oml-border);
 	border-radius: 4px;
 	font-size: 13px;
 }
@@ -197,7 +219,7 @@
 	min-width: 28px;
 	height: 28px;
 	padding: 4px;
-	color: #646970;
+	color: var(--oml-muted);
 }
 
 .ohmylms-grid-item .ohmylms-grid-drag {
@@ -217,10 +239,10 @@
 
 .editor-styles-wrapper .ohmylms-shared-choice-block {
 	padding: 16px;
-	border: 1px solid #dcdcde;
-	border-left: 3px solid #3858e9;
+	border: 1px solid var(--oml-border);
+	border-left: 3px solid var(--oml-primary);
 	border-radius: 6px;
-	background: #fff;
+	background: var(--oml-surface);
 	font-size: 14px;
 	line-height: 1.4;
 }
@@ -336,7 +358,7 @@
 	min-width: 0;
 	margin: 0;
 	padding: 8px;
-	border: 1px solid #dcdcde;
+	border: 1px solid var(--oml-border);
 	border-radius: 4px;
 }
 
@@ -376,30 +398,30 @@
 
 .ohmylms-question-authoring .ohmylms-interactive-editor {
 	padding: 20px;
-	border: 1px solid #d8cde5;
+	border: 1px solid var(--oml-border);
 	border-radius: var(--oml-radius-card, 8px);
-	background: #faf7fd;
+	background: var(--oml-primary-soft);
 }
 
 .ohmylms-question-authoring .ohmylms-numerical-editor {
 	padding: 20px;
-	border: 1px solid #d8cde5;
+	border: 1px solid var(--oml-border);
 	border-radius: var(--oml-radius-card, 8px);
-	background: #faf7fd;
+	background: var(--oml-primary-soft);
 }
 
 .ohmylms-question-authoring .ohmylms-structured-editor {
 	padding: 20px;
-	border: 1px solid #d8cde5;
+	border: 1px solid var(--oml-border);
 	border-radius: var(--oml-radius-card, 8px);
-	background: #faf7fd;
+	background: var(--oml-primary-soft);
 }
 
 .ohmylms-question-authoring .ohmylms-interactive-row {
 	padding: 16px;
-	border: 1px solid #e4dfec;
+	border: 1px solid var(--oml-border);
 	border-radius: var(--oml-radius-card, 8px);
-	background: #fff;
+	background: var(--oml-surface);
 }
 
 .ohmylms-question-authoring .ohmylms-shared-answers {
@@ -409,8 +431,10 @@
 .ohmylms-question-authoring .ohmylms-answer-guidance {
 	grid-column: 1 / -1;
 	margin: 0;
-	color: #50575e;
+	color: var(--oml-muted);
 }
+
+/* stylelint-disable color-no-hex -- Quiz answer-card palette is independent of chrome tokens. */
 
 .ohmylms-question-authoring .ohmylms-shared-answer-row {
 	min-height: 100px;
@@ -418,19 +442,21 @@
 	border: 2px solid #c8d9ea;
 	border-radius: var(--oml-radius-card, 8px);
 	background: #edf4fb;
+
+/* stylelint-enable color-no-hex */
 }
 
 .ohmylms-question-authoring .ohmylms-rich-content-control {
 	flex: 1 1 180px;
 	min-width: 0;
 	width: 100%;
-	color: #1d2327;
+	color: var(--oml-heading);
 }
 
 .ohmylms-question-authoring .ohmylms-shared-answer-correct {
 	width: 24px;
 	height: 24px;
-	accent-color: #218044;
+	accent-color: var(--oml-success);
 }
 
 .ohmylms-question-authoring .ohmylms-preview-options {
@@ -441,7 +467,7 @@
 
 .ohmylms-shared-choice-block .ohmylms-choice-validation {
 	margin: 0 0 8px;
-	color: #8a2424;
+	color: var(--oml-danger);
 	font-size: 12px;
 }
 
@@ -458,7 +484,7 @@
 
 .ohmylms-choice-card .ohmylms-reorder-guidance {
 	margin: 0 0 8px;
-	color: #646970;
+	color: var(--oml-muted);
 	font-size: 12px;
 }
 
@@ -478,17 +504,19 @@
 }
 
 .ohmylms-question-authoring .ohmylms-response-heading span {
-	color: #646970;
+	color: var(--oml-muted);
 	font-size: 12px;
 	text-transform: uppercase;
 }
 
 .ohmylms-question-authoring .ohmylms-structured-editor > fieldset {
 	padding: 16px;
-	border: 1px solid #e4dfec;
+	border: 1px solid var(--oml-border);
 	border-radius: var(--oml-radius-card, 8px);
-	background: #fff;
+	background: var(--oml-surface);
 }
+
+/* stylelint-disable color-no-hex -- Quiz preview option palette is independent of chrome tokens. */
 
 .ohmylms-question-authoring .ohmylms-preview-options > label {
 	display: flex;
@@ -503,6 +531,8 @@
 	color: #fff;
 	font-size: 18px;
 	cursor: pointer;
+
+/* stylelint-enable color-no-hex */
 }
 
 .ohmylms-question-authoring .ohmylms-preview-options img {
@@ -516,10 +546,10 @@
 	max-width: 100%;
 	padding: 6px 0;
 	border: 0;
-	border-bottom: 1px dotted #8c8f94;
+	border-bottom: 1px dotted var(--oml-secondary);
 	border-radius: 0;
 	background: transparent;
-	color: #646970;
+	color: var(--oml-muted);
 	font-size: 14px;
 	resize: vertical;
 }
@@ -557,8 +587,8 @@
 .ohmylms-choice-card-header .ohmylms-rich-content-control > [role="textbox"] {
 	min-height: 50px;
 	padding: 0;
-	border-bottom-color: #8c8f94;
-	background: #f8f9fa;
+	border-bottom-color: var(--oml-secondary);
+	background: var(--oml-subtle);
 }
 
 .ohmylms-choice-card .ohmylms-shared-answer-row > .components-button {
@@ -593,7 +623,7 @@
 	> [role="textbox"] {
 	min-height: 34px;
 	padding: 6px;
-	border: 1px solid #c3c4c7;
+	border: 1px solid var(--oml-border);
 	border-radius: 3px;
 	font-size: 13px;
 }
@@ -604,6 +634,8 @@
 	height: auto;
 	white-space: normal;
 }
+
+/* stylelint-disable color-no-hex -- Quiz stage/prompt/answer preview palettes stay independent of chrome tokens. */
 
 .ohmylms-question-authoring .ohmylms-form-description [role="textbox"] {
 	min-height: 180px;
@@ -641,10 +673,10 @@
 	min-height: 48px;
 	width: 100%;
 	padding: 8px;
-	border: 1px solid #8c8f94;
+	border: 1px solid var(--oml-secondary);
 	border-radius: var(--oml-radius-control, 4px);
-	background: #fff;
-	color: #1d2327;
+	background: var(--oml-surface);
+	color: var(--oml-heading);
 	white-space: pre-wrap;
 	overflow-wrap: anywhere;
 }
@@ -660,8 +692,8 @@
 }
 
 .ohmylms-question-authoring .ohmylms-shared-answer-row:has(input:checked) {
-	border-color: #218044;
-	box-shadow: inset 0 0 0 1px #218044;
+	border-color: var(--oml-success);
+	box-shadow: inset 0 0 0 1px var(--oml-success);
 }
 
 .ohmylms-question-authoring
@@ -686,9 +718,11 @@
 	background: #984167;
 }
 
+/* stylelint-enable color-no-hex */
+
 .ohmylms-choice-card .is-reorder .ohmylms-shared-answer-row::before {
 	counter-increment: ohmylms-order;
-	color: #646970;
+	color: var(--oml-muted);
 	content: counter(ohmylms-order) ".";
 	font-size: 12px;
 }
@@ -723,15 +757,17 @@
 	.ohmylms-prompt-label {
 	display: block;
 	margin-bottom: 4px;
-	color: #1d2327;
+	color: var(--oml-heading);
 }
 
 .ohmylms-question-authoring
 	.ohmylms-rich-content-control
 	> [role="textbox"]:focus {
-	outline: 2px solid #2271b1;
+	outline: 2px solid var(--oml-focus);
 	outline-offset: 1px;
 }
+
+/* stylelint-disable color-no-hex -- Quiz choice answer palette is independent of chrome tokens. */
 
 .ohmylms-question-authoring
 	.ohmylms-shared-answers:is(
@@ -745,9 +781,9 @@
 }
 
 .ohmylms-choice-card .ohmylms-rich-content-control > [role="textbox"]:focus {
-	border-bottom-color: #3858e9;
+	border-bottom-color: var(--oml-primary);
 	outline: none;
-	box-shadow: 0 1px #3858e9;
+	box-shadow: 0 1px var(--oml-primary);
 }
 
 .ohmylms-choice-card
@@ -760,14 +796,14 @@
 	.ohmylms-form-description
 	[role="textbox"]:empty::before {
 	content: attr(data-placeholder);
-	color: #cfc3d4;
+	color: var(--oml-border);
 	pointer-events: none;
 }
 
 .ohmylms-question-authoring
 	.ohmylms-rich-content-control
 	> [role="textbox"]:empty::before {
-	color: #646970;
+	color: var(--oml-muted);
 	content: attr(data-placeholder);
 	pointer-events: none;
 }
@@ -828,6 +864,8 @@
 	background: #984167;
 }
 
+/* stylelint-enable color-no-hex */
+
 .ohmylms-assessment-preview.components-modal__frame {
 	width: min(1400px, 96vw);
 	max-width: 96vw;
@@ -866,8 +904,8 @@
 	flex: 1;
 	width: 100%;
 	min-height: 0;
-	border: 1px solid #ddd;
-	background: #fff;
+	border: 1px solid var(--oml-border);
+	background: var(--oml-surface);
 }
 
 .ohmylms-question-block-preview {
@@ -900,6 +938,6 @@
 }
 
 .ohmylms-question-block-edit:focus-visible {
-	outline: 2px solid #3858e9;
+	outline: 2px solid var(--oml-primary);
 	outline-offset: 4px;
 }

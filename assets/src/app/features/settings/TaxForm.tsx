@@ -1,5 +1,6 @@
 import { Button } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
+import { EmptyState } from '../../../ui/EmptyState';
 import { listCountries, listStates } from './api';
 import {
 	asFlag,
@@ -224,7 +225,9 @@ export function TaxForm( { state }: { state: SettingsGroupState< 'tax' > } ) {
 						<p role="alert">{ state.errors.tax_rates }</p>
 					) }
 					{ 0 === rates.length && (
-						<p>{ __( 'No tax rates yet.', 'ohmylms' ) }</p>
+						<EmptyState
+							title={ __( 'No tax rates yet.', 'ohmylms' ) }
+						/>
 					) }
 					{ rates.map( ( rate, index ) => (
 						<RateRow
