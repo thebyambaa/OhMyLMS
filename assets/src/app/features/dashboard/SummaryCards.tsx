@@ -1,5 +1,5 @@
-import { Card, CardBody } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { Card } from '../../../ui/Card';
 import type { SummaryCard } from './model';
 
 /**
@@ -21,17 +21,15 @@ export function SummaryCards( {
 		<ul aria-label={ label } className="ohmylms-summary-cards">
 			{ cards.map( ( card ) => (
 				<li key={ card.key }>
-					<Card>
-						<CardBody>
-							<div>{ card.label }</div>
-							<strong>{ card.value }</strong>
-							<div>
-								<span aria-hidden="true">{ card.change }</span>
-								<span className="screen-reader-text">
-									{ card.changeDescription }
-								</span>
-							</div>
-						</CardBody>
+					<Card flat className="ohmylms-summary-card">
+						<div>{ card.label }</div>
+						<strong>{ card.value }</strong>
+						<div>
+							<span aria-hidden="true">{ card.change }</span>
+							<span className="screen-reader-text">
+								{ card.changeDescription }
+							</span>
+						</div>
 					</Card>
 				</li>
 			) ) }

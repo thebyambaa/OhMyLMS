@@ -32,5 +32,5 @@
 .theme-kadence.ohmylms-page .ohmylms-checkout-form-wrapper input[type="datetime-local"]:focus,
 .theme-kadence.ohmylms-page .ohmylms-checkout-form-wrapper input[type="color"]:focus,
 .theme-kadence.ohmylms-page .ohmylms-checkout-form-wrapper textarea:focus {
-    border-color: #ebebef;
+    border-color: var(--oml-border, #ebebef);
 }

@@ -13,9 +13,9 @@ the migration inventory and [Design tokens](DESIGN-TOKENS.md) for the token cont
 | Tokens | Implemented: colors, spacing, typography, radii, shadows, motion and layers |
 | Shared components | Implemented in React and PHP: Button, Card, Badge, Progress, Input, Select, Alert, Tabs, Modal, Table and EmptyState |
 | Site customization | Implemented: WordPress, Khan Academy, Classic and custom presets; density, roundness and font settings |
-| Theme support | Learner light/dark/system token output implemented; admin dark mode is not available |
-| Adoption | Broad migration documented across admin, learner and assessment screens; compatibility styling and intentional palette exceptions remain |
-| Enforcement | Architecture rules, token lint rules, component tests and browser screenshot suites exist; their scope is narrower than a complete visual/accessibility audit |
+| Theme support | Learner light/dark/system token output implemented; admin dark mode is deferred (plan in [DESIGN-LANGUAGE](DESIGN-LANGUAGE.md#admin-dark-mode-deferred)) |
+| Adoption | Shared kit used on eligible admin empties/status/progress/summary cards; PHP `Ui::*` on practice/exam/certificate/verification/View-as; peripheral schools/QPay/blocks/theme-support chrome on `--oml-*`. Legacy `.ohmylms-button` aliases and documented artwork/print/video palettes remain |
+| Enforcement | Architecture rules, token lint (including schools, QPay, blocks, theme-support), component tests and browser screenshot suites; scope is still narrower than a complete visual/accessibility audit |
 
 ### Evidence from this review
 
@@ -41,9 +41,9 @@ the migration inventory and [Design tokens](DESIGN-TOKENS.md) for the token cont
    and affected browser specs. Check keyboard operation, focus, labels, contrast, RTL, narrow layouts,
    long Mongolian/English text and learner light/dark/system behavior. Record commit and results;
    update screenshot baselines only for intentional changes.
-4. **Decide admin dark-mode scope separately.** Learner dark tokens do not establish support for
-   wp-admin or WordPress component portals. If admin dark mode is requested, plan its scope and tests
-   before enabling it; it is not required to preserve the current WordPress-admin design contract.
+4. **Admin dark mode stays deferred.** Scope and acceptance steps are recorded under
+   [Admin dark mode (deferred)](DESIGN-LANGUAGE.md#admin-dark-mode-deferred). It is not required to
+   preserve the current WordPress-admin design contract.
 
 Completion means the supported screen inventory is reviewed, remaining exceptions have reasons and
 owners, and required component, PHP and browser checks pass with accessibility findings recorded and

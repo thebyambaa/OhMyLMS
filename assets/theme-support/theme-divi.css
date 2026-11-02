@@ -1,6 +1,6 @@
 .theme-Divi.ohmylms-page .ohmylms-course-reviews-form #commentform .comment-form-comment textarea {
     padding: 14px 20px;
-    background-color: #fff;
+    background-color: var(--oml-surface, #fff);
     font-size: 14px;
-    border: 1px solid #EBECED;
+    border: 1px solid var(--oml-border, #EBECED);
 }

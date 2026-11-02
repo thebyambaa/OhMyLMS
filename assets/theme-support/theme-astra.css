@@ -36,7 +36,7 @@
 .theme-astra.ohmylms-page .ohmylms-checkout-form-wrapper input[type=text],
 .theme-astra.ohmylms-page .ohmylms-checkout-form-wrapper input[type=url],
 .theme-astra.ohmylms-page .ohmylms-checkout-form-wrapper textarea {
-    border-color: #ebebef;
+    border-color: var(--oml-border, #ebebef);
     background-color: transparent;
     border-radius: 10px;
 }

@@ -55,8 +55,8 @@ html.colibri-wp-theme #colibri.ohmylms-page .comment-respond {
     padding: 8px 15px;
     font-size: 14px;
     border-radius: 14px;
-    border: 1px solid #EBECED;
-    background-color: #FFF;
+    border: 1px solid var(--oml-border, #EBECED);
+    background-color: var(--oml-surface, #FFF);
     min-height: auto;
     resize: none;
 }
@@ -65,7 +65,7 @@ html.colibri-wp-theme #colibri.ohmylms-page .comment-respond {
     font-size: 14px;
     font-weight: 500;
     padding: 7px 20px;
-    color: #fff;
+    color: var(--oml-on-primary, #fff);
     border-radius: 10px;
     background-color: var(--ohmylms-primary-color);
     border: 1px solid var(--ohmylms-primary-color);

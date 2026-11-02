@@ -32,7 +32,7 @@
 .theme-generatepress.ohmylms-page .ohmylms-checkout-form-wrapper input[type="number"]:focus,
 .theme-generatepress.ohmylms-page .ohmylms-checkout-form-wrapper textarea:focus,
 .theme-generatepress.ohmylms-page .ohmylms-checkout-form-wrapper select:focus {
-    color: #52525b;
-    border-color: #ebebef;
+    color: var(--oml-text, #52525b);
+    border-color: var(--oml-border, #ebebef);
     background-color: transparent;
 }

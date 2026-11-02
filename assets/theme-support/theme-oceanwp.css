@@ -29,7 +29,7 @@
 .theme-oceanwp.ohmylms-page .ohmylms-checkout-form-wrapper form input[type=color]:focus, 
 .theme-oceanwp.ohmylms-page .ohmylms-checkout-form-wrapper form select:focus, 
 .theme-oceanwp.ohmylms-page .ohmylms-checkout-form-wrapper form textarea:focus {
-    border-color: #ebebef;
+    border-color: var(--oml-border, #ebebef);
 }
 
 .theme-oceanwp.ohmylms-page .ohmylms-password-show .show-password-icon {

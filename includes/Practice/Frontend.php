@@ -91,9 +91,18 @@ final class Frontend {
 		?>
 		<section id="ohmylms-exam" class="ohmylms-guidance-card ohmylms-exam" aria-labelledby="ohmylms-exam-title">
 			<h3 id="ohmylms-exam-title"><?php esc_html_e( 'Preparing for', 'ohmylms' ); ?></h3>
-			<?php if ( $error ) { ?>
-				<p class="ohmylms-exam-error" role="alert"><?php echo esc_html( $error ); ?></p>
-			<?php } ?>
+			<?php
+			if ( $error ) {
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::alert() escapes the message.
+				echo \OhMyLMS\Design\Ui::alert(
+					$error,
+					array(
+						'tone'  => 'danger',
+						'class' => 'ohmylms-exam-error',
+					)
+				);
+			}
+			?>
 			<?php if ( $exam ) { ?>
 				<p class="ohmylms-exam-summary">
 					<strong><?php echo esc_html( $exam['syllabus']['name'] ); ?></strong>

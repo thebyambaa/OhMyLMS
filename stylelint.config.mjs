@@ -135,6 +135,31 @@ export default {
 			},
 		},
 		{
+			// Peripheral surfaces: chrome on --oml-* with previous hex only as a var() fallback.
+			// Schools skill chips keep a documented color-no-hex disable in the file.
+			files: [
+				'assets/schools/schools.css',
+				'packages/e-commerce/assets/css/qpay-checkout.css',
+				'assets/blocks/css/blocks-frontend.css',
+				'assets/blocks/css/blocks-editor.css',
+				'assets/theme-support/*.css',
+			],
+			rules: {
+				'color-no-hex': [ true, { ignoreFunctions: [ 'var' ] } ],
+				'color-named': 'never',
+				'function-disallowed-list': [ 'rgb', 'rgba', 'hsl', 'hsla' ],
+			},
+		},
+		{
+			// schools.css intentionally re-declares shell tokens for the admin-management view
+			// and nests button/input rules after disabled states; keep colour rules, not cascade order.
+			files: [ 'assets/schools/schools.css' ],
+			rules: {
+				'no-descending-specificity': null,
+				'no-duplicate-selectors': null,
+			},
+		},
+		{
 			// Learner SCSS may keep the previous hex only as a var(--oml-*) fallback.
 			// SVG data URIs are checked separately; generated CSS stays ignored below.
 			files: [ 'assets/src/frontend/scss/**/*.scss' ],

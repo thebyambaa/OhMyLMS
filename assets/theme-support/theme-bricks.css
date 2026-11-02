@@ -22,7 +22,7 @@
 
 .theme-bricks.ohmylms-page .ohmylms-checkout-form-outer {
     height: 100%;
-    background-color: #F9FAFD;
+    background-color: var(--oml-subtle, #F9FAFD);
 }
 
 .theme-bricks.ohmylms-page .ohmylms-checkout-form-outer .ohmylms-container {
@@ -52,6 +52,6 @@
 
 @media screen and (max-width: 991px) {
     .theme-bricks.ohmylms-page .ohmylms-checkout-form-outer {
-        background: #fff;
+        background: var(--oml-surface, #fff);
     }
 }

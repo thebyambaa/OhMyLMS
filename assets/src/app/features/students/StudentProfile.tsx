@@ -10,6 +10,7 @@ import { useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
 import { Pagination } from '../../components/Pagination';
+import { EmptyState } from '../../../ui/EmptyState';
 import { enroll, setBlocked, unenroll } from './api';
 import { enrollmentStatus, formatDate, validateEnrollment } from './model';
 import { reportPath } from './report';
@@ -481,7 +482,9 @@ export function StudentProfile( { studentId }: { studentId: number } ) {
 						/>
 					</>
 				) : (
-					<p>{ __( 'No enrolments found.', 'ohmylms' ) }</p>
+					<EmptyState
+						title={ __( 'No enrolments found.', 'ohmylms' ) }
+					/>
 				) ) }
 
 			{ confirmation && (

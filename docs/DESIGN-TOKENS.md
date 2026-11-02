@@ -5,7 +5,11 @@ saved Design system palette, spacing, roundness and font. Settings > Design syst
 
 For implementation status, remaining adoption work and the verification recorded on 2 November 2026,
 see [Design system status](DESIGN-SYSTEM.md#current-status--2-november-2026). Token availability does not
-establish that every screen uses every token; admin dark mode remains outside the supported theme scope.
+establish that every screen uses every token. Learner light/dark/system is supported; admin dark mode
+remains deferred ([plan](DESIGN-LANGUAGE.md#admin-dark-mode-deferred)). Peripheral chrome in
+`assets/schools/schools.css`, `packages/e-commerce/assets/css/qpay-checkout.css`,
+`assets/blocks/css/*.css` and `assets/theme-support/*.css` reads `--oml-*` (previous hex only as
+`var()` fallbacks, plus documented school skill-chip exceptions) and is colour-linted.
 
 | Context | Values come from | Emitted by | Selector |
 | --- | --- | --- | --- |

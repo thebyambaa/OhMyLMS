@@ -1,12 +1,23 @@
-.ohmylms-qpay-modal { box-sizing:border-box; width:min(460px,calc(100% - 32px)); max-height:90vh; padding:28px; border:0; border-radius:16px; color:#20242b; background:#fff; box-shadow:0 16px 70px #0003; overflow:auto; text-align:center; }
-.ohmylms-qpay-modal::backdrop { background:#101828a8; }
+.ohmylms-qpay-modal { box-sizing:border-box; width:min(460px,calc(100% - 32px)); max-height:90vh; padding:28px; border:0; border-radius:16px; color:var(--oml-text, #20242b); background:var(--oml-surface, #fff); box-shadow:var(--oml-shadow-md, 0 16px 70px #0003); overflow:auto; text-align:center; }
+
+.ohmylms-qpay-modal::backdrop { background:color-mix(in srgb, var(--oml-heading, #101828) 66%, transparent); }
+
 .ohmylms-qpay-modal h2 { margin:0 60px 24px 0; font-size:22px; text-align:left; }
+
 .ohmylms-qpay-close { position:absolute; top:20px; right:16px; }
+
 .ohmylms-qpay-qr { display:block; width:240px; max-width:100%; height:auto; margin:0 auto 20px; }
+
 .ohmylms-qpay-banks { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
-.ohmylms-qpay-bank { padding:12px; border:1px solid #d4dae3; border-radius:8px; overflow-wrap:anywhere; text-decoration:none; color:inherit; }
-.ohmylms-qpay-bank:hover { background:#f1f5f9; }
+
+.ohmylms-qpay-bank { padding:12px; border:1px solid var(--oml-border, #d4dae3); border-radius:8px; overflow-wrap:anywhere; text-decoration:none; color:inherit; }
+
+.ohmylms-qpay-bank:hover { background:var(--oml-subtle, #f1f5f9); }
+
 .ohmylms-qpay-status { margin:20px 0; line-height:1.5; }
-.ohmylms-qpay-modal button,.ohmylms-qpay-resume { cursor:pointer; padding:10px 16px; border:1px solid #c5ccd7; border-radius:8px; background:#f8fafc; color:#20242b; }
+
+.ohmylms-qpay-modal button,.ohmylms-qpay-resume { cursor:pointer; padding:10px 16px; border:1px solid var(--oml-border, #c5ccd7); border-radius:8px; background:var(--oml-subtle, #f8fafc); color:var(--oml-text, #20242b); }
+
 .ohmylms-qpay-resume { margin:12px 0; }
-.ohmylms-qpay-modal :focus-visible,.ohmylms-qpay-resume:focus-visible { outline:3px solid #3569d4; outline-offset:3px; }
+
+.ohmylms-qpay-modal :focus-visible,.ohmylms-qpay-resume:focus-visible { outline:3px solid var(--oml-focus, #3569d4); outline-offset:3px; }

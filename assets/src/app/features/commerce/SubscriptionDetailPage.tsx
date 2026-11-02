@@ -3,6 +3,7 @@ import { Button, Modal, Notice } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Link, useParams } from 'react-router-dom';
+import { EmptyState } from '../../../ui/EmptyState';
 import { normalizeApiError } from '../../lib/api';
 import {
 	formatDate,
@@ -318,7 +319,7 @@ function Subscription( { id }: { id: number } ) {
 						) ) }
 					</ul>
 				) : (
-					<p>{ __( 'No notes yet.', 'ohmylms' ) }</p>
+					<EmptyState title={ __( 'No notes yet.', 'ohmylms' ) } />
 				) }
 			</section>
 

@@ -210,14 +210,35 @@ final class Download {
 			$record = Issuer::find_by_code( $code );
 			if ( self::throttled( ! $record ) ) {
 				$status = 429;
-				$body   = '<p role="alert">' . esc_html__( 'Too many codes were checked from your network. Try again in a few minutes.', 'ohmylms' ) . '</p>';
+				$body   = \OhMyLMS\Design\Ui::alert(
+					__( 'Too many codes were checked from your network. Try again in a few minutes.', 'ohmylms' ),
+					array( 'tone' => 'danger' )
+				);
 			} elseif ( ! $record ) {
 				$status = 404;
-				$body   = '<p role="alert"><strong>' . esc_html__( 'No certificate has this code.', 'ohmylms' ) . '</strong> ' . esc_html__( 'Check the code and try again.', 'ohmylms' ) . '</p>';
+				$body   = \OhMyLMS\Design\Ui::alert(
+					__( 'Check the code and try again.', 'ohmylms' ),
+					array(
+						'tone'  => 'danger',
+						'title' => __( 'No certificate has this code.', 'ohmylms' ),
+					)
+				);
 			} else {
 				$view  = self::public_view( $record );
 				$valid = 'issued' === $view['status'];
-				$body  = '<p role="status"><strong>' . ( $valid ? esc_html__( 'This certificate is valid.', 'ohmylms' ) : esc_html( sprintf( /* translators: %s: date. */ __( 'This certificate was revoked on %s.', 'ohmylms' ), $view['revoked_on'] ) ) ) . '</strong></p><dl>';
+				$body  = \OhMyLMS\Design\Ui::alert(
+					$valid
+						? __( 'This certificate is valid.', 'ohmylms' )
+						: sprintf(
+							/* translators: %s: date. */
+							__( 'This certificate was revoked on %s.', 'ohmylms' ),
+							$view['revoked_on']
+						),
+					array(
+						'tone' => $valid ? 'success' : 'warning',
+						'role' => 'status',
+					)
+				) . '<dl>';
 				foreach ( array(
 					__( 'Awarded to', 'ohmylms' )       => $view['student_name'],
 					__( 'Course', 'ohmylms' )           => $view['course_title'],
@@ -232,7 +253,30 @@ final class Download {
 				$body .= '</dl>';
 			}
 		}
-		$form = '<form method="get" action="' . esc_url( home_url( '/' ) ) . '"><label for="oml-verify-code">' . esc_html__( 'Certificate code', 'ohmylms' ) . '</label> <input id="oml-verify-code" name="' . esc_attr( self::QUERY_VERIFY ) . '" value="' . esc_attr( $code ) . '" maxlength="32" autocomplete="off" spellcheck="false" required> <button type="submit">' . esc_html__( 'Verify', 'ohmylms' ) . '</button></form>';
+		$form = '<form method="get" action="' . esc_url( home_url( '/' ) ) . '">'
+			. \OhMyLMS\Design\Ui::input(
+				array(
+					'label'    => __( 'Certificate code', 'ohmylms' ),
+					'name'     => self::QUERY_VERIFY,
+					'id'       => 'oml-verify-code',
+					'value'    => $code,
+					'required' => true,
+					'attrs'    => array(
+						'maxlength'    => '32',
+						'autocomplete' => 'off',
+						'spellcheck'   => 'false',
+					),
+				)
+			)
+			. ' '
+			. \OhMyLMS\Design\Ui::button(
+				__( 'Verify', 'ohmylms' ),
+				array(
+					'variant' => 'primary',
+					'type'    => 'submit',
+				)
+			)
+			. '</form>';
 		self::page( $status, __( 'Verify a certificate', 'ohmylms' ), $body . $form, "form-action 'self'" );
 	}
 

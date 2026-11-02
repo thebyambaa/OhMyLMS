@@ -7,6 +7,7 @@ import {
 } from '@wordpress/components';
 import { useCallback, useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
+import { EmptyState } from '../../../ui/EmptyState';
 import { useOperation } from '../../hooks/useOperation';
 import { useRequest } from '../../hooks/useRequest';
 import {
@@ -454,7 +455,9 @@ export default function ResultsPanel( {
 					</tbody>
 				</table>
 			) : (
-				<p>{ __( 'No one has taken this exam yet.', 'ohmylms' ) }</p>
+				<EmptyState
+					title={ __( 'No one has taken this exam yet.', 'ohmylms' ) }
+				/>
 			) }
 			{ results.data && results.data.totalPages > 1 && (
 				<p>

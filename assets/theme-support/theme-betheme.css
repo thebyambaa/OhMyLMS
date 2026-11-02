@@ -39,7 +39,7 @@
 .theme-betheme.ohmylms-page textarea:focus {
     color: var(--ohmylms-body-text-color);
     background-color: transparent;
-    border-color: #EBEBEF;
+    border-color: var(--oml-border, #EBEBEF);
 }
 
 .theme-betheme.ohmylms-page .ohmylms-checkout-payment .ohmylms-single-payment {

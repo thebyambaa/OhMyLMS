@@ -1,3 +1,4 @@
+import { EmptyState } from '../../../ui/EmptyState';
 import { ListTable } from '../../../ui/ListTable';
 import {
 	Button,
@@ -422,12 +423,13 @@ function Years( {
 					) ) }
 				</ul>
 			) : (
-				<p>
-					{ __(
-						'No academic years yet. Add one before creating classes.',
+				<EmptyState
+					title={ __( 'No academic years yet.', 'ohmylms' ) }
+					description={ __(
+						'Add one before creating classes.',
 						'ohmylms'
 					) }
-				</p>
+				/>
 			) }
 			{ operation.error && (
 				<Notice status="error" isDismissible={ false }>

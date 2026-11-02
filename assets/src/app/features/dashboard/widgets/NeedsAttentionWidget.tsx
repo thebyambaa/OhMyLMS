@@ -2,6 +2,7 @@ import { Button, Notice } from '@wordpress/components';
 import { useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
+import { EmptyState } from '../../../../ui/EmptyState';
 import { normalizeApiError } from '../../../lib/api';
 import { snoozeItem, wakeItem } from '../shell/api';
 import { describeWidgetError } from '../shell/errors';
@@ -119,12 +120,16 @@ export default function NeedsAttentionWidget( {
 			onRetry={ request.reload }
 		>
 			{ data && ! request.loading && 0 === items.length && (
-				<p>
-					{ __(
-						'Nothing needs your attention right now. Everything else is on track.',
+				<EmptyState
+					title={ __(
+						'Nothing needs your attention right now.',
 						'ohmylms'
 					) }
-				</p>
+					description={ __(
+						'Everything else is on track.',
+						'ohmylms'
+					) }
+				/>
 			) }
 			{ failure && (
 				<Notice status="error" isDismissible={ false }>

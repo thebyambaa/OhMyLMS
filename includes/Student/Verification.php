@@ -75,11 +75,21 @@ final class Verification {
 		if ( ! in_array( $type, array( 'success', 'info', 'warning' ), true ) ) {
 			$type = 'info';
 		}
+		$tone = 'info' === $type ? 'info' : $type;
 		if ( class_exists( \OhMyLMS\Design\Ui::class ) ) {
 			\OhMyLMS\Design\Ui::enqueue();
 		}
+		$classes = class_exists( \OhMyLMS\Design\Ui::class )
+			? \OhMyLMS\Design\Ui::alert_class(
+				array(
+					'tone'  => $tone,
+					'class' => 'ohmylms-verification-notice ohmylms-verification-notice-' . $type . ' ohmylms-verification-notice--' . $type,
+				)
+			)
+			: 'ohmylms-verification-notice ohmylms-verification-notice-' . $type . ' ohmylms-verification-notice--' . $type;
 		?>
-		<div class="ohmylms-verification-notice ohmylms-verification-notice-<?php echo esc_attr( $type ); ?> ohmylms-verification-notice--<?php echo esc_attr( $type ); ?>">
+		<div class="<?php echo esc_attr( $classes ); ?>" role="status">
+			<div class="oml-alert-content">
 			<?php
 			if ( $escape ) {
 				echo esc_html( $message );
@@ -87,6 +97,7 @@ final class Verification {
 				echo wp_kses( $message, array( 'a' => array( 'href' => array() ) ) );
 			}
 			?>
+			</div>
 		</div>
 		<?php
 	}

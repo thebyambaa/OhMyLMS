@@ -1,5 +1,6 @@
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
+import { EmptyState } from '../../../ui/EmptyState';
 import { Table } from '../../../ui/Table';
 import { courseReportPath, formatMoney, formatNumber } from './model';
 import type { CourseRow, Currency } from './types';
@@ -28,7 +29,7 @@ export function CourseList( {
 		return (
 			<section aria-label={ caption }>
 				<h3>{ caption }</h3>
-				<p>{ empty }</p>
+				<EmptyState title={ empty } />
 			</section>
 		);
 	}

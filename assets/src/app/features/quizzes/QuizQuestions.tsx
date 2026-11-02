@@ -17,6 +17,7 @@ import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
 import { WidefatTable } from '../../components/WidefatTable';
 import { ApiError, normalizeApiError } from '../../lib/api';
+import { EmptyState } from '../../../ui/EmptyState';
 import {
 	listQuestionTypes,
 	MAX_NAME,
@@ -716,12 +717,16 @@ export function QuizQuestions( {
 							</tbody>
 						</WidefatTable>
 					) : (
-						<p>
-							{ __(
-								'This quiz has no questions yet. Add questions from the question bank or create one.',
+						<EmptyState
+							title={ __(
+								'This quiz has no questions yet.',
 								'ohmylms'
 							) }
-						</p>
+							description={ __(
+								'Add questions from the question bank or create one.',
+								'ohmylms'
+							) }
+						/>
 					) }
 				</>
 			) }

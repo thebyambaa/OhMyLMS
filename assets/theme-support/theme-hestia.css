@@ -25,7 +25,7 @@ body.ohmylms-page.theme-hestia:not(.woocommerce-page) button:not([class^="fl-"])
 
 .ohmylms-page.theme-hestia .header nav.navbar {
     margin: 0;
-    box-shadow: 0px 1px 2px 0px #DBDDE1;
+    box-shadow: 0px 1px 2px 0px var(--oml-border, #DBDDE1);
     position: relative;
 }
 
@@ -67,7 +67,7 @@ body.ohmylms-page.theme-hestia:not(.woocommerce-page) button:not([class^="fl-"])
 }
 
 .ohmylms-checkout.theme-hestia .ohmylms-input-text {
-    border: 1px solid #EBEBEF;
+    border: 1px solid var(--oml-border, #EBEBEF);
     margin: 0;
     box-shadow: none !important;
     outline: none !important;

@@ -2,6 +2,7 @@ import { Button, Notice, SelectControl } from '@wordpress/components';
 import { useCallback, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { WidefatTable } from '../../components/WidefatTable';
+import { EmptyState } from '../../../ui/EmptyState';
 import { useOperation } from '../../hooks/useOperation';
 import { useRequest } from '../../hooks/useRequest';
 import { exportReport, getReport } from './operationsApi';
@@ -241,7 +242,9 @@ export function SchoolReportPanel( { school }: { school: SchoolDetail } ) {
 							</tbody>
 						</WidefatTable>
 					) : (
-						<p>{ __( 'No active classes.', 'ohmylms' ) }</p>
+						<EmptyState
+							title={ __( 'No active classes.', 'ohmylms' ) }
+						/>
 					) }
 					{ data.more_classes > 0 && (
 						<p>
@@ -296,12 +299,12 @@ export function SchoolReportPanel( { school }: { school: SchoolDetail } ) {
 							</tbody>
 						</WidefatTable>
 					) : (
-						<p>
-							{ __(
+						<EmptyState
+							title={ __(
 								'No skill evidence for this school’s learners yet.',
 								'ohmylms'
 							) }
-						</p>
+						/>
 					) }
 				</>
 			) }
