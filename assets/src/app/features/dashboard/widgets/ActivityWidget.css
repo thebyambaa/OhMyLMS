@@ -1,0 +1,32 @@
+/* Happening now: a compact feed, newest first. */
+
+.ohmylms-app .ohmylms-dash-activity {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.ohmylms-app .ohmylms-dash-activity__event {
+	border-bottom: 1px solid var(--oml-border);
+	display: flex;
+	gap: var(--oml-space-3);
+	justify-content: space-between;
+	margin: 0;
+	padding: var(--oml-space-2) 0;
+}
+
+.ohmylms-app .ohmylms-dash-activity__event:last-child {
+	border-bottom: 0;
+}
+
+.ohmylms-app .ohmylms-dash-activity__text {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.ohmylms-app .ohmylms-dash-activity__time {
+	color: var(--oml-muted);
+	flex: 0 0 auto;
+	font-size: 12px;
+	white-space: nowrap;
+}

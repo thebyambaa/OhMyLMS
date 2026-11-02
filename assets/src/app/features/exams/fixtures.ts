@@ -1,0 +1,229 @@
+import type { SourceInfo } from './sourceModel';
+import type {
+	ExamDetail,
+	FigureSpec,
+	ImportJobDetail,
+	ResultsView,
+} from './types';
+
+/** A composed draft exam as `GET /exams/library/12` returns it. */
+export const exam: ExamDetail = {
+	id: 12,
+	title: 'Mock paper 1',
+	status: 'draft',
+	origin: 'composed',
+	job_id: 0,
+	quiz_id: 40,
+	duration_minutes: 90,
+	total_marks: 5,
+	question_count: 2,
+	released: false,
+	results: { mode: 'manual', pending: 0 },
+	updated_at: '2026-10-30T10:00:00Z',
+	revision: 'a'.repeat( 40 ),
+	header: {
+		board: 'Cambridge',
+		qualification: '',
+		subject_code: '0580',
+		paper: '4',
+		variant: '',
+		session: '',
+		calculator: '',
+	},
+	instructions: 'Answer all questions.',
+	timing: {
+		duration_minutes: 90,
+		available_from: '',
+		available_until: '',
+		grace_seconds: 30,
+	},
+	paper: {
+		size: 'a4',
+		margin: 20,
+		font_size: 11,
+		font: 'sans',
+		numbering: 'number',
+		show_marks: true,
+		lines_per_mark: 2,
+		page_numbers: true,
+		default_view: false,
+		versions: 1,
+	},
+	composition: [
+		{ kind: 'section', title: 'Section A', new_page: false },
+		{
+			kind: 'question',
+			question_id: 101,
+			name: 'Solve 2x = 6',
+			type: 'single-choice',
+			marks: 2,
+			approved: true,
+			can_edit: true,
+		},
+		{
+			kind: 'question',
+			question_id: 102,
+			name: 'Expand (x+1)^2',
+			type: 'structured',
+			marks: 3,
+			approved: false,
+			can_edit: true,
+		},
+	],
+	problems: [],
+	warnings: [],
+	links: {
+		player: 'https://example.test/?ohmylms_exam=12',
+		preview: 'https://example.test/?ohmylms_quiz_preview=40',
+		editor: 'https://example.test/wp-admin/post.php?post=40&action=edit',
+		paper: 'https://example.test/?ohmylms_print=40&variant=paper',
+		key: 'https://example.test/?ohmylms_print=40&variant=key',
+	},
+	permissions: {
+		can_edit: true,
+		can_compose: true,
+		can_publish: true,
+		can_release: true,
+	},
+};
+
+/** `GET /exams/library/12/results`: one attempt pending, one released but not seen, one seen. */
+export const results: ResultsView = {
+	policy: { mode: 'manual', release_at: '' },
+	counts: {
+		in_progress: 0,
+		awaiting_marking: 0,
+		pending: 1,
+		released: 1,
+		viewed: 1,
+		total: 3,
+	},
+	items: ( [ 'pending', 'released', 'viewed' ] as const ).map(
+		( state, at ) => ( {
+			attempt_id: 31 + at,
+			learner: { id: 200 + at, name: `Learner ${ at + 1 }` },
+			status: 'completed',
+			submitted_at: '2026-10-31T09:00:00Z',
+			score: 3,
+			max: 5,
+			state,
+			released_at: 0 === at ? '' : '2026-10-31T10:00:00Z',
+			release_by: 0 === at ? '' : 'manual',
+			viewed_at: 2 === at ? '2026-10-31T11:00:00Z' : '',
+			notified_at: 0 === at ? '' : '2026-10-31T10:00:00Z',
+			can_release: 0 === at,
+			can_revoke: 1 === at,
+		} )
+	),
+};
+
+/** A declarative JSXGraph triangle. */
+export const triangle: FigureSpec = {
+	version: 1,
+	bounds: [ -1, 5, 6, -1 ],
+	objects: [
+		{ id: 'A', type: 'point', x: 0, y: 0, label: 'A' },
+		{ id: 'B', type: 'point', x: 4, y: 0, label: 'B' },
+		{ id: 'C', type: 'point', x: 2, y: 3, label: 'C' },
+		{ id: 'tri', type: 'polygon', points: [ 'A', 'B', 'C' ], label: '' },
+	],
+};
+
+/** A PDF import waiting for review. */
+export const job: ImportJobDetail = {
+	id: 7,
+	title: 'June paper',
+	kind: 'pdf',
+	state: 'ready_for_review',
+	target: 'exam',
+	attempts: 1,
+	error: '',
+	validation_error: '',
+	source: { name: 'june.pdf', bytes: 2048 },
+	has_mark_scheme: true,
+	revision: 3,
+	row_count: 2,
+	accepted_count: 0,
+	rejected_count: 0,
+	question_ids: [],
+	exam_id: 0,
+	quiz_id: 0,
+	updated_at: '2026-10-30T10:00:00Z',
+	can_extract: false,
+	can_apply: false,
+	inventory: {
+		title: 'June paper',
+		duration_minutes: 60,
+		total_marks: 4,
+		page_count: 6,
+	},
+	usage: { requests: 2 },
+	can_reconstruct: false,
+	rows: [
+		{
+			index: 0,
+			number: '1',
+			status: 'pending',
+			question: 'Work out 2 + 2.',
+			page: 1,
+			requires_source: false,
+			notes: '',
+			skills: '#5',
+			parts: [
+				{
+					id: 'p1',
+					label: '(a)',
+					prompt: 'Answer',
+					kind: 'numerical',
+					marks: 2,
+					answer: 4,
+				},
+			],
+			figures: [],
+			figures_complete: false,
+			marks: 2,
+		},
+		{
+			index: 1,
+			number: '2',
+			status: 'pending',
+			question: 'Explain why.',
+			page: 2,
+			requires_source: false,
+			notes: '',
+			skills: '',
+			parts: [
+				{
+					id: 'p1',
+					kind: 'written',
+					marks: 2,
+					rubric: 'M1 A1',
+				},
+			],
+			figures: [],
+			figures_complete: false,
+			marks: 2,
+		},
+	],
+};
+
+/** `GET /exam-imports/jobs/7/source` on a server with Poppler. */
+export const source: SourceInfo = {
+	page_count: 6,
+	renderer: {
+		available: true,
+		engine: 'poppler',
+		version: '24.08.0',
+		reason: '',
+		poppler_reason: '',
+		crops: true,
+		max_side: 2400,
+		imagick: false,
+	},
+	page_url:
+		'https://example.test/wp-json/ohmylms/v1/exam-imports/jobs/7/pages/{page}?_wpnonce=abc',
+	document:
+		'https://example.test/wp-json/ohmylms/v1/exam-imports/jobs/7/document?_wpnonce=abc',
+	mark_scheme:
+		'https://example.test/wp-json/ohmylms/v1/exam-imports/jobs/7/document?part=mark_scheme&_wpnonce=abc',
+};

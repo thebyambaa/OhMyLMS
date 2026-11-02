@@ -1,0 +1,53 @@
+{
+	"description": "Accept-Language cases shared by tests/js/language.test.mjs (assets/interactivity/language/model.mjs) and tests/php/interface-language-integration.php (OhMyLMS\\I18n\\AcceptLanguage), so both implementations follow the same rules.",
+	"locales": [ "en_US", "mn" ],
+	"fallback": "en_US",
+	"parse": [
+		{
+			"header": "en;q=0.5, mn-MN, fr;q=0.8",
+			"ranges": [
+				{ "tag": "mn-mn", "q": 1 },
+				{ "tag": "fr", "q": 0.8 },
+				{ "tag": "en", "q": 0.5 }
+			]
+		},
+		{
+			"header": "MN_mn ; q=0.9 , *;q=0.1, de;q=0, xx-;q=1, es;q=abc, it;q=1.5",
+			"ranges": [
+				{ "tag": "mn-mn", "q": 0.9 },
+				{ "tag": "*", "q": 0.1 }
+			]
+		},
+		{
+			"header": "fr;q=0.7, de;q=0.7, mn;q=0.7",
+			"ranges": [
+				{ "tag": "fr", "q": 0.7 },
+				{ "tag": "de", "q": 0.7 },
+				{ "tag": "mn", "q": 0.7 }
+			]
+		},
+		{ "header": "", "ranges": [] },
+		{ "header": " , ;q=1", "ranges": [] }
+	],
+	"match": [
+		{ "header": "mn", "locale": "mn" },
+		{ "header": "mn-MN", "locale": "mn" },
+		{ "header": "mn-Cyrl-MN,mn;q=0.9", "locale": "mn" },
+		{ "header": "MN-mn", "locale": "mn" },
+		{ "header": "mn_MN", "locale": "mn" },
+		{ "header": "mn-MN,en;q=0.5", "locale": "mn" },
+		{ "header": "en-US,en;q=0.9,mn;q=0.8", "locale": "en_US" },
+		{ "header": "en-GB", "locale": "en_US" },
+		{ "header": "en", "locale": "en_US" },
+		{ "header": "ru-RU,ru;q=0.9,mn;q=0.8,en;q=0.7", "locale": "mn" },
+		{ "header": "fr;q=0.9, mn;q=0.95", "locale": "mn" },
+		{ "header": "en;q=0.4, mn;q=0.6", "locale": "mn" },
+		{ "header": "de, *;q=0.5, mn;q=0.4", "locale": "en_US" },
+		{ "header": "*", "locale": "en_US" },
+		{ "header": "", "locale": "en_US" },
+		{ "header": "de-DE,fr", "locale": "en_US" },
+		{ "header": "mn;q=0, en", "locale": "en_US" },
+		{ "header": "mn;q=abc, fr", "locale": "en_US" },
+		{ "header": "x-klingon, mn;q=0.1", "locale": "mn" }
+	]
+}

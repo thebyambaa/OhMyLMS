@@ -1,0 +1,25 @@
+{
+	"description": "Existing exceptions to the front-end rules of tools/architecture-rules/frontend.mjs (docs/ENFORCEMENT.md, sections l to o). Measured on 31 October 2026; remove entries as they are fixed. Do not add entries without a reason.",
+	"cycles": [],
+	"jquery": [],
+	"featureImports": [
+		{
+			"from": "learning",
+			"to": "question-editor",
+			"files": [ "MultipleChoiceBlock.jsx", "QuestionLivePreview.jsx" ],
+			"reason": "Import cycle: both components reach question-bank/public.mjs (MultipleChoiceBlock directly, QuestionLivePreview through InteractiveEditors), whose model.mjs imports the question type models from question-editor/public.mjs, so that file cannot re-export them."
+		},
+		{
+			"from": "learning",
+			"to": "paper",
+			"files": [ "paperBlocks.jsx" ],
+			"reason": "Side-effect import that registers the paper blocks before the question blocks; webpack drops a public.mjs that is imported only for its side effects, so it would not load the registration."
+		},
+		{
+			"from": "math",
+			"to": "question-editor",
+			"files": [ "QuestionMediaUpload.jsx" ],
+			"reason": "question-editor/public.mjs holds only .mjs models because question-bank/model.mjs, paper/paperTypes.mjs and learning/choiceAutosave.mjs load it in Node tests, which cannot load JSX; the rich content control opens the media library with this component."
+		}
+	]
+}

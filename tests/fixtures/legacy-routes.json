@@ -1,0 +1,1189 @@
+{
+	"addresses": [
+		[
+			"",
+			"page=ohmylms"
+		],
+		[
+			"/order-edit/12",
+			"page=ohmylms-commerce&tab=orders&id=12"
+		],
+		[
+			"/earnings-report",
+			"page=ohmylms-commerce&tab=earnings"
+		],
+		[
+			"/course/12/report",
+			"page=ohmylms-content&tab=courses&id=12&view=report"
+		],
+		[
+			"/memberships/coupons",
+			"page=ohmylms-commerce&tab=coupons"
+		],
+		[
+			"/subscription-edit/6",
+			"page=ohmylms-commerce&tab=subscriptions&id=6"
+		],
+		[
+			"/memberships",
+			"page=ohmylms-commerce&tab=memberships"
+		],
+		[
+			"/gamification/certificates",
+			"page=ohmylms-engagement&tab=gamification&section=certificates"
+		],
+		[
+			"/certificate-edit/5",
+			"page=ohmylms-engagement&tab=gamification&section=certificates&id=5"
+		],
+		[
+			"/emails/new-order",
+			"page=ohmylms-engagement&tab=emails&email=new-order"
+		],
+		[
+			"/settings/webhooks-settings",
+			"page=ohmylms-settings&tab=webhooks"
+		],
+		[
+			"/settings/payments-settings/tax",
+			"page=ohmylms-settings&tab=settings&section=tax"
+		],
+		[
+			"/settings/xapi-settings",
+			"page=ohmylms-settings&tab=settings&section=xapi"
+		],
+		[
+			"/settings/gamification-settings/badge-settings",
+			"page=ohmylms-engagement&tab=gamification&section=badges"
+		],
+		[
+			"/setup-wizard/pages",
+			"page=ohmylms-settings&tab=setup"
+		],
+		[
+			"/assignment-report/7/grade-assignment/3",
+			"page=ohmylms-content&tab=assignments&id=7&view=submissions&student=3"
+		],
+		[
+			"/accounthub",
+			"page=ohmylms-accounts&tab=schools"
+		],
+		[
+			"/accounthub?tab=classes",
+			"page=ohmylms-accounts&tab=classes"
+		],
+		[
+			"/accounthub?tab=students",
+			"page=ohmylms-accounts&tab=students"
+		],
+		[
+			"/quiz-report?search=unit",
+			"page=ohmylms-content&tab=quizzes&section=reports&search=unit"
+		],
+		[
+			"/quiz-report/5/grade-quiz/9",
+			"page=ohmylms-content&tab=quizzes&id=5&view=attempts"
+		],
+		[
+			"/content-hub",
+			"page=ohmylms-content&tab=courses&section=overview"
+		],
+		[
+			"/course-edit/12/curriculum",
+			"page=ohmylms-content&tab=courses&id=12"
+		],
+		[
+			"/lesson-edit/3",
+			"page=ohmylms-content&tab=lessons&id=3"
+		],
+		[
+			"/categories",
+			"page=ohmylms-content&tab=curriculum"
+		],
+		[
+			"/content-hub/curriculum/syllabus/24",
+			"page=ohmylms-content&tab=curriculum&id=24&view=syllabus"
+		],
+		[
+			"/extensions/bundles",
+			"page=ohmylms-content&tab=curriculum&section=bundles"
+		],
+		[
+			"/content-hub/exams?action=new",
+			"page=ohmylms-content&tab=exams&action=new"
+		],
+		[
+			"/communities",
+			"page=ohmylms-settings&tab=integrations"
+		],
+		[
+			"/courses/12/students",
+			"page=ohmylms-content&tab=courses&id=12&view=students"
+		],
+		[
+			"/sessions",
+			"page=ohmylms-engagement&tab=sessions"
+		],
+		[
+			"/settings/design-settings/quiz-editor",
+			"page=ohmylms-settings&tab=settings&section=quiz-design"
+		],
+		[
+			"/extensions/skills?add=1",
+			"page=ohmylms-content&tab=skills&add=1"
+		],
+		[
+			"/extensions/unknown-addon-page",
+			null
+		],
+		[
+			"/quizzes?action=bulk",
+			null
+		]
+	],
+	"cases": [
+		[
+			"",
+			"/dashboard"
+		],
+		[
+			"/",
+			"/dashboard"
+		],
+		[
+			"/dashboard",
+			"/dashboard"
+		],
+		[
+			"/earnings-report",
+			"/earnings"
+		],
+		[
+			"/course/12/report",
+			"/reports/courses/12"
+		],
+		[
+			"/orders",
+			"/orders"
+		],
+		[
+			"/orders/",
+			"/orders"
+		],
+		[
+			"#/orders",
+			"/orders"
+		],
+		[
+			"/orders/3",
+			"/orders"
+		],
+		[
+			"/orders?status=completed",
+			"/orders?status=completed"
+		],
+		[
+			"/memberships/orders",
+			"/orders"
+		],
+		[
+			"/memberships/orders/2",
+			"/orders"
+		],
+		[
+			"/order-edit/45",
+			"/orders/45"
+		],
+		[
+			"/coupons",
+			"/coupons"
+		],
+		[
+			"/memberships/coupons",
+			"/coupons"
+		],
+		[
+			"/subscriptions",
+			"/subscriptions"
+		],
+		[
+			"/subscriptions/2",
+			"/subscriptions"
+		],
+		[
+			"/memberships/subscriptions",
+			"/subscriptions"
+		],
+		[
+			"/subscription-edit/9",
+			"/subscriptions/9"
+		],
+		[
+			"/memberships",
+			"/memberships"
+		],
+		[
+			"/certificates",
+			"/certificates"
+		],
+		[
+			"/gamification/certificates",
+			"/certificates"
+		],
+		[
+			"/certificate-edit/7",
+			"/certificates/7"
+		],
+		[
+			"/emails",
+			"/emails"
+		],
+		[
+			"/emails/student_enrolled",
+			"/emails?email=student_enrolled"
+		],
+		[
+			"/emails/a%20b",
+			"/emails?email=a%20b"
+		],
+		[
+			"/settings/emails-settings",
+			"/emails"
+		],
+		[
+			"/webhooks",
+			"/webhooks"
+		],
+		[
+			"/settings/webhooks-settings",
+			"/webhooks"
+		],
+		[
+			"/integrations",
+			"/integrations"
+		],
+		[
+			"/settings/general-settings",
+			"/settings?tab=general"
+		],
+		[
+			"/settings/branding-settings",
+			"/settings?tab=branding"
+		],
+		[
+			"/settings/account-privacy-settings",
+			"/settings?tab=account-and-privacy"
+		],
+		[
+			"/settings/parmalink-settings",
+			"/settings?tab=permalink"
+		],
+		[
+			"/settings/advanced-settings",
+			"/settings?tab=advanced"
+		],
+		[
+			"/settings/ai-tutor-settings",
+			"/settings?tab=ai-tutor"
+		],
+		[
+			"/settings/design-system-settings",
+			"/settings?tab=design-system"
+		],
+		[
+			"/settings/xapi-settings",
+			"/settings?tab=xapi"
+		],
+		[
+			"/settings/payments-settings",
+			"/settings?tab=payment-gateways"
+		],
+		[
+			"/settings/payments-settings/payments",
+			"/settings?tab=payment-gateways"
+		],
+		[
+			"/settings/payments-settings/payments/stripe",
+			"/settings?tab=payment-gateways"
+		],
+		[
+			"/settings/payments-settings/currency",
+			"/settings?tab=currency"
+		],
+		[
+			"/settings/payments-settings/tax",
+			"/settings?tab=tax"
+		],
+		[
+			"/settings/gamification-settings",
+			"/gamification"
+		],
+		[
+			"/settings/gamification-settings/badge-settings",
+			"/gamification?tab=badges"
+		],
+		[
+			"/gamification/point-settings",
+			"/gamification?tab=points"
+		],
+		[
+			"/gamification/level-settings",
+			"/gamification?tab=levels"
+		],
+		[
+			"/gamification/leaderboard-settings",
+			"/gamification?tab=leaderboard"
+		],
+		[
+			"/gamification/streak-settings",
+			"/gamification?tab=streaks"
+		],
+		[
+			"/gamification/xp-settings",
+			"/gamification?tab=xp"
+		],
+		[
+			"/setup-wizard",
+			"/setup"
+		],
+		[
+			"/setup-wizard/payments",
+			"/setup"
+		],
+		[
+			"/assignments",
+			"/assignments"
+		],
+		[
+			"/content-hub/assignments",
+			"/assignments"
+		],
+		[
+			"/assessments/assignments",
+			"/assignments"
+		],
+		[
+			"/assignment-edit/31",
+			"/assignments/31"
+		],
+		[
+			"/assignment-report",
+			"/assignments"
+		],
+		[
+			"/assignment-report/31",
+			"/assignments/31/submissions"
+		],
+		[
+			"/assignment-report/31/grade-assignment/9",
+			"/assignments/31/submissions?student=9"
+		],
+		[
+			"/content-hub/question-bank",
+			"/content-hub/question-bank"
+		],
+		[
+			"/extensions/question-bank",
+			"/content-hub/question-bank"
+		],
+		[
+			"/assessments/question-bank",
+			"/content-hub/question-bank"
+		],
+		[
+			"/accounthub",
+			"/account-hub"
+		],
+		[
+			"/accounthub?tab=home",
+			"/account-hub"
+		],
+		[
+			"/accounthub?tab=schools",
+			"/account-hub"
+		],
+		[
+			"/accounthub?tab=classes",
+			"/account-hub?tab=classes"
+		],
+		[
+			"/accounthub?tab=teachers",
+			"/account-hub?tab=teachers"
+		],
+		[
+			"/accounthub?tab=parents&page=2",
+			"/account-hub?tab=parents&page=2"
+		],
+		[
+			"/accounthub?tab=students",
+			"/students"
+		],
+		[
+			"/quiz-report/5",
+			"/quizzes/5/attempts"
+		],
+		[
+			"/quiz-report/5/grade-quiz/77",
+			"/quizzes/5/attempts"
+		],
+		[
+			"/content-hub/question-bank?action=new",
+			"/content-hub/question-bank?action=new"
+		],
+		[
+			"/content-hub/question-bank?action=import",
+			"/content-hub/question-bank?action=import"
+		],
+		[
+			"/accounthub?tab=users",
+			"/account-hub?tab=users"
+		],
+		[
+			"/settings/design-settings",
+			"/settings?tab=course-archive"
+		],
+		[
+			"/settings/design-settings/course-details",
+			"/settings?tab=course-archive"
+		],
+		[
+			"/settings/migration-settings",
+			"/settings?tab=migration"
+		],
+		[
+			"/gamification/reward-settings",
+			"/gamification?tab=rewards"
+		],
+		[
+			"/quiz-report",
+			"/reports/quizzes"
+		],
+		[
+			"/quiz-edit/5",
+			"/quizzes/5"
+		],
+		[
+			"/quizzes",
+			"/quizzes"
+		],
+		[
+			"/course-edit/12",
+			"/courses/12"
+		],
+		[
+			"/course-edit/12/settings/general",
+			"/courses/12"
+		],
+		[
+			"/lesson-edit/3",
+			"/content-hub/lessons/3"
+		],
+		[
+			"/courses",
+			"/courses"
+		],
+		[
+			"/courses/12/students",
+			"/reports/courses/12/students"
+		],
+		[
+			"/students/4/report",
+			"/students/4/report"
+		],
+		[
+			"/content-hub",
+			"/content-hub"
+		],
+		[
+			"/content-hub/courses",
+			"/courses"
+		],
+		[
+			"/content-hub/lessons",
+			"/content-hub/lessons"
+		],
+		[
+			"/content-hub/quizzes?action=new",
+			"/quizzes?action=new"
+		],
+		[
+			"/content-hub/exams",
+			"/exams"
+		],
+		[
+			"/content-hub/exams?action=import",
+			"/exams?action=import"
+		],
+		[
+			"/extensions/unknown-addon-page",
+			null
+		],
+		[
+			"/content-hub/skills",
+			"/content-hub/skills"
+		],
+		[
+			"/content-hub/curriculum",
+			"/content-hub/curriculum"
+		],
+		[
+			"/content-hub/bundles",
+			"/content-hub/bundles"
+		],
+		[
+			"/communities",
+			"/integrations"
+		],
+		[
+			"/sessions",
+			"/sessions"
+		],
+		[
+			"/extensions/skills",
+			"/content-hub/skills"
+		],
+		[
+			"/extensions/curriculum",
+			"/content-hub/curriculum"
+		],
+		[
+			"/categories",
+			"/content-hub/curriculum"
+		],
+		[
+			"/order-edit",
+			null
+		],
+		[
+			"/order-edit/45/extra",
+			null
+		],
+		[
+			"/settings/design-settings/quiz-editor",
+			"/settings?tab=quiz-design"
+		],
+		[
+			"/settings/design-settings/colors-fonts",
+			"/settings?tab=design-system"
+		],
+		[
+			"/settings/design-settings/checkout-page",
+			"/settings?tab=payment-gateways"
+		],
+		[
+			"/extensions/question-bank?action=import",
+			"/content-hub/question-bank?action=import"
+		],
+		[
+			"/content-hub/question-bank?action=bulk",
+			null
+		],
+		[
+			"/quizzes?action=import",
+			"/quizzes?action=import"
+		],
+		[
+			"/assessments?action=new&course=4",
+			"/quizzes?action=new&course=4"
+		],
+		[
+			"/quizzes?action=bulk",
+			null
+		],
+		[
+			"/content-hub/skills?add=1",
+			"/content-hub/skills?add=1"
+		],
+		[
+			"/extensions/skills?add=1",
+			"/content-hub/skills?add=1"
+		],
+		[
+			"/content-hub/skills?add=yes",
+			null
+		],
+		[
+			"/content-hub/curriculum/compare",
+			"/content-hub/curriculum/compare"
+		],
+		[
+			"/content-hub/curriculum/compare?roadmap=20",
+			"/content-hub/curriculum/compare?roadmap=20"
+		],
+		[
+			"/settings/gamification-settings/reward-settings",
+			"/gamification?tab=rewards"
+		],
+		[
+			"/accounthub?tab=users&page=2",
+			"/account-hub?tab=users&page=2"
+		],
+		[
+			"/quiz-report?search=algebra",
+			"/reports/quizzes?search=algebra"
+		],
+		[
+			"/content-hub?tab=courses",
+			"/content-hub?tab=courses"
+		],
+		[
+			"/content-hub/catalog",
+			"/courses"
+		],
+		[
+			"/content-hub/catalog/12",
+			"/courses/12"
+		]
+	],
+	"routes": [
+		{
+			"from": "/",
+			"to": "/dashboard"
+		},
+		{
+			"from": "/dashboard",
+			"to": "/dashboard"
+		},
+		{
+			"from": "/earnings-report",
+			"to": "/earnings"
+		},
+		{
+			"from": "/course/:id/report",
+			"to": "/reports/courses/:id"
+		},
+		{
+			"from": "/orders/:page?",
+			"to": "/orders"
+		},
+		{
+			"from": "/memberships/orders/:page?",
+			"to": "/orders"
+		},
+		{
+			"from": "/order-edit/:id",
+			"to": "/orders/:id"
+		},
+		{
+			"from": "/coupons",
+			"to": "/coupons"
+		},
+		{
+			"from": "/memberships/coupons",
+			"to": "/coupons"
+		},
+		{
+			"from": "/subscriptions/:page?",
+			"to": "/subscriptions"
+		},
+		{
+			"from": "/memberships/subscriptions/:page?",
+			"to": "/subscriptions"
+		},
+		{
+			"from": "/subscription-edit/:id",
+			"to": "/subscriptions/:id"
+		},
+		{
+			"from": "/memberships",
+			"to": "/memberships"
+		},
+		{
+			"from": "/certificates",
+			"to": "/certificates"
+		},
+		{
+			"from": "/gamification/certificates",
+			"to": "/certificates"
+		},
+		{
+			"from": "/certificate-edit/:id",
+			"to": "/certificates/:id"
+		},
+		{
+			"from": "/emails",
+			"to": "/emails"
+		},
+		{
+			"from": "/emails/:id",
+			"to": "/emails?email=:id"
+		},
+		{
+			"from": "/settings/emails-settings/*",
+			"to": "/emails"
+		},
+		{
+			"from": "/webhooks",
+			"to": "/webhooks"
+		},
+		{
+			"from": "/settings/webhooks-settings/*",
+			"to": "/webhooks"
+		},
+		{
+			"from": "/integrations",
+			"to": "/integrations"
+		},
+		{
+			"from": "/settings/payments-settings",
+			"to": "/settings?tab=payment-gateways"
+		},
+		{
+			"from": "/settings/payments-settings/payments/*",
+			"to": "/settings?tab=payment-gateways"
+		},
+		{
+			"from": "/settings/payments-settings/currency/*",
+			"to": "/settings?tab=currency"
+		},
+		{
+			"from": "/settings/payments-settings/tax/*",
+			"to": "/settings?tab=tax"
+		},
+		{
+			"from": "/settings/gamification-settings",
+			"to": "/gamification"
+		},
+		{
+			"from": "/setup-wizard/:tab?",
+			"to": "/setup"
+		},
+		{
+			"from": "/assignments",
+			"to": "/assignments"
+		},
+		{
+			"from": "/content-hub/assignments",
+			"to": "/assignments"
+		},
+		{
+			"from": "/assessments/assignments",
+			"to": "/assignments"
+		},
+		{
+			"from": "/assignment-edit/:id",
+			"to": "/assignments/:id"
+		},
+		{
+			"from": "/assignment-report",
+			"to": "/assignments"
+		},
+		{
+			"from": "/assignment-report/:id",
+			"to": "/assignments/:id/submissions"
+		},
+		{
+			"from": "/assignment-report/:id/grade-assignment/:student",
+			"to": "/assignments/:id/submissions?student=:student"
+		},
+		{
+			"from": "/accounthub",
+			"to": "/account-hub",
+			"query": {
+				"tab": [
+					"",
+					"home",
+					"schools"
+				]
+			}
+		},
+		{
+			"from": "/accounthub",
+			"to": "/account-hub?tab=:tab",
+			"query": {
+				"tab": [
+					"classes",
+					"teachers",
+					"parents",
+					"users"
+				]
+			}
+		},
+		{
+			"from": "/accounthub",
+			"to": "/students",
+			"query": {
+				"tab": [
+					"students"
+				]
+			}
+		},
+		{
+			"from": "/quiz-report",
+			"to": "/reports/quizzes"
+		},
+		{
+			"from": "/quiz-report/:id/*",
+			"to": "/quizzes/:id/attempts"
+		},
+		{
+			"from": "/content-hub",
+			"to": "/content-hub"
+		},
+		{
+			"from": "/quiz-edit/:id",
+			"to": "/quizzes/:id"
+		},
+		{
+			"from": "/course-edit/:id/*",
+			"to": "/courses/:id"
+		},
+		{
+			"from": "/courses",
+			"to": "/courses"
+		},
+		{
+			"from": "/content-hub/courses",
+			"to": "/courses"
+		},
+		{
+			"from": "/content-hub/catalog",
+			"to": "/courses"
+		},
+		{
+			"from": "/content-hub/catalog/:id",
+			"to": "/courses/:id"
+		},
+		{
+			"from": "/lesson-edit/:id",
+			"to": "/content-hub/lessons/:id"
+		},
+		{
+			"from": "/content-hub/lessons",
+			"to": "/content-hub/lessons"
+		},
+		{
+			"from": "/content-hub/curriculum",
+			"to": "/content-hub/curriculum"
+		},
+		{
+			"from": "/content-hub/curriculum/compare",
+			"to": "/content-hub/curriculum/compare"
+		},
+		{
+			"from": "/extensions/curriculum",
+			"to": "/content-hub/curriculum"
+		},
+		{
+			"from": "/categories",
+			"to": "/content-hub/curriculum"
+		},
+		{
+			"from": "/tags",
+			"to": "/content-hub/curriculum"
+		},
+		{
+			"from": "/content-hub/curriculum/skill-map",
+			"to": "/content-hub/curriculum/skill-map"
+		},
+		{
+			"from": "/content-hub/curriculum/subjects",
+			"to": "/content-hub/curriculum/subjects"
+		},
+		{
+			"from": "/content-hub/curriculum/syllabus/:id",
+			"to": "/content-hub/curriculum/syllabus/:id"
+		},
+		{
+			"from": "/content-hub/bundles",
+			"to": "/content-hub/bundles"
+		},
+		{
+			"from": "/extensions/bundles",
+			"to": "/content-hub/bundles"
+		},
+		{
+			"from": "/content-hub/exams",
+			"to": "/exams",
+			"query": {
+				"action": [
+					""
+				]
+			}
+		},
+		{
+			"from": "/content-hub/exams",
+			"to": "/exams?action=:action",
+			"query": {
+				"action": [
+					"new",
+					"import"
+				]
+			}
+		},
+		{
+			"from": "/communities",
+			"to": "/integrations"
+		},
+		{
+			"from": "/students/:id/report",
+			"to": "/students/:id/report"
+		},
+		{
+			"from": "/courses/:id/students",
+			"to": "/reports/courses/:id/students"
+		},
+		{
+			"from": "/sessions",
+			"to": "/sessions"
+		},
+		{
+			"from": "/settings/design-settings/quiz-editor/*",
+			"to": "/settings?tab=quiz-design"
+		},
+		{
+			"from": "/settings/design-settings/colors-fonts/*",
+			"to": "/settings?tab=design-system"
+		},
+		{
+			"from": "/settings/design-settings/checkout-page/*",
+			"to": "/settings?tab=payment-gateways"
+		},
+		{
+			"from": "/settings/design-settings/*",
+			"to": "/settings?tab=course-archive"
+		},
+		{
+			"from": "/content-hub/question-bank",
+			"to": "/content-hub/question-bank",
+			"query": {
+				"action": [
+					""
+				]
+			}
+		},
+		{
+			"from": "/content-hub/question-bank",
+			"to": "/content-hub/question-bank?action=:action",
+			"query": {
+				"action": [
+					"new",
+					"import"
+				]
+			}
+		},
+		{
+			"from": "/extensions/question-bank",
+			"to": "/content-hub/question-bank",
+			"query": {
+				"action": [
+					""
+				]
+			}
+		},
+		{
+			"from": "/extensions/question-bank",
+			"to": "/content-hub/question-bank?action=:action",
+			"query": {
+				"action": [
+					"new",
+					"import"
+				]
+			}
+		},
+		{
+			"from": "/assessments/question-bank",
+			"to": "/content-hub/question-bank",
+			"query": {
+				"action": [
+					""
+				]
+			}
+		},
+		{
+			"from": "/assessments/question-bank",
+			"to": "/content-hub/question-bank?action=:action",
+			"query": {
+				"action": [
+					"new",
+					"import"
+				]
+			}
+		},
+		{
+			"from": "/quizzes",
+			"to": "/quizzes",
+			"query": {
+				"action": [
+					""
+				]
+			}
+		},
+		{
+			"from": "/quizzes",
+			"to": "/quizzes?action=:action",
+			"query": {
+				"action": [
+					"new",
+					"import"
+				]
+			}
+		},
+		{
+			"from": "/content-hub/quizzes",
+			"to": "/quizzes",
+			"query": {
+				"action": [
+					""
+				]
+			}
+		},
+		{
+			"from": "/content-hub/quizzes",
+			"to": "/quizzes?action=:action",
+			"query": {
+				"action": [
+					"new",
+					"import"
+				]
+			}
+		},
+		{
+			"from": "/assessments",
+			"to": "/quizzes",
+			"query": {
+				"action": [
+					""
+				]
+			}
+		},
+		{
+			"from": "/assessments",
+			"to": "/quizzes?action=:action",
+			"query": {
+				"action": [
+					"new",
+					"import"
+				]
+			}
+		},
+		{
+			"from": "/content-hub/skills",
+			"to": "/content-hub/skills",
+			"query": {
+				"add": [
+					""
+				]
+			}
+		},
+		{
+			"from": "/content-hub/skills",
+			"to": "/content-hub/skills?add=:add",
+			"query": {
+				"add": [
+					"1"
+				]
+			}
+		},
+		{
+			"from": "/extensions/skills",
+			"to": "/content-hub/skills",
+			"query": {
+				"add": [
+					""
+				]
+			}
+		},
+		{
+			"from": "/extensions/skills",
+			"to": "/content-hub/skills?add=:add",
+			"query": {
+				"add": [
+					"1"
+				]
+			}
+		},
+		{
+			"from": "/settings/general-settings/*",
+			"to": "/settings?tab=general"
+		},
+		{
+			"from": "/settings/branding-settings/*",
+			"to": "/settings?tab=branding"
+		},
+		{
+			"from": "/settings/account-privacy-settings/*",
+			"to": "/settings?tab=account-and-privacy"
+		},
+		{
+			"from": "/settings/parmalink-settings/*",
+			"to": "/settings?tab=permalink"
+		},
+		{
+			"from": "/settings/advanced-settings/*",
+			"to": "/settings?tab=advanced"
+		},
+		{
+			"from": "/settings/ai-tutor-settings/*",
+			"to": "/settings?tab=ai-tutor"
+		},
+		{
+			"from": "/settings/design-system-settings/*",
+			"to": "/settings?tab=design-system"
+		},
+		{
+			"from": "/settings/xapi-settings/*",
+			"to": "/settings?tab=xapi"
+		},
+		{
+			"from": "/settings/migration-settings/*",
+			"to": "/settings?tab=migration"
+		},
+		{
+			"from": "/gamification/reward-settings",
+			"to": "/gamification?tab=rewards"
+		},
+		{
+			"from": "/settings/gamification-settings/reward-settings/*",
+			"to": "/gamification?tab=rewards"
+		},
+		{
+			"from": "/gamification/point-settings",
+			"to": "/gamification?tab=points"
+		},
+		{
+			"from": "/settings/gamification-settings/point-settings/*",
+			"to": "/gamification?tab=points"
+		},
+		{
+			"from": "/gamification/badge-settings",
+			"to": "/gamification?tab=badges"
+		},
+		{
+			"from": "/settings/gamification-settings/badge-settings/*",
+			"to": "/gamification?tab=badges"
+		},
+		{
+			"from": "/gamification/level-settings",
+			"to": "/gamification?tab=levels"
+		},
+		{
+			"from": "/settings/gamification-settings/level-settings/*",
+			"to": "/gamification?tab=levels"
+		},
+		{
+			"from": "/gamification/leaderboard-settings",
+			"to": "/gamification?tab=leaderboard"
+		},
+		{
+			"from": "/settings/gamification-settings/leaderboard-settings/*",
+			"to": "/gamification?tab=leaderboard"
+		},
+		{
+			"from": "/gamification/streak-settings",
+			"to": "/gamification?tab=streaks"
+		},
+		{
+			"from": "/settings/gamification-settings/streak-settings/*",
+			"to": "/gamification?tab=streaks"
+		},
+		{
+			"from": "/gamification/xp-settings",
+			"to": "/gamification?tab=xp"
+		},
+		{
+			"from": "/settings/gamification-settings/xp-settings/*",
+			"to": "/gamification?tab=xp"
+		}
+	]
+}

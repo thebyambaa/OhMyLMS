@@ -1,0 +1,33 @@
+/* Insights: one bordered note per sentence; the severity is also announced as text. */
+
+.ohmylms-app .ohmylms-insights {
+	display: flex;
+	flex-direction: column;
+	gap: var(--oml-space-2);
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.ohmylms-app .ohmylms-insights__item {
+	background: var(--oml-background);
+	border-inline-start: 4px solid var(--oml-info);
+	margin: 0;
+	padding: var(--oml-space-2) var(--oml-space-3);
+}
+
+.ohmylms-app .ohmylms-insights__item.is-error {
+	border-inline-start-color: var(--oml-danger);
+}
+
+.ohmylms-app .ohmylms-insights__item.is-warning {
+	border-inline-start-color: var(--oml-warning);
+}
+
+.ohmylms-app .ohmylms-insights__item.is-success {
+	border-inline-start-color: var(--oml-success);
+}
+
+.ohmylms-app .ohmylms-insights__action {
+	white-space: nowrap;
+}

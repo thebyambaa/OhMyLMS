@@ -1,0 +1,38 @@
+{
+	"unit": [
+		{
+			"reason": "Needs the sibling plugin wp-content/plugins/ohmylms-custom-question, which is not in this repository.",
+			"files": [ "tests/php/custom-question-registry.php" ]
+		},
+		{
+			"reason": "Helpers, not suites: tests/js/ui-button.test.mjs and tests/js/ui-components.test.mjs call them with a JSON argument (npm test).",
+			"files": [
+				"tests/php/ui-button-classes.php",
+				"tests/php/ui-component-classes.php"
+			]
+		}
+	],
+	"integration": [
+		{
+			"reason": "Need plugins that are not in this repository: the sibling ohmylms-qpay plugin (qpay-integration), and CreatorLMS (creatorlms/creatorlms.php) plus a scenario argument such as ohmylms-first (creatorlms-coexistence).",
+			"files": [
+				"tests/php/creatorlms-coexistence.php",
+				"tests/php/qpay-integration.php"
+			]
+		},
+		{
+			"reason": "Not suites: routers for PHP's development server (php -S 127.0.0.1:<port> <file> with OHMYLMS_TEST_CREDENTIALS). Under the CLI they exit without checking anything.",
+			"files": [
+				"tests/php/exam-import-http.php",
+				"tests/php/pdf-exam-http.php"
+			]
+		},
+		{
+			"reason": "Not suites: prefix-migration renames database tables when given --apply; randomized-preview-readonly is the PHP half of tests/js/randomized-preview.test.mjs, which the integration job runs with OHMYLMS_READONLY_WP_ROOT.",
+			"files": [
+				"tests/prefix-migration.php",
+				"tests/php/randomized-preview-readonly.php"
+			]
+		}
+	]
+}

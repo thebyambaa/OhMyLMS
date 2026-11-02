@@ -1,0 +1,85 @@
+{
+	"description": "Raw colours that stay in authored learner SCSS (assets/src/frontend/scss). The stylelint rule ohmylms/no-raw-svg-colour allows these file and value pairs inside SVG data URIs. Declaration colours belong on var(--oml-*, <previous>). There are no chart series or exam-print colours in this SCSS; paper.css is a separate stylesheet. See docs/DESIGN-TOKENS.md.",
+	"colours": [
+		{
+			"file": "assets/src/frontend/scss/archive/_course-card.scss",
+			"value": "#f5f5f5",
+			"reason": "Empty-star track in the rating artwork. One mask cannot keep the track, highlight and filled star."
+		},
+		{
+			"file": "assets/src/frontend/scss/archive/_course-card.scss",
+			"value": "#f9fafd",
+			"reason": "Star-rating highlight. Subject artwork, not a brand token."
+		},
+		{
+			"file": "assets/src/frontend/scss/archive/_course-card.scss",
+			"value": "#fe9738",
+			"reason": "Filled-star orange. Subject artwork, not the warning token."
+		},
+		{
+			"file": "assets/src/frontend/scss/single/layout-2/course-single-layout-2.scss",
+			"value": "#f5f5f5",
+			"reason": "Empty-star track in the rating artwork."
+		},
+		{
+			"file": "assets/src/frontend/scss/single/layout-2/course-single-layout-2.scss",
+			"value": "#f9fafd",
+			"reason": "Star-rating highlight. Subject artwork, not a brand token."
+		},
+		{
+			"file": "assets/src/frontend/scss/single/layout-2/course-single-layout-2.scss",
+			"value": "#fe9738",
+			"reason": "Filled-star orange. Subject artwork, not the warning token."
+		},
+		{
+			"file": "assets/src/frontend/scss/single/_course-single-reviews.scss",
+			"value": "#f5f5f5",
+			"reason": "Empty-star track in the rating artwork."
+		},
+		{
+			"file": "assets/src/frontend/scss/single/_course-single-reviews.scss",
+			"value": "#f9fafd",
+			"reason": "Star-rating highlight. Subject artwork, not a brand token."
+		},
+		{
+			"file": "assets/src/frontend/scss/single/_course-single-reviews.scss",
+			"value": "#fe9738",
+			"reason": "Filled-star orange. Subject artwork, not the warning token."
+		},
+		{
+			"file": "assets/src/frontend/scss/archive/_course-search-sort.scss",
+			"value": "#1f2328",
+			"reason": "Select chevron painted as a background image. Masking the control would clip its text."
+		},
+		{
+			"file": "assets/src/frontend/scss/checkout/checkout.scss",
+			"value": "#7a8b9a",
+			"reason": "Select chevron painted as a background image. Masking the control would clip its text."
+		},
+		{
+			"file": "assets/src/frontend/scss/checkout/_login-signup.scss",
+			"value": "#7a8b9a",
+			"reason": "Select chevron painted as a background image. Masking the control would clip its text."
+		},
+		{
+			"file": "assets/src/frontend/scss/checkout/_checkout-error.scss",
+			"value": "#ff6f6f",
+			"reason": "Notice glyph shares its box with the surface disc. Masking that box would remove the disc."
+		},
+		{
+			"file": "assets/src/frontend/scss/lesson/_lesson-sidebar.scss",
+			"value": "#a1a1aa",
+			"reason": "Two-paint lesson-type icon (text). A mask can carry only one token."
+		},
+		{
+			"file": "assets/src/frontend/scss/lesson/_lesson-sidebar.scss",
+			"value": "#f4f5f7",
+			"reason": "Second paint on the text lesson-type icon."
+		},
+		{
+			"file": "assets/src/frontend/scss/lesson/_lesson-sidebar.scss",
+			"value": "#fff",
+			"reason": "Second paint on the audio lesson-type icon."
+		}
+	]
+}

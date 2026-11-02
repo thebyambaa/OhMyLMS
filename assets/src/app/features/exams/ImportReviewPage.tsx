@@ -1,0 +1,1504 @@
+import {
+	Button,
+	CheckboxControl,
+	Modal,
+	Notice,
+	SelectControl,
+	TextControl,
+	TextareaControl,
+} from '@wordpress/components';
+import {
+	Suspense,
+	lazy,
+	useCallback,
+	useEffect,
+	useState,
+} from '@wordpress/element';
+import { __, sprintf } from '@wordpress/i18n';
+import { Link, useParams } from 'react-router-dom';
+import { useOperation } from '../../hooks/useOperation';
+import { useRequest } from '../../hooks/useRequest';
+import { ApiError, normalizeApiError } from '../../lib/api';
+import {
+	applyJob,
+	createFigure,
+	decideRow,
+	deleteJob,
+	extractJob,
+	getJob,
+	getSource,
+	listFigures,
+	searchSkills,
+	updateRow,
+} from './api';
+import { MIN_SIDE, isBounds, round6, type Bounds } from './cropGeometry';
+import FigureProposalPanel from './FigureProposalPanel';
+import type { SourceFocus } from './SourcePanel';
+import type { SourceInfo } from './sourceModel';
+
+// The page viewer and crop tool load only when an import review shows its source.
+const SourcePanel = lazy(
+	() =>
+		import(
+			/* webpackChunkName: "admin-app-exams-source" */ './SourcePanel'
+		)
+);
+import {
+	LIMITS,
+	POLL_MS,
+	examPath,
+	isWorking,
+	rowStatusLabel,
+	stateLabel,
+	targetLabel,
+	withSkill,
+} from './model';
+import type {
+	FigureAsset,
+	ImportFigure,
+	ImportJobDetail,
+	ImportPart,
+	ImportRow,
+	PartKind,
+	RowChanges,
+	SkillMatch,
+} from './types';
+
+const KINDS: readonly PartKind[] = [ 'numerical', 'text', 'written' ];
+
+/** A crop queued from the source panel, for one row's draft: replacing a figure's crop or adding one. */
+interface CropDelivery {
+	seq: number;
+	row: number;
+	figure: string | null;
+	crop: FigureAsset;
+}
+
+function nextFigureId( figures: readonly ImportFigure[] ): string {
+	let number = figures.length + 1;
+	while ( figures.some( ( figure ) => figure.id === `f${ number }` ) ) {
+		number++;
+	}
+	return `f${ number }`;
+}
+
+function routeId( value: string | undefined ): number | null {
+	return value && /^[1-9]\d*$/.test( value ) ? Number( value ) : null;
+}
+
+/**
+ * The saved figure a refused crop (`ohmylms_exam_import_figure_bounds`) names, to redraw on the page.
+ *
+ * @param failure Last failure.
+ * @param rows    Rows of the job.
+ * @return Row index and figure ID, or null.
+ */
+function figureToRedraw(
+	failure: ApiError | null,
+	rows: readonly ImportRow[]
+): { row: number; figure: string } | null {
+	const details = failure?.details;
+	if (
+		'ohmylms_exam_import_figure_bounds' !== failure?.code ||
+		! details ||
+		'object' !== typeof details
+	) {
+		return null;
+	}
+	const { index, figure } = details as Record< string, unknown >;
+	return 'number' === typeof index &&
+		'string' === typeof figure &&
+		rows.some(
+			( row ) =>
+				row.index === index &&
+				row.figures.some( ( item ) => item.id === figure )
+		)
+		? { row: index, figure }
+		: null;
+}
+
+function kindLabel( kind: PartKind ): string {
+	if ( 'numerical' === kind ) {
+		return __( 'Number (auto-marked)', 'ohmylms' );
+	}
+	return 'text' === kind
+		? __( 'Text (auto-marked)', 'ohmylms' )
+		: __( 'Written (teacher-marked)', 'ohmylms' );
+}
+
+/**
+ * Find skills and add their references to a row.
+ * @param root0
+ * @param root0.onPick
+ */
+function SkillSearch( { onPick }: { onPick: ( skill: SkillMatch ) => void } ) {
+	const [ query, setQuery ] = useState( '' );
+	const operation = useOperation();
+	const [ found, setFound ] = useState< SkillMatch[] | null >( null );
+	return (
+		<div>
+			<TextControl
+				label={ __( 'Find a skill', 'ohmylms' ) }
+				value={ query }
+				onChange={ setQuery }
+			/>
+			<Button
+				variant="secondary"
+				size="small"
+				disabled={ ! query.trim() || operation.busy }
+				onClick={ () =>
+					void operation.run(
+						( signal ) => searchSkills( query.trim(), signal ),
+						( result ) => setFound( result.items )
+					)
+				}
+			>
+				{ __( 'Search skills', 'ohmylms' ) }
+			</Button>
+			{ operation.error && <p role="alert">{ operation.error }</p> }
+			{ found && (
+				<ul aria-label={ __( 'Skills', 'ohmylms' ) }>
+					{ found.map( ( skill ) => (
+						<li key={ skill.id }>
+							{ [ skill.code, skill.name ]
+								.filter( Boolean )
+								.join( ' ' ) }
+							{ skill.path && ` (${ skill.path })` }{ ' ' }
+							<Button
+								variant="link"
+								onClick={ () => onPick( skill ) }
+							>
+								{ __( 'Use', 'ohmylms' ) }
+							</Button>
+						</li>
+					) ) }
+					{ ! found.length && (
+						<li>{ __( 'No skills found.', 'ohmylms' ) }</li>
+					) }
+				</ul>
+			) }
+		</div>
+	);
+}
+
+interface RowEditorProps {
+	jobId: number;
+	revision: number;
+	row: ImportRow;
+	crops: FigureAsset[];
+	editable: boolean;
+	busy: boolean;
+	canGenerate: boolean;
+	/** The source panel shows this row. */
+	focused: boolean;
+	/** A source panel is shown beside the rows. */
+	showSource: boolean;
+	onFocusSource: ( figure: string | null ) => void;
+	delivery: CropDelivery | null;
+	onSave: ( changes: RowChanges ) => void;
+	onDecide: ( decision: 'accept' | 'reject' ) => void;
+	onRun: (
+		work: ( signal: AbortSignal ) => Promise< ImportJobDetail >,
+		done: string
+	) => void;
+}
+
+/**
+ * One question of the paper: edit, then accept or reject.
+ * @param root0
+ * @param root0.jobId
+ * @param root0.revision
+ * @param root0.row
+ * @param root0.crops
+ * @param root0.editable
+ * @param root0.busy
+ * @param root0.canGenerate
+ * @param root0.focused
+ * @param root0.showSource
+ * @param root0.onFocusSource
+ * @param root0.delivery
+ * @param root0.onSave
+ * @param root0.onDecide
+ * @param root0.onRun
+ */
+function RowEditor( {
+	jobId,
+	revision,
+	row,
+	crops,
+	editable,
+	busy,
+	canGenerate,
+	focused,
+	showSource,
+	onFocusSource,
+	delivery,
+	onSave,
+	onDecide,
+	onRun,
+}: RowEditorProps ) {
+	const [ question, setQuestion ] = useState( row.question );
+	const [ page, setPage ] = useState( String( row.page ) );
+	const [ skills, setSkills ] = useState( row.skills );
+	const [ notes, setNotes ] = useState( row.notes );
+	const [ requiresSource, setRequiresSource ] = useState(
+		row.requires_source
+	);
+	const [ parts, setParts ] = useState< ImportPart[] >( row.parts );
+	const [ figures, setFigures ] = useState< ImportFigure[] >( row.figures );
+	const [ error, setError ] = useState< string | null >( null );
+	// Reset the draft only when the stored row changed, so other rows keep their unsaved edits.
+	const stored = JSON.stringify( row );
+	useEffect( () => {
+		const next = JSON.parse( stored ) as ImportRow;
+		setQuestion( next.question );
+		setPage( String( next.page ) );
+		setSkills( next.skills );
+		setNotes( next.notes );
+		setRequiresSource( next.requires_source );
+		setParts( next.parts );
+		setFigures( next.figures );
+	}, [ stored ] );
+	// A crop drawn on the source page replaces a figure's crop or adds a figure to the draft.
+	const deliverySeq = delivery?.seq;
+	useEffect( () => {
+		if ( ! delivery ) {
+			return;
+		}
+		const { figure, crop } = delivery;
+		const placed = {
+			asset_id: crop.id,
+			page: crop.page,
+			bounds: crop.bounds,
+			approved: false,
+		};
+		setFigures( ( current ) => {
+			if ( figure && current.some( ( item ) => item.id === figure ) ) {
+				return current.map( ( item ) =>
+					item.id === figure ? { ...item, ...placed } : item
+				);
+			}
+			if ( current.length >= 20 ) {
+				return current;
+			}
+			return [
+				...current,
+				{
+					id: nextFigureId( current ),
+					part_ids: [],
+					alt: '',
+					not_to_scale: false,
+					selected: 'original',
+					...placed,
+				},
+			];
+		} );
+		// Apply each delivery once.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [ deliverySeq ] );
+	const changes: RowChanges = {};
+	if ( question !== row.question ) {
+		changes.question = question;
+	}
+	if ( page !== String( row.page ) ) {
+		changes.page = Number( page );
+	}
+	if ( skills !== row.skills ) {
+		changes.skills = skills;
+	}
+	if ( notes !== row.notes ) {
+		changes.notes = notes;
+	}
+	if ( requiresSource !== row.requires_source ) {
+		changes.requires_source = requiresSource;
+	}
+	if ( JSON.stringify( parts ) !== JSON.stringify( row.parts ) ) {
+		changes.parts = parts;
+	}
+	if ( JSON.stringify( figures ) !== JSON.stringify( row.figures ) ) {
+		changes.figures = figures;
+	}
+	const dirty = Object.keys( changes ).length > 0;
+	const setPart = ( index: number, next: ImportPart ) =>
+		setParts( ( current ) =>
+			current.map( ( item, at ) => ( at === index ? next : item ) )
+		);
+	const setFigure = ( index: number, next: ImportFigure ) =>
+		setFigures( ( current ) =>
+			current.map( ( item, at ) => ( at === index ? next : item ) )
+		);
+	const readyCrops = crops.filter( ( crop ) => 'ready' === crop.state );
+	function save() {
+		if ( ! /^\d{1,3}$/.test( page ) || Number( page ) < 1 ) {
+			setError(
+				__(
+					'Enter the source page as a whole number from 1.',
+					'ohmylms'
+				)
+			);
+			return;
+		}
+		if ( ! question.trim() ) {
+			setError( __( 'The question needs its stem.', 'ohmylms' ) );
+			return;
+		}
+		setError( null );
+		onSave( changes );
+	}
+	return (
+		<article
+			aria-labelledby={ `oml-row-${ row.index }` }
+			className={ focused ? 'is-source-focus' : undefined }
+			onFocusCapture={ () => {
+				if ( showSource && ! focused ) {
+					onFocusSource( null );
+				}
+			} }
+		>
+			<h4 id={ `oml-row-${ row.index }` }>
+				{ sprintf(
+					/* translators: 1: question number; 2: review status; 3: marks. */
+					__( 'Question %1$s — %2$s — %3$s marks', 'ohmylms' ),
+					row.number,
+					rowStatusLabel( row.status ),
+					String( row.marks )
+				) }
+			</h4>
+			{ showSource && (
+				<p>
+					<Button
+						variant="link"
+						aria-pressed={ focused }
+						onClick={ () => onFocusSource( null ) }
+					>
+						{ sprintf(
+							/* translators: %d: source page. */
+							__( 'Show source page %d', 'ohmylms' ),
+							row.page
+						) }
+					</Button>
+				</p>
+			) }
+			<fieldset disabled={ ! editable || busy }>
+				<TextareaControl
+					label={ __( 'Question stem', 'ohmylms' ) }
+					value={ question }
+					rows={ 3 }
+					onChange={ setQuestion }
+				/>
+				<TextControl
+					label={ __( 'Source page', 'ohmylms' ) }
+					value={ page }
+					inputMode="numeric"
+					onChange={ setPage }
+				/>
+				<CheckboxControl
+					label={ __( 'Needs the source figure', 'ohmylms' ) }
+					checked={ requiresSource }
+					onChange={ setRequiresSource }
+				/>
+				<TextControl
+					label={ __( 'Skills', 'ohmylms' ) }
+					help={ __(
+						'Skill codes or #IDs, separated by semicolons.',
+						'ohmylms'
+					) }
+					value={ skills }
+					onChange={ setSkills }
+				/>
+				{ editable && (
+					<SkillSearch
+						onPick={ ( skill ) =>
+							setSkills( withSkill( skills, skill.id ) )
+						}
+					/>
+				) }
+				{ parts.map( ( part, index ) => (
+					<fieldset key={ part.id }>
+						<legend>
+							{ sprintf(
+								/* translators: %s: part label or ID. */
+								__( 'Part %s', 'ohmylms' ),
+								part.label || part.id
+							) }
+						</legend>
+						<TextareaControl
+							label={ __( 'Prompt', 'ohmylms' ) }
+							value={ part.prompt ?? '' }
+							rows={ 2 }
+							onChange={ ( prompt ) =>
+								setPart( index, { ...part, prompt } )
+							}
+						/>
+						<SelectControl
+							label={ __( 'Answer type', 'ohmylms' ) }
+							value={ part.kind ?? 'written' }
+							options={ KINDS.map( ( kind ) => ( {
+								value: kind,
+								label: kindLabel( kind ),
+							} ) ) }
+							onChange={ ( next ) => {
+								const kind = KINDS.find(
+									( item ) => item === next
+								);
+								if ( kind ) {
+									setPart( index, { ...part, kind } );
+								}
+							} }
+						/>
+						<TextControl
+							label={ __( 'Marks', 'ohmylms' ) }
+							value={ String( part.marks ) }
+							inputMode="decimal"
+							onChange={ ( marks ) =>
+								setPart( index, {
+									...part,
+									marks: Number( marks ) || 0,
+								} )
+							}
+						/>
+						{ 'numerical' === part.kind && (
+							<TextControl
+								label={ __( 'Answer', 'ohmylms' ) }
+								value={
+									undefined === part.answer
+										? ''
+										: String( part.answer )
+								}
+								inputMode="decimal"
+								onChange={ ( answer ) =>
+									setPart( index, {
+										...part,
+										...( '' === answer.trim()
+											? { answer: undefined }
+											: { answer: Number( answer ) } ),
+									} )
+								}
+							/>
+						) }
+						{ 'text' === part.kind && (
+							<TextControl
+								label={ __( 'Accepted answers', 'ohmylms' ) }
+								help={ __(
+									'Separate alternatives with a vertical bar (|).',
+									'ohmylms'
+								) }
+								value={ ( part.accepted ?? [] ).join( '|' ) }
+								onChange={ ( accepted ) =>
+									setPart( index, {
+										...part,
+										accepted: accepted
+											.split( '|' )
+											.map( ( item ) => item.trim() )
+											.filter( Boolean ),
+									} )
+								}
+							/>
+						) }
+						<TextareaControl
+							label={ __(
+								'Marking notes (teachers only)',
+								'ohmylms'
+							) }
+							value={ part.rubric ?? '' }
+							rows={ 2 }
+							onChange={ ( rubric ) =>
+								setPart( index, { ...part, rubric } )
+							}
+						/>
+					</fieldset>
+				) ) }
+				{ figures.map( ( item, index ) => {
+					const crop = crops.find(
+						( entry ) => entry.id === item.asset_id
+					);
+					return (
+						<fieldset key={ item.id }>
+							<legend>
+								{ sprintf(
+									/* translators: %s: figure ID. */
+									__( 'Figure %s', 'ohmylms' ),
+									item.id
+								) }
+							</legend>
+							{ crop?.url ? (
+								<img
+									src={ crop.url }
+									alt={ item.alt }
+									style={ { maxWidth: '20rem' } }
+								/>
+							) : (
+								<p>
+									{ __(
+										'The crop is not ready yet.',
+										'ohmylms'
+									) }
+								</p>
+							) }
+							<SelectControl
+								label={ __( 'Crop', 'ohmylms' ) }
+								value={ item.asset_id }
+								options={ [
+									{
+										value: '',
+										label: __( 'Choose a crop', 'ohmylms' ),
+									},
+									...readyCrops.map( ( entry ) => ( {
+										value: entry.id,
+										label: sprintf(
+											/* translators: %d: source page. */
+											__( 'Page %d crop', 'ohmylms' ),
+											entry.page
+										),
+									} ) ),
+								] }
+								onChange={ ( assetId ) => {
+									// The server refuses a figure whose page and area differ from its crop's.
+									const chosen = readyCrops.find(
+										( entry ) => entry.id === assetId
+									);
+									setFigure(
+										index,
+										chosen
+											? {
+													...item,
+													asset_id: chosen.id,
+													page: chosen.page,
+													bounds: chosen.bounds,
+													approved: false,
+												}
+											: { ...item, asset_id: assetId }
+									);
+								} }
+							/>
+							<TextControl
+								label={ __(
+									'Description for screen readers',
+									'ohmylms'
+								) }
+								value={ item.alt }
+								onChange={ ( alt ) =>
+									setFigure( index, { ...item, alt } )
+								}
+							/>
+							<CheckboxControl
+								label={ __( 'Approve this figure', 'ohmylms' ) }
+								help={
+									'original' === item.selected
+										? __(
+												'Learners see the original crop.',
+												'ohmylms'
+											)
+										: __(
+												'Learners see the accepted JSXGraph reconstruction.',
+												'ohmylms'
+											)
+								}
+								checked={ item.approved }
+								onChange={ ( approved ) =>
+									setFigure( index, { ...item, approved } )
+								}
+							/>
+							{ showSource &&
+								row.figures.some(
+									( saved ) => saved.id === item.id
+								) && (
+									<Button
+										variant="secondary"
+										size="small"
+										onClick={ () =>
+											onFocusSource( item.id )
+										}
+									>
+										{ __(
+											'Adjust the crop on the page',
+											'ohmylms'
+										) }
+									</Button>
+								) }
+							{ editable &&
+								'ready' === crop?.state &&
+								row.figures.some(
+									( saved ) =>
+										saved.id === item.id &&
+										saved.asset_id === item.asset_id
+								) && (
+									<FigureProposalPanel
+										jobId={ jobId }
+										rowIndex={ row.index }
+										revision={ revision }
+										figure={
+											row.figures.find(
+												( saved ) =>
+													saved.id === item.id
+											) as ImportFigure
+										}
+										cropUrl={ crop.url }
+										canGenerate={ canGenerate }
+										dirty={ dirty }
+										busy={ busy }
+										onRun={ onRun }
+									/>
+								) }
+							<Button
+								variant="link"
+								isDestructive
+								onClick={ () =>
+									setFigures(
+										figures.filter(
+											( _, at ) => at !== index
+										)
+									)
+								}
+							>
+								{ __( 'Remove figure', 'ohmylms' ) }
+							</Button>
+						</fieldset>
+					);
+				} ) }
+				{ editable && readyCrops.length > 0 && figures.length < 20 && (
+					<Button
+						variant="secondary"
+						size="small"
+						onClick={ () => {
+							const crop = readyCrops[ 0 ] as FigureAsset;
+							setFigures( [
+								...figures,
+								{
+									id: `f${ figures.length + 1 }`,
+									page: crop.page,
+									bounds: crop.bounds,
+									part_ids: [],
+									asset_id: crop.id,
+									alt: '',
+									not_to_scale: false,
+									selected: 'original',
+									approved: false,
+								},
+							] );
+						} }
+					>
+						{ __( 'Add figure', 'ohmylms' ) }
+					</Button>
+				) }
+				<TextareaControl
+					label={ __( 'Review notes', 'ohmylms' ) }
+					value={ notes }
+					rows={ 2 }
+					onChange={ setNotes }
+				/>
+			</fieldset>
+			{ error && <p role="alert">{ error }</p> }
+			{ editable && (
+				<p>
+					<Button
+						variant="secondary"
+						disabled={ busy || ! dirty }
+						onClick={ save }
+					>
+						{ __( 'Save changes', 'ohmylms' ) }
+					</Button>{ ' ' }
+					<Button
+						variant="primary"
+						disabled={ busy || dirty || 'accepted' === row.status }
+						onClick={ () => onDecide( 'accept' ) }
+					>
+						{ __( 'Accept', 'ohmylms' ) }
+					</Button>{ ' ' }
+					<Button
+						variant="tertiary"
+						isDestructive
+						disabled={ busy || 'rejected' === row.status }
+						onClick={ () => onDecide( 'reject' ) }
+					>
+						{ __( 'Reject', 'ohmylms' ) }
+					</Button>
+				</p>
+			) }
+		</article>
+	);
+}
+
+/**
+ * Import review (`#/exams/imports/<jobId>`): job status (polled while the server works), extraction,
+ * row-by-row review with parts, skills and figures, and apply. Replaces the review dialog of the legacy
+ * Content Hub Exams tab.
+ */
+export default function ImportReviewPage() {
+	const params = useParams();
+	const id = routeId( params.jobId );
+	const load = useCallback(
+		( signal: AbortSignal ) =>
+			null === id
+				? Promise.reject( new Error( 'invalid id' ) )
+				: getJob( id, signal ),
+		[ id ]
+	);
+	const request = useRequest( load );
+	const operation = useOperation();
+	const [ job, setJob ] = useState< ImportJobDetail | null >( null );
+	const [ crops, setCrops ] = useState< FigureAsset[] >( [] );
+	const [ failure, setFailure ] = useState< ApiError | null >( null );
+	const [ message, setMessage ] = useState< string | null >( null );
+	const [ title, setTitle ] = useState( '' );
+	const [ minutes, setMinutes ] = useState( '' );
+	const [ crop, setCrop ] = useState( {
+		page: '1',
+		left: '0',
+		top: '0',
+		right: '100',
+		bottom: '50',
+	} );
+	const [ deleting, setDeleting ] = useState( false );
+	const [ deleted, setDeleted ] = useState( false );
+	const [ source, setSource ] = useState< SourceInfo | null >( null );
+	const [ sourceError, setSourceError ] = useState< string | null >( null );
+	const [ focus, setFocus ] = useState< {
+		row: number;
+		figure: string | null;
+	} >( { row: 0, figure: null } );
+	const [ delivery, setDelivery ] = useState< CropDelivery | null >( null );
+
+	const adopt = useCallback( ( next: ImportJobDetail ) => {
+		setJob( next );
+		setTitle(
+			( current ) => current || next.inventory.title || next.title
+		);
+		setMinutes(
+			( current ) =>
+				current || String( next.inventory.duration_minutes || 60 )
+		);
+	}, [] );
+
+	useEffect( () => {
+		if ( request.data ) {
+			adopt( request.data );
+		}
+	}, [ request.data, adopt ] );
+
+	const state = job?.state;
+	useEffect( () => {
+		if ( null === id || ! state || ! isWorking( state ) ) {
+			return undefined;
+		}
+		const controller = new AbortController();
+		const timer = window.setTimeout( () => {
+			getJob( id, controller.signal ).then( adopt, () => undefined );
+		}, POLL_MS );
+		return () => {
+			window.clearTimeout( timer );
+			controller.abort();
+		};
+	}, [ id, state, job, adopt ] );
+
+	const kind = job?.kind;
+	useEffect( () => {
+		if ( null === id || 'pdf' !== kind ) {
+			return undefined;
+		}
+		const controller = new AbortController();
+		listFigures( id, controller.signal ).then( setCrops, () => undefined );
+		return () => controller.abort();
+	}, [ id, kind ] );
+
+	// Crops render in the background; refresh them until none is waiting.
+	const rendering = crops.some(
+		( entry ) => 'queued' === entry.state || 'rendering' === entry.state
+	);
+	useEffect( () => {
+		if ( null === id || ! rendering ) {
+			return undefined;
+		}
+		const controller = new AbortController();
+		const timer = window.setTimeout( () => {
+			listFigures( id, controller.signal ).then(
+				setCrops,
+				() => undefined
+			);
+		}, POLL_MS );
+		return () => {
+			window.clearTimeout( timer );
+			controller.abort();
+		};
+	}, [ id, rendering, crops ] );
+
+	// The source paper can be shown once its upload was checked.
+	const viewable =
+		'pdf' === kind &&
+		!! state &&
+		! [ 'queued', 'failed' ].includes( state );
+	useEffect( () => {
+		if ( null === id || ! viewable ) {
+			return undefined;
+		}
+		const controller = new AbortController();
+		getSource( id, controller.signal ).then(
+			( next ) => {
+				setSource( next );
+				setSourceError( null );
+			},
+			( problem ) => {
+				const error = normalizeApiError( problem );
+				if ( ! error.isAborted ) {
+					setSourceError( error.message );
+				}
+			}
+		);
+		return () => controller.abort();
+	}, [ id, viewable ] );
+
+	if ( null === id ) {
+		return (
+			<>
+				<h2>{ __( 'Import review', 'ohmylms' ) }</h2>
+				<Notice status="error" isDismissible={ false }>
+					{ __( 'This import link is invalid.', 'ohmylms' ) }
+				</Notice>
+				<Link to="/exams">{ __( 'Back to exams', 'ohmylms' ) }</Link>
+			</>
+		);
+	}
+	if ( deleted ) {
+		return (
+			<>
+				<h2>{ __( 'Import review', 'ohmylms' ) }</h2>
+				<Notice status="success" isDismissible={ false }>
+					{ __(
+						'The import and its private files were deleted.',
+						'ohmylms'
+					) }
+				</Notice>
+				<Link to="/exams">{ __( 'Back to exams', 'ohmylms' ) }</Link>
+			</>
+		);
+	}
+	if ( request.loading && ! job ) {
+		return (
+			<>
+				<h2>{ __( 'Import review', 'ohmylms' ) }</h2>
+				<p role="status">{ __( 'Loading import…', 'ohmylms' ) }</p>
+			</>
+		);
+	}
+	if ( ! job ) {
+		return (
+			<>
+				<h2>{ __( 'Import review', 'ohmylms' ) }</h2>
+				<Notice status="error" isDismissible={ false }>
+					{ request.error ||
+						__( 'The import could not be loaded.', 'ohmylms' ) }
+				</Notice>
+				<p>
+					<Button variant="secondary" onClick={ request.retry }>
+						{ __( 'Try again', 'ohmylms' ) }
+					</Button>{ ' ' }
+					<Link to="/exams">
+						{ __( 'Back to exams', 'ohmylms' ) }
+					</Link>
+				</p>
+			</>
+		);
+	}
+
+	function run(
+		work: ( signal: AbortSignal ) => Promise< ImportJobDetail >,
+		done: string
+	) {
+		setMessage( null );
+		setFailure( null );
+		void operation.run(
+			async ( signal ) => {
+				try {
+					return await work( signal );
+				} catch ( problem ) {
+					const error = normalizeApiError( problem );
+					if ( ! signal.aborted ) {
+						setFailure( error );
+					}
+					throw error;
+				}
+			},
+			( result ) => {
+				adopt( result );
+				setMessage( done );
+			}
+		);
+	}
+
+	const current = job;
+	const redraw = figureToRedraw( failure, current.rows );
+	const reviewable = 'ready_for_review' === current.state;
+	const pending = current.rows.filter(
+		( row ) => 'pending' === row.status
+	).length;
+
+	const focusRow =
+		current.rows.find( ( row ) => row.index === focus.row ) ??
+		current.rows[ 0 ];
+	const focusFigure =
+		focusRow?.figures.find( ( figure ) => figure.id === focus.figure ) ??
+		null;
+	const sourceFocus: SourceFocus = {
+		key: `${ focusRow?.index ?? -1 }:${ focusFigure?.id ?? '' }`,
+		title: focusRow
+			? sprintf(
+					/* translators: %s: question number. */
+					__( 'Question %s', 'ohmylms' ),
+					focusRow.number
+				)
+			: __( 'The paper', 'ohmylms' ),
+		page: focusFigure?.page ?? focusRow?.page ?? 1,
+		figure: focusFigure?.id ?? null,
+		bounds:
+			focusFigure && isBounds( focusFigure.bounds )
+				? focusFigure.bounds
+				: null,
+	};
+	const regions = ( focusRow?.figures ?? [] )
+		.filter( ( figure ) => isBounds( figure.bounds ) )
+		.map( ( figure ) => ( {
+			id: figure.id,
+			label: figure.id,
+			page: figure.page,
+			bounds: figure.bounds,
+		} ) );
+
+	function cropFromSource(
+		page: number,
+		bounds: Bounds,
+		figure: string | null
+	) {
+		if ( ! focusRow ) {
+			return;
+		}
+		const row = focusRow.index;
+		setMessage( null );
+		setFailure( null );
+		void operation.run(
+			async ( signal ) => {
+				try {
+					return await createFigure(
+						current.id,
+						page,
+						bounds,
+						signal
+					);
+				} catch ( problem ) {
+					const error = normalizeApiError( problem );
+					if ( ! signal.aborted ) {
+						setFailure( error );
+					}
+					throw error;
+				}
+			},
+			( queued ) => {
+				setCrops( ( previous ) => [
+					...previous.filter( ( entry ) => entry.id !== queued.id ),
+					queued,
+				] );
+				setDelivery( ( previous ) => ( {
+					seq: ( previous?.seq ?? 0 ) + 1,
+					row,
+					figure,
+					crop: queued,
+				} ) );
+				setMessage(
+					figure
+						? sprintf(
+								/* translators: %s: figure ID. */
+								__(
+									'Crop requested for figure %s. Save the question to keep it, then approve the figure when the crop is ready.',
+									'ohmylms'
+								),
+								figure
+							)
+						: __(
+								'Crop requested as a new figure. Describe it and save the question, then approve it when the crop is ready.',
+								'ohmylms'
+							)
+				);
+			}
+		);
+	}
+
+	function apply() {
+		const duration = /^\d{1,4}$/.test( minutes ) ? Number( minutes ) : 0;
+		if (
+			'questions' !== current.target &&
+			( ! title.trim() ||
+				Array.from( title.trim() ).length > LIMITS.title )
+		) {
+			setFailure(
+				new ApiError( {
+					status: 422,
+					code: 'ohmylms_exam_invalid_field',
+					message: __(
+						'Enter a title of 1 to 190 characters.',
+						'ohmylms'
+					),
+				} )
+			);
+			return;
+		}
+		if (
+			'exam' === current.target &&
+			( duration < 1 || duration > LIMITS.duration )
+		) {
+			setFailure(
+				new ApiError( {
+					status: 422,
+					code: 'ohmylms_exam_invalid_field',
+					message: __(
+						'Enter a duration from 1 to 1440 minutes.',
+						'ohmylms'
+					),
+				} )
+			);
+			return;
+		}
+		run(
+			( signal ) =>
+				applyJob(
+					current.id,
+					current.revision,
+					'questions' === current.target
+						? {}
+						: {
+								title: title.trim(),
+								...( 'exam' === current.target
+									? { duration_minutes: duration }
+									: {} ),
+							},
+					signal
+				),
+			__( 'Import applied.', 'ohmylms' )
+		);
+	}
+
+	function requestCrop() {
+		const values = [ crop.left, crop.top, crop.right, crop.bottom ].map(
+			( value ) => Number( value ) / 100
+		);
+		const pages = current.inventory.page_count;
+		const valid =
+			/^\d{1,3}$/.test( crop.page ) &&
+			Number( crop.page ) >= 1 &&
+			( ! pages || Number( crop.page ) <= pages ) &&
+			values.every(
+				( value ) =>
+					Number.isFinite( value ) && value >= 0 && value <= 1
+			) &&
+			round6( ( values[ 2 ] as number ) - ( values[ 0 ] as number ) ) >=
+				MIN_SIDE &&
+			round6( ( values[ 3 ] as number ) - ( values[ 1 ] as number ) ) >=
+				MIN_SIDE;
+		if ( ! valid ) {
+			setFailure(
+				new ApiError( {
+					status: 422,
+					code: 'ohmylms_exam_import_crop',
+					message: pages
+						? sprintf(
+								/* translators: %d: pages of the paper. */
+								__(
+									'Choose a page from 1 to %d and a crop area from 0 to 100 percent, with left before right and top before bottom, at least half a percent wide and high.',
+									'ohmylms'
+								),
+								pages
+							)
+						: __(
+								'Choose a page and a crop area from 0 to 100 percent, with left before right and top before bottom, at least half a percent wide and high.',
+								'ohmylms'
+							),
+				} )
+			);
+			return;
+		}
+		setFailure( null );
+		void operation.run(
+			( signal ) =>
+				createFigure(
+					current.id,
+					Number( crop.page ),
+					values as [ number, number, number, number ],
+					signal
+				).then( () => listFigures( current.id, signal ) ),
+			( next ) => {
+				setCrops( next );
+				setMessage(
+					__(
+						'Crop requested. It appears here when it is ready.',
+						'ohmylms'
+					)
+				);
+			}
+		);
+	}
+
+	return (
+		<>
+			<p>
+				<Link to="/exams">{ __( 'Back to exams', 'ohmylms' ) }</Link>
+			</p>
+			<h2>
+				{ sprintf(
+					/* translators: %s: import title. */
+					__( 'Review import: %s', 'ohmylms' ),
+					current.title || current.source.name
+				) }
+			</h2>
+			<p role="status">
+				{ stateLabel( current.state ) } ·{ ' ' }
+				{ targetLabel( current.target ) }
+				{ current.row_count > 0 &&
+					` · ${ sprintf(
+						/* translators: 1: accepted rows; 2: rejected rows; 3: all rows. */
+						__( '%1$d accepted, %2$d rejected of %3$d', 'ohmylms' ),
+						current.accepted_count,
+						current.rejected_count,
+						current.row_count
+					) }` }
+			</p>
+			{ ( current.error || current.validation_error ) && (
+				<Notice status="warning" isDismissible={ false }>
+					{ current.validation_error || current.error }
+				</Notice>
+			) }
+			{ message && (
+				<Notice status="success" onRemove={ () => setMessage( null ) }>
+					{ message }
+				</Notice>
+			) }
+			{ failure && (
+				<Notice status="error" isDismissible={ false }>
+					{ failure.message }
+					{ 'ohmylms_exam_import_conflict' === failure.code && (
+						<>
+							{ ' ' }
+							<Button variant="link" onClick={ request.retry }>
+								{ __( 'Reload the latest version', 'ohmylms' ) }
+							</Button>
+						</>
+					) }
+					{ viewable && redraw && (
+						<>
+							{ ' ' }
+							<Button
+								variant="link"
+								onClick={ () => {
+									setFailure( null );
+									setFocus( redraw );
+								} }
+							>
+								{ sprintf(
+									/* translators: %s: figure ID. */
+									__(
+										'Redraw figure %s on the page',
+										'ohmylms'
+									),
+									redraw.figure
+								) }
+							</Button>
+						</>
+					) }
+				</Notice>
+			) }
+			{ current.can_extract && (
+				<p>
+					<Button
+						variant="primary"
+						disabled={ operation.busy }
+						onClick={ () =>
+							run(
+								( signal ) => extractJob( current.id, signal ),
+								__( 'Extraction started.', 'ohmylms' )
+							)
+						}
+					>
+						{ __( 'Extract questions with AI', 'ohmylms' ) }
+					</Button>
+				</p>
+			) }
+			{ isWorking( current.state ) && (
+				<p>
+					{ __(
+						'The server is working on this import. This page updates by itself.',
+						'ohmylms'
+					) }
+				</p>
+			) }
+
+			{ ( reviewable || viewable ) && (
+				<div
+					className={
+						viewable
+							? 'ohmylms-import-review has-source'
+							: 'ohmylms-import-review'
+					}
+				>
+					{ reviewable && (
+						<section aria-labelledby="oml-import-rows">
+							<h3 id="oml-import-rows">
+								{ __( 'Questions', 'ohmylms' ) }
+							</h3>
+							{ current.rows.map( ( row ) => (
+								<RowEditor
+									key={ row.index }
+									jobId={ current.id }
+									revision={ current.revision }
+									row={ row }
+									crops={ crops }
+									editable={ reviewable }
+									busy={ operation.busy }
+									canGenerate={ current.can_reconstruct }
+									focused={ viewable && row === focusRow }
+									showSource={ viewable }
+									onFocusSource={ ( figure ) =>
+										setFocus( { row: row.index, figure } )
+									}
+									delivery={
+										delivery?.row === row.index
+											? delivery
+											: null
+									}
+									onRun={ run }
+									onSave={ ( changes ) =>
+										run(
+											( signal ) =>
+												updateRow(
+													current.id,
+													row.index,
+													changes,
+													current.revision,
+													signal
+												),
+											__(
+												'Question saved. Accept it when it is right.',
+												'ohmylms'
+											)
+										)
+									}
+									onDecide={ ( decision ) =>
+										run(
+											( signal ) =>
+												decideRow(
+													current.id,
+													row.index,
+													decision,
+													current.revision,
+													signal
+												),
+											'accept' === decision
+												? __(
+														'Question accepted.',
+														'ohmylms'
+													)
+												: __(
+														'Question rejected.',
+														'ohmylms'
+													)
+										)
+									}
+								/>
+							) ) }
+						</section>
+					) }
+					{ viewable && (
+						<Suspense
+							fallback={
+								<p role="status">
+									{ __(
+										'Loading the source paper…',
+										'ohmylms'
+									) }
+								</p>
+							}
+						>
+							<SourcePanel
+								source={ source }
+								error={ sourceError }
+								focus={ sourceFocus }
+								regions={ regions }
+								canCrop={
+									reviewable && !! source?.renderer.crops
+								}
+								busy={ operation.busy }
+								onCrop={ cropFromSource }
+							/>
+						</Suspense>
+					) }
+				</div>
+			) }
+
+			{ 'pdf' === current.kind && reviewable && (
+				<section aria-labelledby="oml-import-crops">
+					<h3 id="oml-import-crops">
+						{ __( 'Figure crops', 'ohmylms' ) }
+					</h3>
+					<ul>
+						{ crops.map( ( entry ) => (
+							<li key={ entry.id }>
+								{ sprintf(
+									/* translators: 1: page; 2: crop state. */
+									__( 'Page %1$d: %2$s', 'ohmylms' ),
+									entry.page,
+									entry.state
+								) }
+							</li>
+						) ) }
+					</ul>
+					<fieldset disabled={ operation.busy }>
+						<legend>{ __( 'Request a crop', 'ohmylms' ) }</legend>
+						{ (
+							[
+								[ 'page', __( 'Page', 'ohmylms' ) ],
+								[ 'left', __( 'Left (%)', 'ohmylms' ) ],
+								[ 'top', __( 'Top (%)', 'ohmylms' ) ],
+								[ 'right', __( 'Right (%)', 'ohmylms' ) ],
+								[ 'bottom', __( 'Bottom (%)', 'ohmylms' ) ],
+							] as const
+						 ).map( ( [ key, label ] ) => (
+							<TextControl
+								key={ key }
+								label={ label }
+								value={ crop[ key ] }
+								inputMode="numeric"
+								onChange={ ( value ) =>
+									setCrop( { ...crop, [ key ]: value } )
+								}
+							/>
+						) ) }
+						<Button variant="secondary" onClick={ requestCrop }>
+							{ __( 'Request crop', 'ohmylms' ) }
+						</Button>
+					</fieldset>
+				</section>
+			) }
+
+			{ ( current.can_apply ||
+				( reviewable && current.row_count > 0 ) ) && (
+				<section aria-labelledby="oml-import-apply">
+					<h3 id="oml-import-apply">{ __( 'Apply', 'ohmylms' ) }</h3>
+					{ pending > 0 && (
+						<p>
+							{ sprintf(
+								/* translators: %d: rows still to review. */
+								__(
+									'%d questions still need a decision.',
+									'ohmylms'
+								),
+								pending
+							) }
+						</p>
+					) }
+					{ 'questions' !== current.target && (
+						<TextControl
+							label={
+								'exam' === current.target
+									? __( 'Exam title', 'ohmylms' )
+									: __( 'Quiz title', 'ohmylms' )
+							}
+							value={ title }
+							maxLength={ LIMITS.title }
+							onChange={ setTitle }
+						/>
+					) }
+					{ 'exam' === current.target && (
+						<TextControl
+							label={ __( 'Duration (minutes)', 'ohmylms' ) }
+							value={ minutes }
+							inputMode="numeric"
+							onChange={ setMinutes }
+						/>
+					) }
+					<Button
+						variant="primary"
+						disabled={ operation.busy || ! current.can_apply }
+						isBusy={ operation.busy }
+						onClick={ apply }
+					>
+						{ __( 'Apply import', 'ohmylms' ) }
+					</Button>
+				</section>
+			) }
+
+			{ current.exam_id > 0 && (
+				<p>
+					<Link to={ examPath( current.exam_id ) }>
+						{ __( 'Open the exam', 'ohmylms' ) }
+					</Link>
+				</p>
+			) }
+			{ 'committed' === current.state &&
+				0 === current.exam_id &&
+				'exam' !== current.target && (
+					<p>
+						{ sprintf(
+							/* translators: %d: number of questions. */
+							__(
+								'%d questions were saved to the question bank as drafts.',
+								'ohmylms'
+							),
+							current.question_ids.length
+						) }
+					</p>
+				) }
+			{ 0 === current.exam_id && (
+				<p>
+					<Button
+						variant="link"
+						isDestructive
+						disabled={ operation.busy }
+						onClick={ () => setDeleting( true ) }
+					>
+						{ __( 'Delete import', 'ohmylms' ) }
+					</Button>
+				</p>
+			) }
+			{ deleting && (
+				<Modal
+					title={ __( 'Delete import', 'ohmylms' ) }
+					onRequestClose={ () =>
+						! operation.busy && setDeleting( false )
+					}
+					shouldCloseOnClickOutside={ false }
+				>
+					{ operation.error && (
+						<Notice status="error" isDismissible={ false }>
+							{ operation.error }
+						</Notice>
+					) }
+					<p>
+						{ __(
+							'Delete this import and its private source files? Questions already saved to the question bank stay.',
+							'ohmylms'
+						) }
+					</p>
+					<Button
+						variant="primary"
+						isDestructive
+						disabled={ operation.busy }
+						onClick={ () =>
+							void operation.run(
+								( signal ) => deleteJob( current.id, signal ),
+								() => {
+									setDeleting( false );
+									setDeleted( true );
+								}
+							)
+						}
+					>
+						{ __( 'Delete', 'ohmylms' ) }
+					</Button>{ ' ' }
+					<Button
+						variant="tertiary"
+						disabled={ operation.busy }
+						onClick={ () => setDeleting( false ) }
+					>
+						{ __( 'Cancel', 'ohmylms' ) }
+					</Button>
+				</Modal>
+			) }
+		</>
+	);
+}

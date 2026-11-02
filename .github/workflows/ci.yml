@@ -1,0 +1,284 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# All jobs run in parallel; see docs/ENFORCEMENT.md for what each one checks and how to run it locally.
+jobs:
+  checks:
+    name: Build, typecheck, app tests, architecture and node tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # tests/js compares PHP and React output (ui-button, ui-components); without PHP those tests skip.
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: none
+
+      - run: npm ci
+
+      # Styles, the admin app, blocks and native editors; the architecture check then measures these bundles.
+      - run: npm run build
+
+      - run: npm run check:ci
+
+      - name: Node tests (tests/js)
+        run: npm test
+
+  lint-js:
+    name: ESLint and Stylelint (npm run lint:js, lint:css)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run lint:js
+
+      - run: npm run lint:css
+
+  php:
+    name: PHP syntax (php -l) and unit suites
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      # The suite runner is a dependency-free Node script; no npm ci.
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: none
+          extensions: mbstring, sodium, zip, intl
+          ini-values: display_errors=stderr, error_reporting=E_ALL, memory_limit=1G
+
+      # Parse errors go to stderr; xargs exits non-zero if any file fails.
+      - name: Lint includes/ and tests/php
+        run: |
+          find includes tests/php -type f -name '*.php' -print0 \
+            | xargs -0 -n 1 -P 4 php -d display_errors=stderr -l > /dev/null
+
+      # Suites that stub WordPress (tests/*.php and tests/php/*.php without wp-load.php); skips are in tests/php-suites.json.
+      - name: Unit suites
+        run: node tools/run-php-tests.mjs unit
+
+  phpcs:
+    name: WordPress coding standards (every file, plus changed lines)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: composer
+
+      - uses: ramsey/composer-install@v3
+        with:
+          working-directory: tools/coding-standards
+          composer-options: --no-plugins --no-scripts
+
+      # Every file has 0 errors since 2 November 2026; legacy warnings remain, so only errors fail here.
+      - name: phpcs errors in every file
+        run: node tools/wp-standards.mjs -n --report=summary --parallel=4
+
+      # Lists the warnings on new and changed lines, so the legacy warnings do not grow unnoticed.
+      - name: phpcs on lines changed since the base commit
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then BASE=HEAD~1; fi
+          node tools/phpcs-changed.mjs "$BASE"
+
+  browser:
+    name: Browser specs (Playwright against the PHP fixture servers)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      PLUGIN: wordpress/wp-content/plugins/ohmylms
+    steps:
+      # The interactivity fixture serves WordPress's Interactivity API from wp-includes three folders above the plugin.
+      - uses: actions/checkout@v7
+        with:
+          path: wordpress/wp-content/plugins/ohmylms
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: wordpress/wp-content/plugins/ohmylms/.nvmrc
+          cache: npm
+          cache-dependency-path: wordpress/wp-content/plugins/ohmylms/package-lock.json
+
+      # The fixtures run the plugin's templates and graders on PHP's development server; no database.
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: none
+          extensions: mbstring, intl
+
+      - name: WordPress core files (wp-includes only)
+        run: |
+          curl -sSfL https://wordpress.org/latest.tar.gz | tar -xz -C "$RUNNER_TEMP"
+          cp -r "$RUNNER_TEMP/wordpress/wp-includes" wordpress/
+
+      - run: npm ci
+        working-directory: ${{ env.PLUGIN }}
+
+      - run: npx playwright install --with-deps chromium
+        working-directory: ${{ env.PLUGIN }}
+
+      # The configs default to the installed Microsoft Edge; an empty channel uses Playwright's Chromium.
+      - name: Playwright (interactivity, dropdown, mathlive)
+        working-directory: ${{ env.PLUGIN }}
+        run: |
+          export OHMYLMS_BROWSER_CHANNEL=''
+          status=0
+          for config in interactivity dropdown mathlive; do
+            npx playwright test -c "tests/$config.config.cjs" || status=1
+          done
+          exit $status
+
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-results
+          path: |
+            ${{ env.PLUGIN }}/test-results
+            ${{ env.PLUGIN }}/tests/test-results
+          if-no-files-found: ignore
+
+  php-integration:
+    name: PHP integration suites (WordPress + MySQL)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        # The disposable sites' port, as in tools/create-test-site.py: curriculum-integration opens a second connection on it.
+        ports:
+          - 10005:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=30
+    env:
+      # figure-assets-integration runs only in a WordPress at <...>/xyz/app/public, the Local site's layout.
+      WP_ROOT: ${{ github.workspace }}/xyz/app/public
+      # Not localhost or 127.0.0.1: webhooks-rest-integration expects loopback hooks to be refused, and
+      # WordPress allows URLs on the site's own host.
+      OHMYLMS_TEST_HOST: ohmylms.test:8080
+      # Written by tools/install-test-sites.sh; the runner points each suite at the site with its database.
+      OHMYLMS_TEST_CREDENTIALS: ${{ github.workspace }}/test-sites/test-credentials.json
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: plugin
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: plugin/.nvmrc
+          cache: npm
+          cache-dependency-path: plugin/package-lock.json
+
+      # extension-host-assets-integration runs its source-mode checks against the webpack entries in build/sdk
+      # (git-ignored); tools/install-test-wordpress.sh copies them into the test site, which keeps serving assets/dist.
+      - name: Build the SDK entries (build/sdk)
+        working-directory: plugin
+        run: |
+          npm ci
+          npm run build:sdk
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: wp-cli
+          extensions: mysqli, mbstring, sodium, zip, intl, gd
+          # setup-php turns on the OPcache JIT (256 MB buffer); PHP 8.2's JIT segfaulted inside its own code in
+          # the `wp server` process (kernel log: "php8.2 segfault ... in dev/zero"), killing lesson-player and
+          # every later HTTP suite. The JIT is off so the suites test the plugin, not the JIT.
+          ini-values: display_errors=stderr, error_reporting=E_ALL, memory_limit=1G, opcache.jit=disable, opcache.jit_buffer_size=0
+
+      - run: echo "127.0.0.1 ohmylms.test" | sudo tee -a /etc/hosts
+
+      # pdftoppm for figure-assets-integration.
+      - run: sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends poppler-utils
+
+      # WordPress in $WP_ROOT, the plugin copied to wp-content/plugins/ohmylms so dirname( __DIR__, 5 ) is the root.
+      - name: Install WordPress and activate the plugin
+        env:
+          OHMYLMS_TEST_DB_HOST: 127.0.0.1
+          OHMYLMS_TEST_DB_PORT: ${{ job.services.mysql.ports['3306'] }}
+        run: bash plugin/tools/install-test-wordpress.sh "$WP_ROOT"
+
+      # Disposable sites with the databases the credentials, migration and streak suites check for
+      # (ohmylms_source_test, ohmylms_gutenberg_migration_20261020, ohmylms_streak_test).
+      - name: Install the disposable test sites
+        env:
+          OHMYLMS_TEST_DB_HOST: 127.0.0.1
+        run: bash plugin/tools/install-test-sites.sh "$GITHUB_WORKSPACE/test-sites"
+
+      # issued-certificates-integration fetches the public verification page over HTTP.
+      - name: Serve WordPress on port 8080
+        run: |
+          # The exit status (139 is a segfault) tells a crashed server from a PHP error in the log.
+          ( wp server --path="$WP_ROOT" --host=127.0.0.1 --port=8080; echo "wp server exited with status $?" ) > "$RUNNER_TEMP/server.log" 2>&1 &
+          for _ in $(seq 30); do curl -sf -o /dev/null "http://$OHMYLMS_TEST_HOST/" && exit 0; sleep 1; done
+          cat "$RUNNER_TEMP/server.log"; exit 1
+
+      # Sets each suite's OHMYLMS_*_TEST flag; skips and expected failures are in tests/php-suites.json.
+      - name: Integration suites
+        working-directory: ${{ env.WP_ROOT }}/wp-content/plugins/ohmylms
+        env:
+          OHMYLMS_TEST_PDFTOPPM: /usr/bin/pdftoppm
+        run: node tools/run-php-tests.mjs integration
+
+      - name: Randomized preview against the live REST endpoint (tests/js)
+        working-directory: ${{ env.WP_ROOT }}/wp-content/plugins/ohmylms
+        env:
+          OHMYLMS_READONLY_WP_ROOT: ${{ env.WP_ROOT }}
+        run: node --test tests/js/randomized-preview.test.mjs
+
+      - name: Server and debug logs
+        if: failure()
+        run: |
+          cat "$RUNNER_TEMP/server.log" || true
+          cat "$WP_ROOT/wp-content/debug.log" || true
+          sudo dmesg | grep -iE 'php|segfault|oom|killed' | tail -n 20 || true

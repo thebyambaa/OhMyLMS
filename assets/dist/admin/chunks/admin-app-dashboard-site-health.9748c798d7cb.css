@@ -1,0 +1,60 @@
+/* Site health: one row per check with a mark that is also announced as text. */
+
+.ohmylms-app .ohmylms-site-health {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.ohmylms-app .ohmylms-site-health__check {
+	align-items: flex-start;
+	display: flex;
+	gap: var(--oml-space-2);
+	margin: 0;
+	padding: var(--oml-space-2) 0;
+}
+
+.ohmylms-app .ohmylms-site-health__mark {
+	border-radius: 50%;
+	color: var(--oml-surface);
+	flex: 0 0 18px;
+	font-size: 11px;
+	font-weight: 700;
+	height: 18px;
+	line-height: 18px;
+	text-align: center;
+	width: 18px;
+}
+
+.ohmylms-app .ohmylms-site-health__check.is-ok .ohmylms-site-health__mark {
+	background: var(--oml-success);
+}
+
+.ohmylms-app .ohmylms-site-health__check.is-warning .ohmylms-site-health__mark {
+	background: var(--oml-warning);
+	color: var(--oml-heading);
+}
+
+.ohmylms-app .ohmylms-site-health__check.is-error .ohmylms-site-health__mark {
+	background: var(--oml-danger);
+}
+
+.ohmylms-app .ohmylms-site-health__text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.ohmylms-app .ohmylms-site-health__detail {
+	color: var(--oml-muted);
+	font-size: 12px;
+}
+
+.ohmylms-app .ohmylms-site-health__progress {
+	display: block;
+	margin-top: var(--oml-space-2);
+	width: 100%;
+}
+
+
+/*# sourceMappingURL=admin-app-dashboard-site-health.9748c798d7cb.css.map*/
