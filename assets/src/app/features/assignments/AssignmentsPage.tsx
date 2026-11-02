@@ -1,3 +1,4 @@
+import { Badge } from '../../../ui/Badge';
 import { ListTable, ListTableSelect } from '../../../ui/ListTable';
 import { Button, Modal, Notice, TextControl } from '@wordpress/components';
 import { useCallback, useEffect, useMemo, useState } from '@wordpress/element';
@@ -19,7 +20,7 @@ import {
 	type ListFilters,
 } from './api';
 import { LIMITS, statusLabel } from './model';
-import type { Assignment, StatusFilter } from './types';
+import type { Assignment, AssignmentStatus, StatusFilter } from './types';
 
 const STATUS_FILTERS: readonly StatusFilter[] = [
 	'all',
@@ -27,6 +28,10 @@ const STATUS_FILTERS: readonly StatusFilter[] = [
 	'draft',
 	'trash',
 ];
+
+function postStatusTone( status: AssignmentStatus ): 'success' | undefined {
+	return 'publish' === status ? 'success' : undefined;
+}
 
 function statusOptions(): Array< { value: StatusFilter; label: string } > {
 	return [
@@ -266,7 +271,11 @@ export default function AssignmentsPage() {
 						{
 							id: 'status',
 							label: __( 'Status', 'ohmylms' ),
-							render: ( item ) => statusLabel( item.status ),
+							render: ( item ) => (
+								<Badge tone={ postStatusTone( item.status ) }>
+									{ statusLabel( item.status ) }
+								</Badge>
+							),
 						},
 						{
 							id: 'course',

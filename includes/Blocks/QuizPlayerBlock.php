@@ -286,11 +286,23 @@ final class QuizPlayerBlock {
 		wp_enqueue_style( 'ohmylms-quiz-embed', plugins_url( 'assets/css/quiz-player-embed.css', OHMYLMS_FILE ), array( 'ohmylms-frontend' ), (string) filemtime( OHMYLMS_DIR . '/assets/css/quiz-player-embed.css' ) );
 		ob_start();
 		if ( ! is_user_logged_in() ) {
-			echo '<p>' . esc_html__( 'Log in to take this quiz.', 'ohmylms' ) . '</p><a class="ohmylms-button" target="_top" href="' . esc_url( wp_login_url( self::url( $quiz_id ) ) ) . '">' . esc_html__( 'Log in', 'ohmylms' ) . '</a>';
+			echo '<p>' . esc_html__( 'Log in to take this quiz.', 'ohmylms' ) . '</p>';
+			$ohmylms_login_button = \OhMyLMS\Design\Ui::button(
+				__( 'Log in', 'ohmylms' ),
+				array(
+					'variant' => 'primary',
+					'href'    => wp_login_url( self::url( $quiz_id ) ),
+					'class'   => 'ohmylms-button',
+					'attrs'   => array( 'target' => '_top' ),
+				)
+			);
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::button() escapes its label and attributes.
+			echo $ohmylms_login_button;
 		} else {
 			$access = Submission::access( $quiz_id, get_current_user_id() );
 			if ( is_wp_error( $access ) ) {
-				echo '<p>' . esc_html( $access->get_error_message() ) . '</p>';
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::alert() escapes the message.
+				echo \OhMyLMS\Design\Ui::alert( $access->get_error_message(), array( 'tone' => 'warning' ) );
 			} else {
 				self::player( $quiz_id, $access );
 			}

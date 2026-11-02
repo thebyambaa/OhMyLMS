@@ -39,6 +39,16 @@ $guidance_endpoint = add_query_arg(
 		<?php endforeach; ?>
 	</ul>
 	<p><a href="<?php echo esc_url( $guidance['lesson_url'] ); ?>"><?php esc_html_e( 'Back to unit progress', 'ohmylms' ); ?></a></p>
-	<button type="button" class="ohmylms-button" data-guidance-refresh><?php esc_html_e( 'Refresh skill progress', 'ohmylms' ); ?></button>
+	<?php
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::button() escapes its label and attributes.
+	echo \OhMyLMS\Design\Ui::button(
+		__( 'Refresh skill progress', 'ohmylms' ),
+		array(
+			'variant' => 'primary',
+			'class'   => 'ohmylms-button',
+			'attrs'   => array( 'data-guidance-refresh' => '' ),
+		)
+	);
+	?>
 	<p data-guidance-message role="status"></p>
 </section>

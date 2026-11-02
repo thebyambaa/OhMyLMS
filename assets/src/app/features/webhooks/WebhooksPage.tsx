@@ -1,3 +1,4 @@
+import { Badge } from '../../../ui/Badge';
 import { ListTable } from '../../../ui/ListTable';
 import { Button, Modal, Notice, TextControl } from '@wordpress/components';
 import { useEffect, useRef, useState } from '@wordpress/element';
@@ -265,10 +266,19 @@ export default function WebhooksPage() {
 						{
 							id: 'status',
 							label: __( 'Status', 'ohmylms' ),
-							render: ( item ) =>
-								'active' === item.status
-									? __( 'Active', 'ohmylms' )
-									: __( 'Inactive', 'ohmylms' ),
+							render: ( item ) => (
+								<Badge
+									tone={
+										'active' === item.status
+											? 'success'
+											: 'warning'
+									}
+								>
+									{ 'active' === item.status
+										? __( 'Active', 'ohmylms' )
+										: __( 'Inactive', 'ohmylms' ) }
+								</Badge>
+							),
 						},
 					] }
 					rowActions={ ( item ) => [

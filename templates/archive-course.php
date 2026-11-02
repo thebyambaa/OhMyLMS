@@ -84,7 +84,17 @@ do_action( 'ohmylms_before_main_content' );
 			<input type="hidden" name="<?php echo esc_attr( $field_name ); ?>" value="<?php echo esc_attr( $field_value ); ?>">
 		<?php endforeach; ?>
 		<noscript>
-			<button type="submit" class="ohmylms-button ohmylms-catalog-apply"><?php esc_html_e( 'Apply filters', 'ohmylms' ); ?></button>
+			<?php
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::button() escapes its label and attributes.
+			echo \OhMyLMS\Design\Ui::button(
+				__( 'Apply filters', 'ohmylms' ),
+				array(
+					'variant' => 'primary',
+					'type'    => 'submit',
+					'class'   => 'ohmylms-button ohmylms-catalog-apply',
+				)
+			);
+			?>
 		</noscript>
 	</form>
 	<?php

@@ -54,7 +54,16 @@ $choices = array(
 	<section class="oml-hub-card oml-hub-settings-card oml-hub-signin-card">
 		<h3><?php esc_html_e( 'Sign in', 'ohmylms' ); ?></h3>
 		<?php if ( $signin_failed ) : ?>
-			<p class="oml-hub-notice" role="alert"><?php esc_html_e( 'We could not sign you in. Check your email or username and password, then try again.', 'ohmylms' ); ?></p>
+			<?php
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::alert() escapes the message.
+			echo \OhMyLMS\Design\Ui::alert(
+				__( 'We could not sign you in. Check your email or username and password, then try again.', 'ohmylms' ),
+				array(
+					'tone'  => 'danger',
+					'class' => 'oml-hub-notice',
+				)
+			);
+			?>
 		<?php endif; ?>
 		<form method="post" action="<?php echo esc_url( site_url( 'wp-login.php', 'login_post' ) ); ?>">
 			<input type="hidden" name="redirect_to" value="<?php echo esc_url( $signin_return ); ?>">
@@ -86,9 +95,28 @@ $signup_role      = $signin_role ? $signin_role : 'learner';
 			<h3><?php echo esc_html( $signup_text[0] ); ?></h3>
 			<p><?php echo esc_html( $signup_text[1] ); ?></p>
 			<?php if ( 'created' === $signup ) : ?>
-				<p class="oml-hub-notice" role="status"><?php esc_html_e( 'Account created. If email verification is required, check your inbox first, then sign in.', 'ohmylms' ); ?></p>
+				<?php
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::alert() escapes the message.
+				echo \OhMyLMS\Design\Ui::alert(
+					__( 'Account created. If email verification is required, check your inbox first, then sign in.', 'ohmylms' ),
+					array(
+						'tone'  => 'success',
+						'class' => 'oml-hub-notice',
+						'role'  => 'status',
+					)
+				);
+				?>
 			<?php elseif ( $error_text ) : ?>
-				<p class="oml-hub-notice" role="alert"><?php echo esc_html( $error_text ); ?></p>
+				<?php
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::alert() escapes the message.
+				echo \OhMyLMS\Design\Ui::alert(
+					$error_text,
+					array(
+						'tone'  => 'danger',
+						'class' => 'oml-hub-notice',
+					)
+				);
+				?>
 			<?php endif; ?>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" autocomplete="off">
 				<input type="hidden" name="action" value="<?php echo esc_attr( ParentActions::ACTION ); ?>">

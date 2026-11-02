@@ -115,7 +115,17 @@ $messages    = array(
 							<input type="hidden" name="assignment_id" value="<?php echo esc_attr( $assignment->get_id() ); ?>">
 							<input type="hidden" name="submission_id" value="<?php echo esc_attr( $submission_id ); ?>">
 							<?php wp_nonce_field( 'ohmylms_assignment_comment_' . $submission_id, 'ohmylms_comment_nonce' ); ?>
-							<button type="submit" class="ohmylms-button"><?php esc_html_e( 'Post comment', 'ohmylms' ); ?></button>
+							<?php
+							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::button() escapes its label and attributes.
+							echo \OhMyLMS\Design\Ui::button(
+								__( 'Post comment', 'ohmylms' ),
+								array(
+									'variant' => 'primary',
+									'type'    => 'submit',
+									'class'   => 'ohmylms-button',
+								)
+							);
+							?>
 						</form>
 					<?php endif; ?>
 				</div>

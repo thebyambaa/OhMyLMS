@@ -196,7 +196,16 @@ final class Player {
 		} else {
 			$text = __( 'Your teacher will release the results. You will get an email when they are ready.', 'ohmylms' );
 		}
-		return '<section class="ohmylms-exam-results is-pending" aria-labelledby="ohmylms-exam-results-title" data-exam="' . (int) $id . '"><h2 id="ohmylms-exam-results-title">' . esc_html__( 'Results pending', 'ohmylms' ) . '</h2><p>' . esc_html( $text ) . '</p></section>';
+		return '<section class="ohmylms-exam-results is-pending" aria-labelledby="ohmylms-exam-results-title" data-exam="' . (int) $id . '"><h2 id="ohmylms-exam-results-title">' . esc_html__( 'Results pending', 'ohmylms' ) . '</h2>'
+			. \OhMyLMS\Design\Ui::alert(
+				$text,
+				array(
+					'tone'  => 'info',
+					'role'  => 'status',
+					'class' => 'ohmylms-exam-results-pending',
+				)
+			)
+			. '</section>';
 	}
 
 	/** Serve a private PDF or an exam document with unchanged engine templates. */

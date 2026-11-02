@@ -2,6 +2,7 @@ import { Button, Notice, TextControl } from '@wordpress/components';
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
+import { EmptyState } from '../../../ui/EmptyState';
 import { useOperation } from '../../hooks/useOperation';
 import {
 	createRoadmap,
@@ -76,7 +77,7 @@ export function CompareRoadmaps( {
 				</ul>
 			) : (
 				! created.length && (
-					<p>{ __( 'No roadmaps yet.', 'ohmylms' ) }</p>
+					<EmptyState title={ __( 'No roadmaps yet.', 'ohmylms' ) } />
 				)
 			) }
 			{ editing && (

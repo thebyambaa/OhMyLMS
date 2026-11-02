@@ -19,7 +19,8 @@ $matrix_base    = $matrix_teacher ? \OhMyLMS\Student\TeacherWorkspace::url( 'pro
 try {
 	$matrix_courses = SchoolGradebook::courses( $school_id, $class_id, $matrix_teacher );
 } catch ( \RuntimeException $matrix_error ) {
-	echo '<p role="alert">' . esc_html__( 'This class gradebook is not available.', 'ohmylms' ) . '</p>';
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::alert() escapes the message.
+	echo \OhMyLMS\Design\Ui::alert( __( 'This class gradebook is not available.', 'ohmylms' ), array( 'tone' => 'danger' ) );
 	return;
 }
 if ( ! $matrix_courses ) {
@@ -31,7 +32,8 @@ $matrix_course = $matrix_course ? $matrix_course : (int) $matrix_courses[0]['id'
 try {
 	$matrix = SchoolGradebook::read( $school_id, $class_id, $matrix_course, $page, $matrix_teacher );
 } catch ( \RuntimeException $matrix_error ) {
-	echo '<p role="alert">' . esc_html__( 'This course is not available in this class.', 'ohmylms' ) . '</p>';
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::alert() escapes the message.
+	echo \OhMyLMS\Design\Ui::alert( __( 'This course is not available in this class.', 'ohmylms' ), array( 'tone' => 'danger' ) );
 	return;
 }
 $matrix_url = add_query_arg(

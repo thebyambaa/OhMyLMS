@@ -85,7 +85,16 @@ $family_selected = $family_child_id ? ParentWorkspace::child( $family_child_id, 
 		<p><?php esc_html_e( 'Follow children a school has linked to you and manage children learning at home.', 'ohmylms' ); ?></p>
 	</section>
 	<?php if ( $family_flash && ! empty( $family_flash['error'] ) ) : ?>
-		<p class="oml-hub-notice" role="alert"><?php echo esc_html( $family_flash['error'] ); ?></p>
+		<?php
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::alert() escapes the message.
+		echo \OhMyLMS\Design\Ui::alert(
+			$family_flash['error'],
+			array(
+				'tone'  => 'danger',
+				'class' => 'oml-hub-notice',
+			)
+		);
+		?>
 	<?php elseif ( $family_flash ) : ?>
 		<div class="oml-hub-notice oml-hub-family-flash" role="status">
 			<p class="oml-hub-family-flash-text"><strong><?php echo esc_html( $family_flash['message'] ); ?></strong></p>

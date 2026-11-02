@@ -2,6 +2,7 @@ import { Button, Notice } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
+import { EmptyState } from '../../../ui/EmptyState';
 import { ListTableSelect } from '../../../ui/ListTable';
 import { Pagination } from '../../components/Pagination';
 import { getCourseGrid } from './api';
@@ -638,20 +639,20 @@ export default function CourseStudentsPage() {
 							/>
 						</div>
 					) : (
-						<p>
-							{ __(
+						<EmptyState
+							title={ __(
 								'This course has no published quizzes, exams or assignments to grade.',
 								'ohmylms'
 							) }
-						</p>
+						/>
 					) }
 					{ ! data.rows.length && (
-						<p>
-							{ __(
+						<EmptyState
+							title={ __(
 								'No learners match these filters.',
 								'ohmylms'
 							) }
-						</p>
+						/>
 					) }
 					{ data.total_pages > 1 && (
 						<Pagination

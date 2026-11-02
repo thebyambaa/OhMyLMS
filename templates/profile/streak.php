@@ -85,7 +85,18 @@ if ( ! $continue ) {
 			</li>
 		<?php } ?>
 	</ol>
-	<a class="ohmylms-button" href="<?php echo esc_url( $continue ); ?>"><?php esc_html_e( 'Continue learning', 'ohmylms' ); ?></a>
+	<?php
+	$ohmylms_continue_button = \OhMyLMS\Design\Ui::button(
+		__( 'Continue learning', 'ohmylms' ),
+		array(
+			'variant' => 'primary',
+			'href'    => $continue,
+			'class'   => 'ohmylms-button',
+		)
+	);
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::button() escapes its label and attributes.
+	echo $ohmylms_continue_button;
+	?>
 	<details>
 		<summary>
 		<?php

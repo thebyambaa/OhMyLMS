@@ -278,7 +278,18 @@ if ( $attempt_context ) {
 					);
 				}
 				?>
-				<a class="ohmylms-button" href="<?php echo esc_url( \OhMyLMS\Assessment\PreviewPlayer::url( get_the_ID() ) ); ?>"><?php esc_html_e( 'Try again', 'ohmylms' ); ?></a>
+				<?php
+				$ohmylms_try_again_button = \OhMyLMS\Design\Ui::button(
+					__( 'Try again', 'ohmylms' ),
+					array(
+						'variant' => 'primary',
+						'href'    => \OhMyLMS\Assessment\PreviewPlayer::url( get_the_ID() ),
+						'class'   => 'ohmylms-button',
+					)
+				);
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::button() escapes its label and attributes.
+				echo $ohmylms_try_again_button;
+				?>
 			</div>
 		</div>
 	<?php } ?>

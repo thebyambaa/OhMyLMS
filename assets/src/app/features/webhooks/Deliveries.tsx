@@ -1,3 +1,4 @@
+import { Badge } from '../../../ui/Badge';
 import { ListTable } from '../../../ui/ListTable';
 import { Modal, Notice, Button } from '@wordpress/components';
 import { useEffect, useState } from '@wordpress/element';
@@ -89,10 +90,19 @@ export function Deliveries( {
 						{
 							id: 'result',
 							label: __( 'Result', 'ohmylms' ),
-							render: ( row ) =>
-								'success' === row.status
-									? __( 'Succeeded', 'ohmylms' )
-									: __( 'Failed', 'ohmylms' ),
+							render: ( row ) => (
+								<Badge
+									tone={
+										'success' === row.status
+											? 'success'
+											: 'danger'
+									}
+								>
+									{ 'success' === row.status
+										? __( 'Succeeded', 'ohmylms' )
+										: __( 'Failed', 'ohmylms' ) }
+								</Badge>
+							),
 						},
 						{
 							id: 'http_status',

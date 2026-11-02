@@ -46,7 +46,16 @@ $school_page = max( 1, absint( get_query_var( 'current_page', 1 ) ) );
 		<?php endif; ?>
 	</section>
 	<?php if ( $school_flash && ! empty( $school_flash['error'] ) ) : ?>
-		<p class="oml-hub-notice is-error" role="alert"><?php echo esc_html( $school_flash['error'] ); ?></p>
+		<?php
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::alert() escapes the message.
+		echo \OhMyLMS\Design\Ui::alert(
+			$school_flash['error'],
+			array(
+				'tone'  => 'danger',
+				'class' => 'oml-hub-notice is-error',
+			)
+		);
+		?>
 	<?php elseif ( $school_flash ) : ?>
 		<div class="oml-hub-notice oml-hub-family-flash" role="status">
 			<p class="oml-hub-family-flash-text"><strong><?php echo esc_html( $school_flash['message'] ); ?></strong></p>

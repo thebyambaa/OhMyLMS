@@ -12,7 +12,8 @@ defined( 'ABSPATH' ) || exit;
 
 $gradebook_class = \OhMyLMS\Schools\Access::classroom( $teacher_class, true );
 if ( ! $gradebook_class || ! TeacherWorkspace::available() ) {
-	echo '<p role="alert">' . esc_html__( 'This class gradebook is not available.', 'ohmylms' ) . '</p>';
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::alert() escapes the message.
+	echo \OhMyLMS\Design\Ui::alert( __( 'This class gradebook is not available.', 'ohmylms' ), array( 'tone' => 'danger' ) );
 	return;
 }
 echo '<h3>' . esc_html__( 'Class gradebook', 'ohmylms' ) . '</h3>';
@@ -30,7 +31,8 @@ echo '<details class="oml-hub-skill-report"><summary>' . esc_html__( 'Skill prog
 try {
 	$class_report = TeacherReports::read( $teacher_class, absint( get_query_var( 'hub_period', 30 ) ), $teacher_page );
 } catch ( RuntimeException $class_report_error ) {
-	echo '<p role="alert">' . esc_html__( 'This class report is no longer available. Return to your classes and try again.', 'ohmylms' ) . '</p>';
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::alert() escapes the message.
+	echo \OhMyLMS\Design\Ui::alert( __( 'This class report is no longer available. Return to your classes and try again.', 'ohmylms' ), array( 'tone' => 'danger' ) );
 	echo '</details>';
 	return;
 }

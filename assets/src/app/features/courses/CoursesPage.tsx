@@ -1,3 +1,4 @@
+import { Badge } from '../../../ui/Badge';
 import {
 	ListTable,
 	ListTableInput,
@@ -28,9 +29,24 @@ import {
 } from './api';
 import { formatPrice, levelLabel, statusLabel } from './model';
 import { useCourses } from './useCourses';
-import type { Course, CourseFilters, Option } from './types';
+import type { Course, CourseFilters, CourseStatus, Option } from './types';
 
 const MAX_TITLE = 200;
+
+function postStatusTone(
+	status: CourseStatus
+): 'success' | 'warning' | 'info' | undefined {
+	switch ( status ) {
+		case 'publish':
+			return 'success';
+		case 'pending':
+			return 'warning';
+		case 'private':
+			return 'info';
+		default:
+			return undefined;
+	}
+}
 const CourseFromSyllabusDialog = lazy( () =>
 	import(
 		/* webpackChunkName: "admin-app-syllabus" */ '../syllabus/public'
@@ -367,7 +383,11 @@ export default function CoursesPage() {
 						{
 							id: 'status',
 							label: __( 'Status', 'ohmylms' ),
-							render: ( item ) => statusLabel( item.status ),
+							render: ( item ) => (
+								<Badge tone={ postStatusTone( item.status ) }>
+									{ statusLabel( item.status ) }
+								</Badge>
+							),
 						},
 						{
 							id: 'level',

@@ -46,15 +46,33 @@ $hub_save = static function () {
 </section>
 
 <?php if ( $hub_flash ) : ?>
-	<div class="oml-hub-notice <?php echo $hub_flash['saved'] ? 'is-success' : 'is-error'; ?>" role="status">
-		<?php if ( $hub_flash['saved'] ) : ?>
-			<p class="oml-hub-notice-line"><?php esc_html_e( 'Your changes were saved.', 'ohmylms' ); ?></p>
-		<?php else : ?>
-			<?php foreach ( $hub_flash['errors'] as $hub_error ) : ?>
-				<p class="oml-hub-notice-line"><?php echo esc_html( $hub_error ); ?></p>
-			<?php endforeach; ?>
-		<?php endif; ?>
-	</div>
+	<?php if ( $hub_flash['saved'] ) : ?>
+		<?php
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::alert() escapes the message.
+		echo \OhMyLMS\Design\Ui::alert(
+			__( 'Your changes were saved.', 'ohmylms' ),
+			array(
+				'tone'  => 'success',
+				'class' => 'oml-hub-notice is-success',
+				'role'  => 'status',
+			)
+		);
+		?>
+	<?php else : ?>
+		<?php foreach ( $hub_flash['errors'] as $hub_error ) : ?>
+			<?php
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::alert() escapes the message.
+			echo \OhMyLMS\Design\Ui::alert(
+				$hub_error,
+				array(
+					'tone'  => 'danger',
+					'class' => 'oml-hub-notice is-error',
+					'role'  => 'status',
+				)
+			);
+			?>
+		<?php endforeach; ?>
+	<?php endif; ?>
 <?php endif; ?>
 
 <?php if ( 'account' === $view ) : ?>
@@ -144,7 +162,20 @@ $hub_save = static function () {
 		$school_result = \OhMyLMS\Student\SchoolActions::flash();
 		if ( $school_result ) :
 			?>
-			<p class="oml-hub-notice" role="status"><?php echo esc_html( $school_result['error'] ?? $school_result['message'] ?? '' ); ?></p>
+			<?php
+			$school_flash_text = (string) ( $school_result['error'] ?? $school_result['message'] ?? '' );
+			if ( '' !== $school_flash_text ) {
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Ui::alert() escapes the message.
+				echo \OhMyLMS\Design\Ui::alert(
+					$school_flash_text,
+					array(
+						'tone'  => empty( $school_result['error'] ) ? 'success' : 'danger',
+						'class' => 'oml-hub-notice',
+						'role'  => 'status',
+					)
+				);
+			}
+			?>
 		<?php endif; ?>
 		<?php foreach ( \OhMyLMS\Schools\Lifecycle::memberships() as $connection_school ) : ?>
 			<form method="post" action="<?php echo esc_url( $hub_action ); ?>">
