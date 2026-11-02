@@ -28,22 +28,6 @@ export function LearningSettings( {
 	return (
 		<fieldset disabled={ disabled }>
 			<legend>{ __( 'Learning and mastery', 'ohmylms' ) }</legend>
-			<SelectControl< string >
-				label={ __( 'Learning mode', 'ohmylms' ) }
-				value={ String( draft.program.mode ?? 'traditional' ) }
-				options={ [
-					{
-						value: 'traditional',
-						label: __( 'Traditional', 'ohmylms' ),
-					},
-					{
-						value: 'skill-based',
-						label: __( 'Skill based', 'ohmylms' ),
-					},
-					{ value: 'blended', label: __( 'Blended', 'ohmylms' ) },
-				] }
-				onChange={ ( value ) => update( { mode: value } ) }
-			/>
 			<CheckboxControl
 				label={ __( 'Recognize prior mastery', 'ohmylms' ) }
 				checked={ draft.program.recognize_prior === true }

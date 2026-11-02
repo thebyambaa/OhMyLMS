@@ -4,31 +4,35 @@ import { __ } from '@wordpress/i18n';
 import { createResource, findResources, type ResourceType } from './api';
 import { useOperation } from '../../hooks/useOperation';
 import { useRequest } from '../../hooks/useRequest';
+import { newId } from '../../lib/uuid';
 
 const TITLES: Record< ResourceType, () => string > = {
-	lesson: () => __( 'Attach an existing lesson', 'ohmylms' ),
+	lesson: () => __( 'Add a lesson', 'ohmylms' ),
 	quiz: () => __( 'Add a quiz', 'ohmylms' ),
 	assignment: () => __( 'Add an assignment', 'ohmylms' ),
 };
 
 /**
- * Pick an existing lesson, quiz or assignment, or create a draft quiz or assignment through its own API.
+ * Pick an existing lesson, quiz or assignment, or create a draft through its own API.
  * The placement itself is only saved with the outline draft.
  *
  * @param root0
  * @param root0.course
  * @param root0.type
+ * @param root0.exclude
  * @param root0.onSelect
  * @param root0.onClose
  */
 export function ResourcePicker( {
 	course,
 	type,
+	exclude = [],
 	onSelect,
 	onClose,
 }: {
 	course: number;
 	type: ResourceType;
+	exclude?: readonly number[];
 	onSelect: ( resource: { id: number; title: string } ) => void;
 	onClose: () => void;
 } ) {
@@ -36,6 +40,7 @@ export function ResourcePicker( {
 	const [ search, setSearch ] = useState( '' );
 	const [ page, setPage ] = useState( 1 );
 	const [ title, setTitle ] = useState( '' );
+	const [ requestId ] = useState( newId );
 	const creation = useOperation();
 	const load = useCallback(
 		( signal: AbortSignal ) =>
@@ -43,6 +48,10 @@ export function ResourcePicker( {
 		[ course, type, search, page ]
 	);
 	const request = useRequest( load );
+	const items =
+		request.data?.items.filter(
+			( resource ) => ! exclude.includes( resource.id )
+		) ?? [];
 	return (
 		<Modal title={ TITLES[ type ]() } onRequestClose={ onClose }>
 			<form
@@ -74,7 +83,7 @@ export function ResourcePicker( {
 			{ request.data && (
 				<>
 					<ul>
-						{ request.data.items.map( ( resource ) => (
+						{ items.map( ( resource ) => (
 							<li key={ resource.id }>
 								<Button onClick={ () => onSelect( resource ) }>
 									{ resource.title }
@@ -82,7 +91,7 @@ export function ResourcePicker( {
 							</li>
 						) ) }
 					</ul>
-					{ ! request.data.items.length && (
+					{ ! items.length && (
 						<p>
 							{ __(
 								'No editable, unplaced items found.',
@@ -105,7 +114,7 @@ export function ResourcePicker( {
 					</Button>
 				</>
 			) }
-			{ 'lesson' !== type && (
+			{
 				<form
 					onSubmit={ ( event ) => {
 						event.preventDefault();
@@ -113,15 +122,31 @@ export function ResourcePicker( {
 							return;
 						}
 						void creation.run(
-							( signal ) => createResource( type, title, signal ),
+							( signal ) =>
+								createResource(
+									type,
+									title,
+									signal,
+									requestId
+								),
 							onSelect
 						);
 					} }
 				>
 					<h2>
-						{ 'quiz' === type
-							? __( 'Or create a draft quiz', 'ohmylms' )
-							: __( 'Or create a draft assignment', 'ohmylms' ) }
+						{
+							{
+								lesson: __(
+									'Or create a draft lesson',
+									'ohmylms'
+								),
+								quiz: __( 'Or create a draft quiz', 'ohmylms' ),
+								assignment: __(
+									'Or create a draft assignment',
+									'ohmylms'
+								),
+							}[ type ]
+						}
 					</h2>
 					{ creation.error && (
 						<Notice status="error" isDismissible={ false }>
@@ -144,7 +169,7 @@ export function ResourcePicker( {
 						{ __( 'Create draft and add', 'ohmylms' ) }
 					</Button>
 				</form>
-			) }
+			}
 		</Modal>
 	);
 }

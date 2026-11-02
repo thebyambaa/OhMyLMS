@@ -61,6 +61,7 @@ const EDIT_ROUTES: Record< string, string > = {
  * @param root0.onAdd
  * @param root0.onDelete
  * @param root0.onDetach
+ * @param root0.onConnect
  * @param root0.onReorder Moves a unit or activity (source) before/after a target; see `dropOn`.
  * @param root0.drag      Current pointer drag, for row feedback.
  * @param root0.handle    Pointer handlers for a row's grip.
@@ -73,6 +74,7 @@ export function UnitEditor( {
 	onAdd,
 	onDelete,
 	onDetach,
+	onConnect,
 	onReorder,
 	drag,
 	handle,
@@ -84,6 +86,7 @@ export function UnitEditor( {
 	onAdd: ( type: ResourceType ) => void;
 	onDelete: () => void;
 	onDetach: ( item: Activity ) => void;
+	onConnect?: ( item: Activity ) => void;
 	onReorder: (
 		source: string,
 		target: string,
@@ -228,6 +231,48 @@ export function UnitEditor( {
 								{ TYPE_LABELS[ item.type ]?.() ?? item.type }
 							</Badge>
 							<span className="oml-outline-item-tools">
+								{ onConnect &&
+									[ 'lesson', 'quiz', 'assignment' ].includes(
+										item.type
+									) && (
+										<Button
+											size="small"
+											variant="secondary"
+											onClick={ () => onConnect( item ) }
+											aria-label={ sprintf(
+												/* translators: %s: activity title. */ __(
+													'Connect skills for %s',
+													'ohmylms'
+												),
+												name
+											) }
+										>
+											{ __( 'Skills', 'ohmylms' ) }
+										</Button>
+									) }
+								{ [ 'lesson', 'quiz' ].includes(
+									item.type
+								) && (
+									<a
+										className="components-button is-tertiary"
+										target="_blank"
+										rel="noopener noreferrer"
+										href={
+											'post.php?post=' +
+											item.content_id +
+											'&action=edit'
+										}
+										aria-label={ sprintf(
+											/* translators: %s: activity title. */ __(
+												'Open %s in block editor (opens in a new tab)',
+												'ohmylms'
+											),
+											name
+										) }
+									>
+										{ __( 'Block editor', 'ohmylms' ) }
+									</a>
+								) }
 								{ units.length > 1 && (
 									<SelectControl< string >
 										__nextHasNoMarginBottom

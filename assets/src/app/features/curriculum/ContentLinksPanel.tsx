@@ -1,27 +1,20 @@
 import {
 	Button,
+	Modal,
 	Notice,
 	SelectControl,
 	TextControl,
 } from '@wordpress/components';
 import { useCallback, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { Pagination } from '../../components/Pagination';
-import { WidefatTable } from '../../components/WidefatTable';
-import { useOperation } from '../../hooks/useOperation';
+import { ContentSkillConnections } from './ContentSkillConnections';
 import { useRequest } from '../../hooks/useRequest';
-import {
-	CONTENT_KINDS,
-	isConflict,
-	readContentLinks,
-	searchContent,
-	updateContentLinks,
-	type ContentKind,
-	type ContentLinks,
-	type SkillRef,
-} from './workspace';
-import { contentRoute, kindLabel, SkillChooser } from './WorkspaceParts';
+import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
+import '../../styles/authoring.css';
+import { CONTENT_KINDS, searchContent, type ContentKind } from './workspace';
+import { kindLabel } from './WorkspaceParts';
 
 function kindOf( value: string | null ): ContentKind {
 	return CONTENT_KINDS.find( ( kind ) => kind === value ) ?? 'lesson';
@@ -35,7 +28,20 @@ export function ContentLinksPanel() {
 	const [ params, setParams ] = useSearchParams();
 	const kind = kindOf( params.get( 'kind' ) );
 	const content = Number( params.get( 'content' ) );
+	const [ dirty, setDirty ] = useState( false );
+	const [ pending, setPending ] = useState< {
+		kind?: ContentKind;
+		content?: number;
+	} | null >( null );
+	const guard = useUnsavedChangesGuard( dirty );
 	function choose( next: { kind?: ContentKind; content?: number } ) {
+		if ( dirty ) {
+			setPending( next );
+			return;
+		}
+		applyChoice( next );
+	}
+	function applyChoice( next: { kind?: ContentKind; content?: number } ) {
 		const query = new URLSearchParams( params );
 		query.set( 'kind', next.kind ?? kind );
 		if ( next.content ) {
@@ -71,11 +77,50 @@ export function ContentLinksPanel() {
 				onChoose={ ( id ) => choose( { content: id } ) }
 			/>
 			{ Number.isSafeInteger( content ) && content > 0 && (
-				<LinkEditor
+				<ContentSkillConnections
 					key={ `${ kind }-${ content }` }
 					kind={ kind }
 					id={ content }
+					onDirtyChange={ setDirty }
 				/>
+			) }
+			{ pending && (
+				<Modal
+					title={ __(
+						'Discard unsaved skill connections?',
+						'ohmylms'
+					) }
+					onRequestClose={ () => setPending( null ) }
+				>
+					<Button onClick={ () => setPending( null ) }>
+						{ __( 'Keep editing', 'ohmylms' ) }
+					</Button>
+					<Button
+						onClick={ () => {
+							setDirty( false );
+							applyChoice( pending );
+							setPending( null );
+						} }
+					>
+						{ __( 'Discard and switch', 'ohmylms' ) }
+					</Button>
+				</Modal>
+			) }
+			{ guard.pendingPath && (
+				<Modal
+					title={ __(
+						'Leave with unsaved skill connections?',
+						'ohmylms'
+					) }
+					onRequestClose={ guard.stay }
+				>
+					<Button onClick={ guard.stay }>
+						{ __( 'Keep editing', 'ohmylms' ) }
+					</Button>
+					<Button onClick={ guard.leave }>
+						{ __( 'Discard edits and leave', 'ohmylms' ) }
+					</Button>
+				</Modal>
 			) }
 		</section>
 	);
@@ -161,230 +206,5 @@ function ContentSearch( {
 				</>
 			) }
 		</>
-	);
-}
-
-function LinkEditor( { kind, id }: { kind: ContentKind; id: number } ) {
-	const load = useCallback(
-		( signal: AbortSignal ) => readContentLinks( kind, id, signal ),
-		[ kind, id ]
-	);
-	const request = useRequest( load );
-	const [ links, setLinks ] = useState< ContentLinks | null >( null );
-	const [ add, setAdd ] = useState< SkillRef[] >( [] );
-	const [ remove, setRemove ] = useState< number[] >( [] );
-	const [ stale, setStale ] = useState( false );
-	const [ message, setMessage ] = useState( '' );
-	const operation = useOperation();
-	const current = links ?? request.data;
-	if ( request.loading && ! links ) {
-		return <p role="status">{ __( 'Loading links…', 'ohmylms' ) }</p>;
-	}
-	if ( ! current ) {
-		return (
-			<Notice status="error" isDismissible={ false }>
-				{ request.error }
-			</Notice>
-		);
-	}
-	const linkedIds = current.skills.map( ( skill ) => skill.id );
-	const dirty = add.length > 0 || remove.length > 0;
-	function save( base: ContentLinks ) {
-		void operation.run(
-			async ( signal ) => {
-				try {
-					return await updateContentLinks(
-						base,
-						add.map( ( skill ) => skill.id ),
-						remove,
-						signal
-					);
-				} catch ( failure ) {
-					setStale( isConflict( failure ) );
-					throw failure;
-				}
-			},
-			( saved ) => {
-				setLinks( saved );
-				setAdd( [] );
-				setRemove( [] );
-				setStale( false );
-				setMessage( __( 'Links saved.', 'ohmylms' ) );
-			}
-		);
-	}
-	async function reloadKeeping() {
-		const fresh = await readContentLinks( kind, id ).catch( () => null );
-		if ( ! fresh ) {
-			return;
-		}
-		const ids = fresh.skills.map( ( skill ) => skill.id );
-		setLinks( fresh );
-		setAdd( ( list ) =>
-			list.filter( ( skill ) => ! ids.includes( skill.id ) )
-		);
-		setRemove( ( list ) =>
-			list.filter( ( skill ) => ids.includes( skill ) )
-		);
-		setStale( false );
-		operation.clearError();
-		setMessage(
-			__(
-				'Reloaded the latest links. Your unsaved changes were kept.',
-				'ohmylms'
-			)
-		);
-	}
-	return (
-		<section aria-labelledby="oml-ws-links">
-			<h4 id="oml-ws-links">
-				<Link to={ contentRoute( kind, current.content.id ) }>
-					{ current.content.title }
-				</Link>{ ' ' }
-				<small>{ kindLabel( kind ) }</small>
-			</h4>
-			{ message && (
-				<Notice status="success" onRemove={ () => setMessage( '' ) }>
-					{ message }
-				</Notice>
-			) }
-			{ stale ? (
-				<Notice status="warning" isDismissible={ false }>
-					{ __(
-						'Someone changed the skills of this content after you opened it.',
-						'ohmylms'
-					) }{ ' ' }
-					<Button
-						variant="secondary"
-						onClick={ () => void reloadKeeping() }
-					>
-						{ __( 'Reload links and keep my changes', 'ohmylms' ) }
-					</Button>
-				</Notice>
-			) : (
-				operation.error && (
-					<Notice status="error" isDismissible={ false }>
-						{ operation.error }
-					</Notice>
-				)
-			) }
-			<WidefatTable caption={ __( 'Linked skills', 'ohmylms' ) }>
-				<thead>
-					<tr>
-						<th scope="col">{ __( 'Remove', 'ohmylms' ) }</th>
-						<th scope="col">{ __( 'Skill', 'ohmylms' ) }</th>
-						<th scope="col">{ __( 'Link', 'ohmylms' ) }</th>
-						<th scope="col">{ __( 'Syllabuses', 'ohmylms' ) }</th>
-					</tr>
-				</thead>
-				<tbody>
-					{ ! current.skills.length && ! add.length && (
-						<tr>
-							<td colSpan={ 4 }>
-								{ __( 'No linked skills yet.', 'ohmylms' ) }
-							</td>
-						</tr>
-					) }
-					{ current.skills.map( ( skill ) => (
-						<tr key={ skill.id }>
-							<td>
-								<input
-									type="checkbox"
-									aria-label={ sprintf(
-										/* translators: %s: skill. */
-										__( 'Remove %s', 'ohmylms' ),
-										skill.name
-									) }
-									disabled={ 'primary' === skill.role }
-									checked={ remove.includes( skill.id ) }
-									onChange={ ( event ) => {
-										const checked = event.target.checked;
-										setRemove( ( list ) =>
-											checked
-												? [ ...list, skill.id ]
-												: list.filter(
-														( entry ) =>
-															entry !== skill.id
-													)
-										);
-									} }
-								/>
-							</td>
-							<th scope="row">
-								{ skill.code
-									? `${ skill.code } ${ skill.name }`
-									: skill.name }
-								{ skill.archived &&
-									` (${ __( 'archived', 'ohmylms' ) })` }
-							</th>
-							<td>
-								{
-									{
-										linked: skill.shared
-											? __( 'Shared skill', 'ohmylms' )
-											: __( 'Objective', 'ohmylms' ),
-										primary: __(
-											'Primary skill',
-											'ohmylms'
-										),
-										supporting: __(
-											'Supporting skill',
-											'ohmylms'
-										),
-									}[ skill.role ]
-								}
-							</td>
-							<td>{ skill.syllabuses.join( ', ' ) || '—' }</td>
-						</tr>
-					) ) }
-					{ add.map( ( skill ) => (
-						<tr key={ `add-${ skill.id }` }>
-							<td>
-								<Button
-									variant="link"
-									onClick={ () =>
-										setAdd( ( list ) =>
-											list.filter(
-												( entry ) =>
-													entry.id !== skill.id
-											)
-										)
-									}
-								>
-									{ __( 'Undo', 'ohmylms' ) }
-								</Button>
-							</td>
-							<th scope="row">{ skill.name }</th>
-							<td>{ __( 'To be linked', 'ohmylms' ) }</td>
-							<td>—</td>
-						</tr>
-					) ) }
-				</tbody>
-			</WidefatTable>
-			<SkillChooser
-				label={ __( 'Add a skill or objective', 'ohmylms' ) }
-				exclude={ [
-					...linkedIds,
-					...add.map( ( skill ) => skill.id ),
-				] }
-				disabled={ operation.busy }
-				onChoose={ ( skill ) =>
-					setAdd( ( list ) => [ ...list, skill ] )
-				}
-			/>
-			<Button
-				variant="primary"
-				disabled={ ! dirty || operation.busy || stale }
-				isBusy={ operation.busy }
-				onClick={ () => save( current ) }
-			>
-				{ sprintf(
-					/* translators: 1: skills to link, 2: skills to unlink. */
-					__( 'Save links (+%1$d, −%2$d)', 'ohmylms' ),
-					add.length,
-					remove.length
-				) }
-			</Button>
-		</section>
 	);
 }

@@ -1,9 +1,5 @@
 import { Badge } from '../../../ui/Badge';
-import {
-	ListTable,
-	ListTableInput,
-	ListTableSelect,
-} from '../../../ui/ListTable';
+import { ListTable, ListTableInput } from '../../../ui/ListTable';
 import { Button, Modal, Notice, TextControl } from '@wordpress/components';
 import {
 	lazy,
@@ -27,7 +23,7 @@ import {
 	restoreCourse,
 	trashCourse,
 } from './api';
-import { formatPrice, levelLabel, statusLabel } from './model';
+import { levelLabel, statusLabel } from './model';
 import { useCourses } from './useCourses';
 import type { Course, CourseFilters, CourseStatus, Option } from './types';
 
@@ -65,14 +61,6 @@ function statusFilters(): Option[] {
 	];
 }
 
-function priceFilters(): Option[] {
-	return [
-		{ value: 'all', label: __( 'All prices', 'ohmylms' ) },
-		{ value: 'free', label: __( 'Free', 'ohmylms' ) },
-		{ value: 'paid', label: __( 'Paid', 'ohmylms' ) },
-	];
-}
-
 type Dialog =
 	| { kind: 'create' }
 	| { kind: 'from-syllabus' }
@@ -81,7 +69,7 @@ type Dialog =
 	| null;
 
 /**
- * Course list (`#/courses`): paged, searchable, filtered by status, price type and creation date, with
+ * Course list (`#/courses`): paged, searchable, filtered by status and creation date, with
  * create, duplicate, trash, restore and confirmed permanent delete. The editor lives at
  * `#/courses/<id>`.
  */
@@ -228,7 +216,7 @@ export default function CoursesPage() {
 			</PageTitleActions>
 			<p>
 				{ __(
-					'Create courses and manage their settings, pricing and access.',
+					'Create courses and manage their content and settings. Pricing and access are managed through memberships.',
 					'ohmylms'
 				) }
 			</p>
@@ -296,17 +284,6 @@ export default function CoursesPage() {
 					} }
 					filters={
 						<>
-							<ListTableSelect
-								label={ __( 'Price', 'ohmylms' ) }
-								value={ draft.price_type }
-								options={ priceFilters() }
-								onChange={ ( value ) =>
-									setDraft( ( current ) => ( {
-										...current,
-										price_type: value,
-									} ) )
-								}
-							/>
 							<ListTableInput
 								label={ __( 'Created from', 'ohmylms' ) }
 								type="date"
@@ -393,32 +370,6 @@ export default function CoursesPage() {
 							id: 'level',
 							label: __( 'Level', 'ohmylms' ),
 							render: ( item ) => levelLabel( item.level ),
-						},
-						{
-							id: 'price',
-							label: __( 'Price', 'ohmylms' ),
-							render: ( item ) => (
-								<>
-									{ 'free' === item.price_type
-										? __( 'Free', 'ohmylms' )
-										: formatPrice(
-												item.price,
-												item.currency
-											) }
-									{ 'paid' === item.price_type &&
-										item.price !== item.regular_price && (
-											<>
-												{ ' ' }
-												<s>
-													{ formatPrice(
-														item.regular_price,
-														item.currency
-													) }
-												</s>
-											</>
-										) }
-								</>
-							),
 						},
 						{
 							id: 'students',
@@ -556,7 +507,7 @@ export default function CoursesPage() {
 							}
 							onChange={ setTitle }
 							help={ __(
-								'The course starts as a draft. Set price, access and availability in the editor.',
+								'The course starts as a draft. Build its outline, then include it in a membership plan.',
 								'ohmylms'
 							) }
 						/>

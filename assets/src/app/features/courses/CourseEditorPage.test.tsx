@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
 import { BootstrapProvider } from '../../bootstrap/BootstrapContext';
 import { ApiError } from '../../lib/api';
 import { attachment, mockMediaFrame } from '../../test/mediaFrame';
@@ -32,7 +32,8 @@ const ADMIN = { edit_posts: true, manage_options: true };
 
 function renderEditor(
 	route = '/courses/7',
-	capabilities: Record< string, boolean > = ADMIN
+	capabilities: Record< string, boolean > = ADMIN,
+	switchCourse = false
 ) {
 	return render(
 		<BootstrapProvider
@@ -46,6 +47,9 @@ function renderEditor(
 			} }
 		>
 			<MemoryRouter initialEntries={ [ route ] }>
+				{ switchCourse && (
+					<Link to="/courses/8">Open another course</Link>
+				) }
 				<Routes>
 					<Route
 						path="/courses/:id/:tab?"
@@ -129,6 +133,32 @@ beforeEach( () => {
 } );
 
 describe( 'CourseEditorPage tabs', () => {
+	it( 'clears the previous course while opening another course on the same tab', async () => {
+		const user = userEvent.setup();
+		let resolveNext!: ( value: typeof detail ) => void;
+		const next = new Promise< typeof detail >( ( resolve ) => {
+			resolveNext = resolve;
+		} );
+		vi.mocked( api.getCourse ).mockImplementation( ( id ) =>
+			8 === id ? next : Promise.resolve( detail )
+		);
+		renderEditor( '/courses/7', ADMIN, true );
+		await loaded();
+		expect( screen.getByLabelText( 'Title' ) ).toHaveValue( detail.title );
+		await user.click(
+			screen.getByRole( 'link', { name: 'Open another course' } )
+		);
+		expect( screen.queryByLabelText( 'Title' ) ).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'button', { name: 'Save course' } )
+		).not.toBeInTheDocument();
+		resolveNext( { ...detail, id: 8, title: 'Next course' } );
+		await waitFor( () =>
+			expect( screen.getByLabelText( 'Title' ) ).toHaveValue(
+				'Next course'
+			)
+		);
+	} );
 	it( 'links every tab and marks the current one', async () => {
 		renderEditor( '/courses/7/settings' );
 		await loaded();
@@ -595,73 +625,66 @@ describe( 'CourseEditorPage details', () => {
 
 describe( 'CourseEditorPage settings', () => {
 	const SETTINGS = '/courses/7/settings';
-	it( 'shows pricing, schedule and capacity values', async () => {
+
+	it( 'shows membership guidance and omits pricing, access and availability controls', async () => {
 		renderEditor( SETTINGS );
 		await loaded();
-		expect( screen.getByLabelText( 'Price type' ) ).toHaveValue( 'paid' );
-		expect( screen.getByLabelText( /Regular price/ ) ).toHaveValue(
-			'49.50'
-		);
-		expect( screen.getByLabelText( /Sale price/ ) ).toHaveValue( '29.00' );
-		expect( screen.getByLabelText( 'Sale starts' ) ).toHaveValue(
-			'2026-11-01'
-		);
-		expect( screen.getByLabelText( 'Sale ends' ) ).toHaveValue(
-			'2026-11-30'
-		);
-		expect( screen.getByLabelText( 'Duration (hours)' ) ).toHaveValue(
-			'3'
-		);
+		for ( const label of [
+			'Price type',
+			/Regular price/,
+			/Sale price/,
+			'Sale starts',
+			'Sale ends',
+			'Who can open the course',
+			'Course password',
+			'Available from',
+			'Duration (hours)',
+			'Duration (minutes)',
+		] ) {
+			expect( screen.queryByLabelText( label ) ).not.toBeInTheDocument();
+		}
+		expect(
+			screen.getByRole( 'link', { name: 'Manage memberships' } )
+		).toHaveAttribute( 'href', '/memberships' );
 		expect( screen.getByLabelText( 'Maximum students' ) ).toHaveValue(
 			'30'
 		);
 		expect(
-			screen.getByText( '4 students are enrolled now.' )
+			screen.getByLabelText( 'Allow student reviews' )
 		).toBeInTheDocument();
-		expect( screen.queryByLabelText( 'Title' ) ).not.toBeInTheDocument();
 	} );
-	it( 'saves a price and sale schedule change', async () => {
+	it( 'saves editable settings without changing stored pricing, access or duration', async () => {
 		const user = userEvent.setup();
 		renderEditor( SETTINGS );
 		await loaded();
-		await setField( user, /Regular price/, '60' );
-		await setField( user, 'Sale ends', '2026-12-15' );
+		await setField( user, 'Maximum students', '31' );
 		await save( user );
-		expect(
-			await screen.findByText( 'Course saved.', notice )
-		).toBeInTheDocument();
+		await screen.findByText( 'Course saved.', notice );
 		expect( api.updateCourse ).toHaveBeenCalledWith(
 			7,
 			expect.objectContaining( {
-				title: 'Algebra I',
-				regular_price: '60.00',
+				price_type: 'paid',
+				regular_price: '49.50',
 				sale_price: '29.00',
 				sale_start_date: '2026-11-01',
-				sale_end_date: '2026-12-15',
-				price_type: 'paid',
-				capacity: 30,
+				sale_end_date: '2026-11-30',
+				access_type: 'public',
+				available_date: null,
 				duration: { hours: 3, minutes: 30 },
+				capacity: 31,
 			} ),
 			expect.any( AbortSignal )
 		);
 	} );
-	it( 'validates before saving and focuses the error summary', async () => {
+	it( 'validates the remaining editable capacity before saving', async () => {
 		const user = userEvent.setup();
 		renderEditor( SETTINGS );
 		await loaded();
-		await setField( user, /Sale price/, '99' );
 		await setField( user, 'Maximum students', '0' );
 		await save( user );
-		expect(
-			await screen.findByText(
-				'Fix the highlighted fields before saving.',
-				notice
-			)
-		).toBeInTheDocument();
-		expect(
-			screen.getByLabelText( /Sale price/ )
-		).toHaveAccessibleDescription(
-			/cannot be higher than the regular price/
+		await screen.findByText(
+			'Fix the highlighted fields before saving.',
+			notice
 		);
 		expect( screen.getByLabelText( 'Maximum students' ) ).toHaveAttribute(
 			'aria-invalid',
@@ -669,12 +692,12 @@ describe( 'CourseEditorPage settings', () => {
 		);
 		expect( api.updateCourse ).not.toHaveBeenCalled();
 	} );
-	it( 'maps a server rejection to its field and keeps the edits', async () => {
+	it( 'keeps edits after a server capacity rejection', async () => {
 		vi.mocked( api.updateCourse ).mockRejectedValue(
 			rejection(
 				422,
-				'ohmylms_course_sale_price_too_high',
-				'The sale price cannot be higher than the regular price.',
+				'ohmylms_course_invalid_capacity',
+				'Capacity cannot be below enrolled students.',
 				{ status: 422 }
 			)
 		);
@@ -683,83 +706,19 @@ describe( 'CourseEditorPage settings', () => {
 		await loaded();
 		await setField( user, 'Maximum students', '31' );
 		await save( user );
-		expect(
-			await screen.findByText(
-				'The sale price cannot be higher than the regular price.',
-				notice
-			)
-		).toBeInTheDocument();
-		expect( screen.getByLabelText( /Sale price/ ) ).toHaveAttribute(
+		await screen.findByText(
+			'Capacity cannot be below enrolled students.',
+			notice
+		);
+		expect( screen.getByLabelText( 'Maximum students' ) ).toHaveAttribute(
 			'aria-invalid',
 			'true'
 		);
 		expect( screen.getByLabelText( 'Maximum students' ) ).toHaveValue(
 			'31'
 		);
-		expect(
-			screen.getByRole( 'button', { name: 'Save course' } )
-		).toBeEnabled();
 	} );
-	it( 'hides sale fields for free courses and sends no sale', async () => {
-		const user = userEvent.setup();
-		renderEditor( SETTINGS );
-		await loaded();
-		await user.selectOptions(
-			screen.getByLabelText( 'Price type' ),
-			'free'
-		);
-		expect(
-			screen.queryByLabelText( /Regular price/ )
-		).not.toBeInTheDocument();
-		expect(
-			screen.queryByLabelText( /Sale price/ )
-		).not.toBeInTheDocument();
-		await save( user );
-		await waitFor( () => expect( api.updateCourse ).toHaveBeenCalled() );
-		expect( api.updateCourse ).toHaveBeenCalledWith(
-			7,
-			expect.objectContaining( {
-				price_type: 'free',
-				regular_price: '0.00',
-				sale_price: null,
-				sale_start_date: null,
-				sale_end_date: null,
-			} ),
-			expect.anything()
-		);
-	} );
-	it( 'requires a password for protected courses and sends it', async () => {
-		const user = userEvent.setup();
-		renderEditor( SETTINGS );
-		await loaded();
-		await user.selectOptions(
-			screen.getByLabelText( 'Who can open the course' ),
-			'password_protected'
-		);
-		await save( user );
-		expect(
-			await screen.findByText( 'Enter a password for this course.' )
-		).toBeInTheDocument();
-		expect( api.updateCourse ).not.toHaveBeenCalled();
-		const field = screen.getByLabelText( 'Course password' );
-		expect( field ).toHaveAttribute( 'type', 'password' );
-		await user.type( field, 's3cret' );
-		await user.click(
-			screen.getByRole( 'checkbox', { name: 'Show password' } )
-		);
-		expect( field ).toHaveAttribute( 'type', 'text' );
-		await save( user );
-		await waitFor( () => expect( api.updateCourse ).toHaveBeenCalled() );
-		expect( api.updateCourse ).toHaveBeenCalledWith(
-			7,
-			expect.objectContaining( {
-				access_type: 'password_protected',
-				password: 's3cret',
-			} ),
-			expect.anything()
-		);
-	} );
-	it( 'prefills the stored password for editors and never sends it for public courses', async () => {
+	it( 'preserves stored password protection rather than silently opening an existing course', async () => {
 		vi.mocked( api.getCourse ).mockResolvedValue( {
 			...detail,
 			access_type: 'password_protected',
@@ -769,18 +728,20 @@ describe( 'CourseEditorPage settings', () => {
 		const user = userEvent.setup();
 		renderEditor( SETTINGS );
 		await loaded();
-		expect( screen.getByLabelText( 'Course password' ) ).toHaveValue(
-			'stored-pw'
-		);
-		await user.selectOptions(
-			screen.getByLabelText( 'Who can open the course' ),
-			'public'
-		);
+		expect(
+			screen.queryByLabelText( 'Course password' )
+		).not.toBeInTheDocument();
+		await user.click( screen.getByLabelText( 'Allow student reviews' ) );
 		await save( user );
 		await waitFor( () => expect( api.updateCourse ).toHaveBeenCalled() );
-		expect(
-			vi.mocked( api.updateCourse ).mock.calls[ 0 ]![ 1 ]
-		).not.toHaveProperty( 'password' );
+		expect( api.updateCourse ).toHaveBeenCalledWith(
+			7,
+			expect.objectContaining( {
+				access_type: 'password_protected',
+				password: 'stored-pw',
+			} ),
+			expect.any( AbortSignal )
+		);
 	} );
 	it( 'only shows the capacity field when enrolment is limited', async () => {
 		const user = userEvent.setup();

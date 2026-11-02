@@ -87,8 +87,8 @@
 			"gzip": 5700
 		},
 		"chunks/admin-app-course-structure.js": {
-			"raw": 32900,
-			"gzip": 9500
+			"raw": 39500,
+			"gzip": 11400
 		},
 		"chunks/admin-app-courses.js": {
 			"raw": 47600,
@@ -111,8 +111,8 @@
 			"gzip": 4500
 		},
 		"chunks/admin-app-curriculum.js": {
-			"raw": 12600,
-			"gzip": 4300
+			"raw": 14700,
+			"gzip": 4900
 		},
 		"chunks/admin-app-dashboard-activity.css": {
 			"raw": 800,
@@ -262,10 +262,6 @@
 			"raw": 35200,
 			"gzip": 10400
 		},
-		"chunks/admin-app-point-price.js": {
-			"raw": 3100,
-			"gzip": 1600
-		},
 		"chunks/admin-app-question-editors.js": {
 			"raw": 104200,
 			"gzip": 29000
@@ -329,6 +325,18 @@
 		"chunks/admin-app-webhooks.js": {
 			"raw": 17000,
 			"gzip": 5600
+		},
+		"chunks/admin-app-course-structure.css": {
+			"raw": 3500,
+			"gzip": 1100
+		},
+		"chunks/admin-app-curriculum.css": {
+			"raw": 3500,
+			"gzip": 1100
+		},
+		"chunks/admin-app-skill-workspace.css": {
+			"raw": 3500,
+			"gzip": 1100
 		}
 	}
 }

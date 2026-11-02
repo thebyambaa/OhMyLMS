@@ -1,6 +1,7 @@
 import { del, get, put } from '../../lib/api';
 import { createAssignment } from '../assignments/public';
 import { createQuiz } from '../quizzes/public';
+import { createLesson } from '../lessons';
 import { parseOutline, type Outline } from './model';
 import {
 	invalid,
@@ -108,18 +109,28 @@ export async function findResources(
 }
 
 /**
- * Create a named draft quiz or assignment through its own API. Placement is saved with the outline.
+ * Create a named draft lesson, quiz or assignment through its own API. Placement is saved with the outline.
  *
- * @param type   `quiz` or `assignment`.
- * @param title  Title.
- * @param signal Cancels the request.
+ * @param type      Resource type.
+ * @param title     Title.
+ * @param signal    Cancels the request.
+ * @param requestId Idempotency token required when creating a lesson.
  * @return The new resource.
  */
 export async function createResource(
-	type: Exclude< ResourceType, 'lesson' >,
+	type: ResourceType,
 	title: string,
-	signal?: AbortSignal
+	signal?: AbortSignal,
+	requestId?: string
 ) {
+	if ( 'lesson' === type ) {
+		const lesson = await createLesson(
+			title,
+			requestId ?? invalid(),
+			signal ?? new AbortController().signal
+		);
+		return { id: lesson.id, title: lesson.title };
+	}
 	const item =
 		'quiz' === type
 			? await createQuiz( title, signal )

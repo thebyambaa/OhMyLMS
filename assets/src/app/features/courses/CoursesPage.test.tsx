@@ -52,7 +52,7 @@ beforeEach( () => {
 } );
 
 describe( 'CoursesPage', () => {
-	it( 'lists courses with status, price, students and author', async () => {
+	it( 'lists courses with status, students and author without individual prices', async () => {
 		renderPage();
 		expect( screen.getByRole( 'status' ) ).toHaveTextContent(
 			'Loading courses'
@@ -66,13 +66,15 @@ describe( 'CoursesPage', () => {
 		).toHaveAttribute( 'href', '/courses/7' );
 		expect( first.getByText( 'Published' ) ).toBeInTheDocument();
 		expect( first.getByText( 'Beginner' ) ).toBeInTheDocument();
-		expect( first.getByText( /29\.00/ ) ).toBeInTheDocument();
-		expect( first.getByText( /49\.50/ ).tagName ).toBe( 'S' );
+		expect(
+			screen.queryByRole( 'columnheader', { name: 'Price' } )
+		).not.toBeInTheDocument();
+		expect( screen.queryByLabelText( 'Price' ) ).not.toBeInTheDocument();
 		expect( first.getByText( 'Ada Admin' ) ).toBeInTheDocument();
 		expect( first.getByText( '4' ) ).toBeInTheDocument();
 		const second = within( rows[ 2 ]! );
 		expect( second.getByText( 'Draft' ) ).toBeInTheDocument();
-		expect( second.getByText( 'Free' ) ).toBeInTheDocument();
+		expect( second.queryByText( 'Free' ) ).not.toBeInTheDocument();
 		expect( screen.getAllByText( '2 courses found.' )[ 0 ] ).toHaveClass(
 			'displaying-num'
 		);
@@ -137,14 +139,13 @@ describe( 'CoursesPage', () => {
 		).toBeInTheDocument();
 		expect( screen.queryByRole( 'table' ) ).not.toBeInTheDocument();
 	} );
-	it( 'applies search, status, price and date filters together', async () => {
+	it( 'applies search, status and date filters together', async () => {
 		const user = userEvent.setup();
 		renderPage();
 		await screen.findByRole( 'table', { name: 'Courses' } );
 		await user.type( screen.getByLabelText( 'Search courses' ), ' alg ' );
 		await user.click( screen.getByRole( 'link', { name: 'Draft' } ) );
 		await screen.findByRole( 'table', { name: 'Courses' } );
-		await user.selectOptions( screen.getByLabelText( 'Price' ), 'paid' );
 		await user.type(
 			screen.getByLabelText( 'Created from' ),
 			'2026-01-01'
@@ -160,7 +161,7 @@ describe( 'CoursesPage', () => {
 				{
 					search: 'alg',
 					status: 'draft',
-					price_type: 'paid',
+					price_type: 'all',
 					created_after: '2026-01-01',
 					created_before: '2026-02-01',
 				},

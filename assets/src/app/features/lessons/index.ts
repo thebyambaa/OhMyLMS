@@ -32,3 +32,5 @@ export const lessonEditor: FeatureDefinition = {
 			)
 	),
 };
+
+export { createLesson } from './api';

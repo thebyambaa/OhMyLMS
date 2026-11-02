@@ -94,10 +94,9 @@ it( 'saves learning controls and targets while preserving placement and bank set
 		...outline,
 		revision: 'next',
 	} );
-	await user.selectOptions(
-		screen.getByLabelText( 'Learning mode' ),
-		'skill-based'
-	);
+	expect(
+		screen.queryByLabelText( 'Learning mode' )
+	).not.toBeInTheDocument();
 	await user.selectOptions(
 		screen.getByLabelText( 'Mastery target' ),
 		'mastered'
@@ -113,7 +112,7 @@ it( 'saves learning controls and targets while preserving placement and bank set
 		{
 			program: {
 				...outline.program,
-				mode: 'skill-based',
+				mode: outline.program.mode,
 				outcomes: [
 					{
 						term_id: 7,
@@ -172,6 +171,35 @@ it( 'retains edits after a stale save and confirms before reloading', async () =
 		screen.getByRole( 'button', { name: 'Discard and reload' } )
 	);
 	expect( reload ).toHaveBeenCalledOnce();
+} );
+it( 'excludes saved and unsaved placements from the resource picker', async () => {
+	const user = userEvent.setup();
+	open();
+	vi.mocked( api.findResources ).mockResolvedValue( {
+		pages: 1,
+		items: [
+			{ id: 20, title: 'Already attached' },
+			{ id: 30, title: 'Available lesson' },
+		],
+	} );
+	await user.click(
+		screen.getAllByRole( 'button', { name: 'Attach lesson to unit' } )[ 0 ]!
+	);
+	const available = await screen.findByRole( 'button', {
+		name: 'Available lesson',
+	} );
+	expect(
+		screen.queryByRole( 'button', { name: 'Already attached' } )
+	).not.toBeInTheDocument();
+	await user.click( available );
+	await user.click(
+		screen.getAllByRole( 'button', { name: 'Attach lesson to unit' } )[ 0 ]!
+	);
+	await screen.findByText( 'No editable, unplaced items found.' );
+	expect(
+		screen.queryByRole( 'button', { name: 'Available lesson' } )
+	).not.toBeInTheDocument();
+	expect( api.saveOutline ).not.toHaveBeenCalled();
 } );
 it( 'attaches an existing lesson without changing its shared post or other placements', async () => {
 	const user = userEvent.setup();
@@ -239,7 +267,8 @@ it( 'adds an existing assignment and a newly created draft quiz to units', async
 	expect( api.createResource ).toHaveBeenCalledWith(
 		'quiz',
 		'Unit check',
-		expect.any( AbortSignal )
+		expect.any( AbortSignal ),
+		expect.any( String )
 	);
 	const payload = await saveAndReadPayload( user );
 	expect( payload.program.items ).toMatchObject( [

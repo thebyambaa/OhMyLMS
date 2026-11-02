@@ -7,12 +7,12 @@ import {
 	TextControl,
 	TextareaControl,
 } from '@wordpress/components';
-import { Suspense, useEffect, useRef, useState } from '@wordpress/element';
+import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { MediaPicker } from '../../components/MediaPicker';
 import { normalizeApiError } from '../../lib/api';
 import { IMAGE_MIME_TYPES } from '../../lib/media';
-import { PointPricePanel } from '../commerce/public';
+import { Link } from 'react-router-dom';
 import { updateCourse } from './api';
 import { CourseViewLink } from './CourseViewLink';
 import {
@@ -29,12 +29,10 @@ import {
 import { useCourseEditor } from './useCourseEditor';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
 import type {
-	AccessType,
 	FormErrors,
 	FormState,
 	Level,
 	Option,
-	PriceType,
 	WritableStatus,
 } from './types';
 
@@ -102,8 +100,8 @@ const WRITABLE: readonly WritableStatus[] = [
 ];
 
 /**
- * Course form for the Details tab (basics and thumbnail) or the Settings tab (pricing and sale schedule,
- * access, availability, capacity and certificate). Both save the whole course through the courses API.
+ * Course form for the Details tab (basics and thumbnail) or the Settings tab (membership guidance,
+ * reviews, capacity and certificate). Both save the whole course through the courses API.
  * Edits survive failed saves, and leaving with unsaved changes asks first.
  *
  * @param props         Component props.
@@ -124,7 +122,6 @@ export function CourseForm( {
 	const [ busy, setBusy ] = useState( false );
 	const [ message, setMessage ] = useState< string | null >( null );
 	const [ failure, setFailure ] = useState< string | null >( null );
-	const [ reveal, setReveal ] = useState( false );
 	const summary = useRef< HTMLDivElement >( null );
 	const operation = useRef< AbortController | null >( null );
 	const dirty = Boolean( form && saved && isDirty( form, saved ) );
@@ -177,8 +174,6 @@ export function CourseForm( {
 	const details = 'details' === section;
 
 	const trashed = 'trash' === course.status;
-	const code = options.currency.code;
-	const paid = 'paid' === form.price_type;
 	const statusOptions = withCurrentStatus( options.statuses, form.status );
 	const update = < K extends keyof FormState >(
 		key: K,
@@ -626,197 +621,17 @@ export function CourseForm( {
 
 				{ ! details && (
 					<div className="oml-editor-cards">
+						<Notice status="info" isDismissible={ false }>
+							{ __(
+								'Manage pricing and course access through membership plans. Add this course to a plan in Memberships.',
+								'ohmylms'
+							) }{ ' ' }
+							<Link to="/memberships">
+								{ __( 'Manage memberships', 'ohmylms' ) }
+							</Link>
+						</Notice>
 						<fieldset disabled={ busy || trashed }>
-							<legend>{ __( 'Pricing', 'ohmylms' ) }</legend>
-							<SelectControl
-								label={ __( 'Price type', 'ohmylms' ) }
-								value={ form.price_type }
-								options={ options.price_types }
-								onChange={ ( next ) =>
-									update(
-										'price_type',
-										pick< PriceType >(
-											next,
-											[ 'free', 'paid' ],
-											'free'
-										)
-									)
-								}
-							/>
-							{ paid && (
-								<>
-									<p>
-										{ sprintf(
-											/* translators: %s: currency code such as USD. */
-											__(
-												'Prices use the site currency (%s). Change it in the store settings.',
-												'ohmylms'
-											),
-											code
-										) }
-									</p>
-									<TextControl
-										label={ sprintf(
-											/* translators: %s: currency code. */
-											__(
-												'Regular price (%s)',
-												'ohmylms'
-											),
-											code
-										) }
-										value={ form.regular_price }
-										inputMode="decimal"
-										required
-										aria-invalid={ invalid(
-											'regular_price'
-										) }
-										aria-describedby={ described(
-											'regular_price'
-										) }
-										onChange={ ( next ) =>
-											update( 'regular_price', next )
-										}
-									/>
-									<FieldError
-										id="oml-course-regular_price-error"
-										message={ errors.regular_price }
-									/>
-									<TextControl
-										label={ sprintf(
-											/* translators: %s: currency code. */
-											__( 'Sale price (%s)', 'ohmylms' ),
-											code
-										) }
-										value={ form.sale_price }
-										inputMode="decimal"
-										help={ __(
-											'Leave empty for no sale. A sale needs a start and an end date.',
-											'ohmylms'
-										) }
-										aria-invalid={ invalid( 'sale_price' ) }
-										aria-describedby={ described(
-											'sale_price'
-										) }
-										onChange={ ( next ) =>
-											update( 'sale_price', next )
-										}
-									/>
-									<FieldError
-										id="oml-course-sale_price-error"
-										message={ errors.sale_price }
-									/>
-									<TextControl
-										label={ __( 'Sale starts', 'ohmylms' ) }
-										type="date"
-										value={ form.sale_start_date }
-										aria-invalid={ invalid(
-											'sale_start_date'
-										) }
-										aria-describedby={ described(
-											'sale_start_date'
-										) }
-										onChange={ ( next ) =>
-											update( 'sale_start_date', next )
-										}
-									/>
-									<FieldError
-										id="oml-course-sale_start_date-error"
-										message={ errors.sale_start_date }
-									/>
-									<TextControl
-										label={ __( 'Sale ends', 'ohmylms' ) }
-										type="date"
-										value={ form.sale_end_date }
-										help={ __(
-											'Dates use the site timezone and include the whole day.',
-											'ohmylms'
-										) }
-										aria-invalid={ invalid(
-											'sale_end_date'
-										) }
-										aria-describedby={ described(
-											'sale_end_date'
-										) }
-										onChange={ ( next ) =>
-											update( 'sale_end_date', next )
-										}
-									/>
-									<FieldError
-										id="oml-course-sale_end_date-error"
-										message={ errors.sale_end_date }
-									/>
-								</>
-							) }
-						</fieldset>
-
-						<Suspense fallback={ null }>
-							<PointPricePanel
-								courseId={ id }
-								disabled={ busy || trashed }
-							/>
-						</Suspense>
-
-						<fieldset disabled={ busy || trashed }>
-							<legend>{ __( 'Access', 'ohmylms' ) }</legend>
-							<SelectControl
-								label={ __(
-									'Who can open the course',
-									'ohmylms'
-								) }
-								value={ form.access_type }
-								options={ options.access_types }
-								aria-invalid={ invalid( 'access_type' ) }
-								aria-describedby={ described( 'access_type' ) }
-								onChange={ ( next ) =>
-									update(
-										'access_type',
-										pick< AccessType >(
-											next,
-											[ 'public', 'password_protected' ],
-											'public'
-										)
-									)
-								}
-							/>
-							<FieldError
-								id="oml-course-access_type-error"
-								message={ errors.access_type }
-							/>
-							{ 'password_protected' === form.access_type && (
-								<>
-									<TextControl
-										label={ __(
-											'Course password',
-											'ohmylms'
-										) }
-										type={ reveal ? 'text' : 'password' }
-										autoComplete="new-password"
-										value={ form.password }
-										maxLength={
-											options.limits.max_password
-										}
-										aria-invalid={ invalid( 'password' ) }
-										aria-describedby={ described(
-											'password'
-										) }
-										onChange={ ( next ) =>
-											update( 'password', next )
-										}
-									/>
-									<FieldError
-										id="oml-course-password-error"
-										message={ errors.password }
-									/>
-									<CheckboxControl
-										label={ __(
-											'Show password',
-											'ohmylms'
-										) }
-										checked={ reveal }
-										onChange={ setReveal }
-									/>
-								</>
-							) }
+							<legend>{ __( 'Reviews', 'ohmylms' ) }</legend>
 							<CheckboxControl
 								label={ __(
 									'Allow student reviews',
@@ -826,62 +641,6 @@ export function CourseForm( {
 								onChange={ ( next ) =>
 									update( 'enable_reviews', next )
 								}
-							/>
-						</fieldset>
-
-						<fieldset disabled={ busy || trashed }>
-							<legend>{ __( 'Availability', 'ohmylms' ) }</legend>
-							<TextControl
-								label={ __( 'Available from', 'ohmylms' ) }
-								type="date"
-								value={ form.available_date }
-								help={ __(
-									'Optional. Leave empty for no date.',
-									'ohmylms'
-								) }
-								aria-invalid={ invalid( 'available_date' ) }
-								aria-describedby={ described(
-									'available_date'
-								) }
-								onChange={ ( next ) =>
-									update( 'available_date', next )
-								}
-							/>
-							<FieldError
-								id="oml-course-available_date-error"
-								message={ errors.available_date }
-							/>
-							<TextControl
-								label={ __( 'Duration (hours)', 'ohmylms' ) }
-								value={ form.duration_hours }
-								inputMode="numeric"
-								aria-invalid={ invalid( 'duration_hours' ) }
-								aria-describedby={ described(
-									'duration_hours'
-								) }
-								onChange={ ( next ) =>
-									update( 'duration_hours', next )
-								}
-							/>
-							<FieldError
-								id="oml-course-duration_hours-error"
-								message={ errors.duration_hours }
-							/>
-							<TextControl
-								label={ __( 'Duration (minutes)', 'ohmylms' ) }
-								value={ form.duration_minutes }
-								inputMode="numeric"
-								aria-invalid={ invalid( 'duration_minutes' ) }
-								aria-describedby={ described(
-									'duration_minutes'
-								) }
-								onChange={ ( next ) =>
-									update( 'duration_minutes', next )
-								}
-							/>
-							<FieldError
-								id="oml-course-duration_minutes-error"
-								message={ errors.duration_minutes }
 							/>
 						</fieldset>
 

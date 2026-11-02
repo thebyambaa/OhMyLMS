@@ -225,7 +225,7 @@ describe( 'saving and rollback', () => {
 		expect(
 			screen
 				.getAllByRole( 'region' )
-				.slice( 1 )
+				.filter( ( region ) => region.hasAttribute( 'data-oml-drop' ) )
 				.map( ( region ) => region.getAttribute( 'aria-label' ) )
 		).toEqual( [ 'Algebra', 'Geometry' ] );
 		await user.click(

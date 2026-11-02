@@ -25,7 +25,7 @@ function FeatureRoute( { feature }: { feature: FeatureDefinition } ) {
 	const route = feature.extensionRoute ?? feature.path;
 	const context = { ...params, route, hash: `#${ pathname }${ search }` };
 	return (
-		<ErrorBoundary resetKey={ feature.id }>
+		<ErrorBoundary resetKey={ `${ feature.id }:${ pathname }${ search }` }>
 			<ExtensionSlot name="admin.screen.before" context={ context } />
 			<Suspense fallback={ <RouteFallback /> }>
 				<Page />

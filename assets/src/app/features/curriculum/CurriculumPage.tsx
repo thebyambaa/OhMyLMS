@@ -9,7 +9,8 @@ import {
 } from '@wordpress/components';
 import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import { Link } from 'react-router-dom';
+import { CurriculumTree } from './CurriculumTree';
+import '../../styles/authoring.css';
 import { EmptyState } from '../../../ui/EmptyState';
 import { useListQuery } from '../../components/listQuery';
 import {
@@ -71,9 +72,11 @@ export default function CurriculumPage() {
 	const [ baseline, setBaseline ] = useState( JSON.stringify( empty ) );
 	const [ switchTo, setSwitchTo ] = useState< {
 		item: CurriculumItem | null;
+		parent?: number;
 	} | null >( null );
 	const [ deleting, setDeleting ] = useState< CurriculumItem | null >( null );
-	const dirty = JSON.stringify( input ) !== baseline;
+	const dirty =
+		JSON.stringify( input ) !== baseline || ( ! editing && parent !== 0 );
 	const guard = useUnsavedChangesGuard( dirty );
 	const operation = useRef< AbortController | null >( null );
 	useEffect( () => () => operation.current?.abort(), [] );
@@ -110,11 +113,15 @@ export default function CurriculumPage() {
 		);
 		setError( '' );
 	}
-	function choose( item: CurriculumItem | null ) {
+	function choose( item: CurriculumItem | null, parentId?: number ) {
 		if ( dirty ) {
-			setSwitchTo( { item } );
+			setSwitchTo( { item, parent: parentId } );
 		} else {
 			edit( item );
+			setFocusForm( ( current ) => current + 1 );
+			if ( parentId !== undefined ) {
+				setParent( parentId );
+			}
 		}
 	}
 	async function run( work: ( signal: AbortSignal ) => Promise< unknown > ) {
@@ -192,46 +199,14 @@ export default function CurriculumPage() {
 				value={ search }
 				onChange={ setSearch }
 			/>
-			<ul>
-				{ items
-					.filter( ( item ) =>
-						itemPath( items, item )
-							.toLocaleLowerCase()
-							.includes( search.toLocaleLowerCase() )
-					)
-					.map( ( item ) => (
-						<li key={ item.id }>
-							<Button
-								disabled={ busy }
-								onClick={ () => choose( item ) }
-							>
-								{ itemPath( items, item ) }
-							</Button>{ ' ' }
-							({ item.item_type })
-							{ item.is_syllabus && (
-								<Link
-									to={ `/content-hub/curriculum/syllabus/${ item.id }` }
-								>
-									{ __( 'Open syllabus editor', 'ohmylms' ) }
-								</Link>
-							) }
-							{ item.course_id > 0 && (
-								<>
-									{ ' ' }
-									·{ ' ' }
-									<Link
-										to={ `/content-hub/courses/${ item.course_id }` }
-									>
-										{ __(
-											'Edit course structure',
-											'ohmylms'
-										) }
-									</Link>
-								</>
-							) }
-						</li>
-					) ) }
-			</ul>
+			<CurriculumTree
+				items={ items }
+				search={ search }
+				selected={ editing?.id ?? null }
+				disabled={ busy }
+				onSelect={ choose }
+				onAddChild={ ( item ) => choose( null, item.id ) }
+			/>
 			{ ! request.loading && ! request.error && ! items.length && (
 				<EmptyState
 					title={ __( 'No curriculum items yet.', 'ohmylms' ) }
@@ -400,6 +375,10 @@ export default function CurriculumPage() {
 					<Button
 						onClick={ () => {
 							edit( switchTo.item );
+							setFocusForm( ( current ) => current + 1 );
+							if ( switchTo.parent !== undefined ) {
+								setParent( switchTo.parent );
+							}
 							setSwitchTo( null );
 						} }
 					>

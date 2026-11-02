@@ -1,3 +1,5 @@
+import { createLesson } from '../lessons';
+import { lesson } from '../lessons/fixtures';
 import * as transport from '../../lib/api';
 import { createAssignment } from '../assignments/public';
 import { assignment } from '../assignments/fixtures';
@@ -22,6 +24,7 @@ vi.mock( '../../lib/api', async ( original ) => ( {
 } ) );
 vi.mock( '../quizzes/public', () => ( { createQuiz: vi.fn() } ) );
 vi.mock( '../assignments/public', () => ( { createAssignment: vi.fn() } ) );
+vi.mock( '../lessons', () => ( { createLesson: vi.fn() } ) );
 beforeEach( () => vi.resetAllMocks() );
 it( 'sends the original read revision and cancellation signal, never auto-publishes', async () => {
 	const controller = new AbortController();
@@ -99,4 +102,20 @@ it( 'creates draft quizzes and assignments through their own APIs', async () => 
 	} );
 	expect( createAssignment ).toHaveBeenCalledWith( 'Essay', undefined );
 	expect( transport.post ).not.toHaveBeenCalled();
+} );
+
+it( 'creates a reusable draft lesson with the same idempotency token used on retry', async () => {
+	const signal = new AbortController().signal;
+	vi.mocked( createLesson ).mockResolvedValue( lesson );
+	await expect(
+		createResource( 'lesson', 'Equations', signal, 'request-uuid' )
+	).resolves.toEqual( { id: lesson.id, title: lesson.title } );
+	expect( createLesson ).toHaveBeenCalledWith(
+		'Equations',
+		'request-uuid',
+		signal
+	);
+	await expect(
+		createResource( 'lesson', 'Equations', signal )
+	).rejects.toMatchObject( { code: 'invalid_response' } );
 } );

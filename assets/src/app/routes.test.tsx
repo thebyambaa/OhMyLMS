@@ -1,10 +1,13 @@
-import { screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { lazy } from '@wordpress/element';
-import { Link } from 'react-router-dom';
+import { Link, MemoryRouter, useParams } from 'react-router-dom';
+import { BootstrapProvider } from './bootstrap/BootstrapContext';
+import { ExtensionsProvider } from './extensions/context';
 import { createRegistry } from './extensions/registry.mjs';
 import type { FeatureDefinition } from './features/types';
-import { renderShell } from './test/render';
+import { AppRoutes } from './routes';
+import { createBootstrap, renderShell } from './test/render';
 
 function page( heading: string ) {
 	return lazy( () =>
@@ -43,6 +46,52 @@ function createFeatures(
 }
 
 describe( 'app shell', () => {
+	it( 'recovers from a render error when opening another record in the same feature', async () => {
+		const consoleError = vi
+			.spyOn( console, 'error' )
+			.mockImplementation( () => undefined );
+		const user = userEvent.setup();
+		const component = lazy( () =>
+			Promise.resolve( {
+				default: function RecordPage() {
+					const { id } = useParams();
+					if ( '7' === id ) {
+						throw new Error( 'Record failed to render' );
+					}
+					return <h2>Course { id }</h2>;
+				},
+			} )
+		);
+		try {
+			render(
+				<BootstrapProvider value={ createBootstrap() }>
+					<ExtensionsProvider value={ createRegistry() }>
+						<MemoryRouter initialEntries={ [ '/courses/7' ] }>
+							<Link to="/courses/8">Open another record</Link>
+							<AppRoutes
+								features={ createFeatures( {
+									path: '/courses/:id',
+									component,
+								} ) }
+							/>
+						</MemoryRouter>
+					</ExtensionsProvider>
+				</BootstrapProvider>
+			);
+			await screen.findByRole( 'heading', {
+				name: 'Something went wrong',
+			} );
+			await user.click(
+				screen.getByRole( 'link', { name: 'Open another record' } )
+			);
+			expect(
+				await screen.findByRole( 'heading', { name: 'Course 8' } )
+			).toBeInTheDocument();
+			expect( screen.queryByRole( 'alert' ) ).not.toBeInTheDocument();
+		} finally {
+			consoleError.mockRestore();
+		}
+	} );
 	it( 'renders the route in one main landmark, without a header or navigation of its own', async () => {
 		renderShell( createFeatures(), { route: '/courses' } );
 

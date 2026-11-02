@@ -27,7 +27,7 @@ export function useCourses() {
 		() => ( {
 			search: query.values.s,
 			status: query.values.status,
-			price_type: query.values.price_type,
+			price_type: 'all',
 			created_after: query.values.created_after,
 			created_before: query.values.created_before,
 		} ),
@@ -78,7 +78,7 @@ export function useCourses() {
 	const toQuery = ( next: CourseFilters ) => ( {
 		s: next.search,
 		status: next.status,
-		price_type: next.price_type,
+		price_type: 'all',
 		created_after: next.created_after,
 		created_before: next.created_before,
 	} );

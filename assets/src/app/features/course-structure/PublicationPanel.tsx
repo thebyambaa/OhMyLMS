@@ -60,12 +60,8 @@ export function PublicationPanel( {
 					<h3>{ preview.title }</h3>
 					<p>
 						{
-							/* translators: %1$s: learning mode; %2$d: number of skill targets. */ sprintf(
-								__(
-									'Learning mode: %1$s. Skill targets: %2$d.',
-									'ohmylms'
-								),
-								preview.mode,
+							/* translators: %d: number of skill targets. */ sprintf(
+								__( 'Skill targets: %d.', 'ohmylms' ),
 								preview.outcomes
 							)
 						}

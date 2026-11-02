@@ -36,7 +36,7 @@ function routeId( value: string | undefined ): number | null {
 
 /**
  * Course editor at `#/courses/:id/:tab?`: Details (metadata and thumbnail), Outline (units and activity
- * placements), Settings (pricing, access, availability, capacity and certificate) and Publish (reviewed
+ * placements), Settings (membership guidance, reviews, capacity and certificate) and Publish (reviewed
  * publication of the saved program). Publication and certificates need `manage_options`, as on the server.
  */
 /**
@@ -79,7 +79,7 @@ export default function CourseEditorPage() {
 		);
 	}
 	return (
-		<div className="oml-editor">
+		<div className="oml-editor" key={ id }>
 			<div className="oml-editor-topbar">
 				<p className="oml-editor-breadcrumb">
 					<Link to="/courses">

@@ -15,6 +15,9 @@ import { deleteUnit, readOutline, saveOutline, type ResourceType } from './api';
 import { ResourcePicker } from './ResourcePicker';
 import { UnitEditor } from './UnitEditor';
 import { LearningSettings } from './LearningSettings';
+import { CourseConnections, useConnectionTarget } from './CourseConnections';
+import { OutlineNavigator } from './OutlineNavigator';
+import '../../styles/authoring.css';
 import {
 	removeNewUnit,
 	savePayload,
@@ -108,6 +111,15 @@ export function OutlineWorkspace( {
 			( item ) => `${ item.type }:${ item.content_id }` === opening
 		)
 	);
+	const connections = useConnectionTarget(
+		initial.course_id,
+		targeted && [ 'lesson', 'quiz', 'assignment' ].includes( targeted.type )
+			? {
+					kind: targeted.type as 'lesson' | 'quiz' | 'assignment',
+					id: targeted.content_id,
+				}
+			: undefined
+	);
 	const [ draft, setDraft ] = useState( initial );
 	const [ saved, setSaved ] = useState( snapshot( initial ) );
 	const [ busy, setBusy ] = useState( false );
@@ -142,12 +154,13 @@ export function OutlineWorkspace( {
 					`[data-oml-control="${ focus[ 1 ] }"]:not(:disabled)`
 				);
 		( control ?? row )?.focus();
+		row?.scrollIntoView?.( { block: 'nearest' } );
 		if ( ! busy ) {
 			setFocus( null );
 		}
 	}, [ focus, busy ] );
 	const dirty = snapshot( draft ) !== saved;
-	const guard = useUnsavedChangesGuard( dirty );
+	const guard = useUnsavedChangesGuard( dirty || connections.dirty );
 	function change( next: Outline ) {
 		setDraft( next );
 		setMessage( '' );
@@ -189,7 +202,8 @@ export function OutlineWorkspace( {
 			}
 		}
 	}
-	const askReload = () => ( dirty ? setReloadConfirm( true ) : reload() );
+	const askReload = () =>
+		dirty || connections.dirty ? setReloadConfirm( true ) : reload();
 	/**
 	 * Move a unit or activity (drag, move buttons or unit select), announce it and keep focus on it. On
 	 * a saved outline the move is saved at once and undone if that fails; otherwise it joins the draft.
@@ -343,7 +357,7 @@ export function OutlineWorkspace( {
 				<div className="oml-editor-header-actions">
 					<Button
 						variant="tertiary"
-						disabled={ busy }
+						disabled={ busy || connections.dirty }
 						onClick={ askReload }
 					>
 						{ __( 'Reload saved outline', 'ohmylms' ) }
@@ -406,7 +420,12 @@ export function OutlineWorkspace( {
 							) }
 				</Notice>
 			) }
-			<div className="oml-editor-grid">
+			<div className="oml-editor-grid oml-authoring-grid">
+				<OutlineNavigator
+					draft={ draft }
+					onNavigate={ ( key ) => setFocus( [ key, '' ] ) }
+					onConnect={ connections.choose }
+				/>
 				<div className="oml-editor-main">
 					<p className="oml-editor-hint">
 						{ __(
@@ -444,6 +463,13 @@ export function OutlineWorkspace( {
 								}
 								onDelete={ () => setDeleting( unit ) }
 								onDetach={ setDetach }
+								onConnect={ ( item ) =>
+									connections.choose( {
+										kind: item.type as
+											'lesson' | 'quiz' | 'assignment',
+										id: item.content_id,
+									} )
+								}
 							/>
 						) ) }
 
@@ -513,6 +539,18 @@ export function OutlineWorkspace( {
 					) }
 				</div>
 				<aside className="oml-editor-aside">
+					<CourseConnections
+						target={ connections.target }
+						course={ draft.course_id }
+						dirty={ connections.dirty }
+						onDirtyChange={ connections.setDirty }
+						onCourse={ () =>
+							connections.choose( {
+								kind: 'course',
+								id: draft.course_id,
+							} )
+						}
+					/>
 					<PanelBody
 						title={ __( 'Learning settings', 'ohmylms' ) }
 						initialOpen
@@ -524,7 +562,10 @@ export function OutlineWorkspace( {
 						/>
 					</PanelBody>
 					<PanelBody
-						title={ __( 'Placement', 'ohmylms' ) }
+						title={ __(
+							'Syllabus and curriculum placement',
+							'ohmylms'
+						) }
 						initialOpen={ false }
 					>
 						<CoursePlacement course={ draft.course_id } />
@@ -554,10 +595,14 @@ export function OutlineWorkspace( {
 					</PanelBody>
 				</aside>
 			</div>
+			{ connections.confirmation }
 			{ picker && (
 				<ResourcePicker
 					course={ draft.course_id }
 					type={ picker.type }
+					exclude={ draft.program.items
+						.filter( ( item ) => item.type === picker.type )
+						.map( ( item ) => item.content_id ) }
 					onClose={ () => setPicker( null ) }
 					onSelect={ add }
 				/>

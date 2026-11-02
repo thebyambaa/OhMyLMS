@@ -1,3 +1,4 @@
+import './NativeSkillConnections';
 import './nativeAuthoringBootstrap';
 // Before the question blocks register, so they also receive the paper span attribute.
 import './paperRegistration.mjs';
