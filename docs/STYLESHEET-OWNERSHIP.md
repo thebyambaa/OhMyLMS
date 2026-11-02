@@ -17,7 +17,7 @@ The table below records the 29 October 2026 snapshot on `main`; see the 30 Octob
 | Admin shell | `admin-design-system.css` 17,002 (plus inline variables from `DesignSystem.php`), `global.css` 596 (all wp-admin, LMS menu) | | `Design/DesignSystem.php`, `Assets/AdminAssets.php` | |
 | Admin app (`page=ohmylms-app`) | `assets/dist/admin/admin-app*.css` and its feature chunks | | `assets/src/app/styles`, feature CSS in `assets/src/app` | Built by Webpack; see [ARCHITECTURE.md](ARCHITECTURE.md) |
 | Retired legacy admin (`page=ohmylms`) | `assets/dist/css/admin/oml-{main,rtl}-*.css`, `assets/css/oml-ui-*.css`, `admin-ui.css`, `tailwind.css`, the `admin-styles.js` loader | was 1,430,902 + 77,274 + 4,968 + 22,069 | deleted 31 October 2026 (see below) | |
-| Question editing styles | `question-editor.css` 17,672, plus nine feature files (`question-stage`, `quiz-design`, `quiz-overview`, `course-objectives`, `skill-matrix`, `course-editor-ux`, `course-outline-editor`, `subject-profiles`, `library-curriculum`) totalling 55,727 | | `Design/Tokens.php::enqueue_admin()` | Were requested on the legacy screen; re-targeted with that screen check |
+| Question editing styles | `question-editor.css` (tokenized chrome; quiz stage/answer palettes documented) | | `Learning/NativeLessonEditor.php`, `Design/DesignSystem.php` | Pre-cutover companions (`question-stage`, `quiz-overview`, `quiz-design`, …) were deleted with the legacy admin; do not reintroduce those filenames without restoring consumers |
 | Gutenberg editor | `assets/blocks/css/*`, `question-editor.css` and `paper.css` (native lesson editor) | | `Blocks/BlocksManager.php`, `Learning/NativeLessonEditor.php` | WordPress's own editor styles are not copied |
 
 ## WordPress core styles

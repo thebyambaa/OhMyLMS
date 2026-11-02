@@ -176,9 +176,12 @@ SCSS has no chart series and no exam-print colours (`assets/css/paper.css` is se
 player partial is outside the rule: its fixed media palette is documented on that file and owned with
 the player. The generated `assets/css/frontend/**` stays ignored. `assets/css/oml-ui.css` stays on the stricter rule, with no hex fallbacks.
 
-The ordered admin feature modules are built from
-`assets/src/design-system/admin`; edit authored sources rather than hashed outputs. Video controls retain a documented fixed media palette over arbitrary footage. Status text
-has separate contrast-adjusted `--oml-{success,warning,danger,info}-text` tokens for soft backgrounds.
+`assets/src/design-system/admin/` keeps `public-selectors.json` for stylelint’s public-class
+allowlist; the ordered admin CSS modules that used to live there were deleted with the legacy
+admin cutover ([STYLESHEET-OWNERSHIP](STYLESHEET-OWNERSHIP.md), [CUTOVER.md](CUTOVER.md)).
+Admin chrome is `admin-design-system.css` plus authored `assets/src/app` CSS. Video controls
+retain a documented fixed media palette over arbitrary footage. Status text has separate
+contrast-adjusted `--oml-{success,warning,danger,info}-text` tokens for soft backgrounds.
 
 ## Input and Select
 

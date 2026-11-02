@@ -10,6 +10,7 @@ import {
 import { useCallback, useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Link, useParams } from 'react-router-dom';
+import { EmptyState } from '../../../ui/EmptyState';
 import { useOperation } from '../../hooks/useOperation';
 import { useRequest } from '../../hooks/useRequest';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
@@ -702,7 +703,9 @@ export default function ExamEditorPage() {
 								) ) }
 							</ol>
 						) : (
-							<p>{ __( 'No questions yet.', 'ohmylms' ) }</p>
+							<EmptyState
+								title={ __( 'No questions yet.', 'ohmylms' ) }
+							/>
 						) }
 						{ editable && (
 							<p>

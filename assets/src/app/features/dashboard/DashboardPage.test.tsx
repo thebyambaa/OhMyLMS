@@ -592,7 +592,7 @@ describe( 'course report', () => {
 			within( students ).getByRole( 'progressbar', {
 				name: 'Progress of Ada Lovelace',
 			} )
-		).toHaveAttribute( 'value', '66' );
+		).toHaveAttribute( 'aria-valuenow', '66' );
 		expect(
 			within( students ).getByText( 'Completed' )
 		).toBeInTheDocument();

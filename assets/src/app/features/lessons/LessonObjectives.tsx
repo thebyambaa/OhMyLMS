@@ -6,6 +6,7 @@ import {
 } from '@wordpress/components';
 import { useCallback, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
+import { EmptyState } from '../../../ui/EmptyState';
 import { WidefatTable } from '../../components/WidefatTable';
 import { useOperation } from '../../hooks/useOperation';
 import { useRequest } from '../../hooks/useRequest';
@@ -339,7 +340,9 @@ function Editor( {
 					) ) }
 				</ul>
 			) : (
-				<p>{ __( 'No skills linked yet.', 'ohmylms' ) }</p>
+				<EmptyState
+					title={ __( 'No skills linked yet.', 'ohmylms' ) }
+				/>
 			) }
 			<TextControl
 				label={ __( 'Find a skill', 'ohmylms' ) }
@@ -480,7 +483,12 @@ function Editor( {
 					</tbody>
 				</WidefatTable>
 			) : (
-				<p>{ __( 'No syllabus objectives mapped yet.', 'ohmylms' ) }</p>
+				<EmptyState
+					title={ __(
+						'No syllabus objectives mapped yet.',
+						'ohmylms'
+					) }
+				/>
 			) }
 			{ targets.length > 0 && (
 				<>

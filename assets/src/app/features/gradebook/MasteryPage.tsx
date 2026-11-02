@@ -1,6 +1,7 @@
 import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
+import { EmptyState } from '../../../ui/EmptyState';
 import { Pagination } from '../../components/Pagination';
 import { getMastery } from './api';
 import { masteryCsv } from './exports';
@@ -279,12 +280,12 @@ export default function MasteryPage() {
 							/>
 						</div>
 					) : (
-						<p>
-							{ __(
+						<EmptyState
+							title={ __(
 								'No skill evidence for these learners yet.',
 								'ohmylms'
 							) }
-						</p>
+						/>
 					) }
 					{ data.total_pages > 1 && (
 						<Pagination

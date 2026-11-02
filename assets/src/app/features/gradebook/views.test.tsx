@@ -136,7 +136,9 @@ describe( 'Student transcript', () => {
 		).toBeInTheDocument();
 		expect( screen.getByText( 'Linear equations' ) ).toBeInTheDocument();
 		expect(
-			screen.getByRole( 'img', { name: '88%' } )
+			screen.getByRole( 'progressbar', {
+				name: 'Linear equations: 88%',
+			} )
 		).toBeInTheDocument();
 	} );
 

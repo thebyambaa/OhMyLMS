@@ -119,11 +119,12 @@ export default {
 				'assets/css/extended-questions.css',
 				'assets/css/interactive.css',
 				'assets/css/paper.css',
-				'assets/css/quiz-overview.css',
-				'assets/css/question-stage.css',
+				'assets/css/question-editor.css',
 				'assets/css/language-switcher.css',
 				'assets/src/ui/**/*.{css,scss}',
 				'assets/src/app/styles/*.css',
+				// Authored admin CSS modules were deleted with the legacy admin cutover;
+				// only public-selectors.json remains under assets/src/design-system/admin/.
 				'assets/src/design-system/admin/*.css',
 				'assets/src/frontend/scss/**/*.scss',
 			],

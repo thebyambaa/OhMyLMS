@@ -2,6 +2,7 @@ import { Button, Notice } from '@wordpress/components';
 import { useCallback, useEffect, useMemo, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Badge } from '../../../ui/Badge';
 import { ListTableSelect } from '../../../ui/ListTable';
 import { normalizeApiError } from '../../lib/api';
 import { createView, deleteView, getContext, listViews } from './api';
@@ -390,10 +391,21 @@ export function ViewActions( {
  * @param root0.source
  */
 export function SourceBadge( { source }: { source: string } ) {
+	let tone = 'info';
+	if ( 'purchase' === source ) {
+		tone = 'success';
+	} else if ( 'seat' === source ) {
+		tone = 'danger';
+	} else if ( 'roster' === source || 'self' === source ) {
+		tone = 'primary';
+	}
 	return (
-		<span className={ `ohmylms-gradebook-source is-${ source }` }>
+		<Badge
+			tone={ tone }
+			className={ `ohmylms-gradebook-source is-${ source }` }
+		>
 			{ sourceLabel( source ) }
-		</span>
+		</Badge>
 	);
 }
 

@@ -2,6 +2,7 @@ import { Notice } from '@wordpress/components';
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
+import { EmptyState } from '../../../ui/EmptyState';
 import { ListTableSelect } from '../../../ui/ListTable';
 import { getRoster } from './api';
 import { CellDialog } from './CellDialog';
@@ -280,12 +281,12 @@ export default function RosterPage() {
 							/>
 						</div>
 					) : (
-						<p>
-							{ __(
+						<EmptyState
+							title={ __(
 								'No courses are linked to this class yet, or it has no learners.',
 								'ohmylms'
 							) }
-						</p>
+						/>
 					) }
 					<p className="ohmylms-gradebook-muted">
 						{ __(
