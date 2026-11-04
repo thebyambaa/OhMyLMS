@@ -458,56 +458,69 @@ class Hooks {
 	 * Google meet authentication for Hooks.
 	 */
 	public function google_meet_authentication() {
-		if ( isset( $_GET['code'] ) && isset( $_GET['state'] ) && 'googlemeet_auth' === $_GET['state'] ) {
-			$code    = sanitize_text_field( wp_unslash( $_GET['code'] ) );
-			$user_id = get_current_user_id();
-			$creds   = get_user_meta( $user_id, 'ohmylms_googlemeet_api_credentials', true );
+		if ( ! isset( $_GET['code'], $_GET['state'] ) ) {
+			return;
+		}
 
-			if ( empty( $creds['client_id'] ) || empty( $creds['client_secret'] ) ) {
-				// Redirect back with error.
-				wp_safe_redirect( \OhMyLMS\Admin\LegacyRoutes::app_url( '/integrations?auth=error&message=missing_credentials' ) );
-				exit;
-			}
+		$state = sanitize_text_field( wp_unslash( $_GET['state'] ) );
+		if ( 0 !== strpos( $state, 'googlemeet_auth.' ) ) {
+			return;
+		}
 
-			$response = wp_remote_post(
-				'https://oauth2.googleapis.com/token',
+		// The state carries a nonce created for the user who started the connection.
+		if ( ! wp_verify_nonce( substr( $state, strlen( 'googlemeet_auth.' ) ), 'googlemeet_auth' ) ) {
+			wp_safe_redirect( \OhMyLMS\Admin\LegacyRoutes::app_url( '/integrations?auth=error&message=invalid_state' ) );
+			exit;
+		}
+
+		$code    = sanitize_text_field( wp_unslash( $_GET['code'] ) );
+		$user_id = get_current_user_id();
+		$creds   = get_user_meta( $user_id, 'ohmylms_googlemeet_api_credentials', true );
+
+		if ( empty( $creds['client_id'] ) || empty( $creds['client_secret'] ) ) {
+			// Redirect back with error.
+			wp_safe_redirect( \OhMyLMS\Admin\LegacyRoutes::app_url( '/integrations?auth=error&message=missing_credentials' ) );
+			exit;
+		}
+
+		$response = wp_remote_post(
+			'https://oauth2.googleapis.com/token',
+			array(
+				'body' => array(
+					'code'          => $code,
+					'client_id'     => $creds['client_id'],
+					'client_secret' => $creds['client_secret'],
+					'redirect_uri'  => $creds['redirect_url'],
+					'grant_type'    => 'authorization_code',
+				),
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			// Redirect back with error.
+			wp_safe_redirect( \OhMyLMS\Admin\LegacyRoutes::app_url( '/integrations?auth=error&message=oauth_failed' ) );
+			exit;
+		}
+
+		$body = json_decode( wp_remote_retrieve_body( $response ), true );
+		if ( isset( $body['access_token'] ) ) {
+			update_user_meta(
+				$user_id,
+				'ohmylms_googlemeet_tokens',
 				array(
-					'body' => array(
-						'code'          => $code,
-						'client_id'     => $creds['client_id'],
-						'client_secret' => $creds['client_secret'],
-						'redirect_uri'  => $creds['redirect_url'],
-						'grant_type'    => 'authorization_code',
-					),
+					'access_token'  => $body['access_token'],
+					'refresh_token' => $body['refresh_token'] ?? '',
+					'expires_in'    => time() + ( $body['expires_in'] ?? 3600 ),
 				)
 			);
 
-			if ( is_wp_error( $response ) ) {
-				// Redirect back with error.
-				wp_safe_redirect( \OhMyLMS\Admin\LegacyRoutes::app_url( '/integrations?auth=error&message=oauth_failed' ) );
-				exit;
-			}
-
-			$body = json_decode( wp_remote_retrieve_body( $response ), true );
-			if ( isset( $body['access_token'] ) ) {
-				update_user_meta(
-					$user_id,
-					'ohmylms_googlemeet_tokens',
-					array(
-						'access_token'  => $body['access_token'],
-						'refresh_token' => $body['refresh_token'] ?? '',
-						'expires_in'    => time() + ( $body['expires_in'] ?? 3600 ),
-					)
-				);
-
-				// Redirect back to integrations page with success.
-				wp_safe_redirect( \OhMyLMS\Admin\LegacyRoutes::app_url( '/integrations?auth=success' ) );
-				exit;
-			} else {
-				// Redirect back with error.
-				wp_safe_redirect( \OhMyLMS\Admin\LegacyRoutes::app_url( '/integrations?auth=error&message=no_access_token' ) );
-				exit;
-			}
+			// Redirect back to integrations page with success.
+			wp_safe_redirect( \OhMyLMS\Admin\LegacyRoutes::app_url( '/integrations?auth=success' ) );
+			exit;
+		} else {
+			// Redirect back with error.
+			wp_safe_redirect( \OhMyLMS\Admin\LegacyRoutes::app_url( '/integrations?auth=error&message=no_access_token' ) );
+			exit;
 		}
 	}
 }

@@ -260,7 +260,8 @@ class GoogleMeetSettingsController extends WP_REST_Controller {
 			'prompt'        => 'consent',
 			'flowName'      => 'GeneralOAuthFlow',
 			'client_id'     => $credentials['client_id'],
-			'state'         => 'googlemeet_auth',
+			// The callback accepts only a state minted for this user, so a forged link cannot attach someone else's Google account.
+			'state'         => 'googlemeet_auth.' . wp_create_nonce( 'googlemeet_auth' ),
 		);
 
 		$auth_url = 'https://accounts.google.com/o/oauth2/v2/auth?' . http_build_query( $params );
