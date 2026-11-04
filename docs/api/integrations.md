@@ -26,7 +26,7 @@ used little of `WP_REST_Controller`).
 | Low | The list response mixed manifest and option data (`class`, `is_valid`, `required_plan`, stored `is_enable`), had no schema entry for it, no `_fields`/filters and no pagination headers. `get_item_schema()` did not exist (the schema callback pointed at the parent's empty one). |
 | Low | `class` (a PHP class name) was stored in the option and returned to the client. |
 | Low | `question_bank`, `ai_model` and `skills` were special-cased with `unset()` in three places. They are not in the catalogue, so they are now simply unknown ids. |
-| OK | Cookie authentication: WordPress core's `rest_cookie_check_errors()` rejects cookie requests without a valid `X-WP-Nonce` before any permission callback; no custom nonce code is needed. No route made an outbound HTTP request (Google Meet's own OAuth routes do, with `wp_remote_post()` to fixed Google hosts; they are outside this contract). |
+| OK | Cookie authentication: WordPress core's `rest_cookie_check_errors()` rejects cookie requests without a valid `X-WP-Nonce` before any permission callback; no custom nonce code is needed. No route made an outbound HTTP request (Google Meet's own OAuth routes do, with `wp_remote_post()` to fixed Google hosts; they are outside this contract). The browser callback `/?code=…&state=googlemeet_auth.<nonce>` only accepts a `state` whose nonce was created for the signed-in user; the connect URL from `googlemeet/settings/oauth-url` carries it, and anything else is ignored or redirected with `message=invalid_state`. |
 
 ## Final routes
 

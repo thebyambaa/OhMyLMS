@@ -50,6 +50,11 @@ npm run test:reproducible
 
 Installed PHP packages are included; do not clone another e-commerce package over this modified implementation.
 
+PHP integration suites (`node tools/run-php-tests.mjs integration`) load the Local site through `wp-load.php`. Local's MySQL does not
+listen on 3306, so set `OHMYLMS_TEST_DB_PORT` to the port in the site's `my.cnf` (10006 on the 800.local site); without it every suite
+fails with "Error establishing a database connection". The site must be running in Local. Suites that need a disposable site, the sibling
+qpay or CreatorLMS plugins, or `pdftoppm` are reported as "not run".
+
 For the disposable WordPress installation, set `OHMYLMS_TEST_CREDENTIALS` to its external JSON file and run `npm run test:browser` (Chromium; set `OHMYLMS_CHROMIUM_PATH` to use a specific binary), then `php tests/php/extensions-integration.php` with mysqli/mbstring. The PHP suite refuses databases other than `ohmylms_source_test`. Also run `php tests/unit.php` and `php tests/membership-permissions.php`.
 
 ## Opt-in and rollback

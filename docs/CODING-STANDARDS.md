@@ -62,27 +62,33 @@ These boundaries are not a claim of full compliance (see "Known standards debt" 
 
 ## Known standards debt
 
-The plugin is **not fully compliant**. Automatic fixes and the official tooling are in place, but the remaining findings need
-source-level review, and the standards commands intentionally fail while they remain; there is no blanket baseline hiding them.
-Figures from the last full repository run (October 16, 2026): PHP 14,100 errors and 2,986 warnings, JavaScript 6,947 errors and 27
-warnings, CSS 1,647 errors. The first audit (October 9) covered 771 PHP files, 424 authored JavaScript files and 102 stylesheets
-and started from 122,082 PHP errors; earlier smaller totals in older documents are superseded. Recovered upstream runtime assets
-and third-party code are outside the authored-source audit, so these figures are not a certification of every file. Rerun the commands
-above for the current numbers.
+Status on `main`, 4 November 2026 (after the recovered admin was deleted): **PHP 0 errors and 624 warnings, JavaScript 0 errors
+and 17 warnings, CSS clean.** The standards commands report every remaining finding; there is no baseline hiding them. Earlier,
+much larger figures in git history described the recovered runtime and are superseded.
 
-What remains, by language:
+What remains in PHP, by cause:
 
-- PHP: contextual output escaping, prepared queries and caching, nonce and request boundaries, Yoda comparisons, documentation and
-  translator comments, and naming and file conventions (the PSR-4 filename findings above).
-- JavaScript: shadowed recovered aliases, loose comparisons, unused expressions and variables, nested ternaries, fallthrough,
-  internationalization and accessibility findings.
-- CSS: descending specificity, existing selector naming, import placement, duplicate selectors, and deprecated or unknown
-  properties and values.
+- **Nonce warnings (79).** Reviewed one by one on 4 November 2026. They are read-only URL parameters (tabs, views, paging,
+  layout), payment redirects that are only read, token-authenticated links and one in-memory toggle. The one real gap, the Google
+  Meet OAuth callback, now checks a per-user nonce carried in `state`. `?ohmylms_add_to_cart=<id>` still adds a course to the
+  cart of a logged-in user from a plain link (no purchase); a nonce would break existing links.
+- **`current_time( 'timestamp' )` (21).** These compare against site-local stored dates, so the shifted timestamp is consistent.
+  Values stored in GMT use `time()` instead (the subscription scheduler was changed for this).
+- **Strictness.** Loose `==` and `in_array()` without `true` remain where the operands are IDs, counts or response codes, because
+  `===` could change the result. They were made strict only for string-literal names and string-only lists.
+- **Unused parameters, commented-out code, `error_log()`.** Hook signatures must keep their parameters; most "commented-out code"
+  findings are ordinary prose.
 
-Public PHP interfaces, PSR-4 mappings, database fields and CSS selectors need compatible migrations before renaming. Escaping and query
-findings need inspection of the actual trust boundary. CSS rules need coordinated template changes and visual regression checks.
-Reconstructed React factories keep the narrowly scoped `no-var`/`prefer-const` exception described above; new authored modules do not
-receive it. Full JSON reports are local audit artifacts under the ignored `.wp-dev/` folder.
+### Direct database queries (scoped rule exception)
+
+`phpcs.xml.dist` excludes `WordPress.DB.DirectDatabaseQuery.DirectQuery` and `.NoCaching` under `includes/`, `packages/` and
+`modules/`. The plugin owns custom tables (enrolments, attempts, curriculum, gradebook) that WordPress has no API for, so `$wpdb`
+is its data layer and per-query object caching does not apply. Prepared-SQL, escaping and nonce sniffs stay enabled. A new
+direct query outside those folders is still reported.
+
+Public PHP interfaces, PSR-4 mappings, database fields and CSS selectors need compatible migrations before renaming. Escaping and
+query findings need inspection of the actual trust boundary. Full JSON reports are local audit artifacts under the ignored
+`.wp-dev/` folder.
 
 ## Review findings manually
 

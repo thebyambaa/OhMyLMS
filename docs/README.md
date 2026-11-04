@@ -4,7 +4,7 @@ Start with [OhMyLMS Learning Architecture](LEARNING-ARCHITECTURE.md) for product
 
 This folder is the source of truth for how the plugin is built, extended and verified. The plugin root [README.md](../README.md) is the short entry point; this page lists every maintained document.
 
-**Last reviewed:** 31 October 2026 (aligned with the recovered-admin cutover and learner Interactivity batches L1–L7).
+**Last reviewed:** 5 November 2026 (aligned with the typed admin app, the learner Interactivity batches L1–L7 and the PHP standards run of 4 November).
 
 ## Build, architecture and quality
 
@@ -31,7 +31,6 @@ This folder is the source of truth for how the plugin is built, extended and ver
 | [DESIGN-TOKENS.md](DESIGN-TOKENS.md) | `--oml-*` variables (admin and learner) |
 | [DESIGN-LANGUAGE.md](DESIGN-LANGUAGE.md) | Components and patterns |
 | [STYLESHEET-OWNERSHIP.md](STYLESHEET-OWNERSHIP.md) | Which CSS ships with which bundle |
-| [ADMIN-CSS-MODULES.md](ADMIN-CSS-MODULES.md) | Feature-scoped admin styles |
 | [COMMAND-PALETTE.md](COMMAND-PALETTE.md) | Quick navigation |
 
 ## Learner front end
