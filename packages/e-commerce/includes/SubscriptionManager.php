@@ -239,11 +239,11 @@ class SubscriptionManager {
 		$next_payment_date_gmt = get_post_meta( $subscription_id, '_schedule_next_payment_date', true );
 		$end_date_gmt          = get_post_meta( $subscription_id, '_schedule_end_date', true );
 
-		if ( empty( $end_date_gmt ) || strtotime( $end_date_gmt ) > current_time( 'timestamp' ) ) {
+		if ( empty( $end_date_gmt ) || strtotime( $end_date_gmt ) > time() ) {
 
 			if ( ! empty( $next_payment_date_gmt ) ) {
 				$next_payment_timestamp_gmt = strtotime( $next_payment_date_gmt );
-				if ( $next_payment_timestamp_gmt > current_time( 'timestamp' ) && ( empty( $end_date_gmt ) || $next_payment_timestamp_gmt <= strtotime( $end_date_gmt ) ) ) {
+				if ( $next_payment_timestamp_gmt > time() && ( empty( $end_date_gmt ) || $next_payment_timestamp_gmt <= strtotime( $end_date_gmt ) ) ) {
 					self::clear_scheduled_renewal_actions( $subscription_id );
 					self::schedule_renewal_payment( $subscription_id, $next_payment_timestamp_gmt );
 				}
@@ -253,7 +253,7 @@ class SubscriptionManager {
 				$period            = get_post_meta( $membership_id, '_subscription_period', true );
 				$interval          = (int) get_post_meta( $membership_id, '_subscription_period_interval', true );
 
-				$base_ts = $last_payment_date ? strtotime( $last_payment_date ) : current_time( 'timestamp' );
+				$base_ts = $last_payment_date ? strtotime( $last_payment_date ) : time();
 
 				try {
 					$next_payment_dt = ( new \DateTime( "@$base_ts" ) )->setTimezone( new \DateTimeZone( 'GMT' ) );
