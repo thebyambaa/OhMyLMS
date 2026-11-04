@@ -28,7 +28,9 @@ import {
 } from '../paper/public.mjs';
 import { ProfilePanel } from './ProfilePanel';
 import {
+	ExamsPage,
 	ExportRowsButtons,
+	ImportDialog,
 	downloadText,
 	exportQuiz,
 } from '../content-hub/public.mjs';
@@ -96,6 +98,8 @@ function NativeQuizSettings() {
 	const { insertBlocks } = useDispatch( 'core/block-editor' );
 	const { savePost } = useDispatch( 'core/editor' );
 	const [ pickerOpen, setPickerOpen ] = useState( false );
+	const [ importOpen, setImportOpen ] = useState( false );
+	const [ importJob, setImportJob ] = useState( 0 );
 	const [ error, setError ] = useState( '' );
 	const { settings: assessment } = useNativeAssessmentSettings(
 		postType === 'ohmylms-quiz'
@@ -104,6 +108,16 @@ function NativeQuizSettings() {
 	if ( postType !== 'ohmylms-quiz' ) {
 		return null;
 	}
+	// Imported questions are appended as question blocks; saving the quiz links them, as with the bank picker.
+	const addQuestions = ( ids ) =>
+		insertBlocks(
+			ids.map( ( questionId ) =>
+				createBlock( 'ohmylms/shared-multiple-choice', {
+					questionId,
+					delivery: 'quiz',
+				} )
+			)
+		);
 	return (
 		<AssessmentPreviewProvider>
 			<QuizPreviewAction />
@@ -129,6 +143,12 @@ function NativeQuizSettings() {
 					onClick={ () => setPickerOpen( true ) }
 				>
 					{ __( 'Add from question bank', 'ohmylms' ) }
+				</Button>
+				<Button
+					variant="secondary"
+					onClick={ () => setImportOpen( true ) }
+				>
+					{ __( 'Import questions', 'ohmylms' ) }
 				</Button>
 				<Button
 					variant="tertiary"
@@ -239,16 +259,29 @@ function NativeQuizSettings() {
 							}
 						) }
 					onClose={ () => setPickerOpen( false ) }
-					onPick={ ( ids ) =>
-						insertBlocks(
-							ids.map( ( questionId ) =>
-								createBlock( 'ohmylms/shared-multiple-choice', {
-									questionId,
-									delivery: 'quiz',
-								} )
-							)
-						)
+					onPick={ addQuestions }
+				/>
+			) }
+			{ importOpen && (
+				<ImportDialog
+					withSkills
+					secure={
+						window.ohmylmsNativeLesson?.profile?.id === 'exam'
 					}
+					onQuestions={ addQuestions }
+					onClose={ () => setImportOpen( false ) }
+					onJob={ ( id ) => {
+						setImportOpen( false );
+						setImportJob( id );
+					} }
+				/>
+			) }
+			{ importJob > 0 && (
+				<ExamsPage
+					reviewOnly
+					jobId={ importJob }
+					onQuestions={ addQuestions }
+					onClosed={ () => setImportJob( 0 ) }
 				/>
 			) }
 		</AssessmentPreviewProvider>

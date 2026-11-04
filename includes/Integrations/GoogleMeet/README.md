@@ -31,8 +31,6 @@ includes/Integrations/GoogleMeet/
 │   ├── Api/
 │   │   ├── GoogleMeetApiInterface.php     # API interface
 │   │   └── GoogleMeetApiClient.php        # API client
-│   ├── Helpers/
-│   │   └── GoogleMeetApiHelper.php        # Helper functions
 │   ├── Rest/
 │   │   └── GoogleMeetSettingsController.php # REST API endpoints
 │   └── Services/

@@ -8,7 +8,7 @@ import {
 	useRef,
 	useState,
 } from '@wordpress/element';
-import { __, sprintf } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import { Button, Modal, Notice, Spinner } from '@wordpress/components';
 import { approveQuestion } from '../question-bank/public.mjs';
 import { NewExamDialog } from './NewExamDialog.jsx';
@@ -1343,63 +1343,95 @@ export function ExamsPage( {
 										'ohmylms'
 									) }
 								</Button>
-								{ job.target === 'questions' && (
+								{ onQuestions && (
 									<p>
-										<a href="#/content-hub/question-bank">
-											{ __(
-												'Open the Question Bank',
-												'ohmylms'
-											) }
-										</a>
-									</p>
-								) }
-								{ job.target === 'quiz' && job.quiz_id && (
-									<p>
-										<a
-											href={ `#/quiz-edit/${ job.quiz_id }` }
-										>
-											{ __(
-												'Open the draft quiz',
-												'ohmylms'
-											) }
-										</a>
-									</p>
-								) }
-								{ job.target === 'quiz' && ! job.quiz_id && (
-									<form
-										onSubmit={ ( event ) => {
-											event.preventDefault();
-											run( async () => {
-												await api(
-													`exam-imports/${ job.id }/quiz`,
-													{
-														title: header.title,
-													}
-												);
-												await load( job.id );
-											} );
-										} }
-									>
-										<h3>
-											{ __( 'Quiz details', 'ohmylms' ) }
-										</h3>
-										{ field(
-											__( 'Quiz title', 'ohmylms' ),
-											'title'
-										) }
 										<Button
 											variant="primary"
-											type="submit"
 											disabled={ busy }
+											onClick={ () => {
+												onQuestions( job.question_ids );
+												setJob( null );
+											} }
 										>
-											{ __(
-												'Create draft quiz',
-												'ohmylms'
+											{ sprintf(
+												/* translators: %d: number of imported questions. */
+												_n(
+													'Add %d question to this assessment',
+													'Add %d questions to this assessment',
+													job.question_ids.length,
+													'ohmylms'
+												),
+												job.question_ids.length
 											) }
 										</Button>
-									</form>
+									</p>
 								) }
-								{ ( ! job.target || job.target === 'exam' ) &&
+								{ ! onQuestions &&
+									job.target === 'questions' && (
+										<p>
+											<a href="#/content-hub/question-bank">
+												{ __(
+													'Open the Question Bank',
+													'ohmylms'
+												) }
+											</a>
+										</p>
+									) }
+								{ ! onQuestions &&
+									job.target === 'quiz' &&
+									job.quiz_id && (
+										<p>
+											<a
+												href={ `#/quiz-edit/${ job.quiz_id }` }
+											>
+												{ __(
+													'Open the draft quiz',
+													'ohmylms'
+												) }
+											</a>
+										</p>
+									) }
+								{ ! onQuestions &&
+									job.target === 'quiz' &&
+									! job.quiz_id && (
+										<form
+											onSubmit={ ( event ) => {
+												event.preventDefault();
+												run( async () => {
+													await api(
+														`exam-imports/${ job.id }/quiz`,
+														{
+															title: header.title,
+														}
+													);
+													await load( job.id );
+												} );
+											} }
+										>
+											<h3>
+												{ __(
+													'Quiz details',
+													'ohmylms'
+												) }
+											</h3>
+											{ field(
+												__( 'Quiz title', 'ohmylms' ),
+												'title'
+											) }
+											<Button
+												variant="primary"
+												type="submit"
+												disabled={ busy }
+											>
+												{ __(
+													'Create draft quiz',
+													'ohmylms'
+												) }
+											</Button>
+										</form>
+									) }
+								{ ! onQuestions &&
+									( ! job.target || job.target === 'exam' ) &&
 									! job.exam_id && (
 										<form
 											onSubmit={ ( event ) => {

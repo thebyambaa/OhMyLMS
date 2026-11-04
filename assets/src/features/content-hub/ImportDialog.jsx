@@ -27,6 +27,9 @@ import { request } from '../rest.mjs';
 /** @type {ImportTarget[]} */
 export const IMPORT_TARGETS = [ 'questions', 'quiz', 'exam' ];
 
+/** The target offered inside the quiz editor: add the questions to the open quiz or exam. */
+export const INTO_TARGET = 'into';
+
 const targetInfo = () => ( {
 	questions: {
 		label: __( 'Questions', 'ohmylms' ),
@@ -43,6 +46,13 @@ const targetInfo = () => ( {
 		label: __( 'Exam', 'ohmylms' ),
 		help: __(
 			'Create a timed exam on the quiz player, with marking and a mark scheme.',
+			'ohmylms'
+		),
+	},
+	into: {
+		label: __( 'This assessment', 'ohmylms' ),
+		help: __(
+			'Add the questions to the end of the quiz or exam you are editing.',
 			'ohmylms'
 		),
 	},
@@ -138,6 +148,8 @@ function CheckReport( { report, done } ) {
  * (`onJob` is told which import to open). Question files are checked first and nothing is written
  * until Import is pressed. A quiz file makes a draft quiz (`onQuiz` receives it, otherwise its
  * editor opens). With `withSkills`, chosen skills are given to every row that names none.
+ * With `onQuestions`, the only target is the open assessment: a question file's questions are passed
+ * to it at once, and a PDF's after review. `secure` keeps them exam-only, as an exam import does.
  *
  * @param {Object}                                       root0                 Component properties.
  * @param {ImportTarget}                                 [root0.initialTarget] questions, quiz or exam.
@@ -148,6 +160,7 @@ function CheckReport( { report, done } ) {
  * @param {(jobId: number) => void}                      root0.onJob           An import job to review was made.
  * @param {((ids: number[]) => void|Promise<void>)|null} [root0.onQuestions]   Imported question IDs.
  * @param {((quiz: QuizImport) => void)|null}            [root0.onQuiz]        A quiz was made from a quiz file.
+ * @param {boolean}                                      [root0.secure]        Mark imported questions exam-only.
  */
 export function ImportDialog( {
 	initialTarget = 'questions',
@@ -158,10 +171,14 @@ export function ImportDialog( {
 	onJob,
 	onQuiz = null,
 	onQuestions = null,
+	secure = false,
 } ) {
+	const offered = onQuestions ? [ INTO_TARGET ] : targets;
 	const [ target, setTarget ] = useState(
-		targets.includes( initialTarget ) ? initialTarget : targets[ 0 ]
+		offered.includes( initialTarget ) ? initialTarget : offered[ 0 ]
 	);
+	// The job target that creates bank questions without making a quiz or an exam.
+	const jobTarget = secure ? 'exam' : 'questions';
 	const [ file, setFile ] = useState( /** @type {File|null} */ ( null ) );
 	const [ scheme, setScheme ] = useState( /** @type {File|null} */ ( null ) );
 	const [ text, setText ] = useState( '' );
@@ -269,7 +286,10 @@ export function ImportDialog( {
 			if ( kind === 'pdf' ) {
 				const body = new FormData();
 				body.append( 'file', /** @type {File} */ ( file ) );
-				body.append( 'target', target );
+				body.append(
+					'target',
+					target === INTO_TARGET ? jobTarget : target
+				);
 				body.append( 'default_skills', defaultSkills );
 				if ( scheme ) {
 					body.append( 'mark_scheme', scheme );
@@ -289,6 +309,17 @@ export function ImportDialog( {
 				} else {
 					finishQuiz( quiz );
 				}
+			} else if ( target === INTO_TARGET ) {
+				const job = await api( 'exam-imports/rows', {
+					text,
+					format,
+					target: jobTarget,
+					name: baseName( file ),
+					skip_invalid: skipInvalid,
+					default_skills: defaultSkills,
+				} );
+				onQuestions( job.question_ids || [] );
+				onClose();
 			} else if ( target === 'exam' ) {
 				const job = /** @type {{id: number}} */ (
 					await api( 'exam-imports/rows', {
@@ -393,7 +424,7 @@ export function ImportDialog( {
 			<form onSubmit={ submit }>
 				<fieldset>
 					<legend>{ __( 'Import as', 'ohmylms' ) }</legend>
-					{ targets.map( ( id ) => (
+					{ offered.map( ( id ) => (
 						<label
 							key={ id }
 							htmlFor={ `${ radioId }-${ id }` }
