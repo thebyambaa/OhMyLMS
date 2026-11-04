@@ -589,7 +589,7 @@ class Cart {
 	 */
 	public function get_total( $context = 'view' ) {
 		$total = $this->get_total_by_var( 'total' );
-		return 'view' == $context ? ohmylms_price( $total ) : $total;
+		return 'view' === $context ? ohmylms_price( $total ) : $total;
 	}
 
 	/**

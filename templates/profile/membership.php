@@ -251,7 +251,7 @@ use function OhMyLMS\Commerce\ecommerce;
 							$is_one_time         = 'one_time' === $subscription_length;
 
 							// Only process if it's a one-time payment and order is completed.
-							if ( ! $is_one_time || ! in_array( $membership_order->get_status(), array( 'completed', 'processing' ) ) ) {
+							if ( ! $is_one_time || ! in_array( $membership_order->get_status(), array( 'completed', 'processing' ), true ) ) {
 								continue;
 							}
 

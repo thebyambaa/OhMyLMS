@@ -17,6 +17,19 @@
   <rule ref="WordPress.Files.FileName">
     <exclude-pattern>*/includes/Student/Hub.php</exclude-pattern>
   </rule>
+  <!-- Narrow exception: this plugin owns custom tables (enrolments, attempts, curriculum, gradebook)
+       that WordPress core has no API for, so $wpdb is the data layer. Per-query object caching is
+       not applicable to them. Prepared SQL, escaping and nonce sniffs stay on. -->
+  <rule ref="WordPress.DB.DirectDatabaseQuery.DirectQuery">
+    <exclude-pattern>*/includes/*</exclude-pattern>
+    <exclude-pattern>*/packages/*</exclude-pattern>
+    <exclude-pattern>*/modules/*</exclude-pattern>
+  </rule>
+  <rule ref="WordPress.DB.DirectDatabaseQuery.NoCaching">
+    <exclude-pattern>*/includes/*</exclude-pattern>
+    <exclude-pattern>*/packages/*</exclude-pattern>
+    <exclude-pattern>*/modules/*</exclude-pattern>
+  </rule>
   <rule ref="WordPress.WP.I18n">
     <properties><property name="text_domain" type="array"><element value="ohmylms"/></property></properties>
   </rule>

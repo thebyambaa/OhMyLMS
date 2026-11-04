@@ -768,7 +768,7 @@ class Checkout {
 
 				$response = self::attempt_course_enrollment( $course_id, $order_id );
 
-				if ( 'error' == $response['status'] ) {
+				if ( 'error' === $response['status'] ) {
 					ohmylms_add_notice( $response['message'], $response['status'] );
 					return $response;
 				}

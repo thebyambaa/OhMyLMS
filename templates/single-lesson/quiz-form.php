@@ -16,7 +16,7 @@ if ( empty( $ohmylms_player_preview ) && \OhMyLMS\Extensions\Layouts::render( 'q
 	return;
 }
 
-$quiz_start = isset( $_GET['quiz'] ) && 'start' == $_GET['quiz'] ? true : false;
+$quiz_start = isset( $_GET['quiz'] ) && 'start' === $_GET['quiz'] ? true : false;
 $quiz       = ohmylms_get_quiz( get_the_ID() );
 $questions  = array_values(
 	array_filter(

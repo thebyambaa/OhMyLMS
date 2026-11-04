@@ -55,7 +55,7 @@ class ScormHelper {
 		}
 
 		// Check if course is published or draft.
-		if ( ! in_array( $course->post_status, array( 'publish', 'draft', 'pending' ) ) ) {
+		if ( ! in_array( $course->post_status, array( 'publish', 'draft', 'pending' ), true ) ) {
 			return array(
 				'valid'   => false,
 				'message' => sprintf( /* translators: %1$s: text value; %2$s: text value. */

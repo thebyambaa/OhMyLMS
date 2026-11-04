@@ -208,7 +208,7 @@ class CourseStore extends DataStore {
 			$post_data['post_date_gmt'] = $course->get_post_date() ? gmdate( 'Y-m-d H:i:s', $course->get_post_date( 'edit' )->getTimestamp() ) : gmdate( 'Y-m-d H:i:s', $course->get_date_created( 'edit' )->getTimestamp() );
 			$post_data['post_date']     = get_date_from_gmt( $post_data['post_date_gmt'] );
 		}
-		if ( 'password_protected' == $course->get_access_type() ) {
+		if ( 'password_protected' === $course->get_access_type() ) {
 			$post_data['post_password'] = $course->get_password_protected();
 		} else {
 			$post_data['post_password'] = '';
@@ -1055,7 +1055,7 @@ class CourseStore extends DataStore {
 				$student['skipped_quizzes']     = array();
 				$student['skipped_assignments'] = array();
 				foreach ( $contents as $index => &$item ) {
-					if ( in_array( $item['type'], array( 'assignment', 'quiz' ) ) && ! $student_obj->maybe_completed( $item['id'] ) ) {
+					if ( in_array( $item['type'], array( 'assignment', 'quiz' ), true ) && ! $student_obj->maybe_completed( $item['id'] ) ) {
 						// Check next contents for completion.
 						$skipped       = false;
 						$content_count = count( $contents );

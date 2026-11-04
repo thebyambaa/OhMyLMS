@@ -374,19 +374,19 @@ class ChapterController extends RestController {
 		$order_number = 0;
 
 		foreach ( $request->get_json_params() as $lesson ) {
-			if ( ( isset( $lesson['content_type'] ) && 'session' == $lesson['content_type'] ) || ( isset( $lesson['type'] ) && 'session' == $lesson['type'] ) ) {
+			if ( ( isset( $lesson['content_type'] ) && 'session' === $lesson['content_type'] ) || ( isset( $lesson['type'] ) && 'session' === $lesson['type'] ) ) {
 				++$order_number;
 				$lesson['order_number'] = ! empty( $lesson['order_number'] ) ? intval( $lesson['order_number'] ) : $order_number;
 				$chapter->get_data_store()->set_session( $chapter, $lesson );
 				$lessons[] = $lesson;
 			} else {
-				if ( isset( $lesson['type'] ) && 'quiz' == $lesson['type'] ) {
+				if ( isset( $lesson['type'] ) && 'quiz' === $lesson['type'] ) {
 					if ( isset( $lesson['id'] ) ) {
 						$lesson_obj = ohmylms_get_quiz( $lesson['id'] );
 					} else {
 						$lesson_obj = new Quiz( $chapter );
 					}
-				} elseif ( isset( $lesson['type'] ) && 'assignment' == $lesson['type'] ) {
+				} elseif ( isset( $lesson['type'] ) && 'assignment' === $lesson['type'] ) {
 					if ( isset( $lesson['id'] ) ) {
 						$lesson_obj = ohmylms_get_assignment( $lesson['id'] );
 					} else {
@@ -407,7 +407,7 @@ class ChapterController extends RestController {
 				$lesson['order_number'] = ! empty( $lesson['order_number'] ) ? intval( $lesson['order_number'] ) : $order_number;
 
 				// Handle Prerequisites.
-				if ( isset( $lesson['prerequisites'] ) && 'quiz' != $lesson['type'] ) {
+				if ( isset( $lesson['prerequisites'] ) && 'quiz' !== $lesson['type'] ) {
 					$lesson_obj->set_prerequisites( $lesson['prerequisites'] );
 				}
 				$lesson_obj->save();

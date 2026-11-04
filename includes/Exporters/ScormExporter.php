@@ -89,7 +89,7 @@ class ScormExporter {
 		}
 
 		$this->course_ids    = $course_ids;
-		$this->scorm_version = in_array( $scorm_version, array( '1.2', '2004' ) ) ? $scorm_version : '1.2';
+		$this->scorm_version = in_array( $scorm_version, array( '1.2', '2004' ), true ) ? $scorm_version : '1.2';
 
 		// Create temporary directory.
 		$upload_dir     = wp_upload_dir();

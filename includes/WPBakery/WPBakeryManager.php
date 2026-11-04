@@ -169,7 +169,7 @@ class WPBakeryManager {
 		}
 
 		$screen = get_current_screen();
-		if ( $screen && in_array( $screen->id, array( 'page', 'post' ) ) && defined( 'WPB_VC_VERSION' ) ) {
+		if ( $screen && in_array( $screen->id, array( 'page', 'post' ), true ) && defined( 'WPB_VC_VERSION' ) ) {
 			// Check if WPBakery is active on this post/page.
 			global $post;
 			if ( $post && has_shortcode( $post->post_content, 'ohmylms_course_list' ) ) {
@@ -197,7 +197,7 @@ class WPBakeryManager {
 	public function add_backend_editor_refresh_script() {
 		// Only load on WPBakery editor pages.
 		$screen = get_current_screen();
-		if ( ! $screen || ! in_array( $screen->id, array( 'page', 'post' ) ) || ! defined( 'WPB_VC_VERSION' ) ) {
+		if ( ! $screen || ! in_array( $screen->id, array( 'page', 'post' ), true ) || ! defined( 'WPB_VC_VERSION' ) ) {
 			return;
 		}
 		?>

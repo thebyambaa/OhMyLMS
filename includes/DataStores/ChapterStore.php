@@ -401,7 +401,7 @@ class ChapterStore extends DataStore {
 					if ( function_exists( 'ohmylms_get_session' ) ) {
 						$lesson_obj = ohmylms_get_session( $lesson->content_id );
 					}
-				} elseif ( in_array( $lesson->content_type, array( 'text', 'video', 'audio' ) ) ) {
+				} elseif ( in_array( $lesson->content_type, array( 'text', 'video', 'audio' ), true ) ) {
 						$lesson_obj = ohmylms_get_lesson( $lesson->content_id );
 				}
 

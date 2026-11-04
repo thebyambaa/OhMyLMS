@@ -157,10 +157,10 @@ class MailMintAutomationController extends RestController {
 		$status = isset( $request['status'] ) ? strtolower( $request['status'] ) : 'all';
 
 		$order_by = isset( $request['orderby'] ) ? strtolower( $request['orderby'] ) : 'created_at';
-		if ( 'date_created_desc' == $order_by ) {
+		if ( 'date_created_desc' === $order_by ) {
 			$order_by   = 'created_at';
 			$order_type = 'desc';
-		} elseif ( 'date_created_asc' == $order_by ) {
+		} elseif ( 'date_created_asc' === $order_by ) {
 			$order_by   = 'created_at';
 			$order_type = 'asc';
 		} elseif ( 'name_asc' === $order_by ) {

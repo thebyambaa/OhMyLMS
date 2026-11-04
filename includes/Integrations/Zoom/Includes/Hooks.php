@@ -40,7 +40,7 @@ class Hooks {
 		// Prepare Zoom Data.
 		$meeting_duration = ! empty( $request['duration'] ) ? intval( $request['duration'] ) : 60;
 		$duration_unit    = ! empty( $request['duration_unit'] ) ? $request['duration_unit'] : 'min';
-		$duration         = ( 'hr' == $duration_unit ) ? $meeting_duration * 60 : $meeting_duration;
+		$duration         = ( 'hr' === $duration_unit ) ? $meeting_duration * 60 : $meeting_duration;
 		$start_date       = $request['date'];
 		$time_zone        = $request['timezone'];
 		$password         = ! empty( $request['password'] ) ? sanitize_text_field( $request['password'] ) : '';

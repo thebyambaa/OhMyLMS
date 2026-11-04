@@ -48,7 +48,7 @@ ob_start();
 			<p>
 				<?php
 				$pricing_type = get_post_meta( $plan_id, 'ohmylms_membership_pricing_type', true );
-				if ( 'Paid' == $pricing_type ) {
+				if ( 'Paid' === $pricing_type ) {
 					$price = get_post_meta( $plan_id, 'ohmylms_membership_regular_price', true );
 					echo esc_html__( 'Price: ', 'ohmylms' ) . '$' . number_format( (float) $price, 2, '.', '' );
 				} else {

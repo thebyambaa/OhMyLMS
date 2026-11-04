@@ -43,7 +43,7 @@ $catalog_form = \OhMyLMS\Extensions\Catalog::current() ? \OhMyLMS\Extensions\Cat
 			$filter_title = '';
 			// The "category" and "tag" filters keep their stored keys but now list the curriculum and
 			// Course Bundles. Only entries with published courses are shown; slugs are c<id> / t<id>.
-			if ( 'category' == $filter ) {
+			if ( 'category' === $filter ) {
 				$filter_title = __( 'Curriculum', 'ohmylms' );
 				foreach ( \OhMyLMS\Curriculum\Placement::public_items() as $entry ) {
 					$items['category'][] = array(
@@ -57,7 +57,7 @@ $catalog_form = \OhMyLMS\Extensions\Catalog::current() ? \OhMyLMS\Extensions\Cat
 				continue;
 			}
 
-			if ( 'price_type' == $filter ) {
+			if ( 'price_type' === $filter ) {
 				$filter_title        = __( 'Price Type', 'ohmylms' );
 				$items['price_type'] = array(
 					array(
@@ -71,7 +71,7 @@ $catalog_form = \OhMyLMS\Extensions\Catalog::current() ? \OhMyLMS\Extensions\Cat
 				);
 			}
 
-			if ( 'difficulty_level' == $filter ) {
+			if ( 'difficulty_level' === $filter ) {
 				$filter_title              = __( 'Level', 'ohmylms' );
 				$items['difficulty_level'] = array(
 					array(

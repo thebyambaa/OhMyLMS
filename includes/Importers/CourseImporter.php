@@ -159,7 +159,7 @@ class CourseImporter {
 			if ( in_array( $key, array( \OhMyLMS\Learning\CourseProgram::DRAFT, \OhMyLMS\Learning\CourseProgram::CURRENT ), true ) ) {
 				continue;
 			}
-			if ( '_video_url' == $key ) {
+			if ( '_video_url' === $key ) {
 				$video_id = $this->import_attachment( $value[0] );
 
 				if ( $video_id ) {
@@ -295,7 +295,7 @@ class CourseImporter {
 
 		// Save metadata.
 		foreach ( $data['meta'] as $key => $value ) {
-			if ( '_video_url' == $key ) {
+			if ( '_video_url' === $key ) {
 				$video_id = $this->import_attachment( $value[0] );
 				if ( $video_id ) {
 					update_post_meta( $chapter_id, '_video_id', $video_id );
@@ -353,7 +353,7 @@ class CourseImporter {
 
 		// Save metadata.
 		foreach ( $data['meta'] as $key => $value ) {
-			if ( '_video_url' == $key ) {
+			if ( '_video_url' === $key ) {
 				$video_id = $this->import_attachment( $value[0] );
 				if ( $video_id ) {
 					update_post_meta( $content_id, '_video_id', $video_id );
@@ -556,7 +556,7 @@ class CourseImporter {
 
 			// Save metadata for the question.
 			foreach ( $question['meta'] as $key => $value ) {
-				if ( '_video_url' == $key ) {
+				if ( '_video_url' === $key ) {
 					$video_id = $this->import_attachment( $value[0] );
 					if ( $video_id ) {
 						update_post_meta( $question_id, '_video_id', $video_id );

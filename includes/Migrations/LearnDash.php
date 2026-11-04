@@ -132,7 +132,7 @@ class LearnDash {
 
 			// Migrate the course price type.
 			if ( '_ld_price_type' === $key ) {
-				if ( in_array( $value[0], array( 'free', 'paid', 'closed' ) ) ) {
+				if ( in_array( $value[0], array( 'free', 'paid', 'closed' ), true ) ) {
 					$actual_value = 'closed' === $value[0] ? 'paid' : $value[0];
 					update_post_meta( $new_course_id, '_price_type', $actual_value );
 				} else {

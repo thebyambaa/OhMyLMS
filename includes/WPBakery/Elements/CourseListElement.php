@@ -103,7 +103,7 @@ class CourseListElement {
 		}
 
 		// Filter out show_filter, show_search, show_sort for Layout 3 and 4.
-		if ( isset( $out['layout_style'] ) && in_array( $out['layout_style'], array( 'grid-style3', 'grid-style4' ) ) ) {
+		if ( isset( $out['layout_style'] ) && in_array( $out['layout_style'], array( 'grid-style3', 'grid-style4' ), true ) ) {
 			$out['show_filter'] = 'no';
 			$out['show_search'] = 'no';
 			$out['show_sort']   = 'no';

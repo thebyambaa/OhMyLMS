@@ -1794,18 +1794,18 @@ class ScormImporter {
 		}
 
 		$data_correct = $input->getAttribute( 'data-correct' );
-		if ( in_array( strtolower( $data_correct ), array( 'true', '1', 'yes', 'correct' ) ) ) {
+		if ( in_array( strtolower( $data_correct ), array( 'true', '1', 'yes', 'correct' ), true ) ) {
 			return true;
 		}
 
 		$data_answer = $input->getAttribute( 'data-answer' );
-		if ( in_array( strtolower( $data_answer ), array( 'true', '1', 'yes', 'correct' ) ) ) {
+		if ( in_array( strtolower( $data_answer ), array( 'true', '1', 'yes', 'correct' ), true ) ) {
 			return true;
 		}
 
 		$value = $input->getAttribute( 'value' );
 		$name  = $input->getAttribute( 'name' );
-		if ( stripos( $name, 'correct' ) !== false && in_array( strtolower( $value ), array( '1', 'true', 'yes' ) ) ) {
+		if ( stripos( $name, 'correct' ) !== false && in_array( strtolower( $value ), array( '1', 'true', 'yes' ), true ) ) {
 			return true;
 		}
 

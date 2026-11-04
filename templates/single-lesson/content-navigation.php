@@ -83,7 +83,7 @@ if ( 'ohmylms-session' === get_post_type() ) {
 
 <div class="ohmylms-lesson-navigation" data-wp-interactive="ohmylms/lesson" data-wp-init="callbacks.listen" <?php echo wp_interactivity_data_wp_context( \OhMyLMS\Extensions\Lesson::navigation_context( get_the_ID() ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core helper escapes the attribute. ?>>
 	<?php
-	if ( 'assignment' == $get_type ) {
+	if ( 'assignment' === $get_type ) {
 		$submission_count   = count( $lesson->get_submission( $student->get_id() ) );
 		$allowed_submission = $lesson->get_number_of_files();
 		$is_allow           = $lesson->get_allow_upload_files();
@@ -184,7 +184,7 @@ if ( 'ohmylms-session' === get_post_type() ) {
 	<?php } ?>
 
 	<?php
-	if ( 'quiz' == $get_type ) {
+	if ( 'quiz' === $get_type ) {
 		$current_url = ohmylms_get_pretty_content_permalink( $lesson_id );
 		// Admins and authors previewing a quiz can retry without limit and never see it as completed.
 		$is_quiz_preview = \OhMyLMS\Quiz\Submission::is_preview( $lesson_id, get_current_user_id() );
@@ -262,7 +262,7 @@ if ( 'ohmylms-session' === get_post_type() ) {
 		?>
 	<?php } ?>
 
-	<?php if ( 'quiz' != $get_type && 'assignment' != $get_type ) { ?>
+	<?php if ( 'quiz' !== $get_type && 'assignment' !== $get_type ) { ?>
 		<div class="default-navigation">
 			<input type="hidden" id="ohmylms-lesson-id" value="<?php echo esc_attr( get_the_ID() ); ?>">
 			<input type="hidden" id="ohmylms-student-id" value="<?php echo esc_attr( get_current_user_id() ); ?>">

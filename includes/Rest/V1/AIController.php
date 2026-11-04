@@ -220,9 +220,9 @@ class AIController extends RestController {
 				} else {
 					$lesson_obj = new Lesson( $chapter );
 				}
-			} elseif ( 'quiz' == $request['type'] ) {
+			} elseif ( 'quiz' === $request['type'] ) {
 				$lesson_obj = new Quiz( $chapter );
-			} elseif ( 'assignment' == $request['type'] ) {
+			} elseif ( 'assignment' === $request['type'] ) {
 				$lesson_obj = new Assignment( $chapter );
 			}
 
