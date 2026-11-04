@@ -167,7 +167,7 @@ in fixtures or documentation.
 | Area | Existing source | Required work |
 | --- | --- | --- |
 | Hub shell | `includes/Student/Hub.php`, `templates/student-hub/`, authored hub CSS/JS | Parent context, child selector, reusable profile/report presentation |
-| Signup/login | `includes/Schools/Controller.php`, existing registration blocks and auth services | Dedicated onboarding presentation and reliable role-aware landing |
+| Signup/login | `includes/Schools/Signup.php` (the old `Schools\Controller` was deleted in the 31 October cutover), existing registration blocks and auth services | Dedicated onboarding presentation and reliable role-aware landing |
 | School guardians | `includes/Schools/Schema.php`, `Access::guardian()`, `Service::children()` | Preserve school-specific approvals and immediate revocation |
 | Children API | `GET /ohmylms/v1/school/children` | Keep existing contract; add scoped family read models rather than widening it silently |
 | Scope gap | Guardian links currently require school/student membership | Add an explicit independent-family relationship design and additive migration |

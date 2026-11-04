@@ -11,7 +11,7 @@ The table below records the 29 October 2026 snapshot on `main`; see the 30 Octob
 | Learner `core` | `assets/css/frontend/core.css` | 51,338 | `assets/src/frontend/scss/base`, `header`, `login` | Loaded on every LMS page |
 | Learner `catalog` / `course` / `lesson` | `frontend/catalog.css`, `course.css`, `lesson.css` | 56,013 / 121,829 / 105,241 | `assets/src/frontend/scss/{archive,single,lesson}` | Chosen by `Design/FrontendStyles::groups()` |
 | Learner `checkout` / `thankyou` / `account` / `membership` | `frontend/*.css` | 36,512 / 12,995 / 84,565 / 8,352 | `assets/src/frontend/scss/{checkout,thankyou,dashboard,membership}` | |
-| Learner RTL | `frontend/rtl.css` | 1,209 | `assets/src/frontend/scss/rtl` | Only when `is_rtl()` |
+| Learner RTL | `frontend/rtl.css` | 1,209 | `assets/src/frontend/scss/_rtl.scss` | Only when `is_rtl()` |
 | Learner, other features | `student-hub.css` 49,070, `quiz-player-templates.css` 43,298, `practice.css` 23,752, `paper.css` 21,618, `student-dashboard.css` 17,373, and about 30 smaller files | | Each feature's PHP class enqueues its own | Referenced from `includes/` or `templates/` |
 | Retired compatibility URLs | `assets/css/style.css`, `style-rtl.css` | was 476,556 / 1,215 | deleted in 1.2.22 (see [below](#compatibility-bundle-removed-1222)) | Not enqueued by the plugin; listed in `retiredAssets` |
 | Admin shell | `admin-design-system.css` 17,002 (plus inline variables from `DesignSystem.php`), `global.css` 596 (all wp-admin, LMS menu) | | `Design/DesignSystem.php`, `Assets/AdminAssets.php` | |

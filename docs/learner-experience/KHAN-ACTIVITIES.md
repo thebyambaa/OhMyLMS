@@ -271,8 +271,8 @@ and records the remaining full-repository standards and exact-parity differences
 | Piece | Files and entry points |
 | --- | --- |
 | Practice runner (dots, Skip, stepped hints, tiers, Start over) | `assets/js/practice.js`, `includes/Practice/Sessions.php` (`can_skip`, `results`, `skipped`), REST `POST /practice/sessions/{uuid}/skip` in `Rest/V1/PracticeController.php` |
-| Khan level model | `includes/Skills/Khan/Settings.php` (option `ohmylms_mastery_settings`, models `evidence` and `khan`), `Levels.php` (rules, `changes()`), `Schema.php` (table `{prefix}ohmylms_khan_level_events`, option `ohmylms_khan_schema`); the setting is the Mastery model switch under Gamification, XP & mastery (REST group `mastery` of `Rest/V1/EngagementController.php`) |
-| Level display | `includes/Skills/MasteryDisplay.php` |
+| Level model | `includes/Performance/Levels.php` and `includes/Performance/Policies/` (the Khan rules are the `steps` policy), events in `skill_level_events`; see [PERFORMANCE](../PERFORMANCE.md). The separate Khan settings, `Khan/Levels.php` and `ohmylms_khan_level_events` table were removed when the engine was unified. |
+| Level display | Computed by `includes/Performance/Levels.php` and shown through the skill report data in `includes/Skills/ReportData.php`; the separate `MasteryDisplay` class was removed. |
 | Mixed-skill assessments | `includes/Assessment/SkillAssessment.php` (`create()`, `create_for_course()`), REST `POST /ohmylms/v1/skill-assessments` and `/skill-assessments/course` in `Rest/V1/AssessmentController.php`, setting `style` in `Assessment/AssessmentSettings.php`, pools in `Assessment/Pools.php` |
 | Intro screen and result levels | `includes/Quiz/Intro.php`, `Quiz/AnswerReview.php` |
 | Authoring screen | **OhMyLMS -> Skill assessments**: `Assessment/SkillAssessmentPage.php` and `templates/admin/skill-assessments.php` |

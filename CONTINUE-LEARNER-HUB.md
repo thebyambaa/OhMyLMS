@@ -1,5 +1,11 @@
 # Continue the OhMyLMS learner experience
 
+> **Historical ledger (reviewed 5 November 2026).** This is a chronological record from 16 to 19 October 2026.
+> Several files it names were later removed (`includes/Skills/MasteryDisplay.php`, `includes/Skills/Khan/`,
+> `includes/Schools/Controller.php`, `assets/src/features/schools/`, the quiz-report README and several one-time
+> verification notes). For what ships now, use [docs/README.md](docs/README.md), [docs/PERFORMANCE.md](docs/PERFORMANCE.md)
+> and [docs/MODULARIZATION-ROADMAP.md](docs/MODULARIZATION-ROADMAP.md); treat paths below as history, not as instructions.
+
 Last updated: October 19, 2026, Asia/Ulaanbaatar (documentation cleanup; see the last section). The checkpoints dated October 16 are unchanged.
 
 ## Current state: start here (October 16, 2026)
