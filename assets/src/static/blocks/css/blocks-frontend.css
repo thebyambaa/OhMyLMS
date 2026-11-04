@@ -53,17 +53,18 @@
 }
 
 /* Full width alignment for dashboard block - FRONTEND ONLY */
-/* Only apply full width styles when NOT in the editor */
+/* Width is 100% of the containing block. A 100vw + negative-margin breakout
+   (and the duplicate left/right offsets that used to sit under it) made
+   signed-out /profile scroll sideways, because 100vw includes the scrollbar. */
 body:not(.block-editor-page) .alignfull {
-	width: 100vw;
-	max-width: 100vw;
-	margin-left: calc(50% - 50vw);
-	margin-right: calc(50% - 50vw);
+	width: 100%;
+	max-width: 100%;
+	margin-left: 0;
+	margin-right: 0;
 	position: relative;
-	left: 50%;
-	right: 50%;
-	margin-left: -50vw;
-	margin-right: -50vw;
+	left: auto;
+	right: auto;
+	box-sizing: border-box;
 }
 
 /* Ensure dashboard block content is full width on frontend */

@@ -7,38 +7,7 @@
 			const destination = new URL( window.location.href );
 			const locationKey = `ohmylms-hub-location:${ destination.origin }${ destination.pathname }`;
 			try {
-				const previous = JSON.parse(
-					window.localStorage.getItem( locationKey ) || 'null'
-				);
-				const visible = Array.from(
-					hub.querySelectorAll(
-						'.oml-hub-nav a, .oml-hub-rail-foot > a'
-					)
-				).some(
-					( link ) =>
-						new URL( link.href ).searchParams.get(
-							'hub_section'
-						) === previous?.section
-				);
-				if (
-					! destination.searchParams.has( 'hub_section' ) &&
-					! destination.searchParams.has( 'ohmylms_invite' ) &&
-					visible &&
-					previous.section !== hub.dataset.section
-				) {
-					destination.searchParams.set(
-						'hub_section',
-						previous.section
-					);
-					if ( /^[a-z-]+$/.test( previous.view || '' ) ) {
-						destination.searchParams.set(
-							'hub_view',
-							previous.view
-						);
-					}
-					window.location.replace( destination.href );
-					return;
-				}
+				// A bare /profile stays on the learner profile. The rail links carry hub_section.
 				window.localStorage.setItem(
 					locationKey,
 					JSON.stringify( {

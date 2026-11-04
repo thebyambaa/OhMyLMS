@@ -29,7 +29,7 @@ $hub_role = $teacher_mode ? 'teacher' : ( $parent_mode ? 'parent' : ( $school_mo
 $hub_url  = $teacher_mode ? array( TeacherWorkspace::class, 'url' ) : ( $parent_mode ? array( ParentWorkspace::class, 'url' ) : ( $school_mode ? array( SchoolWorkspace::class, 'url' ) : array( Hub::class, 'url' ) ) );
 ?>
 <?php
-$hub_icons = array(
+$hub_icons   = array(
 	'home'             => 'M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
 	'classes'          => 'M3 5h18v12H3zM8 21h8M12 17v4',
 	'achievements'     => 'M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3',
@@ -52,13 +52,17 @@ $hub_icons = array(
 	'member'           => 'M4 7h16v12H4zM4 7l3-4h10l3 4M9 13h6',
 	'membership'       => 'M4 7h16v12H4zM4 7l3-4h10l3 4M9 13h6',
 );
-$hub_icon  = static function ( $key ) use ( $hub_icons ) {
+$hub_icon    = static function ( $key ) use ( $hub_icons ) {
 	return '<svg class="oml-hub-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="' . esc_attr( $hub_icons[ $key ] ?? $hub_icons['home'] ) . '"/></svg>';
 };
-$hub_main  = array_values( array_diff( $config['tabs'], array( 'account', 'home' ) ) );
+$hub_main    = array_values( array_diff( $config['tabs'], array( 'account', 'home' ) ) );
+$hub_profile = ! $teacher_mode && ! $parent_mode && ! $school_mode && 'home' === $section;
+if ( $hub_profile && in_array( 'home', $config['tabs'], true ) ) {
+	array_unshift( $hub_main, 'home' );
+}
 ?>
 <div class="ohmylms ohmylms-page">
-	<section class="ohmylms-student-hub" data-layout="<?php echo esc_attr( $config['layout'] ); ?>" data-role="<?php echo esc_attr( $hub_role ); ?>" data-section="<?php echo esc_attr( $section ); ?>" data-view="<?php echo esc_attr( $view ); ?>" data-theme="light" style="<?php echo esc_attr( $hub_style ); ?>">
+	<section class="ohmylms-student-hub" data-layout="<?php echo esc_attr( $config['layout'] ); ?>" data-role="<?php echo esc_attr( $hub_role ); ?>" data-section="<?php echo esc_attr( $section ); ?>" data-view="<?php echo esc_attr( $view ); ?>" data-profile="<?php echo $hub_profile ? '1' : '0'; ?>" data-theme="light" style="<?php echo esc_attr( $hub_style ); ?>">
 		<?php
 		// Apply the saved theme before first paint so navigating does not flash the light default.
 		wp_print_inline_script_tag( "try{var t=localStorage.getItem('ohmylms-hub-theme');if(t==='system'||t==='dark'||t==='light'){document.currentScript.parentElement.dataset.theme=t;}}catch(e){}" );

@@ -131,8 +131,8 @@
     {
       "output": "assets/blocks/css/blocks-frontend.css",
       "source": "static/blocks/css/blocks-frontend.css",
-      "sha256": "40be3eda57db4f23509c34823ede713e4a303e3f10abc7231092e16400c45734",
-      "bytes": 2034,
+      "sha256": "9536faf0089f6ccb074f5e3831746e4c235258cd459460401e1822910fb5d524",
+      "bytes": 2069,
       "factories": []
     },
     {
