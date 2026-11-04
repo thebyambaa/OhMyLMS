@@ -18,6 +18,6 @@ if ( ! empty( $question['inline_blanks'] ) ) {
 
 <?php foreach ( $question['questions'] as $option ) { ?>
 	<div class="answer-type-text fillin-blanks">
-		<input type="text" class="ohmylms-text-input" data-question-id="<?php echo esc_attr( $option['question_id'] ); ?>" name="attempt[<?php echo esc_attr( $attempt['id'] ); ?>][quiz_question][<?php echo esc_attr( $option['question_id'] ); ?>][]" placeholder="<?php echo esc_attr( 'Type your answer here ...', 'ohmylms' ); ?>">
+		<input type="text" class="ohmylms-text-input" data-question-id="<?php echo esc_attr( $option['question_id'] ); ?>" name="attempt[<?php echo esc_attr( $attempt['id'] ); ?>][quiz_question][<?php echo esc_attr( $option['question_id'] ); ?>][]" placeholder="<?php echo esc_attr__( 'Type your answer here ...', 'ohmylms' ); ?>">
 	</div>
 <?php } ?>

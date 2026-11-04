@@ -27,7 +27,7 @@ $answer_rows = ! empty( $question['questions'] ) ? $question['questions'] : arra
 
 <?php foreach ( $answer_rows as $option ) { ?>
 	<div class="answer-type-text">
-		<textarea class="textarea-auto-resize <?php echo esc_attr( $class ); ?>" data-limit="<?php echo esc_attr( $long_text_limit ); ?>" data-question-id="<?php echo esc_attr( $option['question_id'] ); ?>" name="attempt[<?php echo esc_attr( $attempt['id'] ); ?>][quiz_question][<?php echo esc_attr( $option['question_id'] ); ?>][]" placeholder="<?php echo esc_attr( 'Type your answer here ...', 'ohmylms' ); ?>"></textarea>
+		<textarea class="textarea-auto-resize <?php echo esc_attr( $class ); ?>" data-limit="<?php echo esc_attr( $long_text_limit ); ?>" data-question-id="<?php echo esc_attr( $option['question_id'] ); ?>" name="attempt[<?php echo esc_attr( $attempt['id'] ); ?>][quiz_question][<?php echo esc_attr( $option['question_id'] ); ?>][]" placeholder="<?php echo esc_attr__( 'Type your answer here ...', 'ohmylms' ); ?>"></textarea>
 
 		<?php if ( ! empty( $long_text_limit ) ) { ?>
 			<span class="ohmylms-character-limit-hints">

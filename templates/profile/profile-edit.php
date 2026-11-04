@@ -79,7 +79,7 @@ $student_profile_photo = $profile_images['avatar'];
 						</label>
 
 						<span class="ohmylms-input-wrapper">
-							<input type="text" name="first_name" placeholder="<?php echo esc_attr( 'Enter first name', 'ohmylms' ); ?>" value="<?php echo esc_attr( $student->get_first_name() ); ?>">
+							<input type="text" name="first_name" placeholder="<?php echo esc_attr__( 'Enter first name', 'ohmylms' ); ?>" value="<?php echo esc_attr( $student->get_first_name() ); ?>">
 						</span>
 					</div>
 
@@ -89,7 +89,7 @@ $student_profile_photo = $profile_images['avatar'];
 						</label>
 
 						<span class="ohmylms-input-wrapper">
-							<input type="text" name="last_name" placeholder="<?php echo esc_attr( 'Enter last name', 'ohmylms' ); ?>" value="<?php echo esc_attr( $student->get_last_name() ); ?>">
+							<input type="text" name="last_name" placeholder="<?php echo esc_attr__( 'Enter last name', 'ohmylms' ); ?>" value="<?php echo esc_attr( $student->get_last_name() ); ?>">
 						</span>
 					</div>
 
@@ -121,7 +121,7 @@ $student_profile_photo = $profile_images['avatar'];
 						</label>
 
 						<span class="ohmylms-input-wrapper">
-							<input type="text" name="address" placeholder="<?php echo esc_attr( 'Street address, P. O. box', 'ohmylms' ); ?>" value="<?php echo esc_attr( $student->get_address() ); ?>">
+							<input type="text" name="address" placeholder="<?php echo esc_attr__( 'Street address, P. O. box', 'ohmylms' ); ?>" value="<?php echo esc_attr( $student->get_address() ); ?>">
 						</span>
 					</div>
 
@@ -232,7 +232,7 @@ $student_profile_photo = $profile_images['avatar'];
 									?>
 									<div class="ohmylms-dynamic-field-row">
 										<span class="ohmylms-input-wrapper">
-											<input type="text" name="skills[]" placeholder="<?php echo esc_attr( 'Enter a skill', 'ohmylms' ); ?>" value="<?php echo esc_attr( $skill ); ?>">
+											<input type="text" name="skills[]" placeholder="<?php echo esc_attr__( 'Enter a skill', 'ohmylms' ); ?>" value="<?php echo esc_attr( $skill ); ?>">
 										</span>
 										<button type="button" class="ohmylms-remove-field" aria-label="<?php echo esc_attr__( 'Remove skill', 'ohmylms' ); ?>">×</button>
 									</div>
@@ -242,7 +242,7 @@ $student_profile_photo = $profile_images['avatar'];
 								?>
 								<div class="ohmylms-dynamic-field-row">
 									<span class="ohmylms-input-wrapper">
-										<input type="text" name="skills[]" placeholder="<?php echo esc_attr( 'Enter a skill', 'ohmylms' ); ?>">
+										<input type="text" name="skills[]" placeholder="<?php echo esc_attr__( 'Enter a skill', 'ohmylms' ); ?>">
 									</span>
 									<button type="button" class="ohmylms-remove-field" aria-label="<?php echo esc_attr__( 'Remove skill', 'ohmylms' ); ?>">×</button>
 								</div>
@@ -268,10 +268,10 @@ $student_profile_photo = $profile_images['avatar'];
 									?>
 									<div class="ohmylms-dynamic-field-row ohmylms-link-row">
 										<span class="ohmylms-input-wrapper ohmylms-link-label">
-											<input type="text" name="link_labels[]" placeholder="<?php echo esc_attr( 'Label (e.g., LinkedIn, Facebook)', 'ohmylms' ); ?>" value="<?php echo esc_attr( $social_link['label'] ?? '' ); ?>">
+											<input type="text" name="link_labels[]" placeholder="<?php echo esc_attr__( 'Label (e.g., LinkedIn, Facebook)', 'ohmylms' ); ?>" value="<?php echo esc_attr( $social_link['label'] ?? '' ); ?>">
 										</span>
 										<span class="ohmylms-input-wrapper ohmylms-link-url">
-											<input type="url" name="link_urls[]" placeholder="<?php echo esc_attr( 'https://example.com', 'ohmylms' ); ?>" value="<?php echo esc_attr( $social_link['url'] ?? '' ); ?>">
+											<input type="url" name="link_urls[]" placeholder="<?php echo esc_attr__( 'https://example.com', 'ohmylms' ); ?>" value="<?php echo esc_attr( $social_link['url'] ?? '' ); ?>">
 										</span>
 										<button type="button" class="ohmylms-remove-field" aria-label="<?php echo esc_attr__( 'Remove link', 'ohmylms' ); ?>">×</button>
 									</div>
@@ -281,10 +281,10 @@ $student_profile_photo = $profile_images['avatar'];
 								?>
 								<div class="ohmylms-dynamic-field-row ohmylms-link-row">
 									<span class="ohmylms-input-wrapper ohmylms-link-label">
-										<input type="text" name="link_labels[]" placeholder="<?php echo esc_attr( 'Label (e.g., LinkedIn, Facebook)', 'ohmylms' ); ?>">
+										<input type="text" name="link_labels[]" placeholder="<?php echo esc_attr__( 'Label (e.g., LinkedIn, Facebook)', 'ohmylms' ); ?>">
 									</span>
 									<span class="ohmylms-input-wrapper ohmylms-link-url">
-										<input type="url" name="link_urls[]" placeholder="<?php echo esc_attr( 'https://example.com', 'ohmylms' ); ?>">
+										<input type="url" name="link_urls[]" placeholder="<?php echo esc_attr__( 'https://example.com', 'ohmylms' ); ?>">
 									</span>
 									<button type="button" class="ohmylms-remove-field" aria-label="<?php echo esc_attr__( 'Remove link', 'ohmylms' ); ?>">×</button>
 								</div>
@@ -432,7 +432,7 @@ $student_profile_photo = $profile_images['avatar'];
 <template id="skills-template">
 	<div class="ohmylms-dynamic-field-row">
 		<span class="ohmylms-input-wrapper">
-			<input type="text" name="skills[]" placeholder="<?php echo esc_attr( 'Enter a skill', 'ohmylms' ); ?>">
+			<input type="text" name="skills[]" placeholder="<?php echo esc_attr__( 'Enter a skill', 'ohmylms' ); ?>">
 		</span>
 		<button type="button" class="ohmylms-remove-field" aria-label="<?php echo esc_attr__( 'Remove skill', 'ohmylms' ); ?>">×</button>
 	</div>
@@ -441,10 +441,10 @@ $student_profile_photo = $profile_images['avatar'];
 <template id="links-template">
 	<div class="ohmylms-dynamic-field-row ohmylms-link-row">
 		<span class="ohmylms-input-wrapper ohmylms-link-label">
-			<input type="text" name="link_labels[]" placeholder="<?php echo esc_attr( 'Label (e.g., LinkedIn, Facebook)', 'ohmylms' ); ?>">
+			<input type="text" name="link_labels[]" placeholder="<?php echo esc_attr__( 'Label (e.g., LinkedIn, Facebook)', 'ohmylms' ); ?>">
 		</span>
 		<span class="ohmylms-input-wrapper ohmylms-link-url">
-			<input type="url" name="link_urls[]" placeholder="<?php echo esc_attr( 'https://example.com', 'ohmylms' ); ?>">
+			<input type="url" name="link_urls[]" placeholder="<?php echo esc_attr__( 'https://example.com', 'ohmylms' ); ?>">
 		</span>
 		<button type="button" class="ohmylms-remove-field" aria-label="<?php echo esc_attr__( 'Remove link', 'ohmylms' ); ?>">×</button>
 	</div>
