@@ -58,7 +58,7 @@ $attempt_results = array(
 $latest_id       = $attempts ? (int) $attempts[0]['quiz_attempt_id'] : 0;
 $stamp           = static function ( $row ) {
 	$time = ! empty( $row['start_date'] ) ? strtotime( $row['start_date'] ) : 0;
-	return $time ? date( 'M j, Y g:i a', $time ) : '';
+	return $time ? gmdate( 'M j, Y g:i a', $time ) : '';
 };
 ?>
 <section class="ohmylms-answer-review" id="<?php echo esc_attr( $anchor ); ?>" aria-labelledby="<?php echo esc_attr( $anchor ); ?>-title">
