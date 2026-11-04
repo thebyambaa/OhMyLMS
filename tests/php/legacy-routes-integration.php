@@ -689,7 +689,7 @@ try {
 	ok( false === strpos( file_get_contents( OHMYLMS_DIR . '/includes/Schools/ViewAs.php' ), "page=' . OHMYLMS_SLUG" ), 'View as no longer links to the legacy page' );
 	ok( false === strpos( file_get_contents( OHMYLMS_DIR . '/templates/admin/skill-assessments.php' ), "admin.php?page=ohmylms'" ), 'skill assessments no longer link to the legacy page' );
 	$meet = file_get_contents( OHMYLMS_DIR . '/includes/Integrations/GoogleMeet/Includes/Hooks.php' );
-	ok( 4 === substr_count( $meet, "LegacyRoutes::app_url( '/integrations?auth=" ), 'the Google Meet OAuth redirects land on the new Integrations tab' );
+	ok( 5 === substr_count( $meet, "LegacyRoutes::app_url( '/integrations?auth=" ), 'the Google Meet OAuth redirects land on the new Integrations tab' );
 
 	// Rendered instructor email links to the exact submission in the new grading screen.
 	$student = wp_insert_user(
