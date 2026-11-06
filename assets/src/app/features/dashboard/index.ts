@@ -16,7 +16,7 @@ export const dashboard: FeatureDefinition = {
 	component: lazy(
 		() =>
 			import(
-				/* webpackChunkName: "admin-app-dashboard" */ './DashboardPage'
+				/* webpackChunkName: "admin-app-dashboard-feature" */ './DashboardPage'
 			)
 	),
 };
@@ -33,7 +33,7 @@ export const earnings: FeatureDefinition = {
 	component: lazy(
 		() =>
 			import(
-				/* webpackChunkName: "admin-app-dashboard" */ './EarningsPage'
+				/* webpackChunkName: "admin-app-dashboard-feature" */ './EarningsPage'
 			)
 	),
 };
@@ -55,7 +55,7 @@ export const courseReport: FeatureDefinition = {
 	component: lazy(
 		() =>
 			import(
-				/* webpackChunkName: "admin-app-dashboard" */ './CourseReportPage'
+				/* webpackChunkName: "admin-app-dashboard-feature" */ './CourseReportPage'
 			)
 	),
 };
@@ -74,7 +74,7 @@ export const courseRoster: FeatureDefinition = {
 	component: lazy(
 		() =>
 			import(
-				/* webpackChunkName: "admin-app-dashboard" */ './CourseRosterPage'
+				/* webpackChunkName: "admin-app-dashboard-feature" */ './CourseRosterPage'
 			)
 	),
 };

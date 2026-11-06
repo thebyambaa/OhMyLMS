@@ -17,7 +17,7 @@ export const builtInWidgets: readonly DashboardWidgetDefinition[] = [
 		component: lazy(
 			() =>
 				import(
-					/* webpackChunkName: "admin-app-dashboard" */ './NeedsAttentionWidget'
+					/* webpackChunkName: "admin-app-dashboard-feature" */ './NeedsAttentionWidget'
 				)
 		),
 	},
@@ -29,7 +29,7 @@ export const builtInWidgets: readonly DashboardWidgetDefinition[] = [
 		component: lazy(
 			() =>
 				import(
-					/* webpackChunkName: "admin-app-dashboard" */ './PulseWidget'
+					/* webpackChunkName: "admin-app-dashboard-feature" */ './PulseWidget'
 				)
 		),
 	},
