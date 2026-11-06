@@ -15,6 +15,7 @@ $methods = array(
 	'progress' => 'progress_class',
 	'input'    => 'input_class',
 	'select'   => 'select_class',
+	'textarea' => 'textarea_class',
 );
 $out     = array();
 foreach ( json_decode( $argv[1], true ) as $name => $list ) {

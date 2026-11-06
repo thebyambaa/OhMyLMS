@@ -8,6 +8,7 @@
 use OhMyLMS\Student\Hub;
 use OhMyLMS\Student\ParentWorkspace;
 use OhMyLMS\Student\SchoolWorkspace;
+use OhMyLMS\Student\StudioWorkspace;
 use OhMyLMS\Student\TeacherWorkspace;
 use OhMyLMS\Practice\Dashboard;
 use OhMyLMS\Practice\Frontend;
@@ -17,6 +18,7 @@ defined( 'ABSPATH' ) || exit;
 $user        = wp_get_current_user();
 $parent_mode = ! empty( $parent_mode );
 $school_mode = ! empty( $school_mode );
+$studio_mode = ! empty( $studio_mode );
 // A school can override the site accent and logo for everyone working in that school.
 $hub_school_id = $school_mode && SchoolWorkspace::current() ? (int) SchoolWorkspace::current()['id'] : \OhMyLMS\Schools\Settings::school_for_user();
 // Following the brand sets no inline accent, so the stylesheet's token (and its dark variant) applies.
@@ -25,8 +27,8 @@ if ( $hub_school_id ) {
 	$hub_own_accent = \OhMyLMS\Schools\Settings::overrides( $hub_school_id )['accent'] ?? '';
 	$hub_style      = '' !== $hub_own_accent ? \OhMyLMS\Schools\Settings::style( $hub_own_accent ) : $hub_style;
 }
-$hub_role = $teacher_mode ? 'teacher' : ( $parent_mode ? 'parent' : ( $school_mode ? 'school' : 'learner' ) );
-$hub_url  = $teacher_mode ? array( TeacherWorkspace::class, 'url' ) : ( $parent_mode ? array( ParentWorkspace::class, 'url' ) : ( $school_mode ? array( SchoolWorkspace::class, 'url' ) : array( Hub::class, 'url' ) ) );
+$hub_role = $teacher_mode ? 'teacher' : ( $parent_mode ? 'parent' : ( $school_mode ? 'school' : ( $studio_mode ? 'studio' : 'learner' ) ) );
+$hub_url  = $teacher_mode ? array( TeacherWorkspace::class, 'url' ) : ( $parent_mode ? array( ParentWorkspace::class, 'url' ) : ( $school_mode ? array( SchoolWorkspace::class, 'url' ) : ( $studio_mode ? array( StudioWorkspace::class, 'url' ) : array( Hub::class, 'url' ) ) ) );
 ?>
 <?php
 $hub_icons   = array(
@@ -56,7 +58,7 @@ $hub_icon    = static function ( $key ) use ( $hub_icons ) {
 	return '<svg class="oml-hub-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="' . esc_attr( $hub_icons[ $key ] ?? $hub_icons['home'] ) . '"/></svg>';
 };
 $hub_main    = array_values( array_diff( $config['tabs'], array( 'account', 'home' ) ) );
-$hub_profile = ! $teacher_mode && ! $parent_mode && ! $school_mode && 'home' === $section;
+$hub_profile = ! $teacher_mode && ! $parent_mode && ! $school_mode && ! $studio_mode && 'home' === $section;
 if ( $hub_profile && in_array( 'home', $config['tabs'], true ) ) {
 	array_unshift( $hub_main, 'home' );
 }
@@ -71,7 +73,7 @@ if ( $hub_profile && in_array( 'home', $config['tabs'], true ) ) {
 			<div class="oml-hub-rail-head">
 				<a class="oml-hub-brand" href="<?php echo esc_url( $hub_url( $teacher_mode ? 'classes' : ( $parent_mode ? 'family' : ( $school_mode ? 'school-overview' : '' ) ) ) ); ?>">
 				<?php
-				$hub_logo = \OhMyLMS\Design\HubIcons::logo_markup( $school_mode ? 'school' : ( $teacher_mode ? 'teacher' : ( $parent_mode ? 'parent' : 'learner' ) ) );
+				$hub_logo = \OhMyLMS\Design\HubIcons::logo_markup( $school_mode || $studio_mode ? 'school' : ( $teacher_mode ? 'teacher' : ( $parent_mode ? 'parent' : 'learner' ) ) );
 				$hub_own  = $hub_school_id ? \OhMyLMS\Schools\Settings::overrides( $hub_school_id ) : array();
 				if ( ! empty( $hub_own['logo'] ) ) {
 					$hub_logo = '<img class="oml-hub-logo oml-hub-logo--custom" src="' . esc_url( (string) wp_get_attachment_image_url( $hub_own['logo'], 'thumbnail' ) ) . '" alt="" width="28" height="28" decoding="async">';
@@ -111,9 +113,10 @@ if ( $hub_profile && in_array( 'home', $config['tabs'], true ) ) {
 				<?php $hub_teacher = TeacherWorkspace::available(); ?>
 				<?php $hub_parent = ParentWorkspace::available(); ?>
 				<?php $hub_school = SchoolWorkspace::available(); ?>
-				<?php if ( $hub_teacher || $hub_parent || $hub_school ) : ?>
+				<?php $hub_studio = StudioWorkspace::available(); ?>
+				<?php if ( $hub_teacher || $hub_parent || $hub_school || $hub_studio ) : ?>
 					<details class="oml-hub-role-switch">
-						<summary><?php echo esc_html( $teacher_mode ? __( 'Teacher', 'ohmylms' ) : ( $parent_mode ? __( 'Parent', 'ohmylms' ) : ( $school_mode ? __( 'School', 'ohmylms' ) : __( 'Learner', 'ohmylms' ) ) ) ); ?> · <?php esc_html_e( 'Switch role', 'ohmylms' ); ?></summary>
+						<summary><?php echo esc_html( $teacher_mode ? __( 'Teacher', 'ohmylms' ) : ( $parent_mode ? __( 'Parent', 'ohmylms' ) : ( $school_mode ? __( 'School', 'ohmylms' ) : ( $studio_mode ? __( 'Studio', 'ohmylms' ) : __( 'Learner', 'ohmylms' ) ) ) ) ); ?> · <?php esc_html_e( 'Switch role', 'ohmylms' ); ?></summary>
 						<div class="oml-hub-role-options">
 							<a href="<?php echo esc_url( Hub::url( 'learn' ) ); ?>"><?php esc_html_e( 'Learner', 'ohmylms' ); ?></a>
 							<?php if ( $hub_teacher ) : ?>
@@ -124,6 +127,9 @@ if ( $hub_profile && in_array( 'home', $config['tabs'], true ) ) {
 							<?php endif; ?>
 							<?php if ( $hub_school ) : ?>
 								<a href="<?php echo esc_url( SchoolWorkspace::url() ); ?>"><?php esc_html_e( 'School', 'ohmylms' ); ?></a>
+							<?php endif; ?>
+							<?php if ( $hub_studio ) : ?>
+								<a href="<?php echo esc_url( StudioWorkspace::url() ); ?>"><?php esc_html_e( 'Studio', 'ohmylms' ); ?></a>
 							<?php endif; ?>
 						</div>
 					</details>
@@ -148,6 +154,8 @@ if ( $hub_profile && in_array( 'home', $config['tabs'], true ) ) {
 				<?php
 				if ( $teacher_mode && in_array( $section, array( 'classes', 'work', 'roster', 'progress', 'class-settings' ), true ) ) {
 					ohmylms_get_template( 'student-hub/teacher.php', array( 'section' => $section ) );
+				} elseif ( $studio_mode && 0 === strpos( $section, 'studio-' ) ) {
+					ohmylms_get_template( 'student-hub/studio.php', array( 'section' => $section ) );
 				} elseif ( $school_mode && 0 === strpos( $section, 'school-' ) ) {
 					ohmylms_get_template( 'student-hub/school.php', array( 'section' => $section ) );
 				} elseif ( $parent_mode && 'family' === $section ) {

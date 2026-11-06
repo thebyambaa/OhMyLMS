@@ -1,6 +1,6 @@
 <?php
 /**
- * Standalone checks for the hub slug migration (student-home to profile) and the redirects around it.
+ * Standalone checks for the hub slug migration (profile to dashboard) and the redirects around it.
  *
  * Uses the real Hub and LegacyPages classes against in-memory stand-ins for WordPress; no database.
  *
@@ -50,8 +50,8 @@ namespace {
 			if ( $other->ID !== $post->ID && $other->post_name === $name && 'trash' !== $other->post_status ) {
 				$name .= '-2'; }
 		}
-		if ( $GLOBALS['force_unique_suffix'] && 'profile' === $name ) {
-			$name = 'profile-2'; }
+		if ( $GLOBALS['force_unique_suffix'] && 'dashboard' === $name ) {
+			$name = 'dashboard-2'; }
 		$post->post_name = $name;
 		return $post->ID;
 	}
@@ -70,7 +70,7 @@ namespace {
 	function make_page( $id, $name, $status = 'publish', $content = '' ) {
 		$GLOBALS['posts'][ $id ] = (object) array( 'ID' => $id, 'post_type' => 'page', 'post_status' => $status, 'post_name' => $name, 'post_content' => $content );
 	}
-	function reset_site( $slug = 'student-home' ) {
+	function reset_site( $slug = 'profile' ) {
 		$GLOBALS['options'] = array( 'ohmylms_student_hub' => array( 'page_id' => 318, 'enabled' => true ) );
 		$GLOBALS['posts']   = array();
 		$GLOBALS['can']     = true;
@@ -88,11 +88,11 @@ namespace {
 	function check( $ok, $message ) { global $checks; if ( ! $ok ) { throw new RuntimeException( $message ); } $checks++; }
 
 	// ---- Defaults ----
-	check( 'profile' === Hub::SLUG && 'student-home' === Hub::LEGACY_SLUG, 'The hub slug constants are profile and student-home' );
+	check( 'dashboard' === Hub::SLUG && 'profile' === Hub::LEGACY_SLUG, 'The hub slug constants are dashboard and profile' );
 	check( false !== strpos( file_get_contents( dirname( __DIR__, 2 ) . '/includes/Student/Hub.php' ), "'post_name'    => self::SLUG" ), 'A new site creates the page with the new slug' );
 
 	// ---- Decision rules ----
-	$facts = array( 'configured_id' => 318, 'page_id' => 318, 'post_type' => 'page', 'post_name' => 'student-home', 'new_slug_taken' => false );
+	$facts = array( 'configured_id' => 318, 'page_id' => 318, 'post_type' => 'page', 'post_name' => 'profile', 'new_slug_taken' => false );
 	check( Hub::slug_migration_decision( $facts )['rename'], 'The configured page with the old slug is renamed' );
 	check( ! Hub::slug_migration_decision( array_merge( $facts, array( 'configured_id' => 7 ) ) )['rename'], 'A page that is not the configured hub is never renamed' );
 	check( ! Hub::slug_migration_decision( array_merge( $facts, array( 'post_name' => 'my-hub' ) ) )['rename'], 'A custom slug is respected' );
@@ -103,26 +103,26 @@ namespace {
 	reset_site();
 	Hub::migrate_slug();
 	$record = get_option( Hub::SLUG_OPTION );
-	check( 'profile' === $posts[318]->post_name && 'renamed' === $record['result'] && '/student-home/' === $record['old_path'] && 318 === $record['page_id'], 'The hub page is renamed and the old path recorded' );
-	$posts[318]->post_name = 'student-home';
+	check( 'dashboard' === $posts[318]->post_name && 'renamed' === $record['result'] && '/profile/' === $record['old_path'] && 318 === $record['page_id'], 'The hub page is renamed and the old path recorded' );
+	$posts[318]->post_name = 'profile';
 	Hub::migrate_slug();
-	check( 'student-home' === $posts[318]->post_name, 'The migration runs once: a later call does not rename again' );
+	check( 'profile' === $posts[318]->post_name, 'The migration runs once: a later call does not rename again' );
 
 	reset_site();
-	make_page( 400, 'profile__trashed', 'trash' );
+	make_page( 400, 'dashboard__trashed', 'trash' );
 	Hub::migrate_slug();
-	check( 'profile' === $posts[318]->post_name && 'renamed' === get_option( Hub::SLUG_OPTION )['result'], 'A trashed page (slug with __trashed) does not block the rename' );
+	check( 'dashboard' === $posts[318]->post_name && 'renamed' === get_option( Hub::SLUG_OPTION )['result'], 'A trashed page (slug with __trashed) does not block the rename' );
 
 	reset_site();
-	make_page( 401, 'profile', 'publish', 'Public profile page' );
+	make_page( 401, 'dashboard', 'publish', 'Public dashboard page' );
 	Hub::migrate_slug();
 	$record = get_option( Hub::SLUG_OPTION );
-	check( 'student-home' === $posts[318]->post_name && 'skipped' === $record['result'] && false !== strpos( $record['reason'], 'already used' ), 'A taken slug leaves the page alone and records why' );
+	check( 'profile' === $posts[318]->post_name && 'skipped' === $record['result'] && false !== strpos( $record['reason'], 'already used' ), 'A taken slug leaves the page alone and records why' );
 
 	reset_site();
-	make_page( 402, 'profile', 'draft' );
+	make_page( 402, 'dashboard', 'draft' );
 	Hub::migrate_slug();
-	check( 'student-home' === $posts[318]->post_name && 'skipped' === get_option( Hub::SLUG_OPTION )['result'], 'A draft page with the slug also blocks it' );
+	check( 'profile' === $posts[318]->post_name && 'skipped' === get_option( Hub::SLUG_OPTION )['result'], 'A draft page with the slug also blocks it' );
 
 	reset_site( 'my-hub' );
 	Hub::migrate_slug();
@@ -131,37 +131,37 @@ namespace {
 	reset_site();
 	$options['ohmylms_student_hub']['page_id'] = 0;
 	Hub::migrate_slug();
-	check( 'student-home' === $posts[318]->post_name && 'skipped' === get_option( Hub::SLUG_OPTION )['result'], 'Without a configured hub page nothing is renamed' );
+	check( 'profile' === $posts[318]->post_name && 'skipped' === get_option( Hub::SLUG_OPTION )['result'], 'Without a configured hub page nothing is renamed' );
 
 	reset_site();
 	$force_unique_suffix = true;
 	Hub::migrate_slug();
-	check( 'student-home' === $posts[318]->post_name && 'skipped' === get_option( Hub::SLUG_OPTION )['result'], 'If WordPress would suffix the slug, the original slug is restored' );
+	check( 'profile' === $posts[318]->post_name && 'skipped' === get_option( Hub::SLUG_OPTION )['result'], 'If WordPress would suffix the slug, the original slug is restored' );
 
-	reset_site( 'profile' );
+	reset_site( 'dashboard' );
 	Hub::migrate_slug();
-	check( 'not_needed' === get_option( Hub::SLUG_OPTION )['result'] && 'profile' === $posts[318]->post_name, 'A site already on the new slug records that nothing was needed' );
+	check( 'not_needed' === get_option( Hub::SLUG_OPTION )['result'] && 'dashboard' === $posts[318]->post_name, 'A site already on the new slug records that nothing was needed' );
 
 	reset_site();
 	$can = false;
 	Hub::migrate_slug();
-	check( false === get_option( Hub::SLUG_OPTION, false ) && 'student-home' === $posts[318]->post_name, 'Visitors without manage_options never trigger the migration' );
+	check( false === get_option( Hub::SLUG_OPTION, false ) && 'profile' === $posts[318]->post_name, 'Visitors without manage_options never trigger the migration' );
 
 	// ---- Old address redirects ----
 	reset_site();
 	Hub::migrate_slug();
-	check( 'http://800.local/profile/?hub_section=library&hub_role=teacher' === LegacyPages::renamed_hub_target( '/student-home/?hub_section=library&hub_role=teacher' ), 'The old address keeps hub_section and hub_role' );
+	check( 'http://800.local/dashboard/?hub_section=library&hub_role=teacher' === LegacyPages::renamed_hub_target( '/profile/?hub_section=library&hub_role=teacher' ), 'The old address keeps hub_section and hub_role' );
 	$token = str_repeat( 'a1', 32 );
-	check( 'http://800.local/profile/?ohmylms_invite=' . $token === LegacyPages::renamed_hub_target( '/student-home/?ohmylms_invite=' . $token ), 'Invitation links sent earlier keep their token' );
-	check( 'http://800.local/profile/' === LegacyPages::renamed_hub_target( '/student-home' ) && 'http://800.local/profile/' === LegacyPages::renamed_hub_target( '/student-home/' ), 'The bare old address works with or without the slash' );
-	check( '' === LegacyPages::renamed_hub_target( '/profile/?hub_section=library' ) && '' === LegacyPages::renamed_hub_target( '/other/' ) && '' === LegacyPages::renamed_hub_target( '/student-home-extra/' ), 'The new address and unrelated pages are never redirected' );
-	update_option( Hub::SLUG_OPTION, array( 'result' => 'skipped', 'old_path' => '/student-home/' ) );
-	check( '' === LegacyPages::renamed_hub_target( '/student-home/' ), 'Nothing redirects when the migration did not rename the page' );
-	update_option( Hub::SLUG_OPTION, array( 'result' => 'renamed', 'old_path' => '/profile/' ) );
-	check( '' === LegacyPages::renamed_hub_target( '/profile/' ), 'A recorded old path equal to the hub path can never loop' );
+	check( 'http://800.local/dashboard/?ohmylms_invite=' . $token === LegacyPages::renamed_hub_target( '/profile/?ohmylms_invite=' . $token ), 'Invitation links sent earlier keep their token' );
+	check( 'http://800.local/dashboard/' === LegacyPages::renamed_hub_target( '/profile' ) && 'http://800.local/dashboard/' === LegacyPages::renamed_hub_target( '/profile/' ), 'The bare old address works with or without the slash' );
+	check( '' === LegacyPages::renamed_hub_target( '/dashboard/?hub_section=library' ) && '' === LegacyPages::renamed_hub_target( '/other/' ) && '' === LegacyPages::renamed_hub_target( '/profile-extra/' ), 'The new address and unrelated pages are never redirected' );
+	update_option( Hub::SLUG_OPTION, array( 'result' => 'skipped', 'old_path' => '/profile/' ) );
+	check( 'http://800.local/dashboard/' === LegacyPages::renamed_hub_target( '/profile/' ), 'The retired slug redirects even when no rename was recorded' );
+	update_option( Hub::SLUG_OPTION, array( 'result' => 'renamed', 'old_path' => '/dashboard/' ) );
+	check( '' === LegacyPages::renamed_hub_target( '/dashboard/' ), 'A recorded old path equal to the hub path can never loop' );
 
-	// ---- Retired page ledger vs the new /profile/ address ----
-	reset_site( 'profile' );
+	// ---- Retired page ledger vs the new /dashboard/ address ----
+	reset_site( 'dashboard' );
 	update_option(
 		LegacyPages::OPTION,
 		array(
@@ -170,11 +170,11 @@ namespace {
 			118 => array( 'url' => 'http://800.local/my-courses/', 'endpoint' => 'my-courses', 'option' => 'ohmylms_student_courses_page_id' ),
 		)
 	);
-	check( '' === LegacyPages::target( '/profile/' ) && '' === LegacyPages::target( '/profile' ) && '' === LegacyPages::target( '/profile/?hub_section=account&hub_view=account' ) && '' === LegacyPages::target( '/profile/?ohmylms_invite=' . $token ), 'The retired profile route no longer redirects the hub onto itself' );
-	check( 'http://800.local/profile/?hub_section=learn' === LegacyPages::target( '/dashboard/' ), 'Other retired routes still reach the hub' );
-	check( 'http://800.local/profile/?hub_section=account&hub_view=account' === LegacyPages::target( '/?page_id=117' ), 'A retired page ID still reaches the account view' );
-	check( 'http://800.local/profile/?hub_section=learn&hub_view=courses' === LegacyPages::target( '/my-courses/' ), 'Retired courses route unchanged' );
-	check( LegacyPages::same_location( 'http://800.local/profile/?a=1', '/profile?a=1' ) && ! LegacyPages::same_location( 'http://800.local/profile/?a=1', '/profile/' ), 'A redirect to the requested address is detected' );
+	check( '' === LegacyPages::target( '/dashboard/' ) && '' === LegacyPages::target( '/dashboard' ) && '' === LegacyPages::target( '/dashboard/?hub_section=account&hub_view=account' ) && '' === LegacyPages::target( '/dashboard/?ohmylms_invite=' . $token ), 'The retired dashboard route no longer redirects the hub onto itself' );
+	check( 'http://800.local/dashboard/?hub_section=learn' === LegacyPages::target( '/?page_id=115' ), 'Other retired routes still reach the hub' );
+	check( 'http://800.local/dashboard/?hub_section=account&hub_view=account' === LegacyPages::target( '/?page_id=117' ), 'A retired page ID still reaches the account view' );
+	check( 'http://800.local/dashboard/?hub_section=learn&hub_view=courses' === LegacyPages::target( '/my-courses/' ), 'Retired courses route unchanged' );
+	check( LegacyPages::same_location( 'http://800.local/dashboard/?a=1', '/dashboard?a=1' ) && ! LegacyPages::same_location( 'http://800.local/dashboard/?a=1', '/dashboard/' ), 'A redirect to the requested address is detected' );
 
 	echo "Hub slug migration, old-address redirect and retired-route loop checks passed ($checks).\n";
 }

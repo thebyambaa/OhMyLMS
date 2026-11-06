@@ -58,3 +58,4 @@ export function describedBy( id, help, error, existing = '' ) {
 		].join( ' ' ) || undefined
 	);
 }
+export const textareaClass = ( args ) => controlClass( 'textarea', args );

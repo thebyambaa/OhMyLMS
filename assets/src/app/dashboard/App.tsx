@@ -1,5 +1,6 @@
 import { Suspense, lazy, useId, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import { Select } from '../../ui/Select';
 import { boot } from './api';
 
 const Home = lazy( () =>
@@ -61,6 +62,12 @@ const SettingsPanel = lazy( () =>
 	import(
 		/* webpackChunkName: "admin-app-dashboard-settings" */ './settings'
 	).then( ( mod ) => ( { default: mod.SettingsPanel } ) )
+);
+
+const Showcase = lazy( () =>
+	import(
+		/* webpackChunkName: "admin-app-dashboard-showcase" */ './showcase'
+	).then( ( mod ) => ( { default: mod.Showcase } ) )
 );
 
 function NavIcon( { name }: { name: string } ) {
@@ -191,7 +198,9 @@ function sectionFromUrl() {
 /** Dashboard shell: top bar, capability-gated nav, and one section at a time. */
 export function App() {
 	const data = boot();
-	const [ section, setSection ] = useState( sectionFromUrl );
+	const [ section, setSection ] = useState(
+		() => data.section || sectionFromUrl()
+	);
 	const [ expanded, setExpanded ] = useState( () => {
 		const group = sectionGroup( sectionFromUrl() );
 		return group === 'people' || group === 'content' || group === 'settings'
@@ -238,6 +247,89 @@ export function App() {
 		if ( sectionGroup( section ) !== item ) {
 			go( item === 'content' ? 'courses' : item );
 		}
+	}
+
+	const content = (
+		<Suspense fallback={ <p>{ __( 'Loading…', 'ohmylms' ) }</p> }>
+			{ section === 'home' && (
+				<Home
+					school={ school }
+					range={ range }
+					onPeople={ () => go( 'people' ) }
+					onSchool={ setSchool }
+				/>
+			) }
+			{ section === 'showcase' && <Showcase /> }
+			{ section === 'schools' && <Schools /> }
+			{ section === 'classes' && <Classes school={ school } /> }
+			{ section === 'people' && (
+				<People school={ school } view={ peopleView } />
+			) }
+			{ section === 'content' && (
+				<Content filter={ contentFilter } onOpen={ go } />
+			) }
+			{ section === 'courses' && <CourseBuilder /> }
+			{ section === 'quizzes' && <QuizBuilder /> }
+			{ section === 'skills' && <SkillsScreen /> }
+			{ section === 'gradebook' && <Gradebook /> }
+			{ section === 'reports' && <Reports /> }
+			{ section === 'commerce' && <Commerce /> }
+			{ section === 'settings' && (
+				<SettingsPanel school={ school } pane={ settingsPane } />
+			) }
+		</Suspense>
+	);
+
+	if ( data.section ) {
+		// Inside the hub: it draws the navigation, this draws one section.
+		return (
+			<div className="oml-dash-embedded">
+				{ ( data.schools.length > 0 || section === 'home' ) && (
+					<div className="oml-dash-toolbar">
+						{ data.schools.length > 0 && (
+							<Select
+								label={ __( 'School', 'ohmylms' ) }
+								value={ school }
+								onChange={ ( event ) =>
+									setSchool( Number( event.target.value ) )
+								}
+							>
+								{ data.owner && (
+									<option value={ 0 }>
+										{ __( 'All schools', 'ohmylms' ) }
+									</option>
+								) }
+								{ data.schools.map( ( item ) => (
+									<option key={ item.id } value={ item.id }>
+										{ item.name }
+									</option>
+								) ) }
+							</Select>
+						) }
+						{ section === 'home' && (
+							<Select
+								label={ __( 'Period', 'ohmylms' ) }
+								value={ range }
+								onChange={ ( event ) =>
+									setRange( event.target.value )
+								}
+							>
+								<option value="7">
+									{ __( 'Last 7 days', 'ohmylms' ) }
+								</option>
+								<option value="30">
+									{ __( 'Last 30 days', 'ohmylms' ) }
+								</option>
+								<option value="term">
+									{ __( 'This term', 'ohmylms' ) }
+								</option>
+							</Select>
+						) }
+					</div>
+				) }
+				<main className="oml-dash-main">{ content }</main>
+			</div>
+		);
 	}
 
 	return (
@@ -524,40 +616,7 @@ export function App() {
 							{ LABELS[ section ] || section }
 						</h1>
 					) }
-					<Suspense
-						fallback={ <p>{ __( 'Loading…', 'ohmylms' ) }</p> }
-					>
-						{ section === 'home' && (
-							<Home
-								school={ school }
-								range={ range }
-								onPeople={ () => go( 'people' ) }
-								onSchool={ setSchool }
-							/>
-						) }
-						{ section === 'schools' && <Schools /> }
-						{ section === 'classes' && (
-							<Classes school={ school } />
-						) }
-						{ section === 'people' && (
-							<People school={ school } view={ peopleView } />
-						) }
-						{ section === 'content' && (
-							<Content filter={ contentFilter } onOpen={ go } />
-						) }
-						{ section === 'courses' && <CourseBuilder /> }
-						{ section === 'quizzes' && <QuizBuilder /> }
-						{ section === 'skills' && <SkillsScreen /> }
-						{ section === 'gradebook' && <Gradebook /> }
-						{ section === 'reports' && <Reports /> }
-						{ section === 'commerce' && <Commerce /> }
-						{ section === 'settings' && (
-							<SettingsPanel
-								school={ school }
-								pane={ settingsPane }
-							/>
-						) }
-					</Suspense>
+					{ content }
 				</main>
 			</div>
 		</>

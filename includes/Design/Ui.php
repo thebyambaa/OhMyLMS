@@ -389,6 +389,16 @@ final class Ui {
 	}
 
 	/**
+	 * Textarea classes; matches assets/src/ui/controls.mjs.
+	 *
+	 * @param array $args size, invalid, error, class.
+	 * @return string
+	 */
+	public static function textarea_class( $args = array() ) {
+		return self::control_class( 'textarea', $args );
+	}
+
+	/**
 	 * Shared control class names, keeping unknown sizes at the default.
 	 *
 	 * @param string $kind input or select.

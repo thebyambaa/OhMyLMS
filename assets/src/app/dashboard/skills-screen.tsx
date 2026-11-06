@@ -1,7 +1,13 @@
 import { useEffect, useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { api } from './api';
-import { Disclosure, Field } from './field';
+import { Alert } from '../../ui/Alert';
+import { Button } from '../../ui/Button';
+import { Field } from '../../ui/Field';
+import { Input } from '../../ui/Input';
+import { Select } from '../../ui/Select';
+import { Textarea } from '../../ui/Textarea';
+import { Disclosure } from './field';
 
 interface Skill {
 	id: number;
@@ -24,11 +30,25 @@ export function SkillsScreen() {
 	const [ mn, setMn ] = useState( '' );
 	const [ parent, setParent ] = useState( 0 );
 	const [ message, setMessage ] = useState( '' );
+	const [ failed, setFailed ] = useState( false );
+	const [ busy, setBusy ] = useState( '' );
 	const [ csv, setCsv ] = useState( 'subject,grade,skill,mn\n' );
 	const [ focus, setFocus ] = useState( 0 );
 	const [ adding, setAdding ] = useState( false );
 	const [ coverOpen, setCoverOpen ] = useState( false );
 	const [ importOpen, setImportOpen ] = useState( false );
+
+	function done( text: string ) {
+		setFailed( false );
+		setMessage( text );
+		setBusy( '' );
+	}
+
+	function fail( failure: Error ) {
+		setFailed( true );
+		setMessage( failure.message );
+		setBusy( '' );
+	}
 
 	function load() {
 		void api< { skills: Skill[]; coverage: Skill[]; canEdit: boolean } >(
@@ -62,13 +82,13 @@ export function SkillsScreen() {
 					{ __( 'Skills', 'ohmylms' ) }
 				</h1>
 				{ canEdit && (
-					<button
-						type="button"
-						className="oml-dash-btn is-primary"
+					<Button
+						variant="primary"
+						aria-expanded={ adding }
 						onClick={ () => setAdding( ! adding ) }
 					>
 						{ __( 'Add skill', 'ohmylms' ) }
-					</button>
+					</Button>
 				) }
 			</header>
 			<ul className="oml-tree">
@@ -77,13 +97,14 @@ export function SkillsScreen() {
 						key={ skill.id }
 						style={ { marginLeft: indent( skill.depth ) } }
 					>
-						<button
-							type="button"
-							className="link"
+						<Button
+							variant="tertiary"
+							size="sm"
+							aria-pressed={ focus === skill.id }
 							onClick={ () => setFocus( skill.id ) }
 						>
 							{ skill.name }
-						</button>
+						</Button>
 						{ skill.mn && (
 							<span className="oml-dash-note"> { skill.mn }</span>
 						) }
@@ -95,6 +116,7 @@ export function SkillsScreen() {
 					className="oml-dash-card"
 					onSubmit={ ( event ) => {
 						event.preventDefault();
+						setBusy( 'add' );
 						void api( '/studio/skills', {
 							method: 'POST',
 							body: JSON.stringify( {
@@ -111,60 +133,58 @@ export function SkillsScreen() {
 								setName( '' );
 								setMn( '' );
 								setAdding( false );
-								setMessage( __( 'Saved.', 'ohmylms' ) );
+								done( __( 'Saved.', 'ohmylms' ) );
 							} )
-							.catch( ( failure: Error ) =>
-								setMessage( failure.message )
-							);
+							.catch( ( failure: Error ) => fail( failure ) );
 					} }
 				>
-					<Field label={ __( 'Name (English)', 'ohmylms' ) }>
-						<input
-							value={ name }
-							onChange={ ( event ) =>
-								setName( event.target.value )
-							}
-						/>
-					</Field>
-					<Field label={ __( 'Name (Mongolian)', 'ohmylms' ) }>
-						<input
-							value={ mn }
-							onChange={ ( event ) =>
-								setMn( event.target.value )
-							}
-						/>
-					</Field>
-					<Field label={ __( 'Parent', 'ohmylms' ) }>
-						<select
-							value={ parent }
-							onChange={ ( event ) =>
-								setParent( Number( event.target.value ) )
-							}
-						>
-							<option value={ 0 }>
-								{ __( 'Subject', 'ohmylms' ) }
+					<Input
+						label={ __( 'Name (English)', 'ohmylms' ) }
+						required
+						value={ name }
+						onChange={ ( event ) => setName( event.target.value ) }
+					/>
+					<Input
+						label={ __( 'Name (Mongolian)', 'ohmylms' ) }
+						lang="mn"
+						value={ mn }
+						onChange={ ( event ) => setMn( event.target.value ) }
+					/>
+					<Select
+						label={ __( 'Parent', 'ohmylms' ) }
+						value={ parent }
+						onChange={ ( event ) =>
+							setParent( Number( event.target.value ) )
+						}
+					>
+						<option value={ 0 }>
+							{ __( 'Subject', 'ohmylms' ) }
+						</option>
+						{ subjects.map( ( skill ) => (
+							<option key={ skill.id } value={ skill.id }>
+								{ skill.name }
 							</option>
-							{ subjects.map( ( skill ) => (
-								<option key={ skill.id } value={ skill.id }>
-									{ skill.name }
-								</option>
-							) ) }
-							{ grades.map( ( skill ) => (
-								<option key={ skill.id } value={ skill.id }>
-									{ skill.name }
-								</option>
-							) ) }
-						</select>
-					</Field>
-					<button type="submit" className="oml-dash-btn is-primary">
-						{ __( 'Add', 'ohmylms' ) }
-					</button>
+						) ) }
+						{ grades.map( ( skill ) => (
+							<option key={ skill.id } value={ skill.id }>
+								{ skill.name }
+							</option>
+						) ) }
+					</Select>
+					<Button
+						type="submit"
+						variant="primary"
+						loading={ busy === 'add' }
+					>
+						{ __( 'Save skill', 'ohmylms' ) }
+					</Button>
 				</form>
 			) }
 			{ focus > 0 && canEdit && (
 				<form
 					onSubmit={ ( event ) => {
 						event.preventDefault();
+						setBusy( 'pre' );
 						const selected = [
 							...event.currentTarget.querySelectorAll< HTMLInputElement >(
 								'input[type="checkbox"]:checked'
@@ -175,13 +195,9 @@ export function SkillsScreen() {
 							body: JSON.stringify( { ids: selected } ),
 						} )
 							.then( () =>
-								setMessage(
-									__( 'Prerequisites saved.', 'ohmylms' )
-								)
+								done( __( 'Prerequisites saved.', 'ohmylms' ) )
 							)
-							.catch( ( failure: Error ) =>
-								setMessage( failure.message )
-							);
+							.catch( ( failure: Error ) => fail( failure ) );
 					} }
 				>
 					<h2>{ __( 'Prerequisites', 'ohmylms' ) }</h2>
@@ -207,9 +223,9 @@ export function SkillsScreen() {
 								{ skill.name }
 							</label>
 						) ) }
-					<button type="submit" className="oml-dash-btn">
+					<Button type="submit" loading={ busy === 'pre' }>
 						{ __( 'Save prerequisites', 'ohmylms' ) }
-					</button>
+					</Button>
 				</form>
 			) }
 			<Disclosure
@@ -244,6 +260,7 @@ export function SkillsScreen() {
 						className="oml-drop"
 						onSubmit={ ( event ) => {
 							event.preventDefault();
+							setBusy( 'import' );
 							const form = new FormData();
 							form.set( 'csv', csv );
 							const file = (
@@ -259,37 +276,51 @@ export function SkillsScreen() {
 								{ method: 'POST', body: form }
 							)
 								.then( ( body ) =>
-									setMessage( String( body.imported ) )
+									done(
+										sprintf(
+											/* translators: %d: rows imported. */
+											__(
+												'Imported %d rows.',
+												'ohmylms'
+											),
+											body.imported
+										)
+									)
 								)
-								.catch( ( failure: Error ) =>
-									setMessage( failure.message )
-								);
+								.catch( ( failure: Error ) => fail( failure ) );
 						} }
 					>
 						<h2>{ __( 'Import CSV', 'ohmylms' ) }</h2>
-						<Field label={ __( 'CSV file', 'ohmylms' ) }>
+						<Field
+							id="oml-skills-file"
+							label={ __( 'CSV file', 'ohmylms' ) }
+						>
 							<input
+								id="oml-skills-file"
 								name="file"
 								type="file"
 								accept=".csv,text/csv"
 							/>
 						</Field>
-						<Field label={ __( 'Or paste rows', 'ohmylms' ) }>
-							<textarea
-								value={ csv }
-								rows={ 4 }
-								onChange={ ( event ) =>
-									setCsv( event.target.value )
-								}
-							/>
-						</Field>
-						<button type="submit" className="oml-dash-btn">
+						<Textarea
+							label={ __( 'Or paste rows', 'ohmylms' ) }
+							value={ csv }
+							rows={ 4 }
+							onChange={ ( event ) =>
+								setCsv( event.target.value )
+							}
+						/>
+						<Button type="submit" loading={ busy === 'import' }>
 							{ __( 'Import', 'ohmylms' ) }
-						</button>
+						</Button>
 					</form>
 				</Disclosure>
 			) }
-			{ message && <p role="status">{ message }</p> }
+			{ message && (
+				<Alert tone={ failed ? 'danger' : 'success' }>
+					{ message }
+				</Alert>
+			) }
 		</section>
 	);
 }

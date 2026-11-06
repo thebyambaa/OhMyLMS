@@ -11,7 +11,7 @@ import {
 	alertClass,
 	alertRole,
 } from '../../assets/src/ui/components.mjs';
-import { inputClass, selectClass } from '../../assets/src/ui/controls.mjs';
+import { inputClass, selectClass, textareaClass } from '../../assets/src/ui/controls.mjs';
 
 const css = fs.readFileSync(
 	new URL( '../../assets/css/oml-ui.css', import.meta.url ),
@@ -44,6 +44,7 @@ const cases = {
 		{ error: 'Required' },
 		{ size: 'bogus' },
 	],
+	textarea: [ {}, { size: 'sm' }, { invalid: true }, { error: 'Required', className: 'extra' } ],
 	select: [
 		{},
 		{ size: 'sm' },
@@ -60,6 +61,7 @@ const builders = {
 	progress: progressClass,
 	input: inputClass,
 	select: selectClass,
+	textarea: textareaClass,
 };
 
 test( 'component classes follow the documented modifiers', () => {

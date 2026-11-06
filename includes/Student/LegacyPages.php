@@ -181,16 +181,21 @@ final class LegacyPages {
 	 * @return string New hub URL, or empty when this is not the old hub address.
 	 */
 	public static function renamed_hub_target( $request_uri ) {
-		$record = get_option( Hub::SLUG_OPTION );
-		$base   = Hub::base_url();
-		if ( ! is_array( $record ) || 'renamed' !== ( $record['result'] ?? '' ) || empty( $record['old_path'] ) || ! $base ) {
+		$base = Hub::base_url();
+		if ( ! $base ) {
 			return '';
 		}
+		// The hub's retired addresses: the slug it had before the current one, and the path recorded by an earlier rename.
+		$record = get_option( Hub::SLUG_OPTION );
+		$parent = trailingslashit( dirname( rtrim( (string) wp_parse_url( $base, PHP_URL_PATH ), '/' ) ) );
+		$olds   = array( $parent . Hub::LEGACY_SLUG . '/' );
+		if ( is_array( $record ) && 'renamed' === ( $record['result'] ?? '' ) && ! empty( $record['old_path'] ) ) {
+			$olds[] = trailingslashit( (string) $record['old_path'] );
+		}
 		$request = wp_parse_url( $request_uri );
-		$old     = trailingslashit( (string) $record['old_path'] );
 		$current = trailingslashit( $request['path'] ?? '/' );
 		$new     = trailingslashit( (string) wp_parse_url( $base, PHP_URL_PATH ) );
-		if ( $old !== $current || $new === $old ) {
+		if ( ! in_array( $current, $olds, true ) || $new === $current ) {
 			return '';
 		}
 		$query = (string) ( $request['query'] ?? '' );

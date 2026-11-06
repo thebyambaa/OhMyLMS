@@ -1,5 +1,6 @@
 import { cloneElement, useId } from '@wordpress/element';
 import type { ReactElement, ReactNode } from 'react';
+import { Button } from '../../ui/Button';
 
 /**
  * A labelled control. The label’s `htmlFor` matches the control id.
@@ -54,14 +55,14 @@ export function Disclosure( {
 } ) {
 	return (
 		<div className="oml-disclose">
-			<button
-				type="button"
-				className="oml-disclose-btn"
+			<Button
+				variant="tertiary"
+				size="sm"
 				aria-expanded={ open }
 				onClick={ onToggle }
 			>
 				{ title }
-			</button>
+			</Button>
 			{ open ? (
 				<div className="oml-disclose-body">{ children }</div>
 			) : null }

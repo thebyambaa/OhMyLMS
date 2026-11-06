@@ -633,6 +633,12 @@ body.oml-ds .arco-btn {
 	color: var(--oml-text);
 }
 
+.oml-field .oml-textarea {
+	min-height: calc(var(--oml-button-height-md) * 2);
+	padding-block: var(--oml-space-2);
+	resize: vertical;
+}
+
 .oml-field .oml-control-sm {
 	min-height: var(--oml-button-height-sm);
 	font-size: var(--oml-font-size-xs);

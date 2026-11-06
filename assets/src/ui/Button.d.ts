@@ -11,6 +11,7 @@ type Shared = {
 	block?: boolean;
 	className?: string;
 	disabled?: boolean;
+	loading?: boolean;
 	children?: ReactNode;
 };
 

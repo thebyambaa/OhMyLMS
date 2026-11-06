@@ -579,18 +579,6 @@ body.oml-dashboard-page {
 	padding: 0 0.35rem;
 }
 
-.oml-disclose-btn {
-	width: auto;
-	margin-bottom: 0.5rem;
-	padding: 0;
-	border: 0;
-	background: transparent;
-	color: var(--oml-muted);
-	font: inherit;
-	font-size: var(--oml-font-size-sm, 13px);
-	cursor: pointer;
-}
-
 .oml-pills.is-quiet li {
 	background: transparent;
 	color: var(--oml-muted);
@@ -700,4 +688,12 @@ body.oml-dashboard-page {
 	.oml-dash-logo {
 		width: 100%;
 	}
+}
+
+/* Inside the hub: no shell of its own, only a toolbar above one section. */
+.oml-dash-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6rem;
+	margin-bottom: 1rem;
 }

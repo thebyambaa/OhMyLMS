@@ -8,6 +8,7 @@ import { buttonClass } from './button.mjs';
  * @property {boolean}                   [block]     Full width.
  * @property {string}                    [className] Additional classes.
  * @property {boolean}                   [disabled]  Disabled; links get aria-disabled.
+ * @property {boolean}                   [loading]   Busy: blocks repeat clicks and keeps the label for assistive technology.
  * @property {string}                    [href]      Renders a link.
  * @property {import('react').ReactNode} [children]  Content.
  */
@@ -24,11 +25,19 @@ export function Button( {
 	block,
 	className,
 	disabled,
+	loading,
 	href,
 	children,
 	...rest
 } ) {
-	const classes = buttonClass( { variant, size, block, className } );
+	const classes = buttonClass( {
+		variant,
+		size,
+		block,
+		className: [ className, loading ? 'is-loading' : '' ]
+			.filter( Boolean )
+			.join( ' ' ),
+	} );
 	if ( href ) {
 		return createElement(
 			'a',
@@ -43,7 +52,13 @@ export function Button( {
 	}
 	return createElement(
 		'button',
-		{ type: 'button', ...rest, className: classes, disabled },
+		{
+			type: 'button',
+			...rest,
+			className: classes,
+			disabled: disabled || loading,
+			'aria-busy': loading ? 'true' : undefined,
+		},
 		children
 	);
 }

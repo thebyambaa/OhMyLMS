@@ -20,10 +20,10 @@ final class Hub {
 	const OPTION = 'ohmylms_student_hub';
 
 	/** Slug of the generated public hub page. */
-	const SLUG = 'profile';
+	const SLUG = 'dashboard';
 
-	/** Slug used before the hub moved to the shorter public address. */
-	const LEGACY_SLUG = 'student-home';
+	/** Slug used before the hub became the dashboard address. */
+	const LEGACY_SLUG = 'profile';
 
 	/** Records the one-time slug migration and the old path to redirect. */
 	const SLUG_OPTION = 'ohmylms_hub_slug_migration';
@@ -655,6 +655,10 @@ final class Hub {
 			wp_enqueue_style( 'ohmylms-shortcode-course-list', plugins_url( 'assets/css/shortcode-course-list.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/shortcode-course-list.css' ) );
 		}
 		Dashboard::assets();
+		$state = self::state();
+		if ( ! empty( $state['studio_mode'] ) && isset( StudioWorkspace::tabs()[ $state['section'] ] ) ) {
+			\OhMyLMS\Dashboard\Front::enqueue( StudioWorkspace::tabs()[ $state['section'] ][0] );
+		}
 		if ( 'classes' === get_query_var( 'hub_section' ) ) {
 			\OhMyLMS\Schools\Views::assets();
 			wp_enqueue_style( 'ohmylms-schools' );
@@ -709,9 +713,10 @@ final class Hub {
 		$teacher_mode = $state['teacher_mode'];
 		$parent_mode  = $state['parent_mode'];
 		$school_mode  = $state['school_mode'];
+		$studio_mode  = $state['studio_mode'];
 		$student      = new Student( get_current_user_id() );
 		ob_start();
-		ohmylms_get_template( 'student-hub/workspace.php', compact( 'config', 'section', 'views', 'view', 'student', 'teacher_mode', 'parent_mode', 'school_mode' ) );
+		ohmylms_get_template( 'student-hub/workspace.php', compact( 'config', 'section', 'views', 'view', 'student', 'teacher_mode', 'parent_mode', 'school_mode', 'studio_mode' ) );
 		return ob_get_clean();
 	}
 
@@ -786,6 +791,24 @@ final class Hub {
 		$teacher_mode = 'teacher' === $hub_role;
 		$parent_mode  = 'parent' === $hub_role;
 		$school_mode  = 'school' === $hub_role;
+		$studio_mode  = 'studio' === $hub_role;
+		if ( $studio_mode ) {
+			$studio = StudioWorkspace::tabs();
+			if ( ! $studio ) {
+				return array(
+					'kind'    => 'unavailable',
+					'message' => __( 'The studio is not available for this account.', 'ohmylms' ),
+				);
+			}
+			$config['tabs']  = array_merge( array_keys( $studio ), array( 'account' ) );
+			$config['title'] = __( 'Studio', 'ohmylms' );
+			foreach ( $studio as $key => $row ) {
+				$config['labels'][ $key ] = $row[1];
+			}
+			$section = in_array( get_query_var( 'hub_section' ), $config['tabs'], true ) ? get_query_var( 'hub_section' ) : array_key_first( $studio );
+			$views   = 'account' === $section ? self::views( $section ) : array();
+			$view    = isset( $views[ $view ] ) ? $view : ( array_key_first( $views ) ?? '' );
+		}
 		if ( $school_mode ) {
 			if ( ! SchoolWorkspace::available() ) {
 				return array(
@@ -838,7 +861,7 @@ final class Hub {
 			$views                              = in_array( $section, array( 'classes', 'work', 'roster', 'progress', 'class-settings' ), true ) ? array() : self::views( $section );
 			$view                               = isset( $views[ $view ] ) ? $view : ( array_key_first( $views ) ?? '' );
 		}
-		return compact( 'config', 'section', 'views', 'view', 'teacher_mode', 'parent_mode', 'school_mode' ) + array( 'kind' => 'workspace' );
+		return compact( 'config', 'section', 'views', 'view', 'teacher_mode', 'parent_mode', 'school_mode', 'studio_mode' ) + array( 'kind' => 'workspace' );
 	}
 
 	/**

@@ -7,6 +7,7 @@ export interface DashboardBoot {
 	canManage: boolean;
 	schools: Array< { id: number; name: string; role: string } >;
 	nav: string[];
+	section?: string;
 	links: Record< string, string >;
 }
 
