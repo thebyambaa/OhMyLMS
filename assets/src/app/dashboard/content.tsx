@@ -1,6 +1,6 @@
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import { api, boot } from './api';
+import { api } from './api';
 import type { ContentItem } from './types';
 
 /**
@@ -8,9 +8,15 @@ import type { ContentItem } from './types';
  *
  * @param props        Props.
  * @param props.filter course, lesson or quiz.
+ * @param props.onOpen Open a studio section.
  */
-export function Content( { filter }: { filter: string } ) {
-	const links = boot().links;
+export function Content( {
+	filter,
+	onOpen,
+}: {
+	filter: string;
+	onOpen: ( section: string ) => void;
+} ) {
 	const [ type, setType ] = useState( filter || 'course' );
 	const [ status, setStatus ] = useState( '' );
 	const [ search, setSearch ] = useState( '' );
@@ -28,15 +34,27 @@ export function Content( { filter }: { filter: string } ) {
 	return (
 		<section>
 			<div className="oml-dash-actions">
-				<a className="oml-dash-btn" href={ links.courses }>
+				<button
+					type="button"
+					className="oml-dash-btn"
+					onClick={ () => onOpen( 'courses' ) }
+				>
 					{ __( 'Course builder', 'ohmylms' ) }
-				</a>
-				<a className="oml-dash-btn" href={ links.quizzes }>
+				</button>
+				<button
+					type="button"
+					className="oml-dash-btn"
+					onClick={ () => onOpen( 'quizzes' ) }
+				>
 					{ __( 'Quiz builder', 'ohmylms' ) }
-				</a>
-				<a className="oml-dash-btn" href={ links.skills }>
+				</button>
+				<button
+					type="button"
+					className="oml-dash-btn"
+					onClick={ () => onOpen( 'skills' ) }
+				>
 					{ __( 'Skills', 'ohmylms' ) }
-				</a>
+				</button>
 			</div>
 			<div className="oml-dash-actions">
 				<button

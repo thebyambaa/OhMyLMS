@@ -22,6 +22,21 @@ const Content = lazy( () =>
 		/* webpackChunkName: "admin-app-dashboard-content" */ './content'
 	).then( ( mod ) => ( { default: mod.Content } ) )
 );
+const CourseBuilder = lazy( () =>
+	import(
+		/* webpackChunkName: "admin-app-dashboard-courses" */ './course-builder'
+	).then( ( mod ) => ( { default: mod.CourseBuilder } ) )
+);
+const QuizBuilder = lazy( () =>
+	import(
+		/* webpackChunkName: "admin-app-dashboard-quizzes" */ './quiz-builder'
+	).then( ( mod ) => ( { default: mod.QuizBuilder } ) )
+);
+const SkillsScreen = lazy( () =>
+	import(
+		/* webpackChunkName: "admin-app-dashboard-skills" */ './skills-screen'
+	).then( ( mod ) => ( { default: mod.SkillsScreen } ) )
+);
 const Gradebook = lazy( () =>
 	import(
 		/* webpackChunkName: "admin-app-dashboard-gradebook" */ './gradebook'
@@ -54,6 +69,9 @@ const LABELS: Record< string, string > = {
 	classes: __( 'Classes', 'ohmylms' ),
 	people: __( 'People', 'ohmylms' ),
 	content: __( 'Content', 'ohmylms' ),
+	courses: __( 'Courses', 'ohmylms' ),
+	quizzes: __( 'Quizzes & exams', 'ohmylms' ),
+	skills: __( 'Skills', 'ohmylms' ),
 	gradebook: __( 'Gradebook', 'ohmylms' ),
 	reports: __( 'Reports', 'ohmylms' ),
 	commerce: __( 'Commerce', 'ohmylms' ),
@@ -64,6 +82,12 @@ function sectionFromUrl() {
 	const value =
 		new URLSearchParams( window.location.search ).get( 'section' ) ||
 		'home';
+	if (
+		[ 'courses', 'quizzes', 'skills' ].includes( value ) &&
+		boot().nav.includes( 'content' )
+	) {
+		return value;
+	}
 	return boot().nav.includes( value ) ? value : boot().nav[ 0 ] || 'home';
 }
 
@@ -223,10 +247,7 @@ export function App() {
 						<div className="oml-dash-sub">
 							<button
 								type="button"
-								onClick={ () => {
-									setContentFilter( 'course' );
-									go( 'content' );
-								} }
+								onClick={ () => go( 'courses' ) }
 							>
 								{ __( 'Courses', 'ohmylms' ) }
 							</button>
@@ -241,16 +262,16 @@ export function App() {
 							</button>
 							<button
 								type="button"
-								onClick={ () => {
-									setContentFilter( 'quiz' );
-									go( 'content' );
-								} }
+								onClick={ () => go( 'quizzes' ) }
 							>
 								{ __( 'Quizzes & exams', 'ohmylms' ) }
 							</button>
-							<a href={ data.links.skills }>
+							<button
+								type="button"
+								onClick={ () => go( 'skills' ) }
+							>
 								{ __( 'Skills', 'ohmylms' ) }
-							</a>
+							</button>
 						</div>
 					) }
 					{ data.nav.includes( 'settings' ) && (
@@ -315,8 +336,11 @@ export function App() {
 							<People school={ school } view={ peopleView } />
 						) }
 						{ section === 'content' && (
-							<Content filter={ contentFilter } />
+							<Content filter={ contentFilter } onOpen={ go } />
 						) }
+						{ section === 'courses' && <CourseBuilder /> }
+						{ section === 'quizzes' && <QuizBuilder /> }
+						{ section === 'skills' && <SkillsScreen /> }
 						{ section === 'gradebook' && <Gradebook /> }
 						{ section === 'reports' && <Reports /> }
 						{ section === 'commerce' && <Commerce /> }
