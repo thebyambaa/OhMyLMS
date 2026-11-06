@@ -115,6 +115,7 @@ add_action( 'init', array( 'OhMyLMS\\Extensions\\Bootstrap', 'init' ), 5 );
 \OhMyLMS\Admin\AppPage::init();
 \OhMyLMS\Assets\AdminAppAssets::init();
 \OhMyLMS\Dashboard\Bootstrap::init();
+\OhMyLMS\Dashboard\Front::init();
 \OhMyLMS\Schools\Bootstrap::init();
 \OhMyLMS\Family\Bootstrap::init();
 \OhMyLMS\Certificates\Bootstrap::init();

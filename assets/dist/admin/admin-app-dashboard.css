@@ -1,0 +1,333 @@
+body.oml-dashboard-page {
+	margin: 0;
+	overflow-x: clip;
+}
+
+.oml-dashboard .screen-reader-text {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+}
+
+.oml-dashboard {
+	min-height: 100vh;
+	max-width: 100%;
+	overflow-x: clip;
+	background: var(--oml-background);
+	color: var(--oml-text);
+	font-family: var(--oml-font-family, inherit);
+}
+
+.oml-dashboard * {
+	box-sizing: border-box;
+}
+
+.oml-dash-top,
+.oml-dash-side {
+	background: var(--oml-surface);
+	border-color: var(--oml-border);
+}
+
+.oml-dash-top {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-2, 12px);
+	align-items: center;
+	padding: 0.7rem 1.2rem;
+	border-bottom: 1px solid var(--oml-border);
+	position: sticky;
+	top: 0;
+	z-index: 10;
+}
+
+.oml-dash-logo {
+	margin-right: auto;
+	color: var(--oml-primary);
+	font-weight: 800;
+}
+
+.oml-dash-layout {
+	display: grid;
+	grid-template-columns: 230px minmax(0, 1fr);
+	min-width: 0;
+}
+
+.oml-dash-side {
+	border-right: 1px solid var(--oml-border);
+	padding: 1rem 0.7rem;
+	min-height: calc(100vh - 58px);
+}
+
+.oml-dash-side a,
+.oml-dash-side button {
+	display: block;
+	width: 100%;
+	padding: 0.45rem 0.7rem;
+	border: 0;
+	border-radius: var(--oml-radius-control, 8px);
+	background: transparent;
+	color: var(--oml-heading);
+	font: inherit;
+	font-weight: 500;
+	text-align: left;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.oml-dash-side a[aria-current="page"],
+.oml-dash-side button[aria-current="page"] {
+	background: var(--oml-primary-soft);
+	color: var(--oml-primary);
+}
+
+.oml-dash-sub a,
+.oml-dash-sub button {
+	padding-left: 1.6rem;
+	font-size: 0.92rem;
+}
+
+.oml-dash-main {
+	min-width: 0;
+	max-width: 100%;
+	padding: 1.2rem;
+	overflow-x: auto;
+}
+
+.oml-dash-kpis {
+	display: grid;
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+	gap: 0.8rem;
+	margin: 1rem 0;
+}
+
+.oml-dash-card {
+	min-width: 0;
+	padding: 0.9rem;
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-card, 12px);
+	background: var(--oml-surface);
+}
+
+.oml-dash-card h2,
+.oml-dash-main h1 {
+	margin: 0 0 0.4rem;
+	color: var(--oml-heading);
+}
+
+.oml-dash-kpi .value {
+	color: var(--oml-heading);
+	font-size: 1.5rem;
+	font-weight: 800;
+}
+
+.oml-dash-note,
+.oml-dash-delta {
+	color: var(--oml-muted);
+	font-size: 0.82rem;
+}
+
+.oml-dash-delta.is-up {
+	color: var(--oml-success);
+}
+
+.oml-dash-delta.is-down {
+	color: var(--oml-danger);
+}
+
+.oml-dash-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+	gap: 1rem;
+	margin-bottom: 1rem;
+}
+
+.oml-dash-table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.oml-dash-table th,
+.oml-dash-table td {
+	padding: 0.45rem;
+	border-bottom: 1px solid var(--oml-border);
+	text-align: left;
+}
+
+.oml-dash-table button.link {
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--oml-link);
+	font: inherit;
+	cursor: pointer;
+}
+
+.oml-dash-heat td {
+	text-align: center;
+	font-weight: 700;
+	border-radius: 6px;
+}
+
+.oml-dash-heat .is-attempted,
+.oml-dash-heat .is-familiar {
+	background: var(--oml-warning-soft);
+	color: var(--oml-heading);
+}
+
+.oml-dash-heat .is-proficient {
+	background: var(--oml-primary);
+	color: var(--oml-on-primary);
+}
+
+.oml-dash-heat .is-mastered {
+	background: var(--oml-success);
+	color: var(--oml-on-primary);
+}
+
+.oml-dash-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.oml-dash-btn {
+	padding: 0.45rem 0.8rem;
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-button, 8px);
+	background: var(--oml-surface);
+	color: var(--oml-heading);
+	font: inherit;
+	cursor: pointer;
+}
+
+.oml-dash-btn.is-primary {
+	border-color: var(--oml-primary);
+	background: var(--oml-primary);
+	color: var(--oml-on-primary);
+}
+
+.oml-dash-menu {
+	display: none;
+}
+
+.oml-dash-dialog {
+	width: min(520px, calc(100vw - 2rem));
+	padding: 1rem;
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-card, 12px);
+	background: var(--oml-surface);
+	color: var(--oml-text);
+}
+
+.oml-dash-dialog label,
+.oml-dash-field {
+	display: block;
+	margin: 0.6rem 0;
+}
+
+.oml-dash-dialog input,
+.oml-dash-dialog select,
+.oml-dash-dialog textarea,
+.oml-dash-field input,
+.oml-dash-field select,
+.oml-dash-field textarea,
+.oml-dash-top select,
+.oml-dash-main input,
+.oml-dash-main select,
+.oml-dash-main textarea {
+	max-width: 100%;
+	padding: 0.4rem 0.5rem;
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-control, 8px);
+	background: var(--oml-surface);
+	color: var(--oml-text);
+	font: inherit;
+}
+
+.oml-dash-steps {
+	display: flex;
+	gap: 0.4rem;
+	margin-bottom: 0.8rem;
+}
+
+.oml-dash-steps span {
+	flex: 1;
+	height: 5px;
+	border-radius: 9px;
+	background: var(--oml-border);
+}
+
+.oml-dash-steps span.is-on {
+	background: var(--oml-primary);
+}
+
+.oml-dash-preview {
+	margin-top: 1rem;
+	padding: 1rem;
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-card, 12px);
+	background: var(--oml-background);
+}
+
+.oml-dash-preview svg {
+	width: 48px;
+	height: 48px;
+}
+
+.oml-dash-preview-band {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6rem;
+	align-items: center;
+	margin: 0.6rem 0;
+	padding: 0.8rem;
+	border-radius: var(--oml-radius-card, 12px);
+}
+
+.oml-dash-colors {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+	gap: 0.5rem;
+}
+
+@media (max-width: 1100px) {
+	.oml-dash-kpis {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+
+	.oml-dash-grid {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+@media (max-width: 760px) {
+	.oml-dash-layout {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.oml-dash-side {
+		display: none;
+		min-height: 0;
+	}
+
+	.oml-dash-side.is-open {
+		display: block;
+	}
+
+	.oml-dash-menu {
+		display: inline-flex;
+	}
+
+	.oml-dash-kpis {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.oml-dash-logo {
+		width: 100%;
+	}
+}
+
+
+/*# sourceMappingURL=admin-app-dashboard.css.map*/

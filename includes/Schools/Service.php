@@ -308,6 +308,7 @@ final class Service {
 						)
 					); }
 				self::audit( $school, 'class_created', $id );
+				\OhMyLMS\Dashboard\FrontSummary::bust();
 				return array( 'id' => $id );
 			}
 		);
@@ -494,6 +495,7 @@ final class Service {
 			$record = Access::classroom( $class, true );
 			self::need( $record && (int) $record['school_id'] === $school && in_array( $role, array( 'teacher', 'student' ), true ), 'Select a valid class for this invitation.' );
 		}
+		$days  = isset( $data['days'] ) ? max( 1, min( 30, (int) $data['days'] ) ) : 2;
 		$token = bin2hex( random_bytes( 32 ) );
 		$id    = self::insert(
 			'school_invitations',
@@ -504,7 +506,7 @@ final class Service {
 				'student_user_id' => $student,
 				'role'            => $role,
 				'email'           => $email,
-				'expires_at'      => gmdate( 'Y-m-d H:i:s', time() + 2 * DAY_IN_SECONDS ),
+				'expires_at'      => gmdate( 'Y-m-d H:i:s', time() + $days * DAY_IN_SECONDS ),
 				'invited_by'      => get_current_user_id(),
 				'created_at'      => self::now(),
 			)
@@ -512,18 +514,9 @@ final class Service {
 		$url   = \OhMyLMS\Student\Hub::invitation_url( $token, $role );
 		// Return the link to the authorized staff member. Mail is sent only on an explicit UI action.
 		if ( ! empty( $data['send_email'] ) && 'activation' !== $role ) {
-			$sent = RecipientLocale::run(
-				$email,
-				static function () use ( $email, $url ) {
-					return wp_mail(
-						$email,
-						__( 'Your OhMyLMS invitation', 'ohmylms' ),
-						/* translators: %s: invitation link. */
-						sprintf( __( 'Open this invitation within 48 hours: %s', 'ohmylms' ), $url )
-					);
-				}
-			);
+			$sent = self::mail_invite( $email, $url, $days );
 		}
+		\OhMyLMS\Dashboard\FrontSummary::bust();
 		self::audit( $school, 'invitation_created', $id );
 		return array(
 			'id'         => $id,
@@ -554,7 +547,94 @@ final class Service {
 		self::need( $invite && (int) $invite['school_id'] === $school, 'Invitation not found.' );
 		self::update( 'school_invitations', array( 'revoked_at' => self::now() ), array( 'id' => $id ) );
 		self::audit( $school, 'invitation_revoked', $id );
+		\OhMyLMS\Dashboard\FrontSummary::bust();
 		return array( 'success' => true );
+	}
+
+	/**
+	 * Send the same pending invitation again with a new link and a fresh expiry. The previous link stops working.
+	 *
+	 * @param int $school School ID.
+	 * @param int $id     Invitation ID.
+	 * @param int $days   Days until the new link expires.
+	 * @return array{id:int,url:string,email_sent:bool}
+	 */
+	public static function resend_invite( $school, $id, $days = 14 ) {
+		Access::require_access( Access::school( $school ) );
+		$invite = self::row( 'school_invitations', $id );
+		self::need( $invite && (int) $invite['school_id'] === (int) $school, 'Invitation not found.' );
+		self::need( empty( $invite['consumed_at'] ) && empty( $invite['revoked_at'] ), 'That invitation is no longer pending.' );
+		self::need( 'activation' !== $invite['role'] && is_email( $invite['email'] ), 'This invitation cannot be emailed.' );
+		$days  = max( 1, min( 30, (int) $days ) );
+		$token = bin2hex( random_bytes( 32 ) );
+		self::update(
+			'school_invitations',
+			array(
+				'token_hash' => hash( 'sha256', $token ),
+				'expires_at' => gmdate( 'Y-m-d H:i:s', time() + $days * DAY_IN_SECONDS ),
+			),
+			array( 'id' => (int) $id )
+		);
+		$url  = \OhMyLMS\Student\Hub::invitation_url( $token, $invite['role'] );
+		$sent = self::mail_invite( $invite['email'], $url, $days );
+		self::audit( $school, 'invitation_resent', $id );
+		\OhMyLMS\Dashboard\FrontSummary::bust();
+		return array(
+			'id'         => (int) $id,
+			'url'        => $url,
+			'email_sent' => (bool) $sent,
+		);
+	}
+
+	/**
+	 * Email an invitation link.
+	 *
+	 * @param string $email Recipient.
+	 * @param string $url   Invitation URL.
+	 * @param int    $days  How long the link lasts.
+	 * @return bool
+	 */
+	private static function mail_invite( $email, $url, $days ) {
+		return (bool) RecipientLocale::run(
+			$email,
+			static function () use ( $email, $url, $days ) {
+				return wp_mail(
+					$email,
+					__( 'Your OhMyLMS invitation', 'ohmylms' ),
+					sprintf(
+						/* translators: 1: number of days, 2: invitation link. */
+						__( 'Open this invitation within %1$d days: %2$s', 'ohmylms' ),
+						(int) $days,
+						$url
+					)
+				);
+			}
+		);
+	}
+
+	/**
+	 * An active academic year for a school, creating “Current year” when the school has none.
+	 *
+	 * @param int $school School ID.
+	 * @return int Year ID.
+	 */
+	public static function ensure_default_year( $school ) {
+		Access::require_access( Access::school( $school ) );
+		global $wpdb;
+		$existing = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM %i WHERE school_id=%d AND status='active' ORDER BY id DESC LIMIT 1", Schema::table( 'academic_years' ), $school ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- The class wizard needs the current year before it inserts a class.
+		if ( $existing ) {
+			return (int) $existing;
+		}
+		$year = (int) gmdate( 'Y' );
+		$id   = self::create_year(
+			$school,
+			array(
+				'label'     => __( 'Current year', 'ohmylms' ),
+				'starts_at' => $year . '-01-01',
+				'ends_at'   => $year . '-12-31',
+			)
+		);
+		return (int) ( $id['id'] ?? 0 );
 	}
 	/**
 	 * Role of a currently valid invitation, without consuming it; empty when invalid.

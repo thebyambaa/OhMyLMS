@@ -312,13 +312,13 @@ final class Repository {
 	 * Courses the gradebook picker offers among some ids: not trashed or auto-drafts, by title, at most 500.
 	 * A failed query reads as no courses.
 	 *
-	 * @param int[] $ids Course ids of the scope.
+	 * @param int[]|null $ids Course ids of the scope. Null is every course (the “all” scope).
 	 * @return array[] Rows: id, title.
 	 */
-	public static function picker_courses( array $ids ) {
+	public static function picker_courses( $ids ) {
 		global $wpdb;
 		$args = array( $wpdb->posts, OHMYLMS_COURSE_CPT );
-		$in   = Scope::in_condition( 'ID', $ids, $args );
+		$in   = Scope::in_condition( 'ID', is_array( $ids ) || null === $ids ? $ids : array(), $args );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.DirectDatabaseQuery -- Fragment uses placeholders and $args holds one value per placeholder; bounded.
 		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT ID AS id, post_title AS title FROM %i WHERE post_type = %s AND post_status NOT IN ( 'trash', 'auto-draft' ) AND $in ORDER BY post_title, ID LIMIT 500", $args ), ARRAY_A );
 		return is_array( $rows ) ? $rows : array();
