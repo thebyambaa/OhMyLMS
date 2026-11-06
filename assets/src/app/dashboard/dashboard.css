@@ -519,6 +519,100 @@ body.oml-dashboard-page {
 	font-weight: var(--oml-weight-strong, 600);
 }
 
+.oml-page-bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.75rem;
+	position: sticky;
+	top: 0;
+	z-index: 5;
+	margin: -1.25rem -1.5rem 1rem;
+	padding: 0.75rem 1.5rem;
+	background: var(--oml-background);
+}
+
+.oml-page-bar .oml-dash-title {
+	flex: 1 1 8rem;
+	margin: 0;
+}
+
+.oml-page-bar .oml-dash-field {
+	flex: 1 1 12rem;
+	max-width: 18rem;
+	margin: 0;
+}
+
+.oml-more {
+	position: relative;
+}
+
+.oml-more summary {
+	color: var(--oml-muted);
+	font-size: var(--oml-font-size-sm, 13px);
+	cursor: pointer;
+	list-style: none;
+}
+
+.oml-more summary::-webkit-details-marker {
+	display: none;
+}
+
+.oml-more[open] {
+	padding: 0.35rem;
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-control, 8px);
+	background: var(--oml-surface);
+}
+
+.oml-dash-btn.is-ghost,
+.oml-icon-btn {
+	border-color: transparent;
+	background: transparent;
+	color: var(--oml-muted);
+	box-shadow: none;
+}
+
+.oml-icon-btn {
+	min-height: 2rem;
+	min-width: 2rem;
+	padding: 0 0.35rem;
+}
+
+.oml-disclose-btn {
+	width: auto;
+	margin-bottom: 0.5rem;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--oml-muted);
+	font: inherit;
+	font-size: var(--oml-font-size-sm, 13px);
+	cursor: pointer;
+}
+
+.oml-pills.is-quiet li {
+	background: transparent;
+	color: var(--oml-muted);
+	padding-left: 0;
+}
+
+.oml-q-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	width: 100%;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--oml-heading);
+	font: inherit;
+	font-weight: var(--oml-weight-strong, 600);
+	text-align: left;
+	cursor: pointer;
+}
+
 .oml-preview-sheet {
 	position: fixed;
 	top: 4.5rem;
