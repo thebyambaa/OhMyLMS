@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunkohmylmsExtensionSdk=self.webpackChunkohmylmsExtensionSdk||[]).push([[8227],{5466(e,n,s){s.d(n,{Commerce:()=>r});var m=s(7723),c=s(5317),h=s(790);function r(){return(0,h.jsxs)("section",{children:[(0,h.jsx)("h2",{children:(0,m.__)("Commerce","ohmylms")}),(0,h.jsx)("p",{children:(0,h.jsx)("a",{href:(0,c.z)().links.commerce,children:(0,m.__)("Open commerce in wp-admin","ohmylms")})})]})}}}]);
+//# sourceMappingURL=admin-app-dashboard-commerce.c1b753e54705.js.map

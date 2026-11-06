@@ -1,2 +1,0 @@
-"use strict";(self.webpackChunkohmylmsExtensionSdk=self.webpackChunkohmylmsExtensionSdk||[]).push([[697],{336(s,l,o){o.d(l,{Schools:()=>c});var e=o(723),h=o(317),n=o(790);function c(){const s=(0,h.z)().schools;return(0,n.jsxs)("section",{children:[(0,n.jsx)("h2",{children:(0,e.__)("Schools","ohmylms")}),s.length?(0,n.jsx)("ul",{children:s.map(s=>(0,n.jsx)("li",{children:s.name},s.id))}):(0,n.jsx)("p",{className:"oml-dash-note",children:(0,e.__)("No schools yet.","ohmylms")})]})}}}]);
-//# sourceMappingURL=admin-app-dashboard-schools.628a07864034.js.map
