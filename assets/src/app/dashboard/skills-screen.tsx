@@ -56,6 +56,7 @@ export function SkillsScreen() {
 		<section>
 			{ canEdit && (
 				<form
+					className="oml-dash-card"
 					onSubmit={ ( event ) => {
 						event.preventDefault();
 						void api( '/studio/skills', {
@@ -124,7 +125,7 @@ export function SkillsScreen() {
 					</button>
 				</form>
 			) }
-			<ul>
+			<ul className="oml-tree">
 				{ skills.map( ( skill ) => (
 					<li
 						key={ skill.id }
@@ -194,23 +195,26 @@ export function SkillsScreen() {
 					</button>
 				</form>
 			) }
-			<h2>{ __( 'Coverage', 'ohmylms' ) }</h2>
-			{ coverage.length ? (
-				<ul>
-					{ coverage.map( ( skill ) => (
-						<li key={ skill.id }>{ skill.name }</li>
-					) ) }
-				</ul>
-			) : (
-				<p className="oml-dash-note">
-					{ __(
-						'Every skill has an exercise, or there are no skills yet.',
-						'ohmylms'
-					) }
-				</p>
-			) }
+			<section className="oml-dash-card">
+				<h2>{ __( 'Coverage', 'ohmylms' ) }</h2>
+				{ coverage.length ? (
+					<ul className="oml-tree">
+						{ coverage.map( ( skill ) => (
+							<li key={ skill.id }>{ skill.name }</li>
+						) ) }
+					</ul>
+				) : (
+					<p className="oml-dash-note">
+						{ __(
+							'Every skill has an exercise, or there are no skills yet.',
+							'ohmylms'
+						) }
+					</p>
+				) }
+			</section>
 			{ canEdit && (
 				<form
+					className="oml-drop"
 					onSubmit={ ( event ) => {
 						event.preventDefault();
 						const form = new FormData();

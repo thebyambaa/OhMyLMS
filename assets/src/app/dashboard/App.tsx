@@ -63,6 +63,103 @@ const SettingsPanel = lazy( () =>
 	).then( ( mod ) => ( { default: mod.SettingsPanel } ) )
 );
 
+function NavIcon( { name }: { name: string } ) {
+	const common = {
+		viewBox: '0 0 24 24',
+		width: 18,
+		height: 18,
+		fill: 'none',
+		stroke: 'currentColor',
+		strokeWidth: 1.75,
+		strokeLinecap: 'round' as const,
+		strokeLinejoin: 'round' as const,
+		'aria-hidden': true,
+		className: 'oml-dash-ico',
+	};
+	if ( name === 'home' ) {
+		return (
+			<svg { ...common }>
+				<path d="M4 10.5 12 4l8 6.5V20H4z" />
+			</svg>
+		);
+	}
+	if ( name === 'schools' ) {
+		return (
+			<svg { ...common }>
+				<path d="M4 20V9l8-5 8 5v11" />
+				<path d="M9 20v-6h6v6" />
+			</svg>
+		);
+	}
+	if ( name === 'classes' ) {
+		return (
+			<svg { ...common }>
+				<path d="M4 6h16v12H4z" />
+				<path d="M8 10h8M8 14h5" />
+			</svg>
+		);
+	}
+	if ( name === 'people' ) {
+		return (
+			<svg { ...common }>
+				<circle cx="9" cy="8" r="3" />
+				<path d="M3.5 19a5.5 5.5 0 0 1 11 0" />
+				<circle cx="17" cy="9" r="2" />
+				<path d="M16 19a4 4 0 0 1 4-4" />
+			</svg>
+		);
+	}
+	if ( name === 'content' ) {
+		return (
+			<svg { ...common }>
+				<path d="M6 4h9l3 3v13H6z" />
+				<path d="M9 12h6M9 16h6" />
+			</svg>
+		);
+	}
+	if ( name === 'gradebook' ) {
+		return (
+			<svg { ...common }>
+				<path d="M5 4h14v16H5z" />
+				<path d="M5 9h14M10 4v16" />
+			</svg>
+		);
+	}
+	if ( name === 'reports' ) {
+		return (
+			<svg { ...common }>
+				<path d="M5 19V9M12 19V5M19 19v-7" />
+			</svg>
+		);
+	}
+	if ( name === 'commerce' ) {
+		return (
+			<svg { ...common }>
+				<path d="M6 7h12l-1 13H7z" />
+				<path d="M9 7a3 3 0 0 1 6 0" />
+			</svg>
+		);
+	}
+	return (
+		<svg { ...common }>
+			<circle cx="12" cy="12" r="3" />
+			<path d="M12 3v2M12 19v2M3 12h2M19 12h2" />
+		</svg>
+	);
+}
+
+function sectionGroup( value: string ) {
+	if (
+		value === 'content' ||
+		value === 'courses' ||
+		value === 'quizzes' ||
+		value === 'skills'
+	) {
+		return 'content';
+	}
+	return value;
+}
+
 const LABELS: Record< string, string > = {
 	home: __( 'Home', 'ohmylms' ),
 	schools: __( 'Schools', 'ohmylms' ),
@@ -171,9 +268,9 @@ export function App() {
 						</option>
 					</select>
 				</label>
-				<span>{ data.user.name }</span>
+				<span className="oml-dash-user">{ data.user.name }</span>
 				{ data.adminUrl && (
-					<a href={ data.adminUrl }>
+					<a className="oml-dash-btn" href={ data.adminUrl }>
 						{ __( 'wp-admin', 'ohmylms' ) }
 					</a>
 				) }
@@ -186,137 +283,210 @@ export function App() {
 					aria-label={ __( 'Dashboard', 'ohmylms' ) }
 				>
 					{ data.nav.map( ( item ) => (
-						<button
-							key={ item }
-							type="button"
-							aria-current={
-								item === section ? 'page' : undefined
-							}
-							onClick={ () => go( item ) }
-						>
-							{ LABELS[ item ] || item }
-						</button>
-					) ) }
-					{ data.nav.includes( 'people' ) && (
-						<div className="oml-dash-sub">
+						<div key={ item } className="oml-dash-group">
 							<button
 								type="button"
 								aria-current={
-									section === 'people' &&
-									peopleView === 'student'
+									sectionGroup( section ) === item
 										? 'page'
 										: undefined
 								}
-								onClick={ () => {
-									setPeopleView( 'student' );
-									go( 'people' );
-								} }
+								onClick={ () =>
+									go( item === 'content' ? 'courses' : item )
+								}
 							>
-								{ __( 'Students', 'ohmylms' ) }
+								<NavIcon name={ item } />
+								{ LABELS[ item ] || item }
 							</button>
-							<button
-								type="button"
-								onClick={ () => {
-									setPeopleView( 'teacher' );
-									go( 'people' );
-								} }
-							>
-								{ __( 'Teachers', 'ohmylms' ) }
-							</button>
-							<button
-								type="button"
-								onClick={ () => {
-									setPeopleView( 'parent' );
-									go( 'people' );
-								} }
-							>
-								{ __( 'Parents', 'ohmylms' ) }
-							</button>
-							<button
-								type="button"
-								onClick={ () => {
-									setPeopleView( 'invitations' );
-									go( 'people' );
-								} }
-							>
-								{ __( 'Invitations', 'ohmylms' ) }
-							</button>
+							{ item === 'people' && (
+								<div className="oml-dash-sub">
+									<button
+										type="button"
+										aria-current={
+											section === 'people' &&
+											peopleView === 'student'
+												? 'page'
+												: undefined
+										}
+										onClick={ () => {
+											setPeopleView( 'student' );
+											go( 'people' );
+										} }
+									>
+										{ __( 'Students', 'ohmylms' ) }
+									</button>
+									<button
+										type="button"
+										aria-current={
+											section === 'people' &&
+											peopleView === 'teacher'
+												? 'page'
+												: undefined
+										}
+										onClick={ () => {
+											setPeopleView( 'teacher' );
+											go( 'people' );
+										} }
+									>
+										{ __( 'Teachers', 'ohmylms' ) }
+									</button>
+									<button
+										type="button"
+										aria-current={
+											section === 'people' &&
+											peopleView === 'parent'
+												? 'page'
+												: undefined
+										}
+										onClick={ () => {
+											setPeopleView( 'parent' );
+											go( 'people' );
+										} }
+									>
+										{ __( 'Parents', 'ohmylms' ) }
+									</button>
+									<button
+										type="button"
+										aria-current={
+											section === 'people' &&
+											peopleView === 'invitations'
+												? 'page'
+												: undefined
+										}
+										onClick={ () => {
+											setPeopleView( 'invitations' );
+											go( 'people' );
+										} }
+									>
+										{ __( 'Invitations', 'ohmylms' ) }
+									</button>
+								</div>
+							) }
+							{ item === 'content' && (
+								<div className="oml-dash-sub">
+									<button
+										type="button"
+										aria-current={
+											section === 'courses'
+												? 'page'
+												: undefined
+										}
+										onClick={ () => go( 'courses' ) }
+									>
+										{ __( 'Courses', 'ohmylms' ) }
+									</button>
+									<button
+										type="button"
+										aria-current={
+											section === 'content'
+												? 'page'
+												: undefined
+										}
+										onClick={ () => {
+											setContentFilter( 'lesson' );
+											go( 'content' );
+										} }
+									>
+										{ __( 'Lessons', 'ohmylms' ) }
+									</button>
+									<button
+										type="button"
+										aria-current={
+											section === 'quizzes'
+												? 'page'
+												: undefined
+										}
+										onClick={ () => go( 'quizzes' ) }
+									>
+										{ __( 'Quizzes & exams', 'ohmylms' ) }
+									</button>
+									<button
+										type="button"
+										aria-current={
+											section === 'skills'
+												? 'page'
+												: undefined
+										}
+										onClick={ () => go( 'skills' ) }
+									>
+										{ __( 'Skills', 'ohmylms' ) }
+									</button>
+								</div>
+							) }
+							{ item === 'settings' && (
+								<div className="oml-dash-sub">
+									<button
+										type="button"
+										aria-current={
+											section === 'settings' &&
+											settingsPane === 'general'
+												? 'page'
+												: undefined
+										}
+										onClick={ () => {
+											setSettingsPane( 'general' );
+											go( 'settings' );
+										} }
+									>
+										{ __( 'General', 'ohmylms' ) }
+									</button>
+									<button
+										type="button"
+										aria-current={
+											section === 'settings' &&
+											settingsPane === 'branding'
+												? 'page'
+												: undefined
+										}
+										onClick={ () => {
+											setSettingsPane( 'branding' );
+											go( 'settings' );
+										} }
+									>
+										{ __( 'Branding', 'ohmylms' ) }
+									</button>
+									<button
+										type="button"
+										aria-current={
+											section === 'settings' &&
+											settingsPane === 'mascot'
+												? 'page'
+												: undefined
+										}
+										onClick={ () => {
+											setSettingsPane( 'mascot' );
+											go( 'settings' );
+										} }
+									>
+										{ __( 'Mascot', 'ohmylms' ) }
+									</button>
+									<button
+										type="button"
+										aria-current={
+											section === 'settings' &&
+											settingsPane === 'roles'
+												? 'page'
+												: undefined
+										}
+										onClick={ () => {
+											setSettingsPane( 'roles' );
+											go( 'settings' );
+										} }
+									>
+										{ __(
+											'Roles & permissions',
+											'ohmylms'
+										) }
+									</button>
+								</div>
+							) }
 						</div>
-					) }
-					{ data.nav.includes( 'content' ) && (
-						<div className="oml-dash-sub">
-							<button
-								type="button"
-								onClick={ () => go( 'courses' ) }
-							>
-								{ __( 'Courses', 'ohmylms' ) }
-							</button>
-							<button
-								type="button"
-								onClick={ () => {
-									setContentFilter( 'lesson' );
-									go( 'content' );
-								} }
-							>
-								{ __( 'Lessons', 'ohmylms' ) }
-							</button>
-							<button
-								type="button"
-								onClick={ () => go( 'quizzes' ) }
-							>
-								{ __( 'Quizzes & exams', 'ohmylms' ) }
-							</button>
-							<button
-								type="button"
-								onClick={ () => go( 'skills' ) }
-							>
-								{ __( 'Skills', 'ohmylms' ) }
-							</button>
-						</div>
-					) }
-					{ data.nav.includes( 'settings' ) && (
-						<div className="oml-dash-sub">
-							<button
-								type="button"
-								onClick={ () => {
-									setSettingsPane( 'general' );
-									go( 'settings' );
-								} }
-							>
-								{ __( 'General', 'ohmylms' ) }
-							</button>
-							<button
-								type="button"
-								onClick={ () => {
-									setSettingsPane( 'branding' );
-									go( 'settings' );
-								} }
-							>
-								{ __( 'Branding', 'ohmylms' ) }
-							</button>
-							<button
-								type="button"
-								onClick={ () => {
-									setSettingsPane( 'mascot' );
-									go( 'settings' );
-								} }
-							>
-								{ __( 'Mascot', 'ohmylms' ) }
-							</button>
-							<button
-								type="button"
-								onClick={ () => {
-									setSettingsPane( 'roles' );
-									go( 'settings' );
-								} }
-							>
-								{ __( 'Roles & permissions', 'ohmylms' ) }
-							</button>
-						</div>
-					) }
+					) ) }
 				</nav>
 				<main className="oml-dash-main">
-					<h1>{ LABELS[ section ] || section }</h1>
+					<h1 className="oml-dash-title">
+						{ LABELS[ section ] || section }
+					</h1>
 					<Suspense
 						fallback={ <p>{ __( 'Loading…', 'ohmylms' ) }</p> }
 					>

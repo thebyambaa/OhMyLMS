@@ -161,7 +161,10 @@ export function CourseBuilder() {
 										}
 									/>
 								</Field>
-								<button type="submit" className="oml-dash-btn">
+								<button
+									type="submit"
+									className="oml-dash-btn is-primary"
+								>
 									{ __( 'Add unit', 'ohmylms' ) }
 								</button>
 							</form>
@@ -169,10 +172,15 @@ export function CourseBuilder() {
 						{ tree.units.map( ( unit, unitIndex ) => (
 							<section key={ unit.id } className="oml-dash-card">
 								<h2>{ unit.title }</h2>
-								<ul>
+								<ul className="oml-unit-list">
 									{ unit.items.map( ( item, itemIndex ) => (
 										<li
 											key={ item.id }
+											className={
+												selected?.id === item.id
+													? 'oml-row is-selected'
+													: 'oml-row'
+											}
 											draggable={ tree.canEdit }
 											onDragStart={ ( event ) =>
 												event.dataTransfer.setData(
@@ -195,6 +203,12 @@ export function CourseBuilder() {
 												);
 											} }
 										>
+											<span
+												className="oml-handle"
+												aria-hidden="true"
+											>
+												⋮⋮
+											</span>
 											<button
 												type="button"
 												className="link"
@@ -204,9 +218,19 @@ export function CourseBuilder() {
 											>
 												{ item.title }
 											</button>
-											<span className="oml-dash-note">
-												{ ' ' }
-												{ item.type }
+											<span
+												className={
+													item.kind === 'quiz'
+														? 'oml-badge is-quiz'
+														: 'oml-badge'
+												}
+											>
+												{ item.kind === 'quiz'
+													? __( 'Quiz', 'ohmylms' )
+													: __(
+															'Lesson',
+															'ohmylms'
+														) }
 											</span>
 											{ tree.canEdit && (
 												<>
@@ -348,6 +372,19 @@ export function CourseBuilder() {
 						{ selected ? (
 							<>
 								<p>{ selected.title }</p>
+								<p>
+									<span
+										className={
+											selected.kind === 'quiz'
+												? 'oml-badge is-quiz'
+												: 'oml-badge'
+										}
+									>
+										{ selected.kind === 'quiz'
+											? __( 'Quiz', 'ohmylms' )
+											: __( 'Lesson', 'ohmylms' ) }
+									</span>
+								</p>
 								<p className="oml-dash-note">
 									{ selected.skills.length
 										? __(
@@ -404,9 +441,20 @@ export function CourseBuilder() {
 								) }
 							</>
 						) : (
-							<p className="oml-dash-note">
-								{ __( 'Select an item.', 'ohmylms' ) }
-							</p>
+							<div className="oml-empty">
+								<span
+									className="oml-empty-mark"
+									aria-hidden="true"
+								>
+									+
+								</span>
+								<p>
+									{ __(
+										'Select a lesson or quiz to see its kind and where to edit it.',
+										'ohmylms'
+									) }
+								</p>
+							</div>
 						) }
 					</aside>
 				</div>

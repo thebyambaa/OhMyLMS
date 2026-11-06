@@ -148,9 +148,11 @@ export function QuizBuilder() {
 			</Field>
 			{ quiz && (
 				<>
-					<p className="oml-dash-note">
-						{ quiz.levels.join( ' → ' ) }
-					</p>
+					<ol className="oml-pills">
+						{ quiz.levels.map( ( level ) => (
+							<li key={ level }>{ level }</li>
+						) ) }
+					</ol>
 					{ quiz.canEdit && (
 						<>
 							<Field label={ __( 'Pass mark %', 'ohmylms' ) }>
@@ -251,7 +253,7 @@ export function QuizBuilder() {
 							{ question.choices.map( ( choice, choiceIndex ) => (
 								<label
 									key={ choice.id || choiceIndex }
-									className="oml-dash-field"
+									className="oml-dash-field oml-choice"
 									htmlFor={ `oml-choice-${ index }-${ choiceIndex }` }
 								>
 									<span className="screen-reader-text">
@@ -393,8 +395,18 @@ export function QuizBuilder() {
 						</div>
 					) }
 					{ preview >= 0 && quiz.questions[ preview ] && (
-						<aside className="oml-dash-card">
+						<dialog
+							className="oml-dash-dialog oml-preview-sheet"
+							open
+						>
 							<h2>{ __( 'Preview', 'ohmylms' ) }</h2>
+							<button
+								type="button"
+								className="oml-dash-btn"
+								onClick={ () => setPreview( -1 ) }
+							>
+								{ __( 'Close', 'ohmylms' ) }
+							</button>
 							<p>{ quiz.questions[ preview ].prompt }</p>
 							{ quiz.questions[ preview ].choices.map(
 								( choice, choiceIndex ) => (
@@ -449,7 +461,7 @@ export function QuizBuilder() {
 										}
 									</p>
 								) }
-						</aside>
+						</dialog>
 					) }
 				</>
 			) }
