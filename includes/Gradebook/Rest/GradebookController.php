@@ -350,6 +350,9 @@ final class GradebookController extends WP_REST_Controller {
 		} catch ( \RuntimeException $exception ) {
 			error_log( '[OhMyLMS gradebook] ' . $exception->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Server-side diagnostics only.
 			return new WP_Error( 'ohmylms_gradebook_query_failed', __( 'The gradebook could not be loaded.', 'ohmylms' ), array( 'status' => 500 ) );
+		} catch ( \Throwable $exception ) {
+			error_log( '[OhMyLMS gradebook] ' . $exception->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Server-side diagnostics only.
+			return new WP_Error( 'ohmylms_gradebook_query_failed', __( 'The gradebook could not be loaded.', 'ohmylms' ), array( 'status' => 500 ) );
 		}
 		if ( is_wp_error( $data ) ) {
 			return $data;

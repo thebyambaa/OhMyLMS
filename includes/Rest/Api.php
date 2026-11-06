@@ -87,6 +87,7 @@ class Api {
 			\OhMyLMS\Rest\V1\TagController::class,
 			\OhMyLMS\Rest\V1\EmailController::class,
 			\OhMyLMS\Rest\V1\DashboardController::class,
+			\OhMyLMS\Rest\V1\FrontDashboardController::class,
 			\OhMyLMS\Rest\V1\AnalyticsController::class,
 			\OhMyLMS\Rest\V1\CourseRosterController::class,
 			\OhMyLMS\Rest\V1\StudentReportController::class,
