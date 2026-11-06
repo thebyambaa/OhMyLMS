@@ -263,6 +263,25 @@ body.oml-dashboard-page {
 	background: var(--oml-primary);
 }
 
+.oml-builder-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+	gap: 1rem;
+}
+
+.oml-lesson-callout {
+	padding: 0.8rem 1rem;
+	border-radius: var(--oml-radius-card, 12px);
+	background: var(--oml-surface);
+	border: 1px solid var(--oml-border);
+}
+
+@media (max-width: 760px) {
+	.oml-builder-grid {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
 .oml-dash-preview {
 	margin-top: 1rem;
 	padding: 1rem;
