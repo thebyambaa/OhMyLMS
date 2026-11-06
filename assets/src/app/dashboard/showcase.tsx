@@ -2,6 +2,8 @@ import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { Alert } from '../../ui/Alert';
 import { Button } from '../../ui/Button';
+import { Checkbox } from '../../ui/Checkbox';
+import { IconButton } from '../../ui/IconButton';
 import { Input } from '../../ui/Input';
 import { Select } from '../../ui/Select';
 import { Textarea } from '../../ui/Textarea';
@@ -133,6 +135,31 @@ export function Showcase() {
 					lang="mn"
 					defaultValue={ MONGOLIAN }
 				/>
+			</Group>
+
+			<Group
+				title={ __( 'Icon button and checkbox', 'ohmylms' ) }
+				note={ __(
+					'An icon button must have a label: it is the accessible name and the tooltip. Give reordering a button alternative to dragging.',
+					'ohmylms'
+				) }
+			>
+				<div style={ row }>
+					<IconButton label={ __( 'Move up', 'ohmylms' ) }>
+						↑
+					</IconButton>
+					<IconButton label={ __( 'Move down', 'ohmylms' ) }>
+						↓
+					</IconButton>
+				</div>
+				<Checkbox label={ __( 'Shuffle questions', 'ohmylms' ) } />
+				<Checkbox
+					label={ __( 'With a hint', 'ohmylms' ) }
+					help={ __( 'Shown under the label.', 'ohmylms' ) }
+					defaultChecked
+				/>
+				<Checkbox label={ __( 'Disabled', 'ohmylms' ) } disabled />
+				<Checkbox label={ LONG } />
 			</Group>
 
 			<Group title={ __( 'Select', 'ohmylms' ) }>

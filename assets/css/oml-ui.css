@@ -390,6 +390,11 @@ body.oml-ds .arco-btn {
 	padding: 0 var(--oml-button-pad-sm);
 }
 
+.oml-btn-icon {
+	min-width: var(--oml-button-height-sm);
+	padding-inline: 0;
+}
+
 .oml-btn-lg {
 	min-height: var(--oml-button-height-lg);
 	padding: 0 var(--oml-button-pad-lg);
@@ -872,4 +877,36 @@ body.oml-ds .arco-btn {
 	display: none;
 	position: absolute;
 	z-index: var(--oml-z-dropdown, 100);
+}
+
+.oml-check {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--oml-space-2);
+	min-height: var(--oml-button-height-sm);
+}
+
+.oml-checkbox {
+	flex: none;
+	width: var(--oml-space-4);
+	height: var(--oml-space-4);
+	margin: 0;
+	accent-color: var(--oml-primary);
+}
+
+.oml-checkbox:focus-visible {
+	outline: 2px solid var(--oml-focus);
+	outline-offset: 2px;
+}
+
+.oml-check-label {
+	color: var(--oml-text);
+	font-size: var(--oml-font-size-md);
+	cursor: pointer;
+}
+
+.oml-check .oml-field-help {
+	flex-basis: 100%;
+	margin: 0;
 }

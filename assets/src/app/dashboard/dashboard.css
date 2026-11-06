@@ -437,20 +437,6 @@ body.oml-dashboard-page {
 	cursor: grab;
 }
 
-.oml-badge {
-	padding: 0.1rem 0.45rem;
-	border-radius: 999px;
-	background: var(--oml-subtle, var(--oml-background));
-	color: var(--oml-heading);
-	font-size: var(--oml-font-size-xs, 12px);
-	font-weight: var(--oml-weight-medium, 500);
-}
-
-.oml-badge.is-quiz {
-	background: var(--oml-info-soft, var(--oml-primary-soft));
-	color: var(--oml-info, var(--oml-primary));
-}
-
 .oml-pills {
 	display: flex;
 	flex-wrap: wrap;
@@ -470,12 +456,14 @@ body.oml-dashboard-page {
 }
 
 .oml-choice {
-	flex-direction: row;
-	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: var(--oml-space-3, 0.75rem);
 }
 
-.oml-choice input:not([type="checkbox"]) {
-	flex: 1;
+.oml-choice .oml-field {
+	flex: 1 1 16rem;
 }
 
 .oml-tree {
@@ -565,15 +553,7 @@ body.oml-dashboard-page {
 	background: var(--oml-surface);
 }
 
-.oml-dash-btn.is-ghost,
-.oml-icon-btn {
-	border-color: transparent;
-	background: transparent;
-	color: var(--oml-muted);
-	box-shadow: none;
-}
-
-.oml-icon-btn {
+.oml-dash-btn.is-ghost {
 	min-height: 2rem;
 	min-width: 2rem;
 	padding: 0 0.35rem;
@@ -586,19 +566,8 @@ body.oml-dashboard-page {
 }
 
 .oml-q-head {
-	display: flex;
-	align-items: center;
 	justify-content: space-between;
-	gap: 0.5rem;
-	width: 100%;
-	padding: 0;
-	border: 0;
-	background: transparent;
-	color: var(--oml-heading);
-	font: inherit;
-	font-weight: var(--oml-weight-strong, 600);
 	text-align: left;
-	cursor: pointer;
 }
 
 .oml-preview-sheet {
@@ -619,6 +588,7 @@ body.oml-dashboard-page {
 }
 
 @media (max-width: 760px) {
+
 	.oml-builder-grid {
 		grid-template-columns: minmax(0, 1fr);
 	}
@@ -654,6 +624,7 @@ body.oml-dashboard-page {
 }
 
 @media (max-width: 1100px) {
+
 	.oml-dash-kpis {
 		grid-template-columns: repeat(3, minmax(0, 1fr));
 	}
@@ -664,6 +635,7 @@ body.oml-dashboard-page {
 }
 
 @media (max-width: 760px) {
+
 	.oml-dash-layout {
 		grid-template-columns: minmax(0, 1fr);
 	}

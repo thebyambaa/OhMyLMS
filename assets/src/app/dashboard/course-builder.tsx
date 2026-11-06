@@ -1,7 +1,13 @@
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import { Alert } from '../../ui/Alert';
+import { Badge } from '../../ui/Badge';
+import { Button } from '../../ui/Button';
+import { IconButton } from '../../ui/IconButton';
+import { Input } from '../../ui/Input';
+import { Select } from '../../ui/Select';
 import { api } from './api';
-import { Field } from './field';
+import { quizUrl } from './studio-links';
 
 interface CourseItem {
 	id: number;
@@ -42,6 +48,8 @@ export function CourseBuilder() {
 	const [ itemTitle, setItemTitle ] = useState( '' );
 	const [ kind, setKind ] = useState( 'lesson' );
 	const [ message, setMessage ] = useState( '' );
+	const [ failed, setFailed ] = useState( false );
+	const [ busy, setBusy ] = useState( '' );
 	const [ selected, setSelected ] = useState< CourseItem | null >( null );
 	const [ addingUnit, setAddingUnit ] = useState( false );
 	const [ addingOn, setAddingOn ] = useState( 0 );
@@ -64,6 +72,18 @@ export function CourseBuilder() {
 		);
 	}, [ courseId, message ] );
 
+	function done( text: string ) {
+		setFailed( false );
+		setMessage( text );
+		setBusy( '' );
+	}
+
+	function fail( failure: Error ) {
+		setFailed( true );
+		setMessage( failure.message );
+		setBusy( '' );
+	}
+
 	function saveOrder( next: Unit[] ) {
 		if ( ! tree ) {
 			return;
@@ -77,8 +97,8 @@ export function CourseBuilder() {
 				} ) ),
 			} ),
 		} )
-			.then( () => setMessage( __( 'Order saved.', 'ohmylms' ) ) )
-			.catch( ( failure: Error ) => setMessage( failure.message ) );
+			.then( () => done( __( 'Order saved.', 'ohmylms' ) ) )
+			.catch( ( failure: Error ) => fail( failure ) );
 	}
 
 	function moveItem(
@@ -109,29 +129,36 @@ export function CourseBuilder() {
 		saveOrder( next );
 	}
 
+	function kindBadge( item: CourseItem ) {
+		return item.kind === 'quiz' ? (
+			<Badge tone="info">{ __( 'Quiz', 'ohmylms' ) }</Badge>
+		) : (
+			<Badge>{ __( 'Lesson', 'ohmylms' ) }</Badge>
+		);
+	}
+
 	return (
 		<section className="oml-builder">
 			<header className="oml-page-bar">
 				<h1 className="oml-dash-title">
 					{ __( 'Courses', 'ohmylms' ) }
 				</h1>
-				<Field label={ __( 'Course', 'ohmylms' ) }>
-					<select
-						value={ courseId }
-						onChange={ ( event ) =>
-							setCourseId( Number( event.target.value ) )
-						}
-					>
-						<option value={ 0 }>
-							{ __( 'Choose a course', 'ohmylms' ) }
+				<Select
+					label={ __( 'Course', 'ohmylms' ) }
+					value={ courseId }
+					onChange={ ( event ) =>
+						setCourseId( Number( event.target.value ) )
+					}
+				>
+					<option value={ 0 }>
+						{ __( 'Choose a course', 'ohmylms' ) }
+					</option>
+					{ courses.map( ( course ) => (
+						<option key={ course.id } value={ course.id }>
+							{ course.title }
 						</option>
-						{ courses.map( ( course ) => (
-							<option key={ course.id } value={ course.id }>
-								{ course.title }
-							</option>
-						) ) }
-					</select>
-				</Field>
+					) ) }
+				</Select>
 			</header>
 			{ tree && (
 				<div className="oml-builder-grid">
@@ -141,6 +168,7 @@ export function CourseBuilder() {
 								<form
 									onSubmit={ ( event ) => {
 										event.preventDefault();
+										setBusy( 'unit' );
 										void api(
 											`/studio/courses/${ tree.id }/units`,
 											{
@@ -153,7 +181,7 @@ export function CourseBuilder() {
 											.then( () => {
 												setTitle( '' );
 												setAddingUnit( false );
-												setMessage(
+												done(
 													__(
 														'Unit added.',
 														'ohmylms'
@@ -161,44 +189,45 @@ export function CourseBuilder() {
 												);
 											} )
 											.catch( ( failure: Error ) =>
-												setMessage( failure.message )
+												fail( failure )
 											);
 									} }
 								>
-									<Field
+									<Input
 										label={ __( 'New unit', 'ohmylms' ) }
-									>
-										<input
-											value={ title }
-											onChange={ ( event ) =>
-												setTitle( event.target.value )
-											}
-										/>
-									</Field>
-									<button
+										required
+										value={ title }
+										onChange={ ( event ) =>
+											setTitle( event.target.value )
+										}
+									/>
+									<Button
 										type="submit"
-										className="oml-dash-btn is-primary"
+										variant="primary"
+										loading={ busy === 'unit' }
 									>
 										{ __( 'Add unit', 'ohmylms' ) }
-									</button>
+									</Button>
 								</form>
 							) : (
-								<button
-									type="button"
-									className="oml-dash-btn is-ghost"
+								<Button
+									variant="tertiary"
 									onClick={ () => setAddingUnit( true ) }
 								>
-									{ __( '+ Add unit', 'ohmylms' ) }
-								</button>
+									{ __( 'Add unit', 'ohmylms' ) }
+								</Button>
 							) ) }
 						{ tree.units.map( ( unit, unitIndex ) => (
 							<section key={ unit.id } className="oml-dash-card">
 								<div className="oml-dash-actions">
 									<h2>{ unit.title }</h2>
 									{ tree.canEdit && (
-										<button
-											type="button"
-											className="oml-dash-btn is-ghost"
+										<Button
+											variant="tertiary"
+											size="sm"
+											aria-expanded={
+												addingOn === unit.id
+											}
 											onClick={ () =>
 												setAddingOn(
 													addingOn === unit.id
@@ -207,8 +236,8 @@ export function CourseBuilder() {
 												)
 											}
 										>
-											{ __( '+ Add', 'ohmylms' ) }
-										</button>
+											{ __( 'Add item', 'ohmylms' ) }
+										</Button>
 									) }
 								</div>
 								<ul className="oml-unit-list">
@@ -248,35 +277,23 @@ export function CourseBuilder() {
 											>
 												⋮⋮
 											</span>
-											<button
-												type="button"
-												className="link"
+											<Button
+												variant="tertiary"
+												size="sm"
+												aria-pressed={
+													selected?.id === item.id
+												}
 												onClick={ () =>
 													setSelected( item )
 												}
 											>
 												{ item.title }
-											</button>
-											<span
-												className={
-													item.kind === 'quiz'
-														? 'oml-badge is-quiz'
-														: 'oml-badge'
-												}
-											>
-												{ item.kind === 'quiz'
-													? __( 'Quiz', 'ohmylms' )
-													: __(
-															'Lesson',
-															'ohmylms'
-														) }
-											</span>
+											</Button>
+											{ kindBadge( item ) }
 											{ tree.canEdit && (
 												<>
-													<button
-														type="button"
-														className="oml-dash-btn oml-icon-btn"
-														aria-label={ __(
+													<IconButton
+														label={ __(
 															'Move up',
 															'ohmylms'
 														) }
@@ -289,11 +306,9 @@ export function CourseBuilder() {
 														}
 													>
 														↑
-													</button>
-													<button
-														type="button"
-														className="oml-dash-btn oml-icon-btn"
-														aria-label={ __(
+													</IconButton>
+													<IconButton
+														label={ __(
 															'Move down',
 															'ohmylms'
 														) }
@@ -306,55 +321,35 @@ export function CourseBuilder() {
 														}
 													>
 														↓
-													</button>
+													</IconButton>
 													{ item.kind === 'lesson' &&
 														item.edit && (
-															<a
-																className="oml-dash-btn is-primary"
+															<Button
+																variant="primary"
+																size="sm"
 																href={
 																	item.edit
 																}
 															>
 																{ __(
-																	'Open',
+																	'Open lesson',
 																	'ohmylms'
 																) }
-															</a>
+															</Button>
 														) }
 													{ item.kind === 'quiz' && (
-														<button
-															type="button"
-															className="oml-dash-btn is-primary"
-															onClick={ () => {
-																const url =
-																	new URL(
-																		window
-																			.location
-																			.href
-																	);
-																url.searchParams.set(
-																	'section',
-																	'quizzes'
-																);
-																url.searchParams.set(
-																	'quiz',
-																	String(
-																		item.id
-																	)
-																);
-																window.history.pushState(
-																	{},
-																	'',
-																	url
-																);
-																window.location.reload();
-															} }
+														<Button
+															variant="primary"
+															size="sm"
+															href={ quizUrl(
+																item.id
+															) }
 														>
 															{ __(
-																'Open',
+																'Open quiz',
 																'ohmylms'
 															) }
-														</button>
+														</Button>
 													) }
 												</>
 											) }
@@ -365,6 +360,7 @@ export function CourseBuilder() {
 									<form
 										onSubmit={ ( event ) => {
 											event.preventDefault();
+											setBusy( 'item' );
 											void api(
 												`/studio/units/${ unit.id }/items`,
 												{
@@ -378,7 +374,7 @@ export function CourseBuilder() {
 												.then( () => {
 													setItemTitle( '' );
 													setAddingOn( 0 );
-													setMessage(
+													done(
 														__(
 															'Item added.',
 															'ohmylms'
@@ -386,70 +382,71 @@ export function CourseBuilder() {
 													);
 												} )
 												.catch( ( failure: Error ) =>
-													setMessage(
-														failure.message
-													)
+													fail( failure )
 												);
 										} }
 									>
-										<Field
+										<Input
 											label={ __( 'Name', 'ohmylms' ) }
-										>
-											<input
-												value={ itemTitle }
-												onChange={ ( event ) =>
-													setItemTitle(
-														event.target.value
-													)
-												}
-											/>
-										</Field>
-										<Field
+											required
+											value={ itemTitle }
+											onChange={ ( event ) =>
+												setItemTitle(
+													event.target.value
+												)
+											}
+										/>
+										<Select
 											label={ __( 'Kind', 'ohmylms' ) }
-										>
-											<select
-												value={ kind }
-												onChange={ ( event ) =>
-													setKind(
-														event.target.value
-													)
-												}
-											>
-												<option value="lesson">
-													{ __(
+											value={ kind }
+											onChange={ ( event ) =>
+												setKind( event.target.value )
+											}
+											options={ [
+												{
+													value: 'lesson',
+													label: __(
 														'Lesson',
 														'ohmylms'
-													) }
-												</option>
-												<option value="video">
-													{ __( 'Video', 'ohmylms' ) }
-												</option>
-												<option value="article">
-													{ __(
+													),
+												},
+												{
+													value: 'video',
+													label: __(
+														'Video',
+														'ohmylms'
+													),
+												},
+												{
+													value: 'article',
+													label: __(
 														'Article',
 														'ohmylms'
-													) }
-												</option>
-												<option value="exercise">
-													{ __(
+													),
+												},
+												{
+													value: 'exercise',
+													label: __(
 														'Exercise',
 														'ohmylms'
-													) }
-												</option>
-												<option value="unit_test">
-													{ __(
+													),
+												},
+												{
+													value: 'unit_test',
+													label: __(
 														'Unit test',
 														'ohmylms'
-													) }
-												</option>
-											</select>
-										</Field>
-										<button
+													),
+												},
+											] }
+										/>
+										<Button
 											type="submit"
-											className="oml-dash-btn is-primary"
+											variant="primary"
+											loading={ busy === 'item' }
 										>
-											{ __( 'Add', 'ohmylms' ) }
-										</button>
+											{ __( 'Add item', 'ohmylms' ) }
+										</Button>
 									</form>
 								) }
 							</section>
@@ -460,19 +457,7 @@ export function CourseBuilder() {
 						{ selected ? (
 							<>
 								<p>{ selected.title }</p>
-								<p>
-									<span
-										className={
-											selected.kind === 'quiz'
-												? 'oml-badge is-quiz'
-												: 'oml-badge'
-										}
-									>
-										{ selected.kind === 'quiz'
-											? __( 'Quiz', 'ohmylms' )
-											: __( 'Lesson', 'ohmylms' ) }
-									</span>
-								</p>
+								<p>{ kindBadge( selected ) }</p>
 								<p className="oml-dash-note">
 									{ selected.skills.length
 										? __(
@@ -487,44 +472,22 @@ export function CourseBuilder() {
 								{ selected.kind === 'lesson' &&
 									selected.edit && (
 										<p>
-											<a href={ selected.edit }>
+											<Button href={ selected.edit }>
 												{ __(
 													'Edit in Gutenberg',
 													'ohmylms'
 												) }
-											</a>
+											</Button>
 										</p>
 									) }
 								{ selected.kind === 'quiz' && (
 									<p>
-										<button
-											type="button"
-											className="oml-dash-btn"
-											onClick={ () => {
-												const url = new URL(
-													window.location.href
-												);
-												url.searchParams.set(
-													'section',
-													'quizzes'
-												);
-												url.searchParams.set(
-													'quiz',
-													String( selected.id )
-												);
-												window.history.pushState(
-													{},
-													'',
-													url
-												);
-												window.location.reload();
-											} }
-										>
+										<Button href={ quizUrl( selected.id ) }>
 											{ __(
 												'Open in quiz builder',
 												'ohmylms'
 											) }
-										</button>
+										</Button>
 									</p>
 								) }
 							</>
@@ -547,7 +510,11 @@ export function CourseBuilder() {
 					</aside>
 				</div>
 			) }
-			{ message && <p role="status">{ message }</p> }
+			{ message && (
+				<Alert tone={ failed ? 'danger' : 'success' }>
+					{ message }
+				</Alert>
+			) }
 		</section>
 	);
 }

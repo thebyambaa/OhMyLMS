@@ -49,7 +49,7 @@ final class Front {
 		$css = OHMYLMS_DIR . '/' . $directory . '/admin-app-dashboard.css';
 		if ( is_file( $css ) ) {
 			wp_enqueue_style( 'ohmylms-front-dashboard', plugins_url( $directory . '/admin-app-dashboard.css', OHMYLMS_FILE ), array(), $ver );
-			wp_add_inline_style( 'ohmylms-front-dashboard', '.oml-dashboard{' . \OhMyLMS\Design\Tokens::frontend_oml_vars() . '}' );
+			// The hub already prints the --oml-* tokens, light and dark, on its root; do not redeclare the light set here.
 		}
 		wp_add_inline_script( 'ohmylms-front-dashboard', 'window.ohmylmsDashboard=' . wp_json_encode( self::boot( $section ) ) . ';', 'before' );
 	}

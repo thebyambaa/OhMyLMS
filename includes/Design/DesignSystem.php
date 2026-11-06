@@ -488,19 +488,19 @@ final class DesignSystem {
 		'border'     => '#4a4c53',
 	);
 
-	/** Minimum contrast of a brand or status color against the dark card (WCAG AA for text). */
+	/** Minimum contrast of a brand or status color against the dark page and card (WCAG AA for text). */
 	const DARK_MIN_CONTRAST = 4.5;
 
 	/**
 	 * Lighten a color until it reads on the dark card.
 	 *
 	 * @param string $hex Hex color.
-	 * @return string Hex color with at least DARK_MIN_CONTRAST against DARK['surface'].
+	 * @return string Hex color with at least DARK_MIN_CONTRAST against the dark page, the lighter of the page and the card.
 	 */
 	public static function for_dark( $hex ) {
 		for ( $step = 0; $step <= 10; $step++ ) {
 			$candidate = Tokens::mix( $hex, '#ffffff', $step / 10 );
-			if ( self::contrast( $candidate, self::DARK['surface'] ) >= self::DARK_MIN_CONTRAST ) {
+			if ( self::contrast( $candidate, self::DARK['background'] ) >= self::DARK_MIN_CONTRAST ) {
 				return $candidate;
 			}
 		}
