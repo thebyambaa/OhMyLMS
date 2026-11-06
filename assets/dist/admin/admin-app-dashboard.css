@@ -17,35 +17,74 @@ body.oml-dashboard-page {
 	overflow-x: clip;
 	background: var(--oml-background);
 	color: var(--oml-text);
-	font-family: var(--oml-font-family, inherit);
+	font-family: var(
+		--oml-font-family,
+		-apple-system,
+		BlinkMacSystemFont,
+		"Segoe UI",
+		Roboto,
+		Oxygen-Sans,
+		Ubuntu,
+		Cantarell,
+		"Helvetica Neue",
+		sans-serif
+	);
+	font-size: var(--oml-font-size-md, 14px);
+	line-height: var(--oml-line-normal, 1.5);
 }
 
 .oml-dashboard * {
 	box-sizing: border-box;
 }
 
-.oml-dash-top,
-.oml-dash-side {
-	background: var(--oml-surface);
-	border-color: var(--oml-border);
+.oml-dashboard h1,
+.oml-dashboard h2,
+.oml-dashboard h3,
+.oml-dashboard button,
+.oml-dashboard input,
+.oml-dashboard select,
+.oml-dashboard textarea {
+	font-family: inherit;
+}
+
+.oml-dash-title {
+	margin: 0 0 var(--oml-space-4, 16px);
+	color: var(--oml-heading);
+	font-size: var(--oml-font-size-2xl, 24px);
+	font-weight: var(--oml-weight-strong, 600);
+	letter-spacing: -0.02em;
+	line-height: var(--oml-line-tight, 1.2);
 }
 
 .oml-dash-top {
 	display: flex;
 	flex-wrap: wrap;
-	gap: var(--oml-space-2, 12px);
+	gap: var(--oml-space-2, 8px);
 	align-items: center;
-	padding: 0.7rem 1.2rem;
+	padding: 0.65rem 1.25rem;
 	border-bottom: 1px solid var(--oml-border);
+	background: var(--oml-surface);
 	position: sticky;
 	top: 0;
-	z-index: 10;
+	z-index: var(--oml-z-dropdown, 10);
+	box-shadow: var(--oml-shadow-sm);
 }
 
 .oml-dash-logo {
 	margin-right: auto;
 	color: var(--oml-primary);
-	font-weight: 800;
+	font-size: var(--oml-font-size-lg, 16px);
+	font-weight: var(--oml-weight-strong, 600);
+	letter-spacing: -0.02em;
+}
+
+.oml-dash-user {
+	padding: 0.2rem 0.65rem;
+	border-radius: 999px;
+	background: var(--oml-subtle, var(--oml-background));
+	color: var(--oml-heading);
+	font-size: var(--oml-font-size-sm, 13px);
+	font-weight: var(--oml-weight-medium, 500);
 }
 
 .oml-dash-layout {
@@ -56,24 +95,38 @@ body.oml-dashboard-page {
 
 .oml-dash-side {
 	border-right: 1px solid var(--oml-border);
-	padding: 1rem 0.7rem;
+	background: var(--oml-surface);
+	padding: 0.75rem;
 	min-height: calc(100vh - 58px);
+}
+
+.oml-dash-group {
+	margin-bottom: 0.15rem;
 }
 
 .oml-dash-side a,
 .oml-dash-side button {
-	display: block;
+	display: flex;
+	align-items: center;
+	gap: 0.55rem;
 	width: 100%;
-	padding: 0.45rem 0.7rem;
+	padding: 0.45rem 0.65rem;
 	border: 0;
 	border-radius: var(--oml-radius-control, 8px);
 	background: transparent;
 	color: var(--oml-heading);
 	font: inherit;
-	font-weight: 500;
+	font-size: var(--oml-font-size-sm, 13px);
+	font-weight: var(--oml-weight-medium, 500);
 	text-align: left;
 	text-decoration: none;
 	cursor: pointer;
+}
+
+.oml-dash-ico {
+	width: 18px;
+	height: 18px;
+	flex: none;
 }
 
 .oml-dash-side a[aria-current="page"],
@@ -82,16 +135,23 @@ body.oml-dashboard-page {
 	color: var(--oml-primary);
 }
 
+.oml-dash-sub {
+	margin: 0.1rem 0 0.45rem 1.55rem;
+	padding-left: 0.45rem;
+	border-left: 1px solid var(--oml-border);
+}
+
 .oml-dash-sub a,
 .oml-dash-sub button {
-	padding-left: 1.6rem;
-	font-size: 0.92rem;
+	padding: 0.32rem 0.55rem;
+	font-size: var(--oml-font-size-sm, 13px);
+	font-weight: var(--oml-weight-regular, 400);
 }
 
 .oml-dash-main {
 	min-width: 0;
 	max-width: 100%;
-	padding: 1.2rem;
+	padding: 1.25rem 1.5rem 2rem;
 	overflow-x: auto;
 }
 
@@ -104,22 +164,52 @@ body.oml-dashboard-page {
 
 .oml-dash-card {
 	min-width: 0;
-	padding: 0.9rem;
+	margin-bottom: 1rem;
+	padding: 1rem 1.15rem;
 	border: 1px solid var(--oml-border);
 	border-radius: var(--oml-radius-card, 12px);
 	background: var(--oml-surface);
+	box-shadow: var(--oml-shadow-sm);
 }
 
 .oml-dash-card h2,
-.oml-dash-main h1 {
-	margin: 0 0 0.4rem;
+.oml-dash-main h2 {
+	margin: 0 0 0.65rem;
 	color: var(--oml-heading);
+	font-size: var(--oml-font-size-lg, 16px);
+	font-weight: var(--oml-weight-strong, 600);
+	line-height: var(--oml-line-tight, 1.2);
 }
 
 .oml-dash-kpi .value {
 	color: var(--oml-heading);
-	font-size: 1.5rem;
-	font-weight: 800;
+	font-size: var(--oml-font-size-2xl, 24px);
+	font-weight: var(--oml-weight-strong, 600);
+	letter-spacing: -0.03em;
+	line-height: var(--oml-line-tight, 1.2);
+}
+
+.oml-kpi-label {
+	display: flex;
+	align-items: center;
+	gap: 0.45rem;
+	margin-bottom: 0.35rem;
+	color: var(--oml-muted);
+	font-size: var(--oml-font-size-xs, 12px);
+	font-weight: var(--oml-weight-medium, 500);
+}
+
+.oml-kpi-mark {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.4rem;
+	height: 1.4rem;
+	border-radius: 999px;
+	background: var(--oml-primary-soft);
+	color: var(--oml-primary);
+	font-size: var(--oml-font-size-xs, 12px);
+	font-weight: var(--oml-weight-strong, 600);
 }
 
 .oml-dash-note,
@@ -193,19 +283,35 @@ body.oml-dashboard-page {
 }
 
 .oml-dash-btn {
-	padding: 0.45rem 0.8rem;
+	appearance: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.35rem;
+	min-height: var(--oml-button-height-md, 36px);
+	padding: 0 0.9rem;
 	border: 1px solid var(--oml-border);
 	border-radius: var(--oml-radius-button, 8px);
 	background: var(--oml-surface);
 	color: var(--oml-heading);
 	font: inherit;
+	font-size: var(--oml-font-size-sm, 13px);
+	font-weight: var(--oml-weight-medium, 500);
 	cursor: pointer;
+}
+
+.oml-dash-btn:hover {
+	background: var(--oml-subtle, var(--oml-background));
 }
 
 .oml-dash-btn.is-primary {
 	border-color: var(--oml-primary);
 	background: var(--oml-primary);
 	color: var(--oml-on-primary);
+}
+
+.oml-dash-btn.is-primary:hover {
+	background: var(--oml-primary-hover);
 }
 
 .oml-dash-menu {
@@ -223,8 +329,13 @@ body.oml-dashboard-page {
 
 .oml-dash-dialog label,
 .oml-dash-field {
-	display: block;
-	margin: 0.6rem 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	margin: 0 0 0.85rem;
+	color: var(--oml-heading);
+	font-size: var(--oml-font-size-sm, 13px);
+	font-weight: var(--oml-weight-medium, 500);
 }
 
 .oml-dash-dialog input,
@@ -237,13 +348,45 @@ body.oml-dashboard-page {
 .oml-dash-main input,
 .oml-dash-main select,
 .oml-dash-main textarea {
+	width: 100%;
 	max-width: 100%;
-	padding: 0.4rem 0.5rem;
+	min-height: var(--oml-button-height-lg, 40px);
+	padding: 0.45rem 0.7rem;
 	border: 1px solid var(--oml-border);
 	border-radius: var(--oml-radius-control, 8px);
 	background: var(--oml-surface);
 	color: var(--oml-text);
 	font: inherit;
+	font-weight: var(--oml-weight-regular, 400);
+	box-shadow: none;
+}
+
+.oml-dash-main textarea,
+.oml-dash-field textarea,
+.oml-dash-dialog textarea {
+	min-height: 6.5rem;
+	padding-top: 0.65rem;
+}
+
+.oml-dashboard input:focus,
+.oml-dashboard select:focus,
+.oml-dashboard textarea:focus {
+	outline: 2px solid var(--oml-focus, var(--oml-primary));
+	outline-offset: 1px;
+	border-color: var(--oml-primary);
+}
+
+.oml-dashboard input[type="checkbox"],
+.oml-dashboard input[type="radio"],
+.oml-dashboard input[type="file"] {
+	width: auto;
+	min-height: 0;
+	padding: 0;
+}
+
+.oml-dash-top select {
+	width: auto;
+	min-height: var(--oml-button-height-md, 36px);
 }
 
 .oml-dash-steps {
@@ -267,6 +410,123 @@ body.oml-dashboard-page {
 	display: grid;
 	grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
 	gap: 1rem;
+	align-items: start;
+}
+
+.oml-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.4rem;
+	margin: 0.35rem 0;
+	padding: 0.45rem 0.55rem;
+	border: 1px solid transparent;
+	border-radius: var(--oml-radius-control, 8px);
+	background: var(--oml-background);
+}
+
+.oml-row.is-selected {
+	border-color: var(--oml-primary);
+	background: var(--oml-primary-soft);
+}
+
+.oml-handle {
+	color: var(--oml-muted);
+	font-size: var(--oml-font-size-sm, 13px);
+	letter-spacing: -0.12em;
+	cursor: grab;
+}
+
+.oml-badge {
+	padding: 0.1rem 0.45rem;
+	border-radius: 999px;
+	background: var(--oml-subtle, var(--oml-background));
+	color: var(--oml-heading);
+	font-size: var(--oml-font-size-xs, 12px);
+	font-weight: var(--oml-weight-medium, 500);
+}
+
+.oml-badge.is-quiz {
+	background: var(--oml-info-soft, var(--oml-primary-soft));
+	color: var(--oml-info, var(--oml-primary));
+}
+
+.oml-pills {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+	margin: 0 0 1rem;
+	padding: 0;
+	list-style: none;
+}
+
+.oml-pills li {
+	padding: 0.2rem 0.55rem;
+	border-radius: 999px;
+	background: var(--oml-primary-soft);
+	color: var(--oml-primary);
+	font-size: var(--oml-font-size-xs, 12px);
+	font-weight: var(--oml-weight-medium, 500);
+}
+
+.oml-choice {
+	flex-direction: row;
+	align-items: center;
+}
+
+.oml-choice input:not([type="checkbox"]) {
+	flex: 1;
+}
+
+.oml-tree {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.oml-tree li {
+	margin: 0.35rem 0;
+	padding: 0.45rem 0.7rem;
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-control, 8px);
+	background: var(--oml-surface);
+}
+
+.oml-drop {
+	margin-top: 1rem;
+	padding: 1rem;
+	border: 1px dashed var(--oml-border);
+	border-radius: var(--oml-radius-card, 12px);
+	background: var(--oml-subtle, var(--oml-background));
+}
+
+.oml-empty {
+	display: grid;
+	justify-items: start;
+	gap: 0.35rem;
+	color: var(--oml-muted);
+}
+
+.oml-empty-mark {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.4rem;
+	height: 2.4rem;
+	border-radius: var(--oml-radius-card, 12px);
+	background: var(--oml-primary-soft);
+	color: var(--oml-primary);
+	font-weight: var(--oml-weight-strong, 600);
+}
+
+.oml-preview-sheet {
+	position: fixed;
+	top: 4.5rem;
+	right: 1rem;
+	z-index: var(--oml-z-modal, 1000);
+	max-height: calc(100vh - 6rem);
+	overflow: auto;
+	box-shadow: var(--oml-shadow-md);
 }
 
 .oml-lesson-callout {

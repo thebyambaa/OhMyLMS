@@ -97,7 +97,12 @@ export function Home( {
 						key={ card.id }
 						className="oml-dash-card oml-dash-kpi"
 					>
-						<div>{ card.label }</div>
+						<div className="oml-kpi-label">
+							<span className="oml-kpi-mark" aria-hidden="true">
+								{ card.label.slice( 0, 1 ) }
+							</span>
+							{ card.label }
+						</div>
 						{ card.available ? (
 							<div className="value">{ card.value }</div>
 						) : null }
