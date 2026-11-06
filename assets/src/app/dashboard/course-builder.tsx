@@ -41,9 +41,10 @@ export function CourseBuilder() {
 	const [ title, setTitle ] = useState( '' );
 	const [ itemTitle, setItemTitle ] = useState( '' );
 	const [ kind, setKind ] = useState( 'lesson' );
-	const [ unitId, setUnitId ] = useState( 0 );
 	const [ message, setMessage ] = useState( '' );
 	const [ selected, setSelected ] = useState< CourseItem | null >( null );
+	const [ addingUnit, setAddingUnit ] = useState( false );
+	const [ addingOn, setAddingOn ] = useState( 0 );
 
 	useEffect( () => {
 		void api< { courses: Array< { id: number; title: string } > } >(
@@ -59,7 +60,6 @@ export function CourseBuilder() {
 		void api< CourseTree >( `/studio/courses/${ courseId }` ).then(
 			( body ) => {
 				setTree( body );
-				setUnitId( body.units[ 0 ]?.id || 0 );
 			}
 		);
 	}, [ courseId, message ] );
@@ -111,67 +111,106 @@ export function CourseBuilder() {
 
 	return (
 		<section className="oml-builder">
-			<Field label={ __( 'Course', 'ohmylms' ) }>
-				<select
-					value={ courseId }
-					onChange={ ( event ) =>
-						setCourseId( Number( event.target.value ) )
-					}
-				>
-					<option value={ 0 }>
-						{ __( 'Choose a course', 'ohmylms' ) }
-					</option>
-					{ courses.map( ( course ) => (
-						<option key={ course.id } value={ course.id }>
-							{ course.title }
+			<header className="oml-page-bar">
+				<h1 className="oml-dash-title">
+					{ __( 'Courses', 'ohmylms' ) }
+				</h1>
+				<Field label={ __( 'Course', 'ohmylms' ) }>
+					<select
+						value={ courseId }
+						onChange={ ( event ) =>
+							setCourseId( Number( event.target.value ) )
+						}
+					>
+						<option value={ 0 }>
+							{ __( 'Choose a course', 'ohmylms' ) }
 						</option>
-					) ) }
-				</select>
-			</Field>
+						{ courses.map( ( course ) => (
+							<option key={ course.id } value={ course.id }>
+								{ course.title }
+							</option>
+						) ) }
+					</select>
+				</Field>
+			</header>
 			{ tree && (
 				<div className="oml-builder-grid">
 					<div>
-						{ tree.canEdit && (
-							<form
-								onSubmit={ ( event ) => {
-									event.preventDefault();
-									void api(
-										`/studio/courses/${ tree.id }/units`,
-										{
-											method: 'POST',
-											body: JSON.stringify( { title } ),
-										}
-									)
-										.then( () => {
-											setTitle( '' );
-											setMessage(
-												__( 'Unit added.', 'ohmylms' )
+						{ tree.canEdit &&
+							( addingUnit ? (
+								<form
+									onSubmit={ ( event ) => {
+										event.preventDefault();
+										void api(
+											`/studio/courses/${ tree.id }/units`,
+											{
+												method: 'POST',
+												body: JSON.stringify( {
+													title,
+												} ),
+											}
+										)
+											.then( () => {
+												setTitle( '' );
+												setAddingUnit( false );
+												setMessage(
+													__(
+														'Unit added.',
+														'ohmylms'
+													)
+												);
+											} )
+											.catch( ( failure: Error ) =>
+												setMessage( failure.message )
 											);
-										} )
-										.catch( ( failure: Error ) =>
-											setMessage( failure.message )
-										);
-								} }
-							>
-								<Field label={ __( 'New unit', 'ohmylms' ) }>
-									<input
-										value={ title }
-										onChange={ ( event ) =>
-											setTitle( event.target.value )
-										}
-									/>
-								</Field>
-								<button
-									type="submit"
-									className="oml-dash-btn is-primary"
+									} }
 								>
-									{ __( 'Add unit', 'ohmylms' ) }
+									<Field
+										label={ __( 'New unit', 'ohmylms' ) }
+									>
+										<input
+											value={ title }
+											onChange={ ( event ) =>
+												setTitle( event.target.value )
+											}
+										/>
+									</Field>
+									<button
+										type="submit"
+										className="oml-dash-btn is-primary"
+									>
+										{ __( 'Add unit', 'ohmylms' ) }
+									</button>
+								</form>
+							) : (
+								<button
+									type="button"
+									className="oml-dash-btn is-ghost"
+									onClick={ () => setAddingUnit( true ) }
+								>
+									{ __( '+ Add unit', 'ohmylms' ) }
 								</button>
-							</form>
-						) }
+							) ) }
 						{ tree.units.map( ( unit, unitIndex ) => (
 							<section key={ unit.id } className="oml-dash-card">
-								<h2>{ unit.title }</h2>
+								<div className="oml-dash-actions">
+									<h2>{ unit.title }</h2>
+									{ tree.canEdit && (
+										<button
+											type="button"
+											className="oml-dash-btn is-ghost"
+											onClick={ () =>
+												setAddingOn(
+													addingOn === unit.id
+														? 0
+														: unit.id
+												)
+											}
+										>
+											{ __( '+ Add', 'ohmylms' ) }
+										</button>
+									) }
+								</div>
 								<ul className="oml-unit-list">
 									{ unit.items.map( ( item, itemIndex ) => (
 										<li
@@ -236,7 +275,7 @@ export function CourseBuilder() {
 												<>
 													<button
 														type="button"
-														className="oml-dash-btn"
+														className="oml-dash-btn oml-icon-btn"
 														aria-label={ __(
 															'Move up',
 															'ohmylms'
@@ -249,14 +288,11 @@ export function CourseBuilder() {
 															)
 														}
 													>
-														{ __(
-															'Up',
-															'ohmylms'
-														) }
+														↑
 													</button>
 													<button
 														type="button"
-														className="oml-dash-btn"
+														className="oml-dash-btn oml-icon-btn"
 														aria-label={ __(
 															'Move down',
 															'ohmylms'
@@ -269,103 +305,155 @@ export function CourseBuilder() {
 															)
 														}
 													>
-														{ __(
-															'Down',
-															'ohmylms'
-														) }
+														↓
 													</button>
+													{ item.kind === 'lesson' &&
+														item.edit && (
+															<a
+																className="oml-dash-btn is-primary"
+																href={
+																	item.edit
+																}
+															>
+																{ __(
+																	'Open',
+																	'ohmylms'
+																) }
+															</a>
+														) }
+													{ item.kind === 'quiz' && (
+														<button
+															type="button"
+															className="oml-dash-btn is-primary"
+															onClick={ () => {
+																const url =
+																	new URL(
+																		window
+																			.location
+																			.href
+																	);
+																url.searchParams.set(
+																	'section',
+																	'quizzes'
+																);
+																url.searchParams.set(
+																	'quiz',
+																	String(
+																		item.id
+																	)
+																);
+																window.history.pushState(
+																	{},
+																	'',
+																	url
+																);
+																window.location.reload();
+															} }
+														>
+															{ __(
+																'Open',
+																'ohmylms'
+															) }
+														</button>
+													) }
 												</>
 											) }
 										</li>
 									) ) }
 								</ul>
+								{ tree.canEdit && addingOn === unit.id && (
+									<form
+										onSubmit={ ( event ) => {
+											event.preventDefault();
+											void api(
+												`/studio/units/${ unit.id }/items`,
+												{
+													method: 'POST',
+													body: JSON.stringify( {
+														title: itemTitle,
+														kind,
+													} ),
+												}
+											)
+												.then( () => {
+													setItemTitle( '' );
+													setAddingOn( 0 );
+													setMessage(
+														__(
+															'Item added.',
+															'ohmylms'
+														)
+													);
+												} )
+												.catch( ( failure: Error ) =>
+													setMessage(
+														failure.message
+													)
+												);
+										} }
+									>
+										<Field
+											label={ __( 'Name', 'ohmylms' ) }
+										>
+											<input
+												value={ itemTitle }
+												onChange={ ( event ) =>
+													setItemTitle(
+														event.target.value
+													)
+												}
+											/>
+										</Field>
+										<Field
+											label={ __( 'Kind', 'ohmylms' ) }
+										>
+											<select
+												value={ kind }
+												onChange={ ( event ) =>
+													setKind(
+														event.target.value
+													)
+												}
+											>
+												<option value="lesson">
+													{ __(
+														'Lesson',
+														'ohmylms'
+													) }
+												</option>
+												<option value="video">
+													{ __( 'Video', 'ohmylms' ) }
+												</option>
+												<option value="article">
+													{ __(
+														'Article',
+														'ohmylms'
+													) }
+												</option>
+												<option value="exercise">
+													{ __(
+														'Exercise',
+														'ohmylms'
+													) }
+												</option>
+												<option value="unit_test">
+													{ __(
+														'Unit test',
+														'ohmylms'
+													) }
+												</option>
+											</select>
+										</Field>
+										<button
+											type="submit"
+											className="oml-dash-btn is-primary"
+										>
+											{ __( 'Add', 'ohmylms' ) }
+										</button>
+									</form>
+								) }
 							</section>
 						) ) }
-						{ tree.canEdit && unitId > 0 && (
-							<form
-								onSubmit={ ( event ) => {
-									event.preventDefault();
-									void api(
-										`/studio/units/${ unitId }/items`,
-										{
-											method: 'POST',
-											body: JSON.stringify( {
-												title: itemTitle,
-												kind,
-											} ),
-										}
-									)
-										.then( () => {
-											setItemTitle( '' );
-											setMessage(
-												__( 'Item added.', 'ohmylms' )
-											);
-										} )
-										.catch( ( failure: Error ) =>
-											setMessage( failure.message )
-										);
-								} }
-							>
-								<h2>{ __( 'Add item', 'ohmylms' ) }</h2>
-								<Field label={ __( 'Unit', 'ohmylms' ) }>
-									<select
-										value={ unitId }
-										onChange={ ( event ) =>
-											setUnitId(
-												Number( event.target.value )
-											)
-										}
-									>
-										{ tree.units.map( ( unit ) => (
-											<option
-												key={ unit.id }
-												value={ unit.id }
-											>
-												{ unit.title }
-											</option>
-										) ) }
-									</select>
-								</Field>
-								<Field label={ __( 'Name', 'ohmylms' ) }>
-									<input
-										value={ itemTitle }
-										onChange={ ( event ) =>
-											setItemTitle( event.target.value )
-										}
-									/>
-								</Field>
-								<Field label={ __( 'Kind', 'ohmylms' ) }>
-									<select
-										value={ kind }
-										onChange={ ( event ) =>
-											setKind( event.target.value )
-										}
-									>
-										<option value="lesson">
-											{ __( 'Lesson', 'ohmylms' ) }
-										</option>
-										<option value="video">
-											{ __( 'Video', 'ohmylms' ) }
-										</option>
-										<option value="article">
-											{ __( 'Article', 'ohmylms' ) }
-										</option>
-										<option value="exercise">
-											{ __( 'Exercise', 'ohmylms' ) }
-										</option>
-										<option value="unit_test">
-											{ __( 'Unit test', 'ohmylms' ) }
-										</option>
-									</select>
-								</Field>
-								<button
-									type="submit"
-									className="oml-dash-btn is-primary"
-								>
-									{ __( 'Add', 'ohmylms' ) }
-								</button>
-							</form>
-						) }
 					</div>
 					<aside className="oml-dash-card">
 						<h2>{ __( 'Item', 'ohmylms' ) }</h2>

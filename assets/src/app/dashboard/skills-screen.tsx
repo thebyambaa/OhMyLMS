@@ -1,7 +1,7 @@
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { api } from './api';
-import { Field } from './field';
+import { Disclosure, Field } from './field';
 
 interface Skill {
 	id: number;
@@ -26,6 +26,9 @@ export function SkillsScreen() {
 	const [ message, setMessage ] = useState( '' );
 	const [ csv, setCsv ] = useState( 'subject,grade,skill,mn\n' );
 	const [ focus, setFocus ] = useState( 0 );
+	const [ adding, setAdding ] = useState( false );
+	const [ coverOpen, setCoverOpen ] = useState( false );
+	const [ importOpen, setImportOpen ] = useState( false );
 
 	function load() {
 		void api< { skills: Skill[]; coverage: Skill[]; canEdit: boolean } >(
@@ -54,7 +57,40 @@ export function SkillsScreen() {
 
 	return (
 		<section>
-			{ canEdit && (
+			<header className="oml-page-bar">
+				<h1 className="oml-dash-title">
+					{ __( 'Skills', 'ohmylms' ) }
+				</h1>
+				{ canEdit && (
+					<button
+						type="button"
+						className="oml-dash-btn is-primary"
+						onClick={ () => setAdding( ! adding ) }
+					>
+						{ __( 'Add skill', 'ohmylms' ) }
+					</button>
+				) }
+			</header>
+			<ul className="oml-tree">
+				{ skills.map( ( skill ) => (
+					<li
+						key={ skill.id }
+						style={ { marginLeft: indent( skill.depth ) } }
+					>
+						<button
+							type="button"
+							className="link"
+							onClick={ () => setFocus( skill.id ) }
+						>
+							{ skill.name }
+						</button>
+						{ skill.mn && (
+							<span className="oml-dash-note"> { skill.mn }</span>
+						) }
+					</li>
+				) ) }
+			</ul>
+			{ adding && canEdit && (
 				<form
 					className="oml-dash-card"
 					onSubmit={ ( event ) => {
@@ -74,6 +110,7 @@ export function SkillsScreen() {
 							.then( () => {
 								setName( '' );
 								setMn( '' );
+								setAdding( false );
 								setMessage( __( 'Saved.', 'ohmylms' ) );
 							} )
 							.catch( ( failure: Error ) =>
@@ -114,7 +151,6 @@ export function SkillsScreen() {
 							) ) }
 							{ grades.map( ( skill ) => (
 								<option key={ skill.id } value={ skill.id }>
-									{ __( 'Skill under', 'ohmylms' ) }{ ' ' }
 									{ skill.name }
 								</option>
 							) ) }
@@ -125,25 +161,6 @@ export function SkillsScreen() {
 					</button>
 				</form>
 			) }
-			<ul className="oml-tree">
-				{ skills.map( ( skill ) => (
-					<li
-						key={ skill.id }
-						style={ { marginLeft: indent( skill.depth ) } }
-					>
-						<button
-							type="button"
-							className="link"
-							onClick={ () => setFocus( skill.id ) }
-						>
-							{ skill.name }
-						</button>
-						{ skill.mn && (
-							<span className="oml-dash-note"> { skill.mn }</span>
-						) }
-					</li>
-				) ) }
-			</ul>
 			{ focus > 0 && canEdit && (
 				<form
 					onSubmit={ ( event ) => {
@@ -195,67 +212,82 @@ export function SkillsScreen() {
 					</button>
 				</form>
 			) }
-			<section className="oml-dash-card">
-				<h2>{ __( 'Coverage', 'ohmylms' ) }</h2>
-				{ coverage.length ? (
-					<ul className="oml-tree">
-						{ coverage.map( ( skill ) => (
-							<li key={ skill.id }>{ skill.name }</li>
-						) ) }
-					</ul>
-				) : (
-					<p className="oml-dash-note">
-						{ __(
-							'Every skill has an exercise, or there are no skills yet.',
-							'ohmylms'
-						) }
-					</p>
-				) }
-			</section>
+			<Disclosure
+				title={ __( 'Coverage', 'ohmylms' ) }
+				open={ coverOpen }
+				onToggle={ () => setCoverOpen( ! coverOpen ) }
+			>
+				<section className="oml-dash-card">
+					{ coverage.length ? (
+						<ul className="oml-tree">
+							{ coverage.map( ( skill ) => (
+								<li key={ skill.id }>{ skill.name }</li>
+							) ) }
+						</ul>
+					) : (
+						<p className="oml-dash-note">
+							{ __(
+								'Every skill has an exercise, or there are no skills yet.',
+								'ohmylms'
+							) }
+						</p>
+					) }
+				</section>
+			</Disclosure>
 			{ canEdit && (
-				<form
-					className="oml-drop"
-					onSubmit={ ( event ) => {
-						event.preventDefault();
-						const form = new FormData();
-						form.set( 'csv', csv );
-						const file = (
-							event.currentTarget.elements.namedItem(
-								'file'
-							) as HTMLInputElement
-						 ).files?.[ 0 ];
-						if ( file ) {
-							form.set( 'file', file );
-						}
-						void api< { imported: number } >(
-							'/studio/skills/import',
-							{ method: 'POST', body: form }
-						)
-							.then( ( body ) =>
-								setMessage( String( body.imported ) )
-							)
-							.catch( ( failure: Error ) =>
-								setMessage( failure.message )
-							);
-					} }
+				<Disclosure
+					title={ __( 'Import CSV', 'ohmylms' ) }
+					open={ importOpen }
+					onToggle={ () => setImportOpen( ! importOpen ) }
 				>
-					<h2>{ __( 'Import CSV', 'ohmylms' ) }</h2>
-					<Field label={ __( 'CSV file', 'ohmylms' ) }>
-						<input name="file" type="file" accept=".csv,text/csv" />
-					</Field>
-					<Field label={ __( 'Or paste rows', 'ohmylms' ) }>
-						<textarea
-							value={ csv }
-							rows={ 4 }
-							onChange={ ( event ) =>
-								setCsv( event.target.value )
+					<form
+						className="oml-drop"
+						onSubmit={ ( event ) => {
+							event.preventDefault();
+							const form = new FormData();
+							form.set( 'csv', csv );
+							const file = (
+								event.currentTarget.elements.namedItem(
+									'file'
+								) as HTMLInputElement
+							 ).files?.[ 0 ];
+							if ( file ) {
+								form.set( 'file', file );
 							}
-						/>
-					</Field>
-					<button type="submit" className="oml-dash-btn">
-						{ __( 'Import', 'ohmylms' ) }
-					</button>
-				</form>
+							void api< { imported: number } >(
+								'/studio/skills/import',
+								{ method: 'POST', body: form }
+							)
+								.then( ( body ) =>
+									setMessage( String( body.imported ) )
+								)
+								.catch( ( failure: Error ) =>
+									setMessage( failure.message )
+								);
+						} }
+					>
+						<h2>{ __( 'Import CSV', 'ohmylms' ) }</h2>
+						<Field label={ __( 'CSV file', 'ohmylms' ) }>
+							<input
+								name="file"
+								type="file"
+								accept=".csv,text/csv"
+							/>
+						</Field>
+						<Field label={ __( 'Or paste rows', 'ohmylms' ) }>
+							<textarea
+								value={ csv }
+								rows={ 4 }
+								onChange={ ( event ) =>
+									setCsv( event.target.value )
+								}
+							/>
+						</Field>
+						<button type="submit" className="oml-dash-btn">
+							{ __( 'Import', 'ohmylms' ) }
+						</button>
+					</form>
+				</Disclosure>
 			) }
 			{ message && <p role="status">{ message }</p> }
 		</section>

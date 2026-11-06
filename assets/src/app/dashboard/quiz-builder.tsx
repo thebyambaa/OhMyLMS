@@ -1,7 +1,7 @@
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { api } from './api';
-import { Field } from './field';
+import { Disclosure, Field } from './field';
 
 interface Choice {
 	id?: number;
@@ -104,6 +104,8 @@ export function QuizBuilder() {
 	const [ preview, setPreview ] = useState( -1 );
 	const [ picked, setPicked ] = useState< Record< number, boolean > >( {} );
 	const [ checked, setChecked ] = useState( false );
+	const [ settingsOpen, setSettingsOpen ] = useState( false );
+	const [ openQ, setOpenQ ] = useState( 0 );
 
 	useEffect( () => {
 		void api< { quizzes: Array< { id: number; title: string } > } >(
@@ -129,32 +131,65 @@ export function QuizBuilder() {
 
 	return (
 		<section>
-			<Field label={ __( 'Quiz', 'ohmylms' ) }>
-				<select
-					value={ quizId }
-					onChange={ ( event ) =>
-						setQuizId( Number( event.target.value ) )
-					}
-				>
-					<option value={ 0 }>
-						{ __( 'Choose a quiz', 'ohmylms' ) }
-					</option>
-					{ quizzes.map( ( item ) => (
-						<option key={ item.id } value={ item.id }>
-							{ item.title }
+			<header className="oml-page-bar">
+				<h1 className="oml-dash-title">
+					{ __( 'Quizzes & exams', 'ohmylms' ) }
+				</h1>
+				<Field label={ __( 'Quiz', 'ohmylms' ) }>
+					<select
+						value={ quizId }
+						onChange={ ( event ) =>
+							setQuizId( Number( event.target.value ) )
+						}
+					>
+						<option value={ 0 }>
+							{ __( 'Choose a quiz', 'ohmylms' ) }
 						</option>
-					) ) }
-				</select>
-			</Field>
+						{ quizzes.map( ( item ) => (
+							<option key={ item.id } value={ item.id }>
+								{ item.title }
+							</option>
+						) ) }
+					</select>
+				</Field>
+				{ quiz?.canEdit && (
+					<button
+						type="button"
+						className="oml-dash-btn is-primary"
+						onClick={ () => {
+							void api( `/studio/quizzes/${ quiz.id }`, {
+								method: 'POST',
+								body: JSON.stringify( {
+									settings: quiz.settings,
+									questions: quiz.questions,
+									title: quiz.title,
+								} ),
+							} )
+								.then( () =>
+									setMessage( __( 'Quiz saved.', 'ohmylms' ) )
+								)
+								.catch( ( failure: Error ) =>
+									setMessage( failure.message )
+								);
+						} }
+					>
+						{ __( 'Save quiz', 'ohmylms' ) }
+					</button>
+				) }
+			</header>
 			{ quiz && (
 				<>
-					<ol className="oml-pills">
+					<ol className="oml-pills is-quiet">
 						{ quiz.levels.map( ( level ) => (
 							<li key={ level }>{ level }</li>
 						) ) }
 					</ol>
 					{ quiz.canEdit && (
-						<>
+						<Disclosure
+							title={ __( 'Settings', 'ohmylms' ) }
+							open={ settingsOpen }
+							onToggle={ () => setSettingsOpen( ! settingsOpen ) }
+						>
 							<Field label={ __( 'Pass mark %', 'ohmylms' ) }>
 								<input
 									type="number"
@@ -211,186 +246,205 @@ export function QuizBuilder() {
 									{ __( 'Shuffle questions', 'ohmylms' ) }
 								</label>
 							</div>
-						</>
+						</Disclosure>
 					) }
 					{ quiz.questions.map( ( question, index ) => (
 						<article
 							key={ question.id || index }
 							className="oml-dash-card"
 						>
-							<h2>
-								{ question.prompt ||
-									__( 'New question', 'ohmylms' ) }
-							</h2>
-							<Field label={ __( 'Prompt', 'ohmylms' ) }>
-								<input
-									value={ question.prompt }
-									onChange={ ( event ) =>
-										updateQuestion( index, {
-											...question,
-											prompt: event.target.value,
-										} )
-									}
-								/>
-							</Field>
-							<Field label={ __( 'Type', 'ohmylms' ) }>
-								<select
-									value={ studioType( question.type ) }
-									onChange={ ( event ) =>
-										updateQuestion(
-											index,
-											blank( event.target.value )
-										)
-									}
-								>
-									{ TYPES.map( ( [ value, label ] ) => (
-										<option key={ value } value={ value }>
-											{ label }
-										</option>
-									) ) }
-								</select>
-							</Field>
-							{ question.choices.map( ( choice, choiceIndex ) => (
-								<label
-									key={ choice.id || choiceIndex }
-									className="oml-dash-field oml-choice"
-									htmlFor={ `oml-choice-${ index }-${ choiceIndex }` }
-								>
-									<span className="screen-reader-text">
-										{ __( 'Answer', 'ohmylms' ) }
-									</span>
-									<input
-										id={ `oml-choice-${ index }-${ choiceIndex }-mark` }
-										type="checkbox"
-										checked={ choice.correct }
-										onChange={ ( event ) => {
-											const choices =
-												question.choices.slice();
-											choices[ choiceIndex ] = {
-												...choice,
-												correct: event.target.checked,
-											};
-											updateQuestion( index, {
-												...question,
-												choices,
-											} );
-										} }
-									/>
-									<input
-										id={ `oml-choice-${ index }-${ choiceIndex }` }
-										value={ choice.text }
-										onChange={ ( event ) => {
-											const choices =
-												question.choices.slice();
-											choices[ choiceIndex ] = {
-												...choice,
-												text: event.target.value,
-											};
-											updateQuestion( index, {
-												...question,
-												choices,
-											} );
-										} }
-									/>
-								</label>
-							) ) }
-							<Field label={ __( 'Hint', 'ohmylms' ) }>
-								<input
-									value={ question.hint }
-									onChange={ ( event ) =>
-										updateQuestion( index, {
-											...question,
-											hint: event.target.value,
-										} )
-									}
-								/>
-							</Field>
-							<Field label={ __( 'Explanation', 'ohmylms' ) }>
-								<input
-									value={ question.explanation }
-									onChange={ ( event ) =>
-										updateQuestion( index, {
-											...question,
-											explanation: event.target.value,
-										} )
-									}
-								/>
-							</Field>
-							<Field label={ __( 'Skill', 'ohmylms' ) }>
-								<select
-									value={ question.skill }
-									onChange={ ( event ) =>
-										updateQuestion( index, {
-											...question,
-											skill: Number( event.target.value ),
-										} )
-									}
-								>
-									<option value={ 0 }>
-										{ __( 'None', 'ohmylms' ) }
-									</option>
-									{ quiz.skills.map( ( skill ) => (
-										<option
-											key={ skill.id }
-											value={ skill.id }
-										>
-											{ skill.name }
-										</option>
-									) ) }
-								</select>
-							</Field>
 							<button
 								type="button"
-								className="oml-dash-btn"
-								onClick={ () => {
-									setPreview( index );
-									setChecked( false );
-									setPicked( {} );
-								} }
+								className="oml-q-head"
+								aria-expanded={ openQ === index }
+								onClick={ () =>
+									setOpenQ( openQ === index ? -1 : index )
+								}
 							>
-								{ __( 'Preview', 'ohmylms' ) }
+								<span>
+									{ question.prompt ||
+										__( 'New question', 'ohmylms' ) }
+								</span>
+								<span className="oml-badge">
+									{ studioType( question.type ).replace(
+										'_',
+										' '
+									) }
+								</span>
 							</button>
+							{ openQ === index && (
+								<>
+									<Field label={ __( 'Prompt', 'ohmylms' ) }>
+										<input
+											value={ question.prompt }
+											onChange={ ( event ) =>
+												updateQuestion( index, {
+													...question,
+													prompt: event.target.value,
+												} )
+											}
+										/>
+									</Field>
+									<Field label={ __( 'Type', 'ohmylms' ) }>
+										<select
+											value={ studioType(
+												question.type
+											) }
+											onChange={ ( event ) =>
+												updateQuestion(
+													index,
+													blank( event.target.value )
+												)
+											}
+										>
+											{ TYPES.map(
+												( [ value, label ] ) => (
+													<option
+														key={ value }
+														value={ value }
+													>
+														{ label }
+													</option>
+												)
+											) }
+										</select>
+									</Field>
+									{ question.choices.map(
+										( choice, choiceIndex ) => (
+											<label
+												key={ choice.id || choiceIndex }
+												className="oml-dash-field oml-choice"
+												htmlFor={ `oml-choice-${ index }-${ choiceIndex }` }
+											>
+												<span className="screen-reader-text">
+													{ __(
+														'Answer',
+														'ohmylms'
+													) }
+												</span>
+												<input
+													id={ `oml-choice-${ index }-${ choiceIndex }-mark` }
+													type="checkbox"
+													checked={ choice.correct }
+													onChange={ ( event ) => {
+														const choices =
+															question.choices.slice();
+														choices[ choiceIndex ] =
+															{
+																...choice,
+																correct:
+																	event.target
+																		.checked,
+															};
+														updateQuestion( index, {
+															...question,
+															choices,
+														} );
+													} }
+												/>
+												<input
+													id={ `oml-choice-${ index }-${ choiceIndex }` }
+													value={ choice.text }
+													onChange={ ( event ) => {
+														const choices =
+															question.choices.slice();
+														choices[ choiceIndex ] =
+															{
+																...choice,
+																text: event
+																	.target
+																	.value,
+															};
+														updateQuestion( index, {
+															...question,
+															choices,
+														} );
+													} }
+												/>
+											</label>
+										)
+									) }
+									<Field label={ __( 'Hint', 'ohmylms' ) }>
+										<input
+											value={ question.hint }
+											onChange={ ( event ) =>
+												updateQuestion( index, {
+													...question,
+													hint: event.target.value,
+												} )
+											}
+										/>
+									</Field>
+									<Field
+										label={ __( 'Explanation', 'ohmylms' ) }
+									>
+										<input
+											value={ question.explanation }
+											onChange={ ( event ) =>
+												updateQuestion( index, {
+													...question,
+													explanation:
+														event.target.value,
+												} )
+											}
+										/>
+									</Field>
+									<Field label={ __( 'Skill', 'ohmylms' ) }>
+										<select
+											value={ question.skill }
+											onChange={ ( event ) =>
+												updateQuestion( index, {
+													...question,
+													skill: Number(
+														event.target.value
+													),
+												} )
+											}
+										>
+											<option value={ 0 }>
+												{ __( 'None', 'ohmylms' ) }
+											</option>
+											{ quiz.skills.map( ( skill ) => (
+												<option
+													key={ skill.id }
+													value={ skill.id }
+												>
+													{ skill.name }
+												</option>
+											) ) }
+										</select>
+									</Field>
+									<button
+										type="button"
+										className="oml-dash-btn"
+										onClick={ () => {
+											setPreview( index );
+											setChecked( false );
+											setPicked( {} );
+										} }
+									>
+										{ __( 'Preview', 'ohmylms' ) }
+									</button>
+								</>
+							) }
 						</article>
 					) ) }
 					{ quiz.canEdit && (
 						<div className="oml-dash-actions">
 							<button
 								type="button"
-								className="oml-dash-btn"
-								onClick={ () =>
+								className="oml-dash-btn is-ghost"
+								onClick={ () => {
+									setOpenQ( quiz.questions.length );
 									setQuiz( {
 										...quiz,
 										questions: quiz.questions.concat( [
 											blank( 'single_choice' ),
 										] ),
-									} )
-								}
-							>
-								{ __( 'Add question', 'ohmylms' ) }
-							</button>
-							<button
-								type="button"
-								className="oml-dash-btn is-primary"
-								onClick={ () => {
-									void api( `/studio/quizzes/${ quiz.id }`, {
-										method: 'POST',
-										body: JSON.stringify( {
-											settings: quiz.settings,
-											questions: quiz.questions,
-											title: quiz.title,
-										} ),
-									} )
-										.then( () =>
-											setMessage(
-												__( 'Quiz saved.', 'ohmylms' )
-											)
-										)
-										.catch( ( failure: Error ) =>
-											setMessage( failure.message )
-										);
+									} );
 								} }
 							>
-								{ __( 'Save quiz', 'ohmylms' ) }
+								{ __( 'Add question', 'ohmylms' ) }
 							</button>
 						</div>
 					) }

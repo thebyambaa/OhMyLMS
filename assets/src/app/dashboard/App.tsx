@@ -192,6 +192,12 @@ function sectionFromUrl() {
 export function App() {
 	const data = boot();
 	const [ section, setSection ] = useState( sectionFromUrl );
+	const [ expanded, setExpanded ] = useState( () => {
+		const group = sectionGroup( sectionFromUrl() );
+		return group === 'people' || group === 'content' || group === 'settings'
+			? group
+			: '';
+	} );
 	const [ school, setSchool ] = useState( data.schools[ 0 ]?.id || 0 );
 	const [ range, setRange ] = useState( '7' );
 	const [ open, setOpen ] = useState( false );
@@ -206,7 +212,32 @@ export function App() {
 		url.searchParams.set( 'section', next );
 		window.history.pushState( {}, '', url );
 		setSection( next );
+		const group = sectionGroup( next );
+		if (
+			group === 'people' ||
+			group === 'content' ||
+			group === 'settings'
+		) {
+			setExpanded( group );
+		}
 		setOpen( false );
+	}
+
+	function onNav( item: string ) {
+		const grouped =
+			item === 'people' || item === 'content' || item === 'settings';
+		if ( ! grouped ) {
+			go( item );
+			return;
+		}
+		if ( expanded === item ) {
+			setExpanded( '' );
+			return;
+		}
+		setExpanded( item );
+		if ( sectionGroup( section ) !== item ) {
+			go( item === 'content' ? 'courses' : item );
+		}
 	}
 
 	return (
@@ -270,9 +301,12 @@ export function App() {
 				</label>
 				<span className="oml-dash-user">{ data.user.name }</span>
 				{ data.adminUrl && (
-					<a className="oml-dash-btn" href={ data.adminUrl }>
-						{ __( 'wp-admin', 'ohmylms' ) }
-					</a>
+					<details className="oml-more">
+						<summary>{ __( 'More', 'ohmylms' ) }</summary>
+						<a href={ data.adminUrl }>
+							{ __( 'wp-admin', 'ohmylms' ) }
+						</a>
+					</details>
 				) }
 			</header>
 			<div className="oml-dash-layout">
@@ -291,14 +325,12 @@ export function App() {
 										? 'page'
 										: undefined
 								}
-								onClick={ () =>
-									go( item === 'content' ? 'courses' : item )
-								}
+								onClick={ () => onNav( item ) }
 							>
 								<NavIcon name={ item } />
 								{ LABELS[ item ] || item }
 							</button>
-							{ item === 'people' && (
+							{ item === 'people' && expanded === 'people' && (
 								<div className="oml-dash-sub">
 									<button
 										type="button"
@@ -362,7 +394,7 @@ export function App() {
 									</button>
 								</div>
 							) }
-							{ item === 'content' && (
+							{ item === 'content' && expanded === 'content' && (
 								<div className="oml-dash-sub">
 									<button
 										type="button"
@@ -413,80 +445,85 @@ export function App() {
 									</button>
 								</div>
 							) }
-							{ item === 'settings' && (
-								<div className="oml-dash-sub">
-									<button
-										type="button"
-										aria-current={
-											section === 'settings' &&
-											settingsPane === 'general'
-												? 'page'
-												: undefined
-										}
-										onClick={ () => {
-											setSettingsPane( 'general' );
-											go( 'settings' );
-										} }
-									>
-										{ __( 'General', 'ohmylms' ) }
-									</button>
-									<button
-										type="button"
-										aria-current={
-											section === 'settings' &&
-											settingsPane === 'branding'
-												? 'page'
-												: undefined
-										}
-										onClick={ () => {
-											setSettingsPane( 'branding' );
-											go( 'settings' );
-										} }
-									>
-										{ __( 'Branding', 'ohmylms' ) }
-									</button>
-									<button
-										type="button"
-										aria-current={
-											section === 'settings' &&
-											settingsPane === 'mascot'
-												? 'page'
-												: undefined
-										}
-										onClick={ () => {
-											setSettingsPane( 'mascot' );
-											go( 'settings' );
-										} }
-									>
-										{ __( 'Mascot', 'ohmylms' ) }
-									</button>
-									<button
-										type="button"
-										aria-current={
-											section === 'settings' &&
-											settingsPane === 'roles'
-												? 'page'
-												: undefined
-										}
-										onClick={ () => {
-											setSettingsPane( 'roles' );
-											go( 'settings' );
-										} }
-									>
-										{ __(
-											'Roles & permissions',
-											'ohmylms'
-										) }
-									</button>
-								</div>
-							) }
+							{ item === 'settings' &&
+								expanded === 'settings' && (
+									<div className="oml-dash-sub">
+										<button
+											type="button"
+											aria-current={
+												section === 'settings' &&
+												settingsPane === 'general'
+													? 'page'
+													: undefined
+											}
+											onClick={ () => {
+												setSettingsPane( 'general' );
+												go( 'settings' );
+											} }
+										>
+											{ __( 'General', 'ohmylms' ) }
+										</button>
+										<button
+											type="button"
+											aria-current={
+												section === 'settings' &&
+												settingsPane === 'branding'
+													? 'page'
+													: undefined
+											}
+											onClick={ () => {
+												setSettingsPane( 'branding' );
+												go( 'settings' );
+											} }
+										>
+											{ __( 'Branding', 'ohmylms' ) }
+										</button>
+										<button
+											type="button"
+											aria-current={
+												section === 'settings' &&
+												settingsPane === 'mascot'
+													? 'page'
+													: undefined
+											}
+											onClick={ () => {
+												setSettingsPane( 'mascot' );
+												go( 'settings' );
+											} }
+										>
+											{ __( 'Mascot', 'ohmylms' ) }
+										</button>
+										<button
+											type="button"
+											aria-current={
+												section === 'settings' &&
+												settingsPane === 'roles'
+													? 'page'
+													: undefined
+											}
+											onClick={ () => {
+												setSettingsPane( 'roles' );
+												go( 'settings' );
+											} }
+										>
+											{ __(
+												'Roles & permissions',
+												'ohmylms'
+											) }
+										</button>
+									</div>
+								) }
 						</div>
 					) ) }
 				</nav>
 				<main className="oml-dash-main">
-					<h1 className="oml-dash-title">
-						{ LABELS[ section ] || section }
-					</h1>
+					{ ! [ 'home', 'courses', 'quizzes', 'skills' ].includes(
+						section
+					) && (
+						<h1 className="oml-dash-title">
+							{ LABELS[ section ] || section }
+						</h1>
+					) }
 					<Suspense
 						fallback={ <p>{ __( 'Loading…', 'ohmylms' ) }</p> }
 					>

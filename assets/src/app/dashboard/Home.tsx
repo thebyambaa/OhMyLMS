@@ -37,8 +37,6 @@ export function Home( {
 	const [ classId, setClassId ] = useState( 0 );
 	const [ data, setData ] = useState< Summary | null >( null );
 	const [ error, setError ] = useState( '' );
-	const [ started ] = useState( () => performance.now() );
-	const [ loaded, setLoaded ] = useState( 0 );
 	const [ exporting, setExporting ] = useState( false );
 	const canManage = boot().canManage;
 	const [ csvReady, setCsvReady ] = useState( '' );
@@ -51,7 +49,6 @@ export function Home( {
 			.then( ( summary ) => {
 				if ( live ) {
 					setData( summary );
-					setLoaded( Math.round( performance.now() - started ) );
 				}
 			} )
 			.catch( ( failure: Error ) => {
@@ -62,7 +59,7 @@ export function Home( {
 		return () => {
 			live = false;
 		};
-	}, [ school, range, level, classId, started ] );
+	}, [ school, range, level, classId ] );
 
 	async function download() {
 		const query = `?school=${ school }&range=${ range }&level=${ level }&class=${ classId }`;
@@ -82,97 +79,122 @@ export function Home( {
 	if ( ! data ) {
 		return <p>{ __( 'Loading the learning summary…', 'ohmylms' ) }</p>;
 	}
+	const quiet =
+		data.kpis.length > 0 &&
+		data.kpis.every( ( card ) => {
+			if ( ! card.available ) {
+				return true;
+			}
+			const lead = card.value.match( /[\d.]+/ );
+			return lead ? Number( lead[ 0 ] ) === 0 : true;
+		} );
+	const shown = quiet
+		? []
+		: data.kpis.filter( ( card ) => {
+				if ( ! card.available ) {
+					return false;
+				}
+				const lead = card.value.match( /[\d.]+/ );
+				return lead ? Number( lead[ 0 ] ) > 0 : false;
+			} );
 	return (
 		<>
-			<p className="oml-dash-note">
-				{ sprintf(
-					/* translators: %d: milliseconds. */
-					__( 'Summary loaded in %d ms.', 'ohmylms' ),
-					loaded
-				) }
-			</p>
-			<section className="oml-dash-kpis" aria-live="polite">
-				{ data.kpis.map( ( card ) => (
-					<article
-						key={ card.id }
-						className="oml-dash-card oml-dash-kpi"
+			<header className="oml-page-bar">
+				<h1 className="oml-dash-title">{ __( 'Home', 'ohmylms' ) }</h1>
+				<details className="oml-more">
+					<summary>{ __( 'Export', 'ohmylms' ) }</summary>
+					<button
+						type="button"
+						className="oml-dash-btn is-ghost"
+						onClick={ () => setExporting( true ) }
 					>
-						<div className="oml-kpi-label">
-							<span className="oml-kpi-mark" aria-hidden="true">
-								{ card.label.slice( 0, 1 ) }
-							</span>
-							{ card.label }
-						</div>
-						{ card.available ? (
-							<div className="value">{ card.value }</div>
-						) : null }
-						{ card.delta === null ? null : (
-							<div
-								className={
-									card.delta >= 0
-										? 'oml-dash-delta is-up'
-										: 'oml-dash-delta is-down'
-								}
-							>
-								{ sprintf(
-									/* translators: %s: percent change versus the previous period. */
-									__( '%s%% vs previous period', 'ohmylms' ),
-									card.delta > 0
-										? `+${ card.delta }`
-										: String( card.delta )
-								) }
-							</div>
-						) }
-						<p className="oml-dash-note">{ card.note }</p>
-					</article>
-				) ) }
-			</section>
-			<div className="oml-dash-grid">
-				<section className="oml-dash-card">
-					<h2>{ __( 'Needs attention', 'ohmylms' ) }</h2>
-					{ data.alerts.length ? (
-						data.alerts.map( ( alert ) => (
-							<p key={ alert.id }>
-								{ alert.text }{ ' ' }
-								{ canManage && (
-									<button
-										type="button"
-										className="oml-dash-btn"
-										onClick={ onPeople }
-									>
-										{ alert.label }
-									</button>
-								) }
-							</p>
-						) )
-					) : (
-						<p className="oml-dash-note">
-							{ __( 'Nothing needs attention.', 'ohmylms' ) }
-						</p>
+						{ __( 'Download CSV', 'ohmylms' ) }
+					</button>
+				</details>
+			</header>
+			{ quiet ? (
+				<p className="oml-dash-note">
+					{ __(
+						'No learning activity in this period yet.',
+						'ohmylms'
 					) }
-				</section>
-				<section className="oml-dash-card">
-					<h2>{ __( 'Quick actions', 'ohmylms' ) }</h2>
-					<div className="oml-dash-actions">
-						{ canManage && (
-							<button
-								type="button"
-								className="oml-dash-btn is-primary"
-								onClick={ onPeople }
-							>
-								{ __( 'Invite someone', 'ohmylms' ) }
-							</button>
-						) }
-						<button
-							type="button"
-							className="oml-dash-btn"
-							onClick={ () => setExporting( true ) }
+				</p>
+			) : (
+				<section className="oml-dash-kpis" aria-live="polite">
+					{ shown.map( ( card ) => (
+						<article
+							key={ card.id }
+							className="oml-dash-card oml-dash-kpi"
 						>
-							{ __( 'Export', 'ohmylms' ) }
-						</button>
-					</div>
+							<div className="oml-kpi-label">
+								<span
+									className="oml-kpi-mark"
+									aria-hidden="true"
+								>
+									{ card.label.slice( 0, 1 ) }
+								</span>
+								{ card.label }
+							</div>
+							<div className="value">{ card.value }</div>
+							{ card.delta === null ? null : (
+								<div
+									className={
+										card.delta >= 0
+											? 'oml-dash-delta is-up'
+											: 'oml-dash-delta is-down'
+									}
+								>
+									{ sprintf(
+										/* translators: %s: percent change versus the previous period. */
+										__(
+											'%s%% vs previous period',
+											'ohmylms'
+										),
+										card.delta > 0
+											? `+${ card.delta }`
+											: String( card.delta )
+									) }
+								</div>
+							) }
+							<p className="oml-dash-note">{ card.note }</p>
+						</article>
+					) ) }
 				</section>
-			</div>
+			) }
+			<section className="oml-dash-card">
+				<h2>{ __( 'Needs attention', 'ohmylms' ) }</h2>
+				{ data.alerts.length ? (
+					data.alerts.map( ( alert ) => (
+						<p key={ alert.id }>
+							{ alert.text }{ ' ' }
+							{ canManage && (
+								<button
+									type="button"
+									className="oml-dash-btn is-primary"
+									onClick={ onPeople }
+								>
+									{ alert.label }
+								</button>
+							) }
+						</p>
+					) )
+				) : (
+					<p className="oml-dash-note">
+						{ canManage
+							? __( 'Nothing needs attention.', 'ohmylms' )
+							: __( 'Nothing needs attention.', 'ohmylms' ) }
+					</p>
+				) }
+				{ canManage && ! data.alerts.length && (
+					<button
+						type="button"
+						className="oml-dash-btn is-primary"
+						onClick={ onPeople }
+					>
+						{ __( 'Invite someone', 'ohmylms' ) }
+					</button>
+				) }
+			</section>
 			<section className="oml-dash-card">
 				<div className="oml-dash-actions">
 					{ level !== 'schools' && (
@@ -243,14 +265,14 @@ export function Home( {
 					</tbody>
 				</table>
 			</section>
-			<section className="oml-dash-card">
-				<h2>
-					{ __(
-						'Mastery heatmap — skill levels × classes',
-						'ohmylms'
-					) }
-				</h2>
-				{ data.heatmap.available ? (
+			{ data.heatmap.available ? (
+				<section className="oml-dash-card">
+					<h2>
+						{ __(
+							'Mastery heatmap — skill levels × classes',
+							'ohmylms'
+						) }
+					</h2>
 					<table className="oml-dash-table oml-dash-heat">
 						<thead>
 							<tr>
@@ -276,9 +298,10 @@ export function Home( {
 							) ) }
 						</tbody>
 					</table>
-				) : null }
+				</section>
+			) : (
 				<p className="oml-dash-note">{ data.heatmap.note }</p>
-			</section>
+			) }
 			{ exporting && (
 				<dialog className="oml-dash-dialog" open>
 					<h2>{ __( 'Export', 'ohmylms' ) }</h2>

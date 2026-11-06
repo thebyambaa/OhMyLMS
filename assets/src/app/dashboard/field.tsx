@@ -1,5 +1,5 @@
 import { cloneElement, useId } from '@wordpress/element';
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 
 /**
  * A labelled control. The label’s `htmlFor` matches the control id.
@@ -20,6 +20,51 @@ export function Field( {
 		<div className="oml-dash-field">
 			<label htmlFor={ id }>{ label }</label>
 			{ cloneElement( children, { id } ) }
+		</div>
+	);
+}
+
+/**
+ * A checkbox with its label.
+ *
+ * @param props          Props.
+ * @param props.label    Visible label.
+ * @param props.checked  Whether it is on.
+ * @param props.onChange New value.
+ */
+/**
+ * A section that stays closed until the user asks for it.
+ *
+ * @param props          Props.
+ * @param props.title    Button label.
+ * @param props.open     Whether the body is shown.
+ * @param props.onToggle Toggle handler.
+ * @param props.children Hidden until open.
+ */
+export function Disclosure( {
+	title,
+	open,
+	onToggle,
+	children,
+}: {
+	title: string;
+	open: boolean;
+	onToggle: () => void;
+	children: ReactNode;
+} ) {
+	return (
+		<div className="oml-disclose">
+			<button
+				type="button"
+				className="oml-disclose-btn"
+				aria-expanded={ open }
+				onClick={ onToggle }
+			>
+				{ title }
+			</button>
+			{ open ? (
+				<div className="oml-disclose-body">{ children }</div>
+			) : null }
 		</div>
 	);
 }
