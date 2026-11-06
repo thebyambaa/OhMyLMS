@@ -89,6 +89,7 @@ ohmylms_enqueue_interactivity_module( 'ohmylms/gamification' );
 <canvas id="ohmylms-confetti-canvas"></canvas>
 <div data-wp-interactive="ohmylms/gamification" data-wp-init="callbacks.mount">
 	<div class="ohmylms-celebration-popup" role="status" aria-live="polite" hidden data-wp-bind--hidden="!state.visible">
+	<?php \OhMyLMS\Design\Mascot::render( 'celebrate' ); ?>
 	<span data-wp-text="state.message"></span>
 	<button type="button" aria-label="<?php esc_attr_e( 'Dismiss notification', 'ohmylms' ); ?>" data-wp-on--click="actions.dismiss">×</button>
 	</div>

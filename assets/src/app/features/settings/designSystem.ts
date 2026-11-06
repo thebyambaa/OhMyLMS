@@ -44,11 +44,57 @@ export const PILL = 999;
 export const MAX_RADIUS = 24;
 const HEX = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
+export const MASCOT_KINDS = [
+	'none',
+	'owl',
+	'robot',
+	'horse',
+	'star',
+	'upload',
+] as const;
+
+export type MascotKind = ( typeof MASCOT_KINDS )[ number ];
+
+export const MASCOT_PLACEMENTS = [
+	'profile',
+	'empty',
+	'celebrate',
+	'quiz',
+] as const;
+
+export type MascotPlacement = ( typeof MASCOT_PLACEMENTS )[ number ];
+
+export interface MascotValues {
+	kind: MascotKind;
+	attachment_id: number;
+	attachment_url: string;
+	name: string;
+	greeting: string;
+	placements: Record< MascotPlacement, boolean >;
+}
+
+export interface MascotDrawing {
+	kind: string;
+	label: string;
+	svg: string;
+}
+
+export interface SchoolBrand {
+	id: number;
+	name: string;
+	accent: string;
+	logo_id: number;
+	logo_url: string;
+	mascot: MascotValues | null;
+}
+
 export interface DesignValues {
 	preset: string;
 	colors: Record< ColorKey, string >;
 	button_radius: number;
 	density: Density;
+	font: string;
+	mascot: MascotValues;
 }
 
 export interface DesignPreset extends DesignValues {
@@ -68,6 +114,9 @@ export interface DesignSnapshot extends DesignValues {
 	white_passes: boolean;
 	admin_scheme: string;
 	admin_colors: Record< ColorKey, string >;
+	fonts: string[];
+	mascots: MascotDrawing[];
+	schools: SchoolBrand[];
 	presets: DesignPreset[];
 }
 
@@ -88,12 +137,64 @@ function parseDensity( raw: unknown ): Density {
 	return value;
 }
 
+function defaultMascot(): MascotValues {
+	return {
+		kind: 'none',
+		attachment_id: 0,
+		attachment_url: '',
+		name: '',
+		greeting: '',
+		placements: {
+			profile: true,
+			empty: true,
+			celebrate: true,
+			quiz: false,
+		},
+	};
+}
+
+function parseMascot( raw: unknown ): MascotValues {
+	const source = asRecord( raw );
+	const fallback = defaultMascot();
+	const kind = asString( source.kind );
+	const placements = asRecord( source.placements );
+	return {
+		kind: ( MASCOT_KINDS as readonly string[] ).includes( kind )
+			? ( kind as MascotKind )
+			: 'none',
+		attachment_id: asNumber( source.attachment_id ),
+		attachment_url: asString( source.attachment_url ),
+		name: asString( source.name ),
+		greeting: asString( source.greeting ),
+		placements: {
+			profile:
+				'profile' in placements
+					? asBoolean( placements.profile )
+					: fallback.placements.profile,
+			empty:
+				'empty' in placements
+					? asBoolean( placements.empty )
+					: fallback.placements.empty,
+			celebrate:
+				'celebrate' in placements
+					? asBoolean( placements.celebrate )
+					: fallback.placements.celebrate,
+			quiz:
+				'quiz' in placements
+					? asBoolean( placements.quiz )
+					: fallback.placements.quiz,
+		},
+	};
+}
+
 function parseValues( raw: Record< string, unknown > ): DesignValues {
 	return {
 		preset: asString( raw.preset ),
 		colors: parseColors( raw.colors ),
 		button_radius: asNumber( raw.button_radius ),
 		density: parseDensity( raw.density ),
+		font: 'string' === typeof raw.font && raw.font ? raw.font : 'inherit',
+		mascot: raw.mascot ? parseMascot( raw.mascot ) : defaultMascot(),
 	};
 }
 
@@ -111,6 +212,32 @@ export function parseDesign( raw: unknown ): DesignSnapshot {
 			const row = asRecord( item );
 			return { ...parseValues( row ), label: asString( row.label ) };
 		} ),
+		fonts: Array.isArray( body.fonts )
+			? body.fonts.map( ( item ) => asString( item ) )
+			: [],
+		mascots: Array.isArray( body.mascots )
+			? body.mascots.map( ( item ) => {
+					const row = asRecord( item );
+					return {
+						kind: asString( row.kind ),
+						label: asString( row.label ),
+						svg: asString( row.svg ),
+					};
+				} )
+			: [],
+		schools: Array.isArray( body.schools )
+			? body.schools.map( ( item ) => {
+					const row = asRecord( item );
+					return {
+						id: asNumber( row.id ),
+						name: asString( row.name ),
+						accent: asString( row.accent ),
+						logo_id: asNumber( row.logo_id ),
+						logo_url: asString( row.logo_url ),
+						mascot: row.mascot ? parseMascot( row.mascot ) : null,
+					};
+				} )
+			: [],
 	};
 }
 
@@ -123,6 +250,23 @@ export async function saveDesign(
 	signal?: AbortSignal
 ): Promise< DesignSnapshot > {
 	return parseDesign( await post< unknown >( PATH, values, { signal } ) );
+}
+
+/**
+ * Save one school's accent, logo and mascot. Returns the design snapshot, including every school.
+ *
+ * @param id     School ID.
+ * @param body   Override fields accepted by Schools\Settings::save().
+ * @param signal Cancels the request.
+ */
+export async function saveSchoolBrand(
+	id: number,
+	body: Record< string, unknown >,
+	signal?: AbortSignal
+): Promise< DesignSnapshot > {
+	return parseDesign(
+		await post< unknown >( `${ PATH }/schools/${ id }`, body, { signal } )
+	);
 }
 
 /**
@@ -143,6 +287,11 @@ export function designDraft( snapshot: DesignSnapshot ): DesignValues {
 		colors: { ...snapshot.colors },
 		button_radius: snapshot.button_radius,
 		density: snapshot.density,
+		font: snapshot.font,
+		mascot: {
+			...snapshot.mascot,
+			placements: { ...snapshot.mascot.placements },
+		},
 	};
 }
 
@@ -183,6 +332,7 @@ export function applyPreset(
 	const preset = presets.find( ( item ) => item.preset === name );
 	return preset
 		? {
+				...values,
 				preset: preset.preset,
 				colors: { ...preset.colors },
 				button_radius: preset.button_radius,
@@ -196,6 +346,8 @@ export function designChanged( a: DesignValues, b: DesignValues ): boolean {
 		a.preset !== b.preset ||
 		a.button_radius !== b.button_radius ||
 		a.density !== b.density ||
+		a.font !== b.font ||
+		JSON.stringify( a.mascot ) !== JSON.stringify( b.mascot ) ||
 		COLOR_KEYS.some(
 			( key ) =>
 				a.colors[ key ].toLowerCase() !== b.colors[ key ].toLowerCase()
@@ -229,7 +381,58 @@ export function validateDesign( values: DesignValues ): FieldErrors {
 			'ohmylms'
 		);
 	}
+	if ( values.mascot.name.length > 40 ) {
+		errors[ 'mascot.name' ] = __(
+			'The mascot name must be 40 characters or fewer.',
+			'ohmylms'
+		);
+	}
+	if ( values.mascot.greeting.length > 160 ) {
+		errors[ 'mascot.greeting' ] = __(
+			'The greeting must be 160 characters or fewer.',
+			'ohmylms'
+		);
+	}
+	if ( 'upload' === values.mascot.kind && values.mascot.attachment_id < 1 ) {
+		errors[ 'mascot.attachment_id' ] = __(
+			'Choose an image from the media library.',
+			'ohmylms'
+		);
+	}
 	return errors;
+}
+
+/**
+ * WCAG contrast of a colour against white (same formula as DesignSystem::contrast()).
+ *
+ * @param color Hex colour.
+ * @return Contrast ratio from 1 to 21.
+ */
+export function contrastOnWhite( color: string ): number {
+	const foreground = luminance( color );
+	const white = 1;
+	const lighter = Math.max( foreground, white );
+	const darker = Math.min( foreground, white );
+	return ( lighter + 0.05 ) / ( darker + 0.05 );
+}
+
+const SYSTEM_STACK =
+	'-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif';
+
+/**
+ * CSS font-family for a learner font choice. Mirrors Tokens::stack().
+ *
+ * @param font Font choice.
+ * @return A CSS font-family list.
+ */
+export function fontStack( font: string ): string {
+	if ( 'inherit' === font ) {
+		return 'inherit';
+	}
+	if ( 'system' === font || '' === font ) {
+		return SYSTEM_STACK;
+	}
+	return `"${ font }", ${ SYSTEM_STACK }`;
 }
 
 /**

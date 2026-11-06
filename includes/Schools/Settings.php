@@ -12,7 +12,7 @@ use OhMyLMS\Student\Hub;
 
 defined( 'ABSPATH' ) || exit;
 
-/** Overridable keys: `accent` (hex colour) and `logo` (image attachment ID). Everything else inherits the site value. */
+/** Overridable keys: `accent` (hex colour), `logo` (image attachment ID) and `mascot` (a full mascot, or absent to inherit the site mascot). */
 final class Settings {
 
 	const OPTION = 'ohmylms_school_settings_';
@@ -24,7 +24,7 @@ final class Settings {
 	 * Stored overrides for a school.
 	 *
 	 * @param int $school School ID.
-	 * @return array{accent?:string,logo?:int}
+	 * @return array{accent?:string,logo?:int,mascot?:array}
 	 */
 	public static function overrides( $school ) {
 		$stored = get_option( self::OPTION . absint( $school ), array() );
@@ -78,7 +78,7 @@ final class Settings {
 	 * Save a school's overrides after authorization. A blank accent or a removed logo returns to the site value.
 	 *
 	 * @param int   $school School ID.
-	 * @param array $data   `accent`, `logo_id`, `remove_logo`.
+	 * @param array $data   `accent`, `logo_id`, `remove_logo`, and optionally `mascot` or `reset_mascot`.
 	 * @return array Stored overrides.
 	 */
 	public static function save( $school, array $data ) {
@@ -99,6 +99,11 @@ final class Settings {
 		}
 		if ( ! empty( $data['logo_id'] ) ) {
 			$next['logo'] = absint( $data['logo_id'] );
+		}
+		if ( ! empty( $data['reset_mascot'] ) ) {
+			unset( $next['mascot'] );
+		} elseif ( array_key_exists( 'mascot', $data ) ) {
+			$next['mascot'] = \OhMyLMS\Design\Mascot::sanitize( $data['mascot'] );
 		}
 		$next = self::clean( $next );
 		if ( $next ) {
@@ -142,6 +147,9 @@ final class Settings {
 		$logo = isset( $input['logo'] ) ? absint( $input['logo'] ) : 0;
 		if ( $logo && wp_attachment_is_image( $logo ) ) {
 			$out['logo'] = $logo;
+		}
+		if ( isset( $input['mascot'] ) && is_array( $input['mascot'] ) ) {
+			$out['mascot'] = \OhMyLMS\Design\Mascot::sanitize( $input['mascot'] );
 		}
 		return $out;
 	}

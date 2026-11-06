@@ -126,7 +126,7 @@ $signup_role      = $signin_role ? $signin_role : 'learner';
 				<div class="oml-hub-field"><label for="parent-last"><?php esc_html_e( 'Last name', 'ohmylms' ); ?></label><input id="parent-last" name="last_name" type="text" maxlength="60" autocomplete="family-name"></div>
 				<div class="oml-hub-field"><label for="parent-email"><?php esc_html_e( 'Email', 'ohmylms' ); ?></label><input id="parent-email" name="email" type="email" required maxlength="190" autocomplete="email"></div>
 				<div class="oml-hub-field"><label for="parent-pass"><?php esc_html_e( 'Password (12–128 characters)', 'ohmylms' ); ?></label><input id="parent-pass" name="password" type="password" required minlength="12" maxlength="128" autocomplete="new-password"></div>
-				<div class="screen-reader-text" aria-hidden="true"><label>Website<input name="website" type="text" tabindex="-1" autocomplete="off"></label></div>
+				<div class="ohmylms-honeypot" aria-hidden="true"><label><?php esc_html_e( 'Website', 'ohmylms' ); ?><input name="website" type="text" tabindex="-1" autocomplete="off"></label></div>
 				<p class="oml-hub-actions"><button type="submit" class="oml-hub-button"><?php echo esc_html( $signup_text[3] ); ?></button></p>
 			</form>
 		</section>

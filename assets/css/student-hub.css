@@ -3,6 +3,7 @@
  * (rail, indigo accent, tactile button) without copying its assets or brand.
  */
 .ohmylms-student-hub {
+	box-sizing: border-box;
 	--hub-accent: var(--hub-accent-light, var(--oml-primary));
 	--hub-on-accent: var(--hub-on-accent-light, var(--oml-on-primary));
 	--hub-accent-shadow: color-mix(in srgb, var(--hub-accent) 70%, var(--oml-shade));
@@ -31,6 +32,20 @@
 
 .oml-hub-page {
 	margin: 0;
+	max-width: 100%;
+	overflow-x: clip;
+}
+
+.ohmylms-student-hub .ohmylms-honeypot {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
 }
 
 /* A custom accent carries its own dark-theme value; following the brand needs none (the token already adapts). */

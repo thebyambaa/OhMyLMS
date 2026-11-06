@@ -111,6 +111,7 @@ add_action( 'init', array( 'OhMyLMS\\Extensions\\Bootstrap', 'init' ), 5 );
 \OhMyLMS\Design\Tokens::init();
 \OhMyLMS\Design\Ui::init();
 \OhMyLMS\Design\DesignSystem::init();
+\OhMyLMS\Design\Mascot::init();
 \OhMyLMS\Admin\AppPage::init();
 \OhMyLMS\Assets\AdminAppAssets::init();
 \OhMyLMS\Dashboard\Bootstrap::init();

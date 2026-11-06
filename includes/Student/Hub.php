@@ -42,6 +42,7 @@ final class Hub {
 		LegacyPages::init();
 		LegacyLessonLinks::init();
 		TeacherActions::init();
+		ProfileHome::init();
 		ParentActions::init();
 		FamilyActions::init();
 		SchoolActivation::init();
@@ -76,7 +77,7 @@ final class Hub {
 	 * @return array
 	 */
 	public static function query_vars( $vars ) {
-		return array_merge( $vars, array( 'hub_section', 'hub_view', 'hub_class', 'hub_q', 'hub_course', 'hub_skill_course', 'hub_skill_unit', 'hub_period', 'hub_type', 'hub_role', 'hub_child', 'hub_scope', 'hub_school', 'ohmylms_child_setup', 'ohmylms_family_invite', 'hub_candidate_page', 'ohmylms_invite', 'id', 'current_page' ) );
+		return array_merge( $vars, array( 'hub_section', 'hub_view', 'hub_class', 'hub_q', 'hub_course', 'hub_skill_course', 'hub_skill_unit', 'hub_period', 'hub_type', 'hub_role', 'hub_child', 'hub_scope', 'hub_school', 'ohmylms_child_setup', 'ohmylms_family_invite', 'hub_candidate_page', 'ohmylms_invite', 'id', 'current_page', 'profile_tab' ) );
 	}
 
 	/**
@@ -660,6 +661,7 @@ final class Hub {
 		}
 		wp_enqueue_style( 'ohmylms-practice', plugins_url( 'assets/css/practice.css', OHMYLMS_FILE ), array(), OHMYLMS_VERSION );
 		wp_enqueue_style( 'ohmylms-student-hub', plugins_url( 'assets/css/student-hub.css', OHMYLMS_FILE ), array( 'ohmylms-frontend' ), (string) filemtime( OHMYLMS_DIR . '/assets/css/student-hub.css' ) );
+		wp_enqueue_style( 'ohmylms-profile-home', plugins_url( 'assets/css/profile-home.css', OHMYLMS_FILE ), array( 'ohmylms-student-hub' ), (string) filemtime( OHMYLMS_DIR . '/assets/css/profile-home.css' ) );
 		wp_enqueue_style( 'ohmylms-learner-journey', plugins_url( 'assets/css/learner-journey.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/learner-journey.css' ) );
 		wp_enqueue_script( 'ohmylms-student-hub', plugins_url( 'assets/js/student-hub.js', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/js/student-hub.js' ), true );
 	}
@@ -765,10 +767,7 @@ final class Hub {
 			$section = 'classes';
 			set_query_var( 'hub_view', 'join' );
 		}
-		if ( ! $section && 'home' === $config['default'] ) {
-			$landing = self::learner_classes() ? 'classes' : 'learn';
-			$section = in_array( $landing, $config['tabs'], true ) ? $landing : $config['default'];
-		}
+		// A bare /profile stays on the configured default (Home is the profile). Other sections stay one click away in the rail.
 		$requested_view = get_query_var( 'hub_view' );
 		if ( $config['commerce'] && 'account' === $section && in_array( $requested_view, array( 'membership', 'orders', 'invoice', 'billing' ), true ) ) {
 			$section = 'membership';

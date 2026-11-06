@@ -61,7 +61,8 @@ $stamp           = static function ( $row ) {
 	return $time ? gmdate( 'M j, Y g:i a', $time ) : '';
 };
 ?>
-<section class="ohmylms-answer-review" id="<?php echo esc_attr( $anchor ); ?>" aria-labelledby="<?php echo esc_attr( $anchor ); ?>-title">
+	<section class="ohmylms-answer-review" id="<?php echo esc_attr( $anchor ); ?>" aria-labelledby="<?php echo esc_attr( $anchor ); ?>-title">
+	<?php \OhMyLMS\Design\Mascot::render( 'quiz' ); ?>
 	<?php if ( $summary ) : ?>
 		<div class="ohmylms-review-summary is-<?php echo esc_attr( $summary['result'] ); ?>">
 			<h2 class="ohmylms-review-headline"><?php echo esc_html( $headlines[ $summary['result'] ] ?? __( 'Your result', 'ohmylms' ) ); ?></h2>
