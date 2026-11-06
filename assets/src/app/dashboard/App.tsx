@@ -280,13 +280,18 @@ export function App() {
 		</Suspense>
 	);
 
+	// Only these sections change with the school; courses, quizzes, skills and lessons do not.
+	const showSchool =
+		data.schools.length > 0 &&
+		[ 'home', 'classes', 'people', 'settings' ].includes( section );
+
 	if ( data.section ) {
 		// Inside the hub: it draws the navigation, this draws one section.
 		return (
 			<div className="oml-dash-embedded">
-				{ ( data.schools.length > 0 || section === 'home' ) && (
+				{ ( showSchool || section === 'home' ) && (
 					<div className="oml-dash-toolbar">
-						{ data.schools.length > 0 && (
+						{ showSchool && (
 							<Select
 								label={ __( 'School', 'ohmylms' ) }
 								value={ school }
