@@ -670,5 +670,216 @@ body.oml-dashboard-page {
 	margin-bottom: 1rem;
 }
 
+/* Quiz editor: question rail, canvas with answer tiles, settings panel. */
+.oml-qe-wrap {
+	container: oml-qe-wrap / inline-size;
+}
+
+.oml-qe {
+	display: grid;
+	grid-template-columns: minmax(12rem, 16rem) minmax(0, 1fr) minmax(12rem, 18rem);
+	gap: var(--oml-space-4);
+	align-items: start;
+}
+
+.oml-qe-canvas {
+	container: oml-qe-canvas / inline-size;
+}
+
+.oml-qe-rail,
+.oml-qe-panel,
+.oml-qe-canvas {
+	min-width: 0;
+	padding: var(--oml-space-4);
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-card, 12px);
+	background: var(--oml-surface);
+}
+
+.oml-qe-rail h2,
+.oml-qe-panel h2 {
+	margin: 0 0 var(--oml-space-3);
+	font-size: var(--oml-font-size-md);
+}
+
+.oml-qe-rail ol {
+	margin: 0 0 var(--oml-space-3);
+	padding: 0;
+	list-style: none;
+}
+
+.oml-qe-pick {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	gap: var(--oml-space-1) var(--oml-space-2);
+	align-items: center;
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 2.75rem;
+	padding: var(--oml-space-2);
+	border: 1px solid transparent;
+	border-radius: var(--oml-radius-control, 8px);
+	background: transparent;
+	color: var(--oml-text);
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+.oml-qe-pick:hover {
+	background: var(--oml-subtle, var(--oml-background));
+}
+
+.oml-qe-pick:focus-visible {
+	outline: 2px solid var(--oml-focus);
+	outline-offset: 2px;
+}
+
+.oml-qe-item.is-current .oml-qe-pick {
+	border-color: var(--oml-primary);
+	background: var(--oml-primary-soft);
+}
+
+.oml-qe-num {
+	display: inline-grid;
+	place-items: center;
+	width: 1.75rem;
+	height: 1.75rem;
+	border: 1px solid var(--oml-border);
+	border-radius: 50%;
+	font-size: var(--oml-font-size-sm, 13px);
+	font-weight: var(--oml-weight-strong, 600);
+}
+
+.oml-qe-snippet {
+	display: -webkit-box;
+	overflow: hidden;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	overflow-wrap: anywhere;
+}
+
+.oml-qe-pick .oml-badge {
+	grid-column: 2;
+	justify-self: start;
+}
+
+.oml-qe-order {
+	display: flex;
+	gap: var(--oml-space-1);
+	margin: var(--oml-space-1) 0 0 2.25rem;
+}
+
+.oml-qe-tiles {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: var(--oml-space-3);
+	margin: var(--oml-space-4) 0;
+	padding: 0;
+	list-style: none;
+}
+
+.oml-qe-tile {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	gap: var(--oml-space-2);
+	align-items: end;
+	padding: var(--oml-space-3);
+	border: 2px solid var(--oml-tile, var(--oml-border));
+	border-radius: var(--oml-radius-card, 12px);
+	background: var(--oml-tile-soft, var(--oml-surface));
+}
+
+.oml-qe-tile.is-correct {
+	box-shadow: 0 0 0 3px var(--oml-success);
+}
+
+.oml-qe-tone-0 {
+	--oml-tile: var(--oml-info);
+	--oml-tile-soft: var(--oml-info-soft);
+}
+
+.oml-qe-tone-1 {
+	--oml-tile: var(--oml-danger);
+	--oml-tile-soft: var(--oml-danger-soft);
+}
+
+.oml-qe-tone-2 {
+	--oml-tile: var(--oml-warning);
+	--oml-tile-soft: var(--oml-warning-soft);
+}
+
+.oml-qe-tone-3 {
+	--oml-tile: var(--oml-success);
+	--oml-tile-soft: var(--oml-success-soft);
+}
+
+.oml-qe-letter {
+	display: inline-grid;
+	place-items: center;
+	width: 2rem;
+	height: 2rem;
+	border: 2px solid var(--oml-tile);
+	border-radius: 50%;
+	color: var(--oml-heading);
+	font-weight: var(--oml-weight-strong, 600);
+}
+
+.oml-qe-check {
+	display: inline-grid;
+	place-items: center;
+	box-sizing: border-box;
+	width: 2.75rem;
+	height: 2.75rem;
+	border: 2px solid var(--oml-border);
+	border-radius: 50%;
+	background: var(--oml-surface);
+	color: var(--oml-on-primary);
+	font-size: var(--oml-font-size-lg);
+	cursor: pointer;
+}
+
+.oml-qe-check[aria-pressed="true"] {
+	border-color: var(--oml-primary);
+	background: var(--oml-primary);
+}
+
+.oml-qe-check:focus-visible {
+	outline: 2px solid var(--oml-focus);
+	outline-offset: 2px;
+}
+
+.oml-qe-check:disabled {
+	cursor: not-allowed;
+	opacity: 0.6;
+}
+
+.oml-qe-tile .oml-btn {
+	grid-column: 2 / -1;
+	justify-self: start;
+}
+
+.oml-qe-empty {
+	grid-column: 2 / -1;
+}
+
+@container oml-qe-wrap (max-width: 62rem) {
+
+	.oml-qe {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.oml-qe-empty {
+		grid-column: auto;
+	}
+}
+
+@container oml-qe-canvas (max-width: 34rem) {
+
+	.oml-qe-tiles {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
 
 /*# sourceMappingURL=admin-app-dashboard.css.map*/
