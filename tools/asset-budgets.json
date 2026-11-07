@@ -370,6 +370,14 @@
 			"raw": 30400,
 			"gzip": 9600
 		},
+		"chunks/admin-app-skill-coverage.css": {
+			"raw": 2800,
+			"gzip": 800
+		},
+		"chunks/admin-app-skill-coverage.js": {
+			"raw": 10500,
+			"gzip": 3300
+		},
 		"chunks/admin-app-skill-workspace.css": {
 			"raw": 3500,
 			"gzip": 1100

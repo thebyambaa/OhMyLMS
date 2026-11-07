@@ -23,6 +23,18 @@ vi.mock( '../course-structure/public', () => ( {
 	CourseOutline: ( { id }: { id: number } ) => (
 		<p>Outline of course { id }</p>
 	),
+	SkillCoverage: ( {
+		course,
+		unsaved,
+	}: {
+		course: number;
+		unsaved: boolean;
+	} ) => (
+		<p>
+			Coverage of course { course }
+			{ unsaved ? ' (unsaved changes)' : '' }
+		</p>
+	),
 	PublicationPanel: ( { course }: { course: number } ) => (
 		<p>Publication of course { course }</p>
 	),
@@ -174,6 +186,7 @@ describe( 'CourseEditorPage tabs', () => {
 		).toEqual( [
 			[ 'Basics', '/courses/7' ],
 			[ 'Curriculum', '/courses/7/outline' ],
+			[ 'Skill coverage', '/courses/7/coverage' ],
 			[ 'Additional', '/courses/7/settings' ],
 		] );
 		expect(
@@ -911,5 +924,57 @@ describe( 'CourseEditorPage settings', () => {
 				expect( api.getCourseCertificate ).toHaveBeenCalledTimes( 2 )
 			);
 		} );
+	} );
+} );
+
+describe( 'the skill coverage step', () => {
+	it( 'opens from the step bar and replaces the form while it is open', async () => {
+		const user = userEvent.setup();
+		renderEditor();
+		await loaded();
+		await user.click(
+			screen.getByRole( 'link', { name: 'Skill coverage' } )
+		);
+		expect(
+			await screen.findByText( 'Coverage of course 7' )
+		).toBeVisible();
+		expect( screen.getByLabelText( 'Title' ) ).not.toBeVisible();
+		expect(
+			screen.getByRole( 'link', { name: 'Skill coverage' } )
+		).toHaveAttribute( 'aria-current', 'page' );
+	} );
+	it( 'is told about unsaved changes and keeps them', async () => {
+		const user = userEvent.setup();
+		renderEditor();
+		await loaded();
+		await setField( user, 'Title', 'Changed' );
+		await user.click(
+			screen.getByRole( 'link', { name: 'Skill coverage' } )
+		);
+		expect(
+			await screen.findByText( 'Coverage of course 7 (unsaved changes)' )
+		).toBeVisible();
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		await user.click( screen.getByRole( 'link', { name: 'Basics' } ) );
+		expect( screen.getByLabelText( 'Title' ) ).toHaveValue( 'Changed' );
+		expect(
+			screen.queryByText( /Coverage of course/ )
+		).not.toBeInTheDocument();
+	} );
+	it( 'sits between Curriculum and Additional in the Next and Previous links', async () => {
+		const user = userEvent.setup();
+		renderEditor( '/courses/7/outline' );
+		await user.click(
+			await screen.findByRole( 'link', { name: 'Next: Skill coverage' } )
+		);
+		expect(
+			await screen.findByText( 'Coverage of course 7' )
+		).toBeVisible();
+		expect(
+			screen.getByRole( 'link', { name: 'Previous: Curriculum' } )
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'link', { name: 'Next: Additional' } )
+		).toBeInTheDocument();
 	} );
 } );

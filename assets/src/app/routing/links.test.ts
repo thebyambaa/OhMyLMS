@@ -6,6 +6,7 @@ describe( 'isCourseEditorStep', () => {
 			'/courses/7',
 			'/courses/7/outline',
 			'/courses/7/settings',
+			'/courses/7/coverage',
 			'/courses/7/outline?focus=lesson:5',
 		] ) {
 			expect( isCourseEditorStep( 7, path ), path ).toBe( true );

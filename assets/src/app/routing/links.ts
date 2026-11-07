@@ -22,7 +22,7 @@ export function setLinkResolver( resolver: LinkResolver | null ) {
  */
 export function isCourseEditorStep( course: number, path: string ): boolean {
 	return new RegExp(
-		`^/courses/${ course }(/(outline|settings))?([?].*)?$`
+		`^/courses/${ course }(/(outline|coverage|settings))?([?].*)?$`
 	).test( path );
 }
 

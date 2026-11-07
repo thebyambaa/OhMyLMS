@@ -16,17 +16,23 @@ const CourseOutline = lazy( () =>
 		/* webpackChunkName: "admin-app-course-structure" */ '../course-structure/public'
 	).then( ( module ) => ( { default: module.CourseOutline } ) )
 );
+const SkillCoverage = lazy( () =>
+	import(
+		/* webpackChunkName: "admin-app-course-structure" */ '../course-structure/public'
+	).then( ( module ) => ( { default: module.SkillCoverage } ) )
+);
 const PublicationPanel = lazy( () =>
 	import(
 		/* webpackChunkName: "admin-app-course-structure" */ '../course-structure/public'
 	).then( ( module ) => ( { default: module.PublicationPanel } ) )
 );
 
-type Tab = 'details' | 'outline' | 'settings';
+type Tab = 'details' | 'outline' | 'coverage' | 'settings';
 
 const TABS: { id: Tab; label: () => string }[] = [
 	{ id: 'details', label: () => __( 'Basics', 'ohmylms' ) },
 	{ id: 'outline', label: () => __( 'Curriculum', 'ohmylms' ) },
+	{ id: 'coverage', label: () => __( 'Skill coverage', 'ohmylms' ) },
 	{ id: 'settings', label: () => __( 'Additional', 'ohmylms' ) },
 ];
 
@@ -90,7 +96,7 @@ export default function CourseEditorPage() {
 	// Steps the user has opened stay mounted, hidden, so their edits survive moving between steps.
 	const [ openedOutline, setOpenedOutline ] = useState( false );
 	const [ openedForm, setOpenedForm ] = useState( () =>
-		Boolean( tab && 'outline' !== tab.id )
+		Boolean( tab && ( 'details' === tab.id || 'settings' === tab.id ) )
 	);
 	const [ formSection, setFormSection ] = useState< 'details' | 'settings' >(
 		'details'
@@ -98,11 +104,14 @@ export default function CourseEditorPage() {
 	useEffect( () => {
 		if ( 'outline' === tab?.id ) {
 			setOpenedOutline( true );
-		} else if ( tab ) {
+		} else if ( 'details' === tab?.id || 'settings' === tab?.id ) {
 			setOpenedForm( true );
-			setFormSection( tab.id as 'details' | 'settings' );
+			setFormSection( tab.id );
 		}
 	}, [ tab ] );
+	const stepSection =
+		'details' === tab?.id || 'settings' === tab?.id ? tab.id : null;
+	const formStep = null !== stepSection;
 	const at = tab ? TABS.indexOf( tab ) : -1;
 	const previous = at > 0 ? TABS[ at - 1 ] : undefined;
 	const next = at >= 0 ? TABS[ at + 1 ] : undefined;
@@ -189,13 +198,11 @@ export default function CourseEditorPage() {
 							) }
 						</div>
 					</header>
-					{ ( 'outline' !== tab.id || openedForm ) && (
-						<div hidden={ 'outline' === tab.id }>
+					{ ( formStep || openedForm ) && (
+						<div hidden={ ! formStep }>
 							<CourseForm
 								id={ id }
-								section={
-									'outline' === tab.id ? formSection : tab.id
-								}
+								section={ stepSection ?? formSection }
 							/>
 						</div>
 					) }
@@ -207,6 +214,12 @@ export default function CourseEditorPage() {
 							<p role="status">{ __( 'Loading…', 'ohmylms' ) }</p>
 						}
 					>
+						{ 'coverage' === tab.id && (
+							<SkillCoverage
+								course={ id }
+								unsaved={ Boolean( step?.dirty ) }
+							/>
+						) }
 						{ ( 'outline' === tab.id || openedOutline ) && (
 							<div hidden={ 'outline' !== tab.id }>
 								<CourseOutline id={ id } />
