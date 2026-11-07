@@ -21,12 +21,20 @@ import {
 	deleteCourse,
 	duplicateCourse,
 	restoreCourse,
+	setCourseStatus,
 	trashCourse,
 } from './api';
 import './CoursesPage.css';
+import { CourseViewLink } from './CourseViewLink';
 import { levelLabel, statusLabel } from './model';
 import { useCourses } from './useCourses';
-import type { Course, CourseFilters, CourseStatus, Option } from './types';
+import type {
+	Course,
+	CourseFilters,
+	CourseStatus,
+	Option,
+	WritableStatus,
+} from './types';
 
 const MAX_TITLE = 200;
 
@@ -44,6 +52,9 @@ function postStatusTone(
 			return undefined;
 	}
 }
+/** Statuses an author can pick in the list. Scheduling needs a date, so it stays in the editor. */
+const PICKABLE: WritableStatus[] = [ 'publish', 'draft', 'pending', 'private' ];
+
 /**
  * Course name with its thumbnail and what it holds: units, lessons, quizzes and assignments.
  *
@@ -279,6 +290,27 @@ export default function CoursesPage() {
 			setDialog( null );
 			setMessage( __( 'Course deleted permanently.', 'ohmylms' ) );
 			list.afterRemoval();
+		} );
+	}
+	function changeStatus( item: Course, status: WritableStatus ) {
+		if ( status === item.status ) {
+			return;
+		}
+		void run( async ( signal ) => {
+			await setCourseStatus( item.id, status, signal );
+			if ( signal.aborted ) {
+				return;
+			}
+			setMessage(
+				sprintf(
+					/* translators: 1: course title, 2: new status. */
+					__( '%1$s is now %2$s.', 'ohmylms' ),
+					item.title,
+					statusLabel( status )
+				)
+			);
+			// The list shows the server's status, which may differ from the one chosen.
+			list.reload();
 		} );
 	}
 	function close() {
@@ -519,10 +551,58 @@ export default function CoursesPage() {
 						{
 							id: 'status',
 							label: __( 'Status', 'ohmylms' ),
+							render: ( item ) =>
+								inTrash ? (
+									<Badge
+										tone={ postStatusTone( item.status ) }
+									>
+										{ statusLabel( item.status ) }
+									</Badge>
+								) : (
+									<select
+										className="oml-courses-status"
+										data-status={ item.status }
+										value={ item.status }
+										disabled={ busy }
+										aria-label={ sprintf(
+											/* translators: %s: course title. */
+											__( 'Status of %s', 'ohmylms' ),
+											item.title
+										) }
+										onChange={ ( event ) =>
+											changeStatus(
+												item,
+												event.target
+													.value as WritableStatus
+											)
+										}
+									>
+										{ ! ( PICKABLE as string[] ).includes(
+											item.status
+										) && (
+											<option
+												value={ item.status }
+												disabled
+											>
+												{ statusLabel( item.status ) }
+											</option>
+										) }
+										{ PICKABLE.map( ( value ) => (
+											<option
+												key={ value }
+												value={ value }
+											>
+												{ statusLabel( value ) }
+											</option>
+										) ) }
+									</select>
+								),
+						},
+						{
+							id: 'view',
+							label: __( 'View', 'ohmylms' ),
 							render: ( item ) => (
-								<Badge tone={ postStatusTone( item.status ) }>
-									{ statusLabel( item.status ) }
-								</Badge>
+								<CourseViewLink course={ item } />
 							),
 						},
 					] }

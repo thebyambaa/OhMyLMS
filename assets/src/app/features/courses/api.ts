@@ -9,7 +9,7 @@ import {
 	positiveId,
 	record,
 } from './model';
-import type { CourseFilters, CourseInput } from './types';
+import type { CourseFilters, CourseInput, WritableStatus } from './types';
 
 const BASE = '/ohmylms/v1/courses';
 const itemPath = ( id: number ) => `${ BASE }/${ positiveId( id ) }`;
@@ -108,6 +108,24 @@ export async function updateCourse(
 ) {
 	return parseCourseDetail(
 		await put< unknown >( itemPath( id ), input, { signal } )
+	);
+}
+
+/**
+ * Change only the publication status of a course. The server still decides who may publish.
+ *
+ * @param id     Course id.
+ * @param status New status.
+ * @param signal Cancels the request.
+ * @return The saved course as the server stored it.
+ */
+export async function setCourseStatus(
+	id: number,
+	status: WritableStatus,
+	signal?: AbortSignal
+) {
+	return parseCourseDetail(
+		await put< unknown >( itemPath( id ), { status }, { signal } )
 	);
 }
 
