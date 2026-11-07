@@ -198,17 +198,22 @@ final class AdminNavigation {
 						'capability' => 'edit_posts',
 						'sections'   => array(
 							''              => __( 'Skill library', 'ohmylms' ),
+							// School staff open the read-only map too; its learner overlays are scoped server-side.
+							'skill-map'     => array(
+								'label'      => __( 'Skill map', 'ohmylms' ),
+								'capability' => \OhMyLMS\Dashboard\Access::CAPABILITY,
+							),
 							'assessments'   => array(
 								'label'  => __( 'Assessments', 'ohmylms' ),
 								'render' => array( SkillAssessmentPage::class, 'render' ),
 							),
+							'ai-runs'       => array(
+								'label'      => __( 'AI runs', 'ohmylms' ),
+								'capability' => self::CAPABILITY,
+							),
 							// The skill workspace, whose endpoints need the curriculum administrator.
 							'mappings'      => array(
 								'label'      => __( 'Combined mappings', 'ohmylms' ),
-								'capability' => self::CAPABILITY,
-							),
-							'ai-runs'       => array(
-								'label'      => __( 'AI runs', 'ohmylms' ),
 								'capability' => self::CAPABILITY,
 							),
 							'content-links' => array(
@@ -234,11 +239,6 @@ final class AdminNavigation {
 							'bundles'       => array(
 								'label'      => __( 'Course bundles', 'ohmylms' ),
 								'capability' => self::CAPABILITY,
-							),
-							// School staff open the read-only map too; its learner overlays are scoped server-side.
-							'skill-map'     => array(
-								'label'      => __( 'Skill map', 'ohmylms' ),
-								'capability' => \OhMyLMS\Dashboard\Access::CAPABILITY,
 							),
 							'subjects'      => array(
 								'label'      => __( 'Subject profiles', 'ohmylms' ),

@@ -395,7 +395,7 @@ describe( 'the Skills pane', () => {
 		);
 	} );
 
-	it( 'adds a skill to a group', async () => {
+	it( 'adds a skill straight to the open item', async () => {
 		vi.mocked( syllabus.syllabusCommand ).mockResolvedValue( outline() );
 		const user = userEvent.setup();
 		open( '/curriculum?item=2' );
@@ -403,7 +403,7 @@ describe( 'the Skills pane', () => {
 			await screen.findByRole( 'button', { name: 'Add skill' } )
 		);
 		const dialog = await screen.findByRole( 'dialog', {
-			name: 'Add a skill to Linear',
+			name: 'Add skill',
 		} );
 		await user.type(
 			within( dialog ).getByRole( 'textbox', { name: 'Name' } ),
@@ -436,7 +436,7 @@ describe( 'the Skills pane', () => {
 		const user = userEvent.setup();
 		open( '/curriculum?item=2' );
 		await user.click(
-			await screen.findByRole( 'button', { name: 'Add skill group' } )
+			await screen.findByRole( 'button', { name: 'Add group' } )
 		);
 		const dialog = await screen.findByRole( 'dialog', {
 			name: 'Add skill group',
@@ -484,16 +484,32 @@ describe( 'the Skills pane', () => {
 		).toBeInTheDocument();
 	} );
 
-	it( 'says skills live in a syllabus and offers to make the item one', async () => {
+	it( 'turns the item into a skill holder when the first skill is added', async () => {
 		vi.mocked( api.saveItem ).mockResolvedValue( items[ 3 ]! );
+		const own = outline();
+		own.contents = own.contents
+			.filter( ( content ) => content.groups.length > 0 )
+			.map( ( content ) => ( { ...content, id: 4, parent_id: 0 } ) );
+		vi.mocked( syllabus.readSyllabus ).mockResolvedValue(
+			outline( false )
+		);
+		vi.mocked( syllabus.syllabusCommand ).mockResolvedValue( own );
 		const user = userEvent.setup();
 		open( '/curriculum?item=4' );
 		expect(
-			await screen.findByText( /Skills are kept in a syllabus/ )
+			await screen.findByText( 'No skills here yet.' )
 		).toBeInTheDocument();
 		expect( syllabus.readSyllabus ).not.toHaveBeenCalled();
+		await user.click( screen.getByRole( 'button', { name: 'Add skill' } ) );
+		const dialog = await screen.findByRole( 'dialog', {
+			name: 'Add skill',
+		} );
+		await user.type(
+			within( dialog ).getByRole( 'textbox', { name: 'Name' } ),
+			'Ratios'
+		);
 		await user.click(
-			screen.getByRole( 'button', { name: 'Make this item a syllabus' } )
+			within( dialog ).getByRole( 'button', { name: 'Add skill' } )
 		);
 		await waitFor( () =>
 			expect( api.saveItem ).toHaveBeenCalledWith(
@@ -503,6 +519,22 @@ describe( 'the Skills pane', () => {
 				} ),
 				items[ 3 ],
 				0,
+				expect.any( AbortSignal )
+			)
+		);
+		await waitFor( () =>
+			expect( syllabus.syllabusCommand ).toHaveBeenCalledWith(
+				4,
+				'add_group',
+				{ item_id: 4, name: 'Skills', code: '' },
+				expect.any( AbortSignal )
+			)
+		);
+		await waitFor( () =>
+			expect( syllabus.syllabusCommand ).toHaveBeenCalledWith(
+				4,
+				'create_skill',
+				{ group_id: 10, name: 'Ratios', code: '' },
 				expect.any( AbortSignal )
 			)
 		);

@@ -13,6 +13,7 @@ import {
 import { saveItem, type CurriculumItem } from './api';
 
 type Adding =
+	| { kind: 'item-skill' }
 	| { kind: 'group'; item: number }
 	| { kind: 'skill'; group: number; groupName: string };
 
@@ -127,47 +128,99 @@ export function SkillsPane( {
 	const request = useRequest( load, { key: String( root ) } );
 	const operation = useOperation();
 	const [ adding, setAdding ] = useState< Adding | null >( null );
+	/**
+	 * Add a skill straight to the open item. The item becomes a skill holder and gets a plain
+	 * "Skills" group the first time, so nobody has to create either by hand.
+	 *
+	 * @param name   Skill name.
+	 * @param code   Optional skill code.
+	 * @param signal Abort signal.
+	 * @return The updated outline.
+	 */
+	async function addSkillToItem(
+		name: string,
+		code: string,
+		signal: AbortSignal
+	): Promise< SyllabusOutline > {
+		let rootId = root;
+		if ( ! rootId ) {
+			await saveItem(
+				{
+					name: item.name,
+					item_type: item.item_type,
+					description: item.description,
+					code: item.code,
+					version: item.version,
+					is_syllabus: true,
+					icon: item.icon,
+				},
+				item,
+				item.parent_id,
+				signal
+			);
+			rootId = item.id;
+		}
+		const own = ( outline: SyllabusOutline ) =>
+			outline.contents.find( ( row ) => row.id === item.id )?.groups[ 0 ];
+		let outline = await readSyllabus( rootId, signal );
+		let group = own( outline );
+		if ( ! group ) {
+			outline = await syllabusCommand(
+				rootId,
+				'add_group',
+				{ item_id: item.id, name: __( 'Skills', 'ohmylms' ), code: '' },
+				signal
+			);
+			group = own( outline );
+		}
+		if ( ! group ) {
+			throw new Error( __( 'The skill could not be added.', 'ohmylms' ) );
+		}
+		return syllabusCommand(
+			rootId,
+			'create_skill',
+			{ group_id: group.id, name, code },
+			signal
+		);
+	}
+	const addToItem = (
+		<>
+			<Button
+				variant="primary"
+				size="small"
+				onClick={ () => setAdding( { kind: 'item-skill' } ) }
+			>
+				{ __( 'Add skill', 'ohmylms' ) }
+			</Button>
+			{ adding && 'item-skill' === adding.kind && (
+				<NameDialog
+					title={ __( 'Add skill', 'ohmylms' ) }
+					submit={ __( 'Add skill', 'ohmylms' ) }
+					busy={ operation.busy }
+					error={ operation.error }
+					onClose={ () => setAdding( null ) }
+					onSubmit={ ( name, code ) =>
+						void operation.run(
+							( signal ) => addSkillToItem( name, code, signal ),
+							( result ) => {
+								setAdding( null );
+								if ( root ) {
+									request.replace( result );
+								} else {
+									onChanged();
+								}
+							}
+						)
+					}
+				/>
+			) }
+		</>
+	);
 	if ( ! syllabus ) {
 		return (
 			<div className="oml-cw-hint">
-				<p>
-					{ __(
-						'Skills are kept in a syllabus. This item is not inside one yet.',
-						'ohmylms'
-					) }
-				</p>
-				{ operation.error && (
-					<Notice status="error" isDismissible={ false }>
-						{ operation.error }
-					</Notice>
-				) }
-				<Button
-					variant="secondary"
-					isBusy={ operation.busy }
-					disabled={ operation.busy }
-					onClick={ () =>
-						void operation.run(
-							( signal ) =>
-								saveItem(
-									{
-										name: item.name,
-										item_type: item.item_type,
-										description: item.description,
-										code: item.code,
-										version: item.version,
-										is_syllabus: true,
-										icon: item.icon,
-									},
-									item,
-									item.parent_id,
-									signal
-								),
-							onChanged
-						)
-					}
-				>
-					{ __( 'Make this item a syllabus', 'ohmylms' ) }
-				</Button>
+				<p>{ __( 'No skills here yet.', 'ohmylms' ) }</p>
+				{ addToItem }
 			</div>
 		);
 	}
@@ -226,20 +279,21 @@ export function SkillsPane( {
 					) }
 				</p>
 				<span className="oml-cw-pane-actions">
+					{ addToItem }
 					<Button
 						size="small"
-						variant="secondary"
+						variant="tertiary"
 						onClick={ () =>
 							setAdding( { kind: 'group', item: item.id } )
 						}
 					>
-						{ __( 'Add skill group', 'ohmylms' ) }
+						{ __( 'Add group', 'ohmylms' ) }
 					</Button>
 					<Link
 						className="components-button is-tertiary is-small"
 						to={ `/content-hub/curriculum/syllabus/${ root }` }
 					>
-						{ __( 'Open the syllabus editor', 'ohmylms' ) }
+						{ __( 'Import and more', 'ohmylms' ) }
 					</Link>
 				</span>
 			</div>
@@ -267,25 +321,30 @@ export function SkillsPane( {
 					) }
 					{ row.groups.map( ( group ) => (
 						<div key={ group.id } className="oml-cw-group">
-							<div className="oml-cw-group-head">
-								<h4>
-									{ group.code ? `${ group.code } · ` : '' }
-									{ group.name }
-								</h4>
-								<Button
-									size="small"
-									variant="tertiary"
-									onClick={ () =>
-										setAdding( {
-											kind: 'skill',
-											group: group.id,
-											groupName: group.name,
-										} )
-									}
-								>
-									{ __( 'Add skill', 'ohmylms' ) }
-								</Button>
-							</div>
+							{ ( row.groups.length > 1 ||
+								row.id !== item.id ) && (
+								<div className="oml-cw-group-head">
+									<h4>
+										{ group.code
+											? `${ group.code } · `
+											: '' }
+										{ group.name }
+									</h4>
+									<Button
+										size="small"
+										variant="tertiary"
+										onClick={ () =>
+											setAdding( {
+												kind: 'skill',
+												group: group.id,
+												groupName: group.name,
+											} )
+										}
+									>
+										{ __( 'Add skill', 'ohmylms' ) }
+									</Button>
+								</div>
+							) }
 							{ group.skills.length ? (
 								<ul className="oml-cw-skilllist">
 									{ group.skills.map( ( skill ) => (
@@ -344,7 +403,7 @@ export function SkillsPane( {
 					) }
 				</section>
 			) ) }
-			{ adding && (
+			{ adding && 'item-skill' !== adding.kind && (
 				<NameDialog
 					title={
 						'group' === adding.kind

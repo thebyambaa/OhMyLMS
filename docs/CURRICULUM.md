@@ -8,7 +8,7 @@ The first tab (`tab=workspace`, app route `/curriculum`) is a single screen:
 
 - **Left: the tree.** Curricula (syllabuses, subjects, roadmaps), their topics and groups, with what each holds ("24 skills · 2 courses"). Search keeps the matches and their parents on screen. The top level starts open, deeper levels start closed, and the open item's parents open by themselves. **Add** starts a new top-level item.
 - **Right: the open item.** Where it sits (a breadcrumb), its kind, code and version, and **Add inside**, **Edit** and **Delete**. Three panes show what it holds:
-  - **Skills**: the skill groups and skills of the item and everything under it, kept in its syllabus. Add a group, add a skill to a group, or take a skill out of a group (the skill itself is kept). An item that is not inside a syllabus offers **Make this item a syllabus**. **Open the syllabus editor** has the rest (CSV import, requirements, mapping, comparison, course generation).
+  - **Skills**: the skills of the item and everything under it. **Add skill** works on any item: the first one quietly makes the item a skill holder and gives it a plain "Skills" group, so there is nothing to set up. **Add group** is optional, for sorting skills into named sets. A skill can be taken out of its group (the skill itself is kept). **Import and more** opens the syllabus editor (CSV import, requirements, mapping, comparison, course generation).
   - **Courses**: the courses placed on the item. A published course placed on a subject, syllabus or unit appears in the student library (`/dashboard/?hub_section=library`). Search for a course and **Add** it, or **Remove** it (the course is kept).
   - **Question banks and quizzes**: the banks, quizzes and exams linked to the item, added and removed the same way.
 
@@ -20,7 +20,7 @@ The workspace needs `manage_options`, because its endpoints are the curriculum a
 
 The second tab (`tab=tools`, `edit_posts`) holds the specialist screens, each a section:
 
-Skill library, Assessments, Combined mappings, AI runs, Content links, Domain placement, Skill quizzes, Provenance review, Item tree (the former Curriculum list), Course bundles, Skill map (also open to school staff, read only), Subject profiles, and Categories and tags. Sections that need the curriculum administrator are hidden from other users.
+Skill library, Skill map, Assessments, AI runs (the four everyday sections, listed first), then Combined mappings, Content links, Domain placement, Skill quizzes, Provenance review, Item tree (the former Curriculum list), Course bundles, Skill map is also open to school staff, read only. Subject profiles, and Categories and tags. Sections that need the curriculum administrator are hidden from other users.
 
 ## Moved from the Content Hub
 

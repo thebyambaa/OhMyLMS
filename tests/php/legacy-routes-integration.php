@@ -510,7 +510,9 @@ try {
 		'the Tools tab shows the app'
 	);
 	$workspace = AdminNavigation::groups()['curriculum']['tabs']['tools']['sections'];
-	ok( array( 'mappings', 'ai-runs', 'content-links', 'placement', 'skill-quizzes', 'provenance' ) === array_slice( array_keys( $workspace ), 2, 6 ) && array( AdminNavigation::CAPABILITY ) === array_values( array_unique( array_column( array_slice( $workspace, 2, 6 ), 'capability' ) ) ), 'the skill workspace sections are Tools sections for site administrators only' );
+	$admin_only = array( 'mappings', 'ai-runs', 'content-links', 'placement', 'skill-quizzes', 'provenance' );
+	ok( array() === array_diff( $admin_only, array_keys( $workspace ) ) && array( AdminNavigation::CAPABILITY ) === array_values( array_unique( array_column( array_intersect_key( $workspace, array_flip( $admin_only ) ), 'capability' ) ) ), 'the skill workspace sections are Tools sections for site administrators only' );
+	ok( array( '', 'skill-map', 'assessments', 'ai-runs' ) === array_slice( array_keys( $workspace ), 0, 4 ), 'Tools opens on the four everyday sections' );
 	ok(
 		'ai-runs' === AdminNavigation::current(
 			array(

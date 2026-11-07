@@ -108,16 +108,16 @@
 					"flag": "",
 					"sections": [
 						"",
+						"skill-map",
 						"assessments",
-						"mappings",
 						"ai-runs",
+						"mappings",
 						"content-links",
 						"placement",
 						"skill-quizzes",
 						"provenance",
 						"tree",
 						"bundles",
-						"skill-map",
 						"subjects",
 						"taxonomies"
 					],

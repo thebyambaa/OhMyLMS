@@ -1,6 +1,5 @@
 import {
 	Button,
-	CheckboxControl,
 	Modal,
 	Notice,
 	SelectControl,
@@ -18,14 +17,15 @@ function label( type: string ) {
 	return type.charAt( 0 ).toUpperCase() + type.slice( 1 );
 }
 
-function inputOf( item: CurriculumItem | null ): ItemInput {
+function inputOf( item: CurriculumItem | null, parent: number ): ItemInput {
 	return {
 		name: item?.name ?? '',
 		item_type: item?.item_type ?? 'topic',
 		description: item?.description ?? '',
 		code: item?.code ?? '',
 		version: item?.version ?? '',
-		is_syllabus: item?.is_syllabus ?? false,
+		// Skills live on any item, so a new top-level item can always hold them.
+		is_syllabus: item?.is_syllabus ?? 0 === parent,
 		icon: item?.icon ?? '',
 	};
 }
@@ -56,7 +56,9 @@ export function ItemDialog( {
 	onClose: () => void;
 	onSaved: ( saved: CurriculumItem ) => void;
 } ) {
-	const [ input, setInput ] = useState< ItemInput >( () => inputOf( item ) );
+	const [ input, setInput ] = useState< ItemInput >( () =>
+		inputOf( item, parent )
+	);
 	const operation = useOperation();
 	const choices = Array.from(
 		new Set( [
@@ -122,21 +124,8 @@ export function ItemDialog( {
 					onChange={ ( itemType ) =>
 						set( {
 							item_type: itemType,
-							is_syllabus:
-								'syllabus' === itemType
-									? true
-									: input.is_syllabus,
+							is_syllabus: input.is_syllabus,
 						} )
-					}
-				/>
-				<CheckboxControl
-					label={ __(
-						'This is a syllabus: it holds skill groups and skills',
-						'ohmylms'
-					) }
-					checked={ input.is_syllabus }
-					onChange={ ( isSyllabus ) =>
-						set( { is_syllabus: isSyllabus } )
 					}
 				/>
 				<TextControl
