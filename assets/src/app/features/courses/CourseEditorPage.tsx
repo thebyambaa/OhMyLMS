@@ -77,6 +77,11 @@ function CourseViewAction( { id }: { id: number } ) {
 export default function CourseEditorPage() {
 	const params = useParams();
 	const id = routeId( params.id );
+	// Full screen: while the editor is open the admin menu and the hub's own header are hidden (see editors.css).
+	useEffect( () => {
+		document.body.classList.add( 'oml-builder-fullscreen' );
+		return () => document.body.classList.remove( 'oml-builder-fullscreen' );
+	}, [] );
 	const { user } = useBootstrap();
 	const admin = hasCapability( user.capabilities, 'manage_options' );
 	const tabs = TABS.filter( ( tab ) => admin || ! tab.admin );
@@ -99,39 +104,44 @@ export default function CourseEditorPage() {
 	}
 	return (
 		<div className="oml-editor" key={ id }>
-			<div className="oml-editor-topbar">
+			<header className="oml-builder-bar">
 				<p className="oml-editor-breadcrumb">
 					<Link to="/courses">
 						{ __( 'Back to courses', 'ohmylms' ) }
 					</Link>
 				</p>
+				<strong className="oml-builder-title">
+					{ __( 'Course builder', 'ohmylms' ) }
+				</strong>
+				<nav
+					className="oml-editor-tabs oml-editor-steps"
+					aria-label={ __( 'Course editor sections', 'ohmylms' ) }
+				>
+					{ tabs.map( ( row ) => (
+						<Link
+							key={ row.id }
+							to={
+								'details' === row.id
+									? `/courses/${ id }`
+									: `/courses/${ id }/${ row.id }`
+							}
+							className={
+								row.id === tab.id
+									? 'oml-editor-tab is-active'
+									: 'oml-editor-tab'
+							}
+							aria-current={
+								row.id === tab.id ? 'page' : undefined
+							}
+						>
+							{ row.label() }
+						</Link>
+					) ) }
+				</nav>
 				{ ( 'outline' === tab.id || 'publish' === tab.id ) && (
 					<CourseViewAction key={ id } id={ id } />
 				) }
-			</div>
-			<nav
-				className="oml-editor-tabs oml-editor-steps"
-				aria-label={ __( 'Course editor sections', 'ohmylms' ) }
-			>
-				{ tabs.map( ( row ) => (
-					<Link
-						key={ row.id }
-						to={
-							'details' === row.id
-								? `/courses/${ id }`
-								: `/courses/${ id }/${ row.id }`
-						}
-						className={
-							row.id === tab.id
-								? 'oml-editor-tab is-active'
-								: 'oml-editor-tab'
-						}
-						aria-current={ row.id === tab.id ? 'page' : undefined }
-					>
-						{ row.label() }
-					</Link>
-				) ) }
-			</nav>
+			</header>
 			{ ( 'details' === tab.id || 'settings' === tab.id ) && (
 				<CourseForm key={ tab.id } id={ id } section={ tab.id } />
 			) }
