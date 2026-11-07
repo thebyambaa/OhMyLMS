@@ -1,6 +1,5 @@
 import {
 	Button,
-	CheckboxControl,
 	Modal,
 	Notice,
 	SelectControl,
@@ -12,7 +11,6 @@ import { __, sprintf } from '@wordpress/i18n';
 import { MediaPicker } from '../../components/MediaPicker';
 import { normalizeApiError } from '../../lib/api';
 import { IMAGE_MIME_TYPES } from '../../lib/media';
-import { Link } from 'react-router-dom';
 import { updateCourse } from './api';
 import { CourseViewLink } from './CourseViewLink';
 import {
@@ -51,9 +49,6 @@ const SHOWN_FIELDS = [
 	'target_audience',
 	'requirements',
 	'thumbnail_id',
-	'capacity',
-	'has_capacity',
-	'enable_reviews',
 ];
 
 function FieldError( { id, message }: { id: string; message?: string } ) {
@@ -98,7 +93,7 @@ const WRITABLE: readonly WritableStatus[] = [
 ];
 
 /**
- * Course form on the Basics step: details and thumbnail, then membership guidance, reviews and capacity.
+ * Course form on the Basics step: details, publishing and thumbnail.
  * It saves the whole course through the courses API. Edits survive failed saves, and leaving with unsaved
  * changes asks first.
  *
@@ -571,71 +566,6 @@ export function CourseForm( { id }: { id: number } ) {
 							/>
 						</fieldset>
 					</div>
-				</div>
-
-				<div className="oml-editor-cards">
-					<Notice status="info" isDismissible={ false }>
-						{ __(
-							'Manage pricing and course access through membership plans. Add this course to a plan in Memberships.',
-							'ohmylms'
-						) }{ ' ' }
-						<Link to="/memberships">
-							{ __( 'Manage memberships', 'ohmylms' ) }
-						</Link>
-					</Notice>
-					<fieldset disabled={ busy || trashed }>
-						<legend>{ __( 'Reviews', 'ohmylms' ) }</legend>
-						<CheckboxControl
-							label={ __( 'Allow student reviews', 'ohmylms' ) }
-							checked={ form.enable_reviews }
-							onChange={ ( next ) =>
-								update( 'enable_reviews', next )
-							}
-						/>
-					</fieldset>
-
-					<fieldset disabled={ busy || trashed }>
-						<legend>{ __( 'Capacity', 'ohmylms' ) }</legend>
-						<CheckboxControl
-							label={ __(
-								'Limit the number of students',
-								'ohmylms'
-							) }
-							checked={ form.has_capacity }
-							onChange={ ( next ) =>
-								update( 'has_capacity', next )
-							}
-						/>
-						{ form.has_capacity && (
-							<>
-								<TextControl
-									label={ __(
-										'Maximum students',
-										'ohmylms'
-									) }
-									value={ form.capacity }
-									inputMode="numeric"
-									help={ sprintf(
-										/* translators: %d: number of students currently enrolled. */
-										__(
-											'%d students are enrolled now.',
-											'ohmylms'
-										),
-										course.enrolled_count
-									) }
-									aria-invalid={ invalid( 'capacity' ) }
-									aria-describedby={ described( 'capacity' ) }
-									onChange={ ( next ) =>
-										update( 'capacity', next )
-									}
-								/>
-								<FieldError
-									id="oml-course-capacity-error"
-									message={ errors.capacity }
-								/>
-							</>
-						) }
-					</fieldset>
 				</div>
 			</form>
 

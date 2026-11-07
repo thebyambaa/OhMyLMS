@@ -13,8 +13,6 @@ vi.mock( './api', () => ( {
 	getCourse: vi.fn(),
 	getOptions: vi.fn(),
 	updateCourse: vi.fn(),
-	getCourseCertificate: vi.fn(),
-	saveCourseCertificate: vi.fn(),
 } ) );
 
 let media: ReturnType< typeof mockMediaFrame >;
@@ -126,14 +124,6 @@ beforeEach( () => {
 	media = mockMediaFrame();
 	vi.mocked( api.getCourse ).mockResolvedValue( detail );
 	vi.mocked( api.getOptions ).mockResolvedValue( options );
-	vi.mocked( api.getCourseCertificate ).mockResolvedValue( {
-		course_id: 7,
-		certificate_id: 0,
-		choices: [
-			{ id: 3, title: 'Completion', status: 'publish' },
-			{ id: 4, title: 'Merit', status: 'draft' },
-		],
-	} );
 	vi.mocked( api.updateCourse ).mockImplementation( async ( id, input ) => ( {
 		...detail,
 		id,
@@ -205,7 +195,7 @@ describe( 'CourseEditorPage tabs', () => {
 			within( nav ).getByRole( 'link', { name: 'Basics' } )
 		).toHaveAttribute( 'aria-current', 'page' );
 	} );
-	it( 'opens Basics, with the former Additional settings, from the old settings address', async () => {
+	it( 'opens Basics from the old settings address', async () => {
 		renderEditor( '/courses/7/settings' );
 		await loaded();
 		expect(
@@ -215,8 +205,6 @@ describe( 'CourseEditorPage tabs', () => {
 				} )
 			).getByRole( 'link', { name: 'Basics' } )
 		).toHaveAttribute( 'aria-current', 'page' );
-		expect( screen.getByText( 'Reviews' ) ).toBeInTheDocument();
-		expect( screen.getByText( 'Capacity' ) ).toBeInTheDocument();
 	} );
 	it( 'has no Additional step', async () => {
 		renderEditor();
@@ -273,16 +261,12 @@ describe( 'CourseEditorPage tabs', () => {
 		await user.click( barSave );
 		expect( api.updateCourse ).toHaveBeenCalled();
 	} );
-	it( 'hides publication and certificates from authors', async () => {
+	it( 'hides publication from authors', async () => {
 		renderEditor( '/courses/7', { edit_posts: true } );
 		await loaded();
 		expect(
 			screen.queryByRole( 'button', { name: 'Publish' } )
 		).not.toBeInTheDocument();
-		expect(
-			screen.queryByRole( 'region', { name: 'Certificate' } )
-		).not.toBeInTheDocument();
-		expect( api.getCourseCertificate ).not.toHaveBeenCalled();
 	} );
 	it( 'rejects an unknown tab and an author opening the publication tab', () => {
 		const { unmount } = renderEditor( '/courses/7/unknown' );
@@ -749,41 +733,30 @@ describe( 'CourseEditorPage details', () => {
 	} );
 } );
 
-describe( 'CourseEditorPage settings', () => {
-	const SETTINGS = '/courses/7';
-
-	it( 'shows membership guidance and omits pricing, access and availability controls', async () => {
-		renderEditor( SETTINGS );
+describe( 'CourseEditorPage basics', () => {
+	it( 'has no pricing, access, reviews, capacity or certificate controls', async () => {
+		renderEditor();
 		await loaded();
 		for ( const label of [
 			'Price type',
 			/Regular price/,
-			/Sale price/,
-			'Sale starts',
-			'Sale ends',
 			'Who can open the course',
 			'Course password',
-			'Available from',
-			'Duration (hours)',
-			'Duration (minutes)',
+			'Allow student reviews',
+			'Limit the number of students',
+			'Certificate template',
 		] ) {
 			expect( screen.queryByLabelText( label ) ).not.toBeInTheDocument();
 		}
-		expect(
-			screen.getByRole( 'link', { name: 'Manage memberships' } )
-		).toHaveAttribute( 'href', '/memberships' );
-		expect( screen.getByLabelText( 'Maximum students' ) ).toHaveValue(
-			'30'
-		);
-		expect(
-			screen.getByLabelText( 'Allow student reviews' )
-		).toBeInTheDocument();
+		expect( screen.queryByText( 'Certificate' ) ).not.toBeInTheDocument();
+		expect( api.getOptions ).toHaveBeenCalled();
 	} );
-	it( 'saves editable settings without changing stored pricing, access or duration', async () => {
+
+	it( 'saves a change without altering stored pricing, access, duration or capacity', async () => {
 		const user = userEvent.setup();
-		renderEditor( SETTINGS );
+		renderEditor();
 		await loaded();
-		await setField( user, 'Maximum students', '31' );
+		await setField( user, 'Title', 'Changed' );
 		await save( user );
 		await screen.findByText( 'Course saved.', notice );
 		expect( api.updateCourse ).toHaveBeenCalledWith(
@@ -792,58 +765,13 @@ describe( 'CourseEditorPage settings', () => {
 				price_type: 'paid',
 				regular_price: '49.50',
 				sale_price: '29.00',
-				sale_start_date: '2026-11-01',
-				sale_end_date: '2026-11-30',
 				access_type: 'public',
-				available_date: null,
 				duration: { hours: 3, minutes: 30 },
-				capacity: 31,
 			} ),
 			expect.any( AbortSignal )
 		);
 	} );
-	it( 'validates the remaining editable capacity before saving', async () => {
-		const user = userEvent.setup();
-		renderEditor( SETTINGS );
-		await loaded();
-		await setField( user, 'Maximum students', '0' );
-		await save( user );
-		await screen.findByText(
-			'Fix the highlighted fields before saving.',
-			notice
-		);
-		expect( screen.getByLabelText( 'Maximum students' ) ).toHaveAttribute(
-			'aria-invalid',
-			'true'
-		);
-		expect( api.updateCourse ).not.toHaveBeenCalled();
-	} );
-	it( 'keeps edits after a server capacity rejection', async () => {
-		vi.mocked( api.updateCourse ).mockRejectedValue(
-			rejection(
-				422,
-				'ohmylms_course_invalid_capacity',
-				'Capacity cannot be below enrolled students.',
-				{ status: 422 }
-			)
-		);
-		const user = userEvent.setup();
-		renderEditor( SETTINGS );
-		await loaded();
-		await setField( user, 'Maximum students', '31' );
-		await save( user );
-		await screen.findByText(
-			'Capacity cannot be below enrolled students.',
-			notice
-		);
-		expect( screen.getByLabelText( 'Maximum students' ) ).toHaveAttribute(
-			'aria-invalid',
-			'true'
-		);
-		expect( screen.getByLabelText( 'Maximum students' ) ).toHaveValue(
-			'31'
-		);
-	} );
+
 	it( 'preserves stored password protection rather than silently opening an existing course', async () => {
 		vi.mocked( api.getCourse ).mockResolvedValue( {
 			...detail,
@@ -852,12 +780,9 @@ describe( 'CourseEditorPage settings', () => {
 			password: 'stored-pw',
 		} );
 		const user = userEvent.setup();
-		renderEditor( SETTINGS );
+		renderEditor();
 		await loaded();
-		expect(
-			screen.queryByLabelText( 'Course password' )
-		).not.toBeInTheDocument();
-		await user.click( screen.getByLabelText( 'Allow student reviews' ) );
+		await setField( user, 'Title', 'Changed' );
 		await save( user );
 		await waitFor( () => expect( api.updateCourse ).toHaveBeenCalled() );
 		expect( api.updateCourse ).toHaveBeenCalledWith(
@@ -868,96 +793,6 @@ describe( 'CourseEditorPage settings', () => {
 			} ),
 			expect.any( AbortSignal )
 		);
-	} );
-	it( 'only shows the capacity field when enrolment is limited', async () => {
-		const user = userEvent.setup();
-		renderEditor( SETTINGS );
-		await loaded();
-		await user.click(
-			screen.getByRole( 'checkbox', {
-				name: 'Limit the number of students',
-			} )
-		);
-		expect(
-			screen.queryByLabelText( 'Maximum students' )
-		).not.toBeInTheDocument();
-		await save( user );
-		await waitFor( () => expect( api.updateCourse ).toHaveBeenCalled() );
-		expect( api.updateCourse ).toHaveBeenCalledWith(
-			7,
-			expect.objectContaining( { has_capacity: false, capacity: null } ),
-			expect.anything()
-		);
-	} );
-
-	describe( 'certificate', () => {
-		it( 'assigns a template with the read assignment as the expected value', async () => {
-			vi.mocked( api.saveCourseCertificate ).mockResolvedValue( {
-				course_id: 7,
-				certificate_id: 3,
-				choices: [ { id: 3, title: 'Completion', status: 'publish' } ],
-			} );
-			const user = userEvent.setup();
-			renderEditor( SETTINGS );
-			const select = await screen.findByLabelText(
-				'Certificate template'
-			);
-			expect( select ).toHaveValue( '0' );
-			expect(
-				within( select )
-					.getAllByRole( 'option' )
-					.map( ( option ) => option.textContent )
-			).toEqual( [ 'No certificate', 'Completion', 'Merit (draft)' ] );
-			await user.selectOptions( select, '3' );
-			await user.click(
-				screen.getByRole( 'button', { name: 'Save certificate' } )
-			);
-			expect(
-				await screen.findByText( 'Certificate saved.', notice )
-			).toBeInTheDocument();
-			expect( api.saveCourseCertificate ).toHaveBeenCalledWith(
-				7,
-				3,
-				0,
-				expect.any( AbortSignal )
-			);
-			expect(
-				screen.getByRole( 'button', { name: 'Save certificate' } )
-			).toBeDisabled();
-		} );
-		it( 'keeps the choice after a conflict and offers a reload', async () => {
-			vi.mocked( api.saveCourseCertificate ).mockRejectedValue(
-				rejection(
-					409,
-					'ohmylms_course_certificate_stale',
-					'The course certificate changed in another session.'
-				)
-			);
-			const user = userEvent.setup();
-			renderEditor( SETTINGS );
-			await user.selectOptions(
-				await screen.findByLabelText( 'Certificate template' ),
-				'4'
-			);
-			await user.click(
-				screen.getByRole( 'button', { name: 'Save certificate' } )
-			);
-			expect(
-				await screen.findByText(
-					/The course certificate changed in another session/,
-					notice
-				)
-			).toBeInTheDocument();
-			expect(
-				screen.getByLabelText( 'Certificate template' )
-			).toHaveValue( '4' );
-			await user.click(
-				screen.getByRole( 'button', { name: 'Reload certificate' } )
-			);
-			await waitFor( () =>
-				expect( api.getCourseCertificate ).toHaveBeenCalledTimes( 2 )
-			);
-		} );
 	} );
 } );
 

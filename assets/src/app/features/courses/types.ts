@@ -135,14 +135,6 @@ export interface CourseOptions {
 	};
 }
 
-/** The certificate template a course awards, with the templates the user may assign. */
-export interface CertificateAssignment {
-	course_id: number;
-	/** Assigned template ID, or 0 for none. */
-	certificate_id: number;
-	choices: { id: number; title: string; status: string }[];
-}
-
 export type { MediaImage } from '../../lib/media';
 
 /** The list filters. */

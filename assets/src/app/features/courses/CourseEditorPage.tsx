@@ -5,7 +5,6 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 import { useBootstrap } from '../../bootstrap/BootstrapContext';
 import { hasCapability } from '../../bootstrap/config';
 import { BuilderSaveProvider } from '../../hooks/useBuilderSave';
-import { CertificatePanel } from './CertificatePanel';
 import { getCourse } from './api';
 import { CourseForm } from './CourseForm';
 import { CourseViewLink } from './CourseViewLink';
@@ -73,11 +72,10 @@ function CourseViewAction( { id, refresh }: { id: number; refresh: number } ) {
 }
 
 /**
- * Course editor at `#/courses/:id/:tab?`, shown as a builder with three steps: Basics (metadata, thumbnail,
- * membership guidance, reviews, capacity and certificate), Curriculum (units and activity placements) and
+ * Course editor at `#/courses/:id/:tab?`, shown as a builder with three steps: Basics (metadata and thumbnail), Curriculum (units and activity placements) and
  * Skill coverage. The bar has one Save, which runs the open step's own save, and Publish for
- * administrators, which opens the reviewed publication of the saved program. Publication and certificates
- * need `manage_options`, as on the server. The old `/settings` step opens Basics.
+ * administrators, which opens the reviewed publication of the saved program. Publication needs
+ * `manage_options`, as on the server. The old `/settings` step opens Basics.
  */
 export default function CourseEditorPage() {
 	const params = useParams();
@@ -198,7 +196,6 @@ export default function CourseEditorPage() {
 					{ ( formStep || openedForm ) && (
 						<div hidden={ ! formStep }>
 							<CourseForm id={ id } />
-							{ admin && <CertificatePanel course={ id } /> }
 						</div>
 					) }
 					<Suspense

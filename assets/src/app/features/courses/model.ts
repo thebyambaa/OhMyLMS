@@ -2,7 +2,6 @@ import { __, sprintf } from '@wordpress/i18n';
 import { ApiError } from '../../lib/api';
 import type {
 	AccessType,
-	CertificateAssignment,
 	ContentCounts,
 	Course,
 	CourseDetail,
@@ -173,30 +172,6 @@ function parseDuration( value: unknown ): Duration | null {
 	}
 	const item = record( value );
 	return { hours: count( item.hours ), minutes: count( item.minutes ) };
-}
-
-/**
- * Validate the certificate assignment of a course.
- *
- * @param value Parsed JSON.
- * @return The assigned template (0 for none) and the templates the user may assign.
- */
-export function parseCertificateAssignment(
-	value: unknown
-): CertificateAssignment {
-	const item = record( value );
-	return {
-		course_id: positiveId( item.course_id ),
-		certificate_id: count( item.certificate_id ),
-		choices: list( item.choices ).map( ( choice ) => {
-			const row = record( choice );
-			return {
-				id: positiveId( row.id ),
-				title: text( row.title ),
-				status: text( row.status ),
-			};
-		} ),
-	};
 }
 
 /**
