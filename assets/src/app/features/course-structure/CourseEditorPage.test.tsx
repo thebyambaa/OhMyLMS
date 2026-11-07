@@ -523,3 +523,68 @@ it( 'narrows the attach picker to a Content Bank folder and tag', async () => {
 		)
 	);
 } );
+describe( 'collapsing units', () => {
+	const body = ( name: string ) =>
+		within( screen.getByRole( 'region', { name } ) )
+			.getByRole( 'button', {
+				name: 'Attach lesson to unit',
+				hidden: true,
+			} )
+			.closest( '.oml-unit-body' ) as HTMLElement;
+
+	it( 'folds one unit away and keeps its header', async () => {
+		const user = userEvent.setup();
+		open();
+		const toggle = screen.getByRole( 'button', {
+			name: 'Collapse Algebra',
+		} );
+		expect( toggle ).toHaveAttribute( 'aria-expanded', 'true' );
+		expect( body( 'Algebra' ) ).toBeVisible();
+		await user.click( toggle );
+		expect(
+			screen.getByRole( 'button', { name: 'Expand Algebra' } )
+		).toHaveAttribute( 'aria-expanded', 'false' );
+		expect( body( 'Algebra' ) ).not.toBeVisible();
+		expect( body( 'Geometry' ) ).toBeVisible();
+		expect(
+			within(
+				screen.getByRole( 'region', { name: 'Algebra' } )
+			).getByRole( 'heading', { name: 'Algebra' } )
+		).toBeVisible();
+	} );
+
+	it( 'collapses and expands every unit at once', async () => {
+		const user = userEvent.setup();
+		open();
+		await user.click(
+			screen.getByRole( 'button', { name: 'Collapse all' } )
+		);
+		expect( body( 'Algebra' ) ).not.toBeVisible();
+		expect( body( 'Geometry' ) ).not.toBeVisible();
+		expect(
+			screen.getByRole( 'button', { name: 'Collapse all' } )
+		).toBeDisabled();
+		await user.click(
+			screen.getByRole( 'button', { name: 'Expand all' } )
+		);
+		expect( body( 'Algebra' ) ).toBeVisible();
+		expect( body( 'Geometry' ) ).toBeVisible();
+		expect(
+			screen.getByRole( 'button', { name: 'Expand all' } )
+		).toBeDisabled();
+	} );
+
+	it( 'is a view setting: it does not make the outline draft unsaved', async () => {
+		const user = userEvent.setup();
+		open();
+		const save = screen.getByRole( 'button', {
+			name: 'Save outline draft',
+		} );
+		expect( save ).toBeDisabled();
+		await user.click(
+			screen.getByRole( 'button', { name: 'Collapse all' } )
+		);
+		expect( save ).toBeDisabled();
+		expect( api.saveOutline ).not.toHaveBeenCalled();
+	} );
+} );

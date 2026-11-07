@@ -122,6 +122,17 @@ export function OutlineWorkspace( {
 			: undefined
 	);
 	const [ draft, setDraft ] = useState( initial );
+	const [ folded, setFolded ] = useState< ReadonlySet< Unit[ 'id' ] > >(
+		() => new Set()
+	);
+	const toggleUnit = ( id: Unit[ 'id' ] ) =>
+		setFolded( ( current ) => {
+			const next = new Set( current );
+			if ( ! next.delete( id ) ) {
+				next.add( id );
+			}
+			return next;
+		} );
 	const [ saved, setSaved ] = useState( snapshot( initial ) );
 	const [ busy, setBusy ] = useState( false );
 	const [ error, setError ] = useState( '' );
@@ -296,6 +307,11 @@ export function OutlineWorkspace( {
 		}
 		const { unit, type } = picker;
 		setPicker( null );
+		setFolded( ( current ) => {
+			const next = new Set( current );
+			next.delete( unit );
+			return next;
+		} );
 		if (
 			draft.program.items.some(
 				( item ) =>
@@ -441,10 +457,42 @@ export function OutlineWorkspace( {
 						<legend className="screen-reader-text">
 							{ __( 'Units and activities', 'ohmylms' ) }
 						</legend>
+						{ draft.units.length > 1 && (
+							<div className="oml-outline-toolbar">
+								<Button
+									size="small"
+									variant="tertiary"
+									disabled={ 0 === folded.size }
+									onClick={ () => setFolded( new Set() ) }
+								>
+									{ __( 'Expand all', 'ohmylms' ) }
+								</Button>
+								<Button
+									size="small"
+									variant="tertiary"
+									disabled={ draft.units.every( ( unit ) =>
+										folded.has( unit.id )
+									) }
+									onClick={ () =>
+										setFolded(
+											new Set(
+												draft.units.map(
+													( unit ) => unit.id
+												)
+											)
+										)
+									}
+								>
+									{ __( 'Collapse all', 'ohmylms' ) }
+								</Button>
+							</div>
+						) }
 						{ draft.units.map( ( unit ) => (
 							<UnitEditor
 								key={ unit.id }
 								unit={ unit }
+								collapsed={ folded.has( unit.id ) }
+								onToggle={ () => toggleUnit( unit.id ) }
 								units={ draft.units }
 								items={ draft.program.items.filter(
 									( item ) => item.chapter_id === unit.id

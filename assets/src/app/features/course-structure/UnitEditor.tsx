@@ -4,7 +4,7 @@ import {
 	TextareaControl,
 	TextControl,
 } from '@wordpress/components';
-import { useState } from '@wordpress/element';
+import { useId, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
 import { Badge } from '../../../ui/Badge';
@@ -62,6 +62,8 @@ const EDIT_ROUTES: Record< string, string > = {
  * @param root0.onDelete
  * @param root0.onDetach
  * @param root0.onConnect
+ * @param root0.collapsed Whether the unit body is folded away; the header always shows.
+ * @param root0.onToggle  Folds or unfolds the unit body.
  * @param root0.onReorder Moves a unit or activity (source) before/after a target; see `dropOn`.
  * @param root0.drag      Current pointer drag, for row feedback.
  * @param root0.handle    Pointer handlers for a row's grip.
@@ -76,6 +78,8 @@ export function UnitEditor( {
 	onDetach,
 	onConnect,
 	onReorder,
+	collapsed = false,
+	onToggle,
 	drag,
 	handle,
 }: {
@@ -93,9 +97,12 @@ export function UnitEditor( {
 		after: boolean,
 		control: string
 	) => void;
+	collapsed?: boolean;
+	onToggle?: () => void;
 	drag: DragState | null;
 	handle: ReturnType< typeof useDragMove >[ 'handle' ];
 } ) {
+	const bodyId = useId();
 	const unitName = unit.title || __( 'New unit', 'ohmylms' );
 	const [ open, setOpen ] = useState( true );
 	const key = unitKey( unit.id );
@@ -115,8 +122,37 @@ export function UnitEditor( {
 			tabIndex={ -1 }
 			style={ dragStyle( drag, key ) }
 		>
-			<header className="oml-unit-header">
+			<header
+				className={ `oml-unit-header${
+					collapsed ? ' is-collapsed' : ''
+				}` }
+			>
 				<Grip handlers={ handle( key ) } />
+				{ onToggle && (
+					<Button
+						size="small"
+						className="oml-unit-toggle"
+						icon={
+							collapsed ? 'arrow-right-alt2' : 'arrow-down-alt2'
+						}
+						label={
+							collapsed
+								? sprintf(
+										/* translators: %s: unit name. */
+										__( 'Expand %s', 'ohmylms' ),
+										unitName
+									)
+								: sprintf(
+										/* translators: %s: unit name. */
+										__( 'Collapse %s', 'ohmylms' ),
+										unitName
+									)
+						}
+						aria-expanded={ ! collapsed }
+						aria-controls={ bodyId }
+						onClick={ onToggle }
+					/>
+				) }
 				<span className="oml-unit-number">{ unit.number }</span>
 				<h2 className="oml-unit-title">{ unitName }</h2>
 				<span className="oml-unit-count">
@@ -165,223 +201,236 @@ export function UnitEditor( {
 					/>
 				</div>
 			</header>
-			<div className="oml-unit-details" hidden={ ! open }>
-				<div className="oml-unit-row">
-					<TextControl
-						label={ __( 'Unit title', 'ohmylms' ) }
-						value={ unit.title }
-						onChange={ ( title ) => onChange( { title } ) }
-					/>
-					<TextControl
-						label={ __( 'Unit number', 'ohmylms' ) }
-						value={ unit.number }
-						onChange={ ( number ) => onChange( { number } ) }
+			<div id={ bodyId } className="oml-unit-body" hidden={ collapsed }>
+				<div className="oml-unit-details" hidden={ ! open }>
+					<div className="oml-unit-row">
+						<TextControl
+							label={ __( 'Unit title', 'ohmylms' ) }
+							value={ unit.title }
+							onChange={ ( title ) => onChange( { title } ) }
+						/>
+						<TextControl
+							label={ __( 'Unit number', 'ohmylms' ) }
+							value={ unit.number }
+							onChange={ ( number ) => onChange( { number } ) }
+						/>
+					</div>
+					<TextareaControl
+						label={ __( 'Unit description', 'ohmylms' ) }
+						value={ unit.description }
+						rows={ 2 }
+						onChange={ ( description ) =>
+							onChange( { description } )
+						}
 					/>
 				</div>
-				<TextareaControl
-					label={ __( 'Unit description', 'ohmylms' ) }
-					value={ unit.description }
-					rows={ 2 }
-					onChange={ ( description ) => onChange( { description } ) }
-				/>
-			</div>
-			<ol className="oml-unit-items">
-				{ items.length === 0 && (
-					<li className="oml-unit-empty">
-						{ __( 'No activities yet. Add one below.', 'ohmylms' ) }
-					</li>
-				) }
-				{ items.map( ( item, index ) => {
-					const name = item.name || String( item.content_id );
-					const edit = EDIT_ROUTES[ item.type ];
-					return (
-						<li
-							key={ item.id }
-							className="oml-outline-item"
-							data-oml-drop={ item.id }
-							tabIndex={ -1 }
-							style={ dragStyle( drag, item.id ) }
-						>
-							<Grip handlers={ handle( item.id ) } />
-							<span
-								className={ `dashicons dashicons-${
-									TYPE_ICONS[ item.type ] ?? 'media-default'
-								} oml-outline-item-icon` }
-								aria-hidden="true"
-							/>
-							<span className="oml-outline-item-name">
-								{ edit ? (
-									<Link
-										to={ `${ edit }${ item.content_id }` }
-										aria-label={ sprintf(
-											/* translators: %s: activity name. */
-											__( 'Edit %s', 'ohmylms' ),
-											name
-										) }
-									>
-										{ name }
-									</Link>
-								) : (
-									name
-								) }
-							</span>{ ' ' }
-							<Badge
-								className={ `oml-outline-item-type oml-outline-item-type-${ item.type }` }
+				<ol className="oml-unit-items">
+					{ items.length === 0 && (
+						<li className="oml-unit-empty">
+							{ __(
+								'No activities yet. Add one below.',
+								'ohmylms'
+							) }
+						</li>
+					) }
+					{ items.map( ( item, index ) => {
+						const name = item.name || String( item.content_id );
+						const edit = EDIT_ROUTES[ item.type ];
+						return (
+							<li
+								key={ item.id }
+								className="oml-outline-item"
+								data-oml-drop={ item.id }
+								tabIndex={ -1 }
+								style={ dragStyle( drag, item.id ) }
 							>
-								{ TYPE_LABELS[ item.type ]?.() ?? item.type }
-							</Badge>
-							<span className="oml-outline-item-tools">
-								{ onConnect &&
-									[ 'lesson', 'quiz', 'assignment' ].includes(
+								<Grip handlers={ handle( item.id ) } />
+								<span
+									className={ `dashicons dashicons-${
+										TYPE_ICONS[ item.type ] ??
+										'media-default'
+									} oml-outline-item-icon` }
+									aria-hidden="true"
+								/>
+								<span className="oml-outline-item-name">
+									{ edit ? (
+										<Link
+											to={ `${ edit }${ item.content_id }` }
+											aria-label={ sprintf(
+												/* translators: %s: activity name. */
+												__( 'Edit %s', 'ohmylms' ),
+												name
+											) }
+										>
+											{ name }
+										</Link>
+									) : (
+										name
+									) }
+								</span>{ ' ' }
+								<Badge
+									className={ `oml-outline-item-type oml-outline-item-type-${ item.type }` }
+								>
+									{ TYPE_LABELS[ item.type ]?.() ??
+										item.type }
+								</Badge>
+								<span className="oml-outline-item-tools">
+									{ onConnect &&
+										[
+											'lesson',
+											'quiz',
+											'assignment',
+										].includes( item.type ) && (
+											<Button
+												size="small"
+												variant="secondary"
+												onClick={ () =>
+													onConnect( item )
+												}
+												aria-label={ sprintf(
+													/* translators: %s: activity title. */ __(
+														'Connect skills for %s',
+														'ohmylms'
+													),
+													name
+												) }
+											>
+												{ __( 'Skills', 'ohmylms' ) }
+											</Button>
+										) }
+									{ [ 'lesson', 'quiz' ].includes(
 										item.type
 									) && (
-										<Button
-											size="small"
-											variant="secondary"
-											onClick={ () => onConnect( item ) }
+										<a
+											className="components-button is-tertiary"
+											target="_blank"
+											rel="noopener noreferrer"
+											href={
+												'post.php?post=' +
+												item.content_id +
+												'&action=edit'
+											}
 											aria-label={ sprintf(
 												/* translators: %s: activity title. */ __(
-													'Connect skills for %s',
+													'Open %s in block editor (opens in a new tab)',
 													'ohmylms'
 												),
 												name
 											) }
 										>
-											{ __( 'Skills', 'ohmylms' ) }
-										</Button>
+											{ __( 'Block editor', 'ohmylms' ) }
+										</a>
 									) }
-								{ [ 'lesson', 'quiz' ].includes(
-									item.type
-								) && (
-									<a
-										className="components-button is-tertiary"
-										target="_blank"
-										rel="noopener noreferrer"
-										href={
-											'post.php?post=' +
-											item.content_id +
-											'&action=edit'
-										}
-										aria-label={ sprintf(
-											/* translators: %s: activity title. */ __(
-												'Open %s in block editor (opens in a new tab)',
-												'ohmylms'
-											),
-											name
-										) }
-									>
-										{ __( 'Block editor', 'ohmylms' ) }
-									</a>
-								) }
-								{ units.length > 1 && (
-									<SelectControl< string >
-										__nextHasNoMarginBottom
-										hideLabelFromVision
+									{ units.length > 1 && (
+										<SelectControl< string >
+											__nextHasNoMarginBottom
+											hideLabelFromVision
+											size="small"
+											label={ sprintf(
+												/* translators: %s: activity name. */
+												__( 'Unit for %s', 'ohmylms' ),
+												name
+											) }
+											value={ String( unit.id ) }
+											data-oml-control="unit"
+											options={ units.map( ( row ) => ( {
+												value: String( row.id ),
+												label:
+													row.title ||
+													__( 'New unit', 'ohmylms' ),
+											} ) ) }
+											onChange={ ( value ) =>
+												onReorder(
+													item.id,
+													unitKey( value ),
+													true,
+													'unit'
+												)
+											}
+										/>
+									) }
+									<Button
 										size="small"
+										icon="arrow-up-alt2"
 										label={ sprintf(
 											/* translators: %s: activity name. */
-											__( 'Unit for %s', 'ohmylms' ),
+											__( 'Move %s up', 'ohmylms' ),
 											name
 										) }
-										value={ String( unit.id ) }
-										data-oml-control="unit"
-										options={ units.map( ( row ) => ( {
-											value: String( row.id ),
-											label:
-												row.title ||
-												__( 'New unit', 'ohmylms' ),
-										} ) ) }
-										onChange={ ( value ) =>
+										disabled={ 0 === index }
+										data-oml-control="up"
+										onClick={ () =>
 											onReorder(
 												item.id,
-												unitKey( value ),
-												true,
-												'unit'
+												items[ index - 1 ]!.id,
+												false,
+												'up'
 											)
 										}
 									/>
-								) }
-								<Button
-									size="small"
-									icon="arrow-up-alt2"
-									label={ sprintf(
-										/* translators: %s: activity name. */
-										__( 'Move %s up', 'ohmylms' ),
-										name
-									) }
-									disabled={ 0 === index }
-									data-oml-control="up"
-									onClick={ () =>
-										onReorder(
-											item.id,
-											items[ index - 1 ]!.id,
-											false,
-											'up'
-										)
-									}
-								/>
-								<Button
-									size="small"
-									icon="arrow-down-alt2"
-									label={ sprintf(
-										/* translators: %s: activity name. */
-										__( 'Move %s down', 'ohmylms' ),
-										name
-									) }
-									disabled={ index === items.length - 1 }
-									data-oml-control="down"
-									onClick={ () =>
-										onReorder(
-											item.id,
-											items[ index + 1 ]!.id,
-											true,
-											'down'
-										)
-									}
-								/>
-								<Button
-									size="small"
-									icon="no-alt"
-									label={ sprintf(
-										/* translators: %s: activity name. */
-										__( 'Detach %s', 'ohmylms' ),
-										name
-									) }
-									onClick={ () => onDetach( item ) }
-								/>
-							</span>
-						</li>
-					);
-				} ) }
-			</ol>
-			<div className="oml-unit-add">
-				<Button
-					size="small"
-					variant="tertiary"
-					icon="plus"
-					aria-label={ __( 'Attach lesson to unit', 'ohmylms' ) }
-					onClick={ () => onAdd( 'lesson' ) }
-				>
-					{ __( 'Lesson', 'ohmylms' ) }
-				</Button>
-				<Button
-					size="small"
-					variant="tertiary"
-					icon="plus"
-					aria-label={ __( 'Add quiz to unit', 'ohmylms' ) }
-					onClick={ () => onAdd( 'quiz' ) }
-				>
-					{ __( 'Quiz', 'ohmylms' ) }
-				</Button>
-				<Button
-					size="small"
-					variant="tertiary"
-					icon="plus"
-					aria-label={ __( 'Add assignment to unit', 'ohmylms' ) }
-					onClick={ () => onAdd( 'assignment' ) }
-				>
-					{ __( 'Assignment', 'ohmylms' ) }
-				</Button>
+									<Button
+										size="small"
+										icon="arrow-down-alt2"
+										label={ sprintf(
+											/* translators: %s: activity name. */
+											__( 'Move %s down', 'ohmylms' ),
+											name
+										) }
+										disabled={ index === items.length - 1 }
+										data-oml-control="down"
+										onClick={ () =>
+											onReorder(
+												item.id,
+												items[ index + 1 ]!.id,
+												true,
+												'down'
+											)
+										}
+									/>
+									<Button
+										size="small"
+										icon="no-alt"
+										label={ sprintf(
+											/* translators: %s: activity name. */
+											__( 'Detach %s', 'ohmylms' ),
+											name
+										) }
+										onClick={ () => onDetach( item ) }
+									/>
+								</span>
+							</li>
+						);
+					} ) }
+				</ol>
+				<div className="oml-unit-add">
+					<Button
+						size="small"
+						variant="tertiary"
+						icon="plus"
+						aria-label={ __( 'Attach lesson to unit', 'ohmylms' ) }
+						onClick={ () => onAdd( 'lesson' ) }
+					>
+						{ __( 'Lesson', 'ohmylms' ) }
+					</Button>
+					<Button
+						size="small"
+						variant="tertiary"
+						icon="plus"
+						aria-label={ __( 'Add quiz to unit', 'ohmylms' ) }
+						onClick={ () => onAdd( 'quiz' ) }
+					>
+						{ __( 'Quiz', 'ohmylms' ) }
+					</Button>
+					<Button
+						size="small"
+						variant="tertiary"
+						icon="plus"
+						aria-label={ __( 'Add assignment to unit', 'ohmylms' ) }
+						onClick={ () => onAdd( 'assignment' ) }
+					>
+						{ __( 'Assignment', 'ohmylms' ) }
+					</Button>
+				</div>
 			</div>
 		</section>
 	);
