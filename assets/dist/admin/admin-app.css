@@ -548,5 +548,12 @@ body.oml-builder-fullscreen .oml-editor-header .oml-editor-view-link {
 	display: none;
 }
 
+.ohmylms-app .oml-unit-quick-add { display: flex; align-items: center; gap: var(--oml-space-2); flex-wrap: wrap; padding: var(--oml-space-2) var(--oml-space-3); border-top: 1px solid var(--oml-border); }
+
+.ohmylms-app .oml-unit-quick-add input[type="text"] { flex: 1; min-width: 12em; }
+
+.ohmylms-app .oml-unit-quick-add-error { color: var(--oml-danger); font-size: var(--oml-font-size-xs); }
+.ohmylms-app .oml-unit-quick-add-status { color: var(--oml-muted); font-size: var(--oml-font-size-xs); }
+
 
 /*# sourceMappingURL=admin-app.css.map*/
