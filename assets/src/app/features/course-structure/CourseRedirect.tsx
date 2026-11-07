@@ -2,7 +2,7 @@ import { Navigate, useLocation, useParams } from 'react-router-dom';
 
 /**
  * Old Content Hub course links open the merged course editor: the list at `#/courses`, the outline at
- * `#/courses/:id/outline` and settings at `#/courses/:id/settings`.
+ * `#/courses/:id/outline` and settings on the Basics step at `#/courses/:id`.
  */
 export default function CourseRedirect() {
 	const { id } = useParams();
@@ -10,6 +10,8 @@ export default function CourseRedirect() {
 	if ( ! id ) {
 		return <Navigate to="/courses" replace />;
 	}
-	const tab = pathname.endsWith( '/settings' ) ? 'settings' : 'outline';
-	return <Navigate to={ `/courses/${ id }/${ tab }` } replace />;
+	const target = pathname.endsWith( '/settings' )
+		? `/courses/${ id }`
+		: `/courses/${ id }/outline`;
+	return <Navigate to={ target } replace />;
 }

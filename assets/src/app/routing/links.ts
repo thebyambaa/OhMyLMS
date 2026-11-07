@@ -13,7 +13,8 @@ export function setLinkResolver( resolver: LinkResolver | null ) {
 }
 
 /**
- * Whether an in-app path is one of the steps of a course's editor (Basics, Curriculum or Additional).
+ * Whether an in-app path is one of the steps of a course's editor (Basics, Curriculum or Skill coverage;
+ * the old `/settings` address opens Basics).
  * The steps keep their drafts while the user moves between them, so these links never need a prompt.
  *
  * @param course Course ID.

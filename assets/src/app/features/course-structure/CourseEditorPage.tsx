@@ -648,7 +648,7 @@ export function OutlineWorkspace( {
 						className="oml-editor-shortcuts"
 						aria-label={ __( 'Shortcuts', 'ohmylms' ) }
 					>
-						<Link to={ `/courses/${ draft.course_id }/settings` }>
+						<Link to={ `/courses/${ draft.course_id }` }>
 							{ __( 'Course settings', 'ohmylms' ) }
 						</Link>
 						<Link to={ `/courses/${ draft.course_id }/publish` }>

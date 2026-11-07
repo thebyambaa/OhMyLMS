@@ -1,7 +1,7 @@
 import { Button, Modal, Notice } from '@wordpress/components';
 import { lazy, Suspense, useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
-import { Link, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router-dom';
 import { useBootstrap } from '../../bootstrap/BootstrapContext';
 import { hasCapability } from '../../bootstrap/config';
 import { BuilderSaveProvider } from '../../hooks/useBuilderSave';
@@ -27,13 +27,12 @@ const PublicationPanel = lazy( () =>
 	).then( ( module ) => ( { default: module.PublicationPanel } ) )
 );
 
-type Tab = 'details' | 'outline' | 'coverage' | 'settings';
+type Tab = 'details' | 'outline' | 'coverage';
 
 const TABS: { id: Tab; label: () => string }[] = [
 	{ id: 'details', label: () => __( 'Basics', 'ohmylms' ) },
 	{ id: 'outline', label: () => __( 'Curriculum', 'ohmylms' ) },
 	{ id: 'coverage', label: () => __( 'Skill coverage', 'ohmylms' ) },
-	{ id: 'settings', label: () => __( 'Additional', 'ohmylms' ) },
 ];
 
 /**
@@ -74,11 +73,11 @@ function CourseViewAction( { id, refresh }: { id: number; refresh: number } ) {
 }
 
 /**
- * Course editor at `#/courses/:id/:tab?`, shown as a builder with three steps: Basics (metadata and
- * thumbnail), Curriculum (units and activity placements) and Additional (membership guidance, reviews,
- * capacity and certificate). The bar has one Save, which runs the open step's own save, and Publish for
+ * Course editor at `#/courses/:id/:tab?`, shown as a builder with three steps: Basics (metadata, thumbnail,
+ * membership guidance, reviews, capacity and certificate), Curriculum (units and activity placements) and
+ * Skill coverage. The bar has one Save, which runs the open step's own save, and Publish for
  * administrators, which opens the reviewed publication of the saved program. Publication and certificates
- * need `manage_options`, as on the server.
+ * need `manage_options`, as on the server. The old `/settings` step opens Basics.
  */
 export default function CourseEditorPage() {
 	const params = useParams();
@@ -97,26 +96,22 @@ export default function CourseEditorPage() {
 	const [ openedOutline, setOpenedOutline ] = useState( false );
 	// A fix made from the coverage step changes the saved outline; remounting makes the Curriculum step load it.
 	const [ outlineVersion, setOutlineVersion ] = useState( 0 );
-	const [ openedForm, setOpenedForm ] = useState( () =>
-		Boolean( tab && ( 'details' === tab.id || 'settings' === tab.id ) )
-	);
-	const [ formSection, setFormSection ] = useState< 'details' | 'settings' >(
-		'details'
-	);
+	const [ openedForm, setOpenedForm ] = useState( 'details' === tab?.id );
 	useEffect( () => {
 		if ( 'outline' === tab?.id ) {
 			setOpenedOutline( true );
-		} else if ( 'details' === tab?.id || 'settings' === tab?.id ) {
+		} else if ( 'details' === tab?.id ) {
 			setOpenedForm( true );
-			setFormSection( tab.id );
 		}
 	}, [ tab ] );
-	const stepSection =
-		'details' === tab?.id || 'settings' === tab?.id ? tab.id : null;
-	const formStep = null !== stepSection;
+	const formStep = 'details' === tab?.id;
+
 	const at = tab ? TABS.indexOf( tab ) : -1;
 	const previous = at > 0 ? TABS[ at - 1 ] : undefined;
 	const next = at >= 0 ? TABS[ at + 1 ] : undefined;
+	if ( null !== id && 'settings' === params.tab ) {
+		return <Navigate to={ stepLink( id, 'details' ) } replace />;
+	}
 	if ( null === id || ! tab ) {
 		return (
 			<>
@@ -202,14 +197,9 @@ export default function CourseEditorPage() {
 					</header>
 					{ ( formStep || openedForm ) && (
 						<div hidden={ ! formStep }>
-							<CourseForm
-								id={ id }
-								section={ stepSection ?? formSection }
-							/>
+							<CourseForm id={ id } />
+							{ admin && <CertificatePanel course={ id } /> }
 						</div>
-					) }
-					{ 'settings' === tab.id && admin && (
-						<CertificatePanel course={ id } />
 					) }
 					<Suspense
 						fallback={

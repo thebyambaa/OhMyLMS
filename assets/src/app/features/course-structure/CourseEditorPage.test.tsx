@@ -777,7 +777,7 @@ describe( 'the side panels', () => {
 		);
 		expect(
 			shortcuts.getByRole( 'link', { name: 'Course settings' } )
-		).toHaveAttribute( 'href', '/courses/12/settings' );
+		).toHaveAttribute( 'href', '/courses/12' );
 		expect(
 			shortcuts.getByRole( 'link', { name: 'Preview and publish' } )
 		).toHaveAttribute( 'href', '/courses/12/publish' );

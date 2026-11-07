@@ -185,7 +185,7 @@ describe( 'CourseEditorPage tabs', () => {
 		);
 	} );
 	it( 'links every tab and marks the current one', async () => {
-		renderEditor( '/courses/7/settings' );
+		renderEditor();
 		await loaded();
 		const nav = screen.getByRole( 'navigation', {
 			name: 'Course editor sections',
@@ -200,11 +200,30 @@ describe( 'CourseEditorPage tabs', () => {
 			[ 'Basics', '/courses/7' ],
 			[ 'Curriculum', '/courses/7/outline' ],
 			[ 'Skill coverage', '/courses/7/coverage' ],
-			[ 'Additional', '/courses/7/settings' ],
 		] );
 		expect(
-			within( nav ).getByRole( 'link', { name: 'Additional' } )
+			within( nav ).getByRole( 'link', { name: 'Basics' } )
 		).toHaveAttribute( 'aria-current', 'page' );
+	} );
+	it( 'opens Basics, with the former Additional settings, from the old settings address', async () => {
+		renderEditor( '/courses/7/settings' );
+		await loaded();
+		expect(
+			within(
+				screen.getByRole( 'navigation', {
+					name: 'Course editor sections',
+				} )
+			).getByRole( 'link', { name: 'Basics' } )
+		).toHaveAttribute( 'aria-current', 'page' );
+		expect( screen.getByText( 'Reviews' ) ).toBeInTheDocument();
+		expect( screen.getByText( 'Capacity' ) ).toBeInTheDocument();
+	} );
+	it( 'has no Additional step', async () => {
+		renderEditor();
+		await loaded();
+		expect(
+			screen.queryByRole( 'link', { name: 'Additional' } )
+		).not.toBeInTheDocument();
 	} );
 	it( 'renders the outline and publication tabs from the course structure feature', async () => {
 		renderEditor( '/courses/7/outline' );
@@ -255,7 +274,7 @@ describe( 'CourseEditorPage tabs', () => {
 		expect( api.updateCourse ).toHaveBeenCalled();
 	} );
 	it( 'hides publication and certificates from authors', async () => {
-		renderEditor( '/courses/7/settings', { edit_posts: true } );
+		renderEditor( '/courses/7', { edit_posts: true } );
 		await loaded();
 		expect(
 			screen.queryByRole( 'button', { name: 'Publish' } )
@@ -282,7 +301,9 @@ describe( 'CourseEditorPage tabs', () => {
 		renderEditor();
 		await loaded();
 		await setField( user, 'Title', 'Changed' );
-		await user.click( screen.getByRole( 'link', { name: 'Additional' } ) );
+		await user.click(
+			screen.getByRole( 'link', { name: 'Skill coverage' } )
+		);
 		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
 		await user.click( screen.getByRole( 'link', { name: 'Curriculum' } ) );
 		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
@@ -409,7 +430,7 @@ describe( 'CourseEditorPage details', () => {
 			expect( api.updateCourse ).toHaveBeenCalledTimes( 1 )
 		);
 	} );
-	it( 'lists errors of the other tab in the summary', async () => {
+	it( 'lists errors of fields without a control in the summary', async () => {
 		vi.mocked( api.getCourse ).mockResolvedValue( {
 			...detail,
 			sale_price: '99.00',
@@ -428,9 +449,9 @@ describe( 'CourseEditorPage details', () => {
 		expect( screen.getByLabelText( 'Title' ) ).toHaveAccessibleDescription(
 			'Enter a title of 1 to 200 characters.'
 		);
-		expect(
-			screen.getAllByText( /Settings tab: .*cannot be higher/ )
-		).not.toHaveLength( 0 );
+		expect( screen.getAllByText( /cannot be higher/ ) ).not.toHaveLength(
+			0
+		);
 		expect( api.updateCourse ).not.toHaveBeenCalled();
 	} );
 	it( 'shows a server error without losing the edits', async () => {
@@ -729,7 +750,7 @@ describe( 'CourseEditorPage details', () => {
 } );
 
 describe( 'CourseEditorPage settings', () => {
-	const SETTINGS = '/courses/7/settings';
+	const SETTINGS = '/courses/7';
 
 	it( 'shows membership guidance and omits pricing, access and availability controls', async () => {
 		renderEditor( SETTINGS );
@@ -974,7 +995,7 @@ describe( 'the skill coverage step', () => {
 			screen.queryByText( /Coverage of course/ )
 		).not.toBeInTheDocument();
 	} );
-	it( 'sits between Curriculum and Additional in the Next and Previous links', async () => {
+	it( 'sits after Curriculum in the Next and Previous links', async () => {
 		const user = userEvent.setup();
 		renderEditor( '/courses/7/outline' );
 		await user.click(
@@ -987,8 +1008,8 @@ describe( 'the skill coverage step', () => {
 			screen.getByRole( 'link', { name: 'Previous: Curriculum' } )
 		).toBeInTheDocument();
 		expect(
-			screen.getByRole( 'link', { name: 'Next: Additional' } )
-		).toBeInTheDocument();
+			screen.queryByRole( 'link', { name: /^Next:/ } )
+		).not.toBeInTheDocument();
 	} );
 } );
 
