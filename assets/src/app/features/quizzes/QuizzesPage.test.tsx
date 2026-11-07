@@ -162,7 +162,8 @@ describe( 'QuizzesPage', () => {
 				'frac',
 				'all',
 				0,
-				expect.any( AbortSignal )
+				expect.any( AbortSignal ),
+				{ folder: '', tag: '' }
 			)
 		);
 		await user.click(
@@ -174,7 +175,8 @@ describe( 'QuizzesPage', () => {
 				'frac',
 				'trash',
 				0,
-				expect.any( AbortSignal )
+				expect.any( AbortSignal ),
+				{ folder: '', tag: '' }
 			)
 		);
 		await user.selectOptions(
@@ -187,7 +189,8 @@ describe( 'QuizzesPage', () => {
 				'frac',
 				'trash',
 				5,
-				expect.any( AbortSignal )
+				expect.any( AbortSignal ),
+				{ folder: '', tag: '' }
 			)
 		);
 	} );

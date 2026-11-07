@@ -70,7 +70,8 @@ describe( 'useQuizzes', () => {
 				'',
 				'all',
 				5,
-				expect.any( AbortSignal )
+				expect.any( AbortSignal ),
+				{ folder: '', tag: '' }
 			)
 		);
 		act( () => view.result.current.setStatus( 'trash' ) );
@@ -80,7 +81,8 @@ describe( 'useQuizzes', () => {
 				'',
 				'trash',
 				5,
-				expect.any( AbortSignal )
+				expect.any( AbortSignal ),
+				{ folder: '', tag: '' }
 			)
 		);
 	} );

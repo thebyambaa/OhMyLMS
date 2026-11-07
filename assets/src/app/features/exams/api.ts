@@ -51,6 +51,10 @@ export const BANK_PER_PAGE = 10;
 export interface ExamFilters {
 	search: string;
 	status: StatusFilter;
+	/** Content Bank folder ID as text, or `''` for every folder. */
+	folder: string;
+	/** Content Bank tag ID as text, or `''` for every tag. */
+	tag: string;
 }
 
 /**
@@ -73,6 +77,8 @@ export function listExams(
 			per_page: PER_PAGE,
 			status: filters.status,
 			...( filters.search ? { search: filters.search } : {} ),
+			...( filters.folder ? { bank_folder: filters.folder } : {} ),
+			...( filters.tag ? { bank_tag: filters.tag } : {} ),
 		},
 	} );
 }

@@ -94,7 +94,13 @@ describe( 'AssignmentsPage', () => {
 		await waitFor( () =>
 			expect( api.listAssignments ).toHaveBeenLastCalledWith(
 				1,
-				{ search: 'essay', status: 'all', course: 0 },
+				{
+					search: 'essay',
+					status: 'all',
+					course: 0,
+					folder: '',
+					tag: '',
+				},
 				expect.any( AbortSignal )
 			)
 		);
@@ -108,7 +114,13 @@ describe( 'AssignmentsPage', () => {
 		await waitFor( () =>
 			expect( api.listAssignments ).toHaveBeenLastCalledWith(
 				1,
-				{ search: 'essay', status: 'draft', course: 12 },
+				{
+					search: 'essay',
+					status: 'draft',
+					course: 12,
+					folder: '',
+					tag: '',
+				},
 				expect.any( AbortSignal )
 			)
 		);

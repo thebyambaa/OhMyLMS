@@ -133,7 +133,7 @@ final class AdminNavigation {
 				'page'  => 'ohmylms-content',
 				'label' => __( 'Content Hub', 'ohmylms' ),
 				'tabs'  => array(
-					'courses'       => array(
+					'courses'    => array(
 						'label'      => __( 'Courses', 'ohmylms' ),
 						'capability' => 'edit_posts',
 						'sections'   => array(
@@ -141,7 +141,7 @@ final class AdminNavigation {
 							'overview' => __( 'Overview', 'ohmylms' ),
 						),
 					),
-					'gradebook'     => array(
+					'gradebook'  => array(
 						'label'      => __( 'Gradebook', 'ohmylms' ),
 						'capability' => \OhMyLMS\Gradebook\Access::CAPABILITY,
 						'sections'   => array(
@@ -152,7 +152,7 @@ final class AdminNavigation {
 							'rollup'  => __( 'Org roll-up', 'ohmylms' ),
 						),
 					),
-					'skills'        => array(
+					'skills'     => array(
 						'label'      => __( 'Skills', 'ohmylms' ),
 						'capability' => 'edit_posts',
 						'sections'   => array(
@@ -188,7 +188,7 @@ final class AdminNavigation {
 							),
 						),
 					),
-					'curriculum'    => array(
+					'curriculum' => array(
 						'label'    => __( 'Curriculum', 'ohmylms' ),
 						'sections' => array(
 							''           => __( 'Syllabuses', 'ohmylms' ),

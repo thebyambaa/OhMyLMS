@@ -29,11 +29,14 @@ export const COURSES_PER_PAGE = 10;
 /**
  * List quizzes the user may edit or grade, newest first.
  *
- * @param page   Page number, from 1.
- * @param search Title search; empty for all.
- * @param status `all`, `draft`, `publish` or `trash`.
- * @param course Course id to filter by, or 0 for all.
- * @param signal Cancels the request.
+ * @param page        Page number, from 1.
+ * @param search      Title search; empty for all.
+ * @param status      `all`, `draft`, `publish` or `trash`.
+ * @param course      Course id to filter by, or 0 for all.
+ * @param signal      Cancels the request.
+ * @param bank        Content Bank folder and tag filters (term IDs as text).
+ * @param bank.folder Folder ID.
+ * @param bank.tag    Tag ID.
  * @return Validated quizzes and pagination totals.
  */
 export function listQuizzes(
@@ -41,7 +44,8 @@ export function listQuizzes(
 	search: string,
 	status: string,
 	course: number,
-	signal?: AbortSignal
+	signal?: AbortSignal,
+	bank: { folder?: string; tag?: string } = {}
 ) {
 	return getCollection( BASE, parseQuiz, {
 		signal,
@@ -51,6 +55,8 @@ export function listQuizzes(
 			search,
 			status,
 			course: course > 0 ? course : undefined,
+			bank_folder: bank.folder || undefined,
+			bank_tag: bank.tag || undefined,
 			orderby: 'created_at',
 			order: 'desc',
 		},

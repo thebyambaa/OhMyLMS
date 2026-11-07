@@ -82,6 +82,10 @@
 			"raw": 6500,
 			"gzip": 2400
 		},
+		"chunks/admin-app-content-bank.js": {
+			"raw": 6900,
+			"gzip": 2650
+		},
 		"chunks/admin-app-content-hub.js": {
 			"raw": 19300,
 			"gzip": 5700

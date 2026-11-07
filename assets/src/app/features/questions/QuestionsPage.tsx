@@ -36,6 +36,7 @@ import { exportQuestions, saveFile, type ExportFormat } from './exchange';
 import { AddToQuizDialog } from './AddToQuizDialog';
 import { DeleteQuestionsDialog } from './DeleteQuestionsDialog';
 import { ImportQuestionsDialog } from './ImportQuestionsDialog';
+import { BankOrganizer, useBankControls } from '../content-bank';
 import { useQuestions } from './useQuestions';
 import type { QuestionSummary, QuestionType, StatusFilter } from './types';
 
@@ -77,6 +78,12 @@ function defaultType( types: readonly QuestionType[] ): string {
  */
 export default function QuestionsPage() {
 	const list = useQuestions();
+	const bank = useBankControls( {
+		folder: list.query.folder ?? '',
+		tag: list.query.tag ?? '',
+		ids: list.data.items.map( ( item ) => item.id ),
+		onFilter: list.setBank,
+	} );
 	const types = useRequest( listQuestionTypes );
 	const navigate = useNavigate();
 	const operation = useOperation();
@@ -330,6 +337,8 @@ export default function QuestionsPage() {
 					{ operation.error }
 				</Notice>
 			) }
+			{ bank.notices }
+			<BankOrganizer folders={ bank.paths } onCreate={ bank.addTerm } />
 			{ list.error && (
 				<Notice status="error" isDismissible={ false }>
 					{ list.error }{ ' ' }
@@ -357,12 +366,20 @@ export default function QuestionsPage() {
 					}
 					bulkActions={ {
 						actions: [
+							...bank.bulkActions.actions,
 							{
 								value: 'delete',
 								label: __( 'Delete', 'ohmylms' ),
 							},
 						],
-						onApply: ( _action, _keys, rows ) => {
+						onApply: ( chosen, keys, rows ) => {
+							if ( 'delete' !== chosen ) {
+								return bank.bulkActions.onApply(
+									chosen,
+									keys,
+									rows
+								);
+							}
 							const deletable = rows.filter(
 								( row ) => row.permissions.can_delete
 							);
@@ -440,6 +457,7 @@ export default function QuestionsPage() {
 								] }
 								onChange={ list.setDifficulty }
 							/>
+							{ bank.filters }
 						</>
 					}
 					pagination={ {
@@ -496,6 +514,7 @@ export default function QuestionsPage() {
 							render: ( item ) =>
 								difficultyLabel( item.difficulty ),
 						},
+						bank.column,
 						{
 							id: 'usage',
 							label: __( 'Used in', 'ohmylms' ),

@@ -19,6 +19,7 @@ import {
 	trashAssignment,
 	type ListFilters,
 } from './api';
+import { BankOrganizer, useBankControls } from '../content-bank';
 import { LIMITS, statusLabel } from './model';
 import type { Assignment, AssignmentStatus, StatusFilter } from './types';
 
@@ -44,7 +45,13 @@ function statusOptions(): Array< { value: StatusFilter; label: string } > {
 
 type Dialog = { kind: 'create' } | { kind: 'trash'; item: Assignment } | null;
 
-const ADDRESS_DEFAULTS = { search: '', status: 'all', course: '0' };
+const ADDRESS_DEFAULTS = {
+	search: '',
+	status: 'all',
+	course: '0',
+	folder: '',
+	tag: '',
+};
 
 /**
  * Assignment list (`#/assignments`): paged, searchable, filterable by status and course, with create
@@ -53,7 +60,11 @@ const ADDRESS_DEFAULTS = { search: '', status: 'all', course: '0' };
  */
 export default function AssignmentsPage() {
 	const navigate = useNavigate();
-	const address = useListState( ADDRESS_DEFAULTS, { search: 's' } );
+	const address = useListState( ADDRESS_DEFAULTS, {
+		search: 's',
+		folder: 'bank_folder',
+		tag: 'bank_tag',
+	} );
 	const { page, setPage } = address;
 	const filters = useMemo< ListFilters >(
 		() => ( {
@@ -65,6 +76,10 @@ export default function AssignmentsPage() {
 			course: /^\d+$/.test( address.filters.course )
 				? Number( address.filters.course )
 				: 0,
+			folder: /^\d+$/.test( address.filters.folder )
+				? address.filters.folder
+				: '',
+			tag: /^\d+$/.test( address.filters.tag ) ? address.filters.tag : '',
 		} ),
 		[ address.filters ]
 	);
@@ -85,6 +100,12 @@ export default function AssignmentsPage() {
 		[]
 	);
 	const courses = useRequest( loadCourses );
+	const bank = useBankControls( {
+		folder: filters.folder,
+		tag: filters.tag,
+		ids: ( list.data?.items ?? [] ).map( ( item ) => item.id ),
+		onFilter: ( folder, tag ) => filter( { folder, tag } ),
+	} );
 
 	const toAddress = ( next: Partial< ListFilters > ) => {
 		const merged = { ...filters, ...next };
@@ -92,6 +113,8 @@ export default function AssignmentsPage() {
 			search: merged.search,
 			status: merged.status,
 			course: String( merged.course ),
+			folder: merged.folder,
+			tag: merged.tag,
 		};
 	};
 	function filter( next: Partial< ListFilters > ) {
@@ -176,6 +199,8 @@ export default function AssignmentsPage() {
 					{ message }
 				</Notice>
 			) }
+			{ bank.notices }
+			<BankOrganizer folders={ bank.paths } onCreate={ bank.addTerm } />
 			{ list.error && (
 				<Notice status="error" isDismissible={ false }>
 					{ list.error }{ ' ' }
@@ -195,6 +220,8 @@ export default function AssignmentsPage() {
 					busy={ operation.busy }
 					rows={ list.data.items }
 					rowKey={ ( item ) => item.id }
+					rowLabel={ ( item ) => item.title }
+					bulkActions={ bank.bulkActions }
 					emptyMessage={ __( 'No assignments found.', 'ohmylms' ) }
 					views={ statusViews(
 						statusOptions(),
@@ -222,18 +249,21 @@ export default function AssignmentsPage() {
 					onFilter={ () => filter( { search: query.trim() } ) }
 					filterLabel={ null }
 					filters={
-						<ListTableSelect
-							label={ __( 'Course', 'ohmylms' ) }
-							value={ String( filters.course ) }
-							options={ courseOptions }
-							onChange={ ( value ) =>
-								filter( {
-									course: /^\d+$/.test( value )
-										? Number( value )
-										: 0,
-								} )
-							}
-						/>
+						<>
+							<ListTableSelect
+								label={ __( 'Course', 'ohmylms' ) }
+								value={ String( filters.course ) }
+								options={ courseOptions }
+								onChange={ ( value ) =>
+									filter( {
+										course: /^\d+$/.test( value )
+											? Number( value )
+											: 0,
+									} )
+								}
+							/>
+							{ bank.filters }
+						</>
 					}
 					pagination={ {
 						page,
@@ -285,6 +315,7 @@ export default function AssignmentsPage() {
 									? item.course.title
 									: __( 'Not in a course', 'ohmylms' ),
 						},
+						bank.column,
 						{
 							id: 'max_score',
 							label: __( 'Max score', 'ohmylms' ),

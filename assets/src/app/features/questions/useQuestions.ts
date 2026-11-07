@@ -5,7 +5,14 @@ import type { Collection } from '../../lib/api/collection';
 import { listQuestions } from './api';
 import type { QuestionListQuery, QuestionSummary, StatusFilter } from './types';
 
-const NO_FILTERS = { search: '', type: '', difficulty: '', status: 'active' };
+const NO_FILTERS = {
+	search: '',
+	type: '',
+	difficulty: '',
+	status: 'active',
+	folder: '',
+	tag: '',
+};
 
 type Filters = typeof NO_FILTERS;
 
@@ -17,7 +24,11 @@ type Filters = typeof NO_FILTERS;
  * @return Items, loading and error state, the current query and the actions that change it.
  */
 export function useQuestions() {
-	const list = useListState< Filters >( NO_FILTERS, { search: 's' } );
+	const list = useListState< Filters >( NO_FILTERS, {
+		search: 's',
+		folder: 'bank_folder',
+		tag: 'bank_tag',
+	} );
 	const query = useMemo< QuestionListQuery >(
 		() => ( {
 			page: list.page,
@@ -25,6 +36,10 @@ export function useQuestions() {
 			type: list.filters.type,
 			difficulty: list.filters.difficulty,
 			status: list.filters.status as StatusFilter,
+			folder: /^\d+$/.test( list.filters.folder )
+				? list.filters.folder
+				: '',
+			tag: /^\d+$/.test( list.filters.tag ) ? list.filters.tag : '',
 		} ),
 		[ list.page, list.filters ]
 	);
@@ -89,5 +104,6 @@ export function useQuestions() {
 		setType: ( type: string ) => filter( { type } ),
 		setDifficulty: ( difficulty: string ) => filter( { difficulty } ),
 		setStatus: ( status: StatusFilter ) => filter( { status } ),
+		setBank: ( folder: string, tag: string ) => filter( { folder, tag } ),
 	};
 }

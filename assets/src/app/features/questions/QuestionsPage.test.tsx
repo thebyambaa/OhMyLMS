@@ -114,6 +114,8 @@ describe( 'QuestionsPage', () => {
 			type: '',
 			difficulty: '',
 			status: 'active',
+			folder: '',
+			tag: '',
 		} );
 	} );
 
@@ -168,6 +170,8 @@ describe( 'QuestionsPage', () => {
 				type: 'multiple-choice',
 				difficulty: 'challenge',
 				status: 'draft',
+				folder: '',
+				tag: '',
 			} )
 		);
 		expect(

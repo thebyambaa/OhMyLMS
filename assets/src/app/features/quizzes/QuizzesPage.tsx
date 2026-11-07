@@ -24,6 +24,7 @@ import {
 	restoreQuiz,
 	trashQuiz,
 } from './api';
+import { BankOrganizer, useBankControls } from '../content-bank';
 import { LIMITS, formatDate, quizStatusLabel } from './model';
 import { useQuizzes } from './useQuizzes';
 import type { Quiz } from './types';
@@ -42,6 +43,12 @@ type Dialog =
 export default function QuizzesPage() {
 	const list = useQuizzes();
 	const navigate = useNavigate();
+	const bank = useBankControls( {
+		folder: list.folder,
+		tag: list.tag,
+		ids: list.data.items.map( ( item ) => item.id ),
+		onFilter: list.setBank,
+	} );
 	const [ params, setParams ] = useSearchParams();
 	const action = params.get( 'action' );
 	const [ query, setQuery ] = useState( list.searchTerm );
@@ -248,6 +255,8 @@ export default function QuizzesPage() {
 					{ error }
 				</Notice>
 			) }
+			{ bank.notices }
+			<BankOrganizer folders={ bank.paths } onCreate={ bank.addTerm } />
 			{ list.error && (
 				<Notice status="error" isDismissible={ false }>
 					{ list.error }{ ' ' }
@@ -268,6 +277,7 @@ export default function QuizzesPage() {
 					rows={ list.data.items }
 					rowKey={ ( item ) => item.id }
 					rowLabel={ ( item ) => item.title }
+					bulkActions={ bank.bulkActions }
 					emptyMessage={ __( 'No quizzes found.', 'ohmylms' ) }
 					views={ statusViews(
 						statusOptions,
@@ -300,6 +310,7 @@ export default function QuizzesPage() {
 									list.setCourse( Number( value ) )
 								}
 							/>
+							{ bank.filters }
 						</>
 					}
 					pagination={ {
@@ -350,6 +361,7 @@ export default function QuizzesPage() {
 							label: __( 'Course', 'ohmylms' ),
 							render: ( item ) => item.course?.title ?? '—',
 						},
+						bank.column,
 						{
 							id: 'questions',
 							label: __( 'Questions', 'ohmylms' ),

@@ -34,6 +34,8 @@ describe( 'typed assignments API', () => {
 			search: 'essay',
 			status: 'draft',
 			course: 0,
+			folder: '',
+			tag: '',
 		} );
 		expect( getCollection ).toHaveBeenCalledWith(
 			'/ohmylms/v1/assignments',
@@ -49,12 +51,21 @@ describe( 'typed assignments API', () => {
 				},
 			} )
 		);
-		await listAssignments( 1, { search: '', status: 'all', course: 12 } );
+		await listAssignments( 1, {
+			search: '',
+			status: 'all',
+			course: 12,
+			folder: '7',
+			tag: '',
+		} );
 		expect( getCollection ).toHaveBeenLastCalledWith(
 			'/ohmylms/v1/assignments',
 			expect.any( Function ),
 			expect.objectContaining( {
-				query: expect.objectContaining( { course: 12 } ),
+				query: expect.objectContaining( {
+					course: 12,
+					bank_folder: '7',
+				} ),
 			} )
 		);
 		await listSubmissions( 31, 3, 'submitted' );

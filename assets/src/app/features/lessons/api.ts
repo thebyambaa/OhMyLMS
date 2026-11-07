@@ -18,10 +18,19 @@ const BASE = '/ohmylms/v1/authoring/lessons';
 export async function listLessons(
 	page: number,
 	search: string,
-	signal: AbortSignal
+	signal: AbortSignal,
+	bank: { folder?: string; tag?: string } = {}
 ) {
 	const row = record(
-		await get< unknown >( BASE, { query: { page, search }, signal } )
+		await get< unknown >( BASE, {
+			query: {
+				page,
+				search,
+				bank_folder: bank.folder || undefined,
+				bank_tag: bank.tag || undefined,
+			},
+			signal,
+		} )
 	);
 	if (
 		! Array.isArray( row.items ) ||

@@ -1,5 +1,6 @@
 import { Badge } from '../../../ui/Badge';
 import { ListTable } from '../../../ui/ListTable';
+import { BankOrganizer, useBankControls } from '../content-bank';
 import {
 	Button,
 	CheckboxControl,
@@ -53,7 +54,12 @@ function postStatusTone( status: ExamStatus ): 'success' | undefined {
 	return 'publish' === status ? 'success' : undefined;
 }
 
-const NO_FILTERS: ExamFilters = { search: '', status: 'all' };
+const NO_FILTERS: ExamFilters = {
+	search: '',
+	status: 'all',
+	folder: '',
+	tag: '',
+};
 
 function dialogFrom( action: string | null ): Dialog {
 	return 'new' === action || 'import' === action ? action : null;
@@ -397,7 +403,11 @@ function ImportDialog( { onClose }: { onClose: () => void } ) {
 export default function ExamsPage() {
 	const [ params, setParams ] = useSearchParams();
 	const dialog = dialogFrom( params.get( 'action' ) );
-	const list = useListState< ExamFilters >( NO_FILTERS, { search: 's' } );
+	const list = useListState< ExamFilters >( NO_FILTERS, {
+		search: 's',
+		folder: 'bank_folder',
+		tag: 'bank_tag',
+	} );
 	const { page, filters, setPage } = list;
 	const [ jobPage, setJobPage ] = useState( 1 );
 	const [ query, setQuery ] = useState( filters.search );
@@ -407,6 +417,13 @@ export default function ExamsPage() {
 		[ page, filters ]
 	);
 	const exams = useRequest( load );
+	const bank = useBankControls( {
+		folder: filters.folder,
+		tag: filters.tag,
+		ids: ( exams.data?.items ?? [] ).map( ( exam ) => exam.id ),
+		onFilter: ( folder, tag ) =>
+			list.setFilters( { ...filters, folder, tag } ),
+	} );
 	const loadJobs = useCallback(
 		( signal: AbortSignal ) => listJobs( jobPage, signal ),
 		[ jobPage ]
@@ -443,6 +460,8 @@ export default function ExamsPage() {
 					{ __( 'Import exam', 'ohmylms' ) }
 				</PageTitleAction>
 			</PageTitleActions>
+			{ bank.notices }
+			<BankOrganizer folders={ bank.paths } onCreate={ bank.addTerm } />
 			{ exams.error && (
 				<Notice status="error" isDismissible={ false }>
 					{ exams.error }{ ' ' }
@@ -461,6 +480,10 @@ export default function ExamsPage() {
 					formLabel={ __( 'Search exams', 'ohmylms' ) }
 					rows={ exams.data.items }
 					rowKey={ ( exam ) => exam.id }
+					rowLabel={ ( exam ) => exam.title }
+					filters={ bank.filters }
+					filterLabel={ null }
+					bulkActions={ bank.bulkActions }
 					emptyMessage={ __( 'No exams found.', 'ohmylms' ) }
 					views={ statusViews(
 						[
@@ -541,6 +564,7 @@ export default function ExamsPage() {
 								</Badge>
 							),
 						},
+						bank.column,
 						{
 							id: 'questions',
 							label: __( 'Questions', 'ohmylms' ),

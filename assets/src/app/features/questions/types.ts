@@ -222,6 +222,10 @@ export interface QuestionListQuery {
 	type: string;
 	difficulty: string;
 	status: StatusFilter;
+	/** Content Bank folder ID as text, or `''` for every folder. */
+	folder?: string;
+	/** Content Bank tag ID as text, or `''` for every tag. */
+	tag?: string;
 }
 
 /** An option as the server accepts it. */

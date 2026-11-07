@@ -66,6 +66,16 @@ module.exports = {
 					priority: 10,
 					reuseExistingChunk: true,
 				},
+				// Folders and tags shared by the five Content Bank lists, kept out of whichever list loads first.
+				adminAppContentBank: {
+					test: /[\\/]assets[\\/]src[\\/]app[\\/]features[\\/]content-bank[\\/]/,
+					name: 'admin-app-content-bank',
+					chunks: 'async',
+					minChunks: 2,
+					minSize: 0,
+					priority: 20,
+					reuseExistingChunk: true,
+				},
 			},
 		},
 	},

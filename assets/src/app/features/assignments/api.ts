@@ -40,6 +40,10 @@ export interface ListFilters {
 	status: StatusFilter;
 	/** Course ID, or 0 for every course. */
 	course: number;
+	/** Content Bank folder ID as text, or `''` for every folder. */
+	folder: string;
+	/** Content Bank tag ID as text, or `''` for every tag. */
+	tag: string;
 }
 
 /**
@@ -63,6 +67,8 @@ export function listAssignments(
 			search: filters.search,
 			status: filters.status,
 			...( filters.course ? { course: filters.course } : {} ),
+			...( filters.folder ? { bank_folder: filters.folder } : {} ),
+			...( filters.tag ? { bank_tag: filters.tag } : {} ),
 			orderby: 'created_at',
 			order: 'desc',
 		},

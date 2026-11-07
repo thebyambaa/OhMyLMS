@@ -88,6 +88,7 @@ add_action( 'init', array( 'OhMyLMS\\Extensions\\Bootstrap', 'init' ), 5 );
 \OhMyLMS\Extensions\Addons::init();
 \OhMyLMS\Assessment\Bootstrap::init();
 \OhMyLMS\Assessment\Profiles::init();
+\OhMyLMS\ContentBank\Organization::init();
 \OhMyLMS\Admin\Commands::init();
 \OhMyLMS\ExamImport\Jobs::init();
 \OhMyLMS\Exams\Library::init();

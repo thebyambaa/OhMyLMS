@@ -45,7 +45,7 @@ final class ImportPage {
 	 * @return string
 	 */
 	public static function url() {
-		return \OhMyLMS\Admin\AdminNavigation::tab_url( 'content', 'question-bank', 'import-review' );
+		return \OhMyLMS\Admin\AdminNavigation::tab_url( 'bank', 'question-bank', 'import-review' );
 	}
 
 	/** Send a visit of the former page to the section. */

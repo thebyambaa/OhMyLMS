@@ -158,6 +158,8 @@ export function listQuestions(
 			type: query.type || undefined,
 			difficulty: query.difficulty || undefined,
 			status: query.status,
+			bank_folder: query.folder || undefined,
+			bank_tag: query.tag || undefined,
 			orderby: 'modified',
 			order: 'desc',
 		},

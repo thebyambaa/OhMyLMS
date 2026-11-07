@@ -10,6 +10,7 @@ import {
 } from '../../layout/PageTitleActions';
 import { newId } from '../../lib/uuid';
 import { ListTable } from '../../../ui/ListTable';
+import { BankOrganizer, useBankControls } from '../content-bank';
 import { createLesson, listLessons } from './api';
 import { blockEditorUrl } from './editUrl';
 import {
@@ -21,26 +22,42 @@ type LessonRow = Awaited<
 	ReturnType< typeof listLessons >
 >[ 'items' ][ number ];
 
-const NO_FILTERS = { search: '' };
+const NO_FILTERS = { search: '', folder: '', tag: '' };
 
 /**
  * Lesson list (`tab=lessons`): paged and searchable, with the search and page in the address. "Add
  * lesson" names a draft in a dialog and opens it in the WordPress block editor.
  */
 export default function LessonsPage() {
-	const list = useListState( NO_FILTERS, { search: 's' } );
+	const list = useListState( NO_FILTERS, {
+		search: 's',
+		folder: 'bank_folder',
+		tag: 'bank_tag',
+	} );
 	const { page, setPage } = list;
-	const search = list.filters.search;
+	const { search, folder, tag } = list.filters;
 	const [ draft, setDraft ] = useState( search );
 	useEffect( () => setDraft( search ), [ search ] );
 	const [ creating, setCreating ] = useState( false );
 	const [ title, setTitle ] = useState( '' );
 	const [ requestId, setRequestId ] = useState( newId );
 	const load = useCallback(
-		( signal: AbortSignal ) => listLessons( page, search, signal ),
-		[ page, search ]
+		( signal: AbortSignal ) =>
+			listLessons( page, search, signal, { folder, tag } ),
+		[ page, search, folder, tag ]
 	);
 	const request = useRequest( load );
+	const bank = useBankControls( {
+		folder,
+		tag,
+		ids: ( request.data?.items ?? [] ).map( ( lesson ) => lesson.id ),
+		onFilter: ( nextFolder, nextTag ) =>
+			list.setFilters( {
+				search,
+				folder: nextFolder,
+				tag: nextTag,
+			} ),
+	} );
 	const operation = useOperation();
 	const preview = useLearnerPreview();
 	return (
@@ -68,6 +85,8 @@ export default function LessonsPage() {
 					</Button>
 				</Notice>
 			) }
+			{ bank.notices }
+			<BankOrganizer folders={ bank.paths } onCreate={ bank.addTerm } />
 			<LearnerPreviewNotices
 				error={ preview.error }
 				blocked={ preview.blocked }
@@ -79,6 +98,10 @@ export default function LessonsPage() {
 					busy={ request.loading }
 					rows={ request.data?.items ?? [] }
 					rowKey={ ( lesson ) => lesson.id }
+					rowLabel={ ( lesson ) => lesson.title }
+					filters={ bank.filters }
+					filterLabel={ null }
+					bulkActions={ bank.bulkActions }
 					emptyMessage={
 						request.loading
 							? ''
@@ -91,7 +114,11 @@ export default function LessonsPage() {
 						maxLength: 100,
 						onChange: setDraft,
 						onSubmit: () =>
-							list.setFilters( { search: draft.trim() } ),
+							list.setFilters( {
+								search: draft.trim(),
+								folder,
+								tag,
+							} ),
 					} }
 					pagination={ {
 						page,
@@ -120,6 +147,7 @@ export default function LessonsPage() {
 							label: __( 'Status', 'ohmylms' ),
 							render: ( lesson ) => lesson.status,
 						},
+						bank.column,
 					] }
 					rowActions={ ( lesson ) => [
 						{

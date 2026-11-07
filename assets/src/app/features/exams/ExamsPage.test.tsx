@@ -87,7 +87,7 @@ describe( 'ExamsPage', () => {
 		await waitFor( () =>
 			expect( api.listExams ).toHaveBeenLastCalledWith(
 				1,
-				{ search: 'mock', status: 'publish' },
+				{ search: 'mock', status: 'publish', folder: '', tag: '' },
 				expect.any( AbortSignal )
 			)
 		);

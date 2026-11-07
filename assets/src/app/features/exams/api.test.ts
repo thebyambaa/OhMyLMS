@@ -37,7 +37,12 @@ beforeEach( () => vi.clearAllMocks() );
 
 describe( 'typed exams API', () => {
 	it( 'lists exams and bank questions with bounded queries', async () => {
-		await listExams( 2, { search: 'mock', status: 'draft' } );
+		await listExams( 2, {
+			search: 'mock',
+			status: 'draft',
+			folder: '',
+			tag: '',
+		} );
 		expect( getCollection ).toHaveBeenCalledWith(
 			'/ohmylms/v1/exams/library',
 			expect.any( Function ),

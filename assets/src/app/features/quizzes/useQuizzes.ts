@@ -5,7 +5,13 @@ import type { Collection } from '../../lib/api/collection';
 import { listQuizzes } from './api';
 import type { Quiz } from './types';
 
-const DEFAULTS = { s: '', status: 'all', course: '0' };
+const DEFAULTS = {
+	s: '',
+	status: 'all',
+	course: '0',
+	bank_folder: '',
+	bank_tag: '',
+};
 
 /**
  * List state for the quiz list, kept in the address (`&status=…&course=…&s=…&paged=…`). Obsolete
@@ -20,6 +26,12 @@ export function useQuizzes() {
 	const search = query.values.s;
 	const status = query.values.status;
 	const course = Math.max( 0, Number( query.values.course ) || 0 );
+	const folder = /^\d+$/.test( query.values.bank_folder )
+		? query.values.bank_folder
+		: '';
+	const tag = /^\d+$/.test( query.values.bank_tag )
+		? query.values.bank_tag
+		: '';
 	const [ version, setVersion ] = useState( 0 );
 	const [ data, setData ] = useState< Collection< Quiz > >( {
 		items: [],
@@ -33,7 +45,10 @@ export function useQuizzes() {
 		const controller = new AbortController();
 		setLoading( true );
 		setError( null );
-		listQuizzes( page, search, status, course, controller.signal ).then(
+		listQuizzes( page, search, status, course, controller.signal, {
+			folder,
+			tag,
+		} ).then(
 			( next ) => {
 				if ( controller.signal.aborted ) {
 					return;
@@ -59,7 +74,7 @@ export function useQuizzes() {
 		);
 		return () => controller.abort();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [ page, search, status, course, version ] );
+	}, [ page, search, status, course, folder, tag, version ] );
 	const reload = () => setVersion( ( current ) => current + 1 );
 	return {
 		data,
@@ -69,6 +84,14 @@ export function useQuizzes() {
 		searchTerm: search,
 		status,
 		course,
+		folder,
+		tag,
+		setBank: ( nextFolder: string, nextTag: string ) =>
+			query.set( {
+				bank_folder: nextFolder,
+				bank_tag: nextTag,
+				page: 1,
+			} ),
 		setPage,
 		pageHref: ( next: number ) => query.href( { page: next } ),
 		statusHref: ( value: string ) => query.href( { status: value } ),
