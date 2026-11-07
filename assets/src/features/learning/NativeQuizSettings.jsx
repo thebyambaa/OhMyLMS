@@ -39,6 +39,7 @@ import { Button, Notice } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { saveQuizForPreview } from './quizPreview.mjs';
 import { useBlankPlaceholderTitle } from './useBlankPlaceholderTitle';
+import { useQuizEditorTidy } from './useQuizEditorTidy';
 
 /**
  * Keep the player preview visible when the document sidebar is closed.
@@ -105,6 +106,7 @@ function NativeQuizSettings() {
 		postType === 'ohmylms-quiz'
 	);
 	const exam = assessment?.kind === 'exam';
+	useQuizEditorTidy( postType === 'ohmylms-quiz' );
 	if ( postType !== 'ohmylms-quiz' ) {
 		return null;
 	}
