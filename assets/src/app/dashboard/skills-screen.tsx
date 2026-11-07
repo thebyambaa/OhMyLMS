@@ -7,7 +7,9 @@ import { Field } from '../../ui/Field';
 import { Input } from '../../ui/Input';
 import { Select } from '../../ui/Select';
 import { Textarea } from '../../ui/Textarea';
+import { ConfirmRemove } from './confirm-remove';
 import { Disclosure } from './field';
+import { deleteSkill, renameSkill } from './studio-actions';
 
 interface Skill {
 	id: number;
@@ -31,6 +33,9 @@ export function SkillsScreen() {
 	const [ parent, setParent ] = useState( 0 );
 	const [ message, setMessage ] = useState( '' );
 	const [ failed, setFailed ] = useState( false );
+	const [ renameValue, setRenameValue ] = useState( '' );
+	const [ removing, setRemoving ] = useState( false );
+	const [ removeError, setRemoveError ] = useState( '' );
 	const [ busy, setBusy ] = useState( '' );
 	const [ csv, setCsv ] = useState( 'subject,grade,skill,mn\n' );
 	const [ focus, setFocus ] = useState( 0 );
@@ -72,6 +77,27 @@ export function SkillsScreen() {
 		}
 		return '0';
 	}
+	const selectedSkill = skills.find( ( skill ) => skill.id === focus );
+
+	function confirmDelete() {
+		if ( ! selectedSkill ) {
+			return;
+		}
+		setBusy( 'delete' );
+		setRemoveError( '' );
+		deleteSkill( selectedSkill.id )
+			.then( () => {
+				setRemoving( false );
+				setFocus( 0 );
+				done( __( 'Skill deleted.', 'ohmylms' ) );
+			} )
+			.catch( ( failure: Error ) => {
+				// Keep the dialog open and show why the server refused.
+				setRemoveError( failure.message );
+				setBusy( '' );
+			} );
+	}
+
 	const subjects = skills.filter( ( skill ) => skill.depth === 'subject' );
 	const grades = skills.filter( ( skill ) => skill.depth === 'grade' );
 
@@ -101,7 +127,10 @@ export function SkillsScreen() {
 							variant="tertiary"
 							size="sm"
 							aria-pressed={ focus === skill.id }
-							onClick={ () => setFocus( skill.id ) }
+							onClick={ () => {
+								setFocus( skill.id );
+								setRenameValue( skill.name );
+							} }
 						>
 							{ skill.name }
 						</Button>
@@ -179,6 +208,70 @@ export function SkillsScreen() {
 						{ __( 'Save skill', 'ohmylms' ) }
 					</Button>
 				</form>
+			) }
+			{ focus > 0 && canEdit && selectedSkill && (
+				<form
+					className="oml-dash-card oml-inline-form"
+					onSubmit={ ( event ) => {
+						event.preventDefault();
+						setBusy( 'rename' );
+						renameSkill(
+							selectedSkill.id,
+							renameValue,
+							selectedSkill.parent
+						)
+							.then( () =>
+								done( __( 'Skill renamed.', 'ohmylms' ) )
+							)
+							.catch( ( failure: Error ) => fail( failure ) );
+					} }
+				>
+					<Input
+						label={ __( 'Skill name', 'ohmylms' ) }
+						required
+						value={ renameValue }
+						onChange={ ( event ) =>
+							setRenameValue( event.target.value )
+						}
+					/>
+					<Button
+						type="submit"
+						loading={ busy === 'rename' }
+						disabled={ renameValue === selectedSkill.name }
+					>
+						{ __( 'Rename skill', 'ohmylms' ) }
+					</Button>
+					<Button
+						variant="tertiary"
+						onClick={ () => {
+							setRemoveError( '' );
+							setRemoving( true );
+						} }
+					>
+						{ __( 'Delete skill', 'ohmylms' ) }
+					</Button>
+				</form>
+			) }
+			{ removing && selectedSkill && (
+				<ConfirmRemove
+					title={ __( 'Delete this skill?', 'ohmylms' ) }
+					confirm={ __( 'Delete skill', 'ohmylms' ) }
+					busy={ busy === 'delete' }
+					error={ removeError }
+					onConfirm={ confirmDelete }
+					onCancel={ () => setRemoving( false ) }
+				>
+					<p>
+						{ sprintf(
+							/* translators: %s: skill name. */
+							__(
+								'“%s” will be deleted permanently. Only administrators can delete skills, and this cannot be undone.',
+								'ohmylms'
+							),
+							selectedSkill.name
+						) }
+					</p>
+				</ConfirmRemove>
 			) }
 			{ focus > 0 && canEdit && (
 				<form

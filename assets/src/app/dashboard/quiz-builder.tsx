@@ -1,12 +1,19 @@
 import { useEffect, useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { Alert } from '../../ui/Alert';
 import { Button } from '../../ui/Button';
 import { Checkbox } from '../../ui/Checkbox';
 import { Input } from '../../ui/Input';
 import { Select } from '../../ui/Select';
 import { api } from './api';
+import { ConfirmRemove } from './confirm-remove';
 import { Disclosure } from './field';
+import {
+	createQuiz,
+	deleteQuestion,
+	renameQuiz,
+	trashQuiz,
+} from './studio-actions';
 import { QuizCanvas } from './quiz-canvas';
 import { type Question, type QuizBody, blank, isEditable } from './quiz-model';
 import { QuizPanel } from './quiz-panel';
@@ -33,18 +40,33 @@ export function QuizBuilder() {
 	const [ checked, setChecked ] = useState( false );
 	const [ settingsOpen, setSettingsOpen ] = useState( false );
 	const [ current, setCurrent ] = useState( 0 );
+	const [ creating, setCreating ] = useState( false );
+	const [ newTitle, setNewTitle ] = useState( '' );
+	const [ quizName, setQuizName ] = useState( '' );
+	const [ busy, setBusy ] = useState( '' );
+	const [ pending, setPending ] = useState< 'quiz' | 'question' | null >(
+		null
+	);
+	const [ pendingError, setPendingError ] = useState( '' );
 
-	useEffect( () => {
+	function loadQuizzes() {
 		void api< { quizzes: Array< { id: number; title: string } > } >(
 			'/studio/quizzes'
 		).then( ( body ) => setQuizzes( body.quizzes ) );
-	}, [] );
+	}
+
+	useEffect( loadQuizzes, [] );
 	useEffect( () => {
 		if ( ! quizId ) {
 			setQuiz( null );
 			return;
 		}
-		void api< QuizBody >( `/studio/quizzes/${ quizId }` ).then( setQuiz );
+		void api< QuizBody >( `/studio/quizzes/${ quizId }` ).then(
+			( body ) => {
+				setQuiz( body );
+				setQuizName( body.title );
+			}
+		);
 	}, [ quizId, message ] );
 
 	function updateQuestion( index: number, next: Question ) {
@@ -79,6 +101,57 @@ export function QuizBuilder() {
 			questions: quiz.questions.concat( [ blank( 'single_choice' ) ] ),
 		} );
 		setCurrent( quiz.questions.length );
+	}
+
+	function confirmRemove() {
+		if ( ! quiz || ! pending ) {
+			return;
+		}
+		const at = Math.min( current, quiz.questions.length - 1 );
+		const target = quiz.questions[ at ];
+		setBusy( 'remove' );
+		setPendingError( '' );
+		const request =
+			pending === 'quiz'
+				? trashQuiz( quiz.id )
+				: deleteQuestion( quiz.id, target?.id ?? 0 );
+		request
+			.then( () => {
+				setPending( null );
+				setBusy( '' );
+				setFailed( false );
+				if ( pending === 'quiz' ) {
+					setQuizId( 0 );
+					loadQuizzes();
+					setMessage( __( 'Quiz moved to the trash.', 'ohmylms' ) );
+				} else {
+					setCurrent( Math.max( 0, at - 1 ) );
+					setMessage( __( 'Question removed.', 'ohmylms' ) );
+				}
+			} )
+			.catch( ( failure: Error ) => {
+				setPendingError( failure.message );
+				setBusy( '' );
+			} );
+	}
+
+	function removeQuestion() {
+		if ( ! quiz ) {
+			return;
+		}
+		const at = Math.min( current, quiz.questions.length - 1 );
+		const target = quiz.questions[ at ];
+		if ( target && ! target.id ) {
+			// Not saved yet: nothing on the server to remove.
+			setQuiz( {
+				...quiz,
+				questions: quiz.questions.filter( ( _, i ) => i !== at ),
+			} );
+			setCurrent( Math.max( 0, at - 1 ) );
+			return;
+		}
+		setPendingError( '' );
+		setPending( 'question' );
 	}
 
 	function save() {
@@ -151,7 +224,56 @@ export function QuizBuilder() {
 						{ __( 'Save quiz', 'ohmylms' ) }
 					</Button>
 				) }
+				<Button
+					aria-expanded={ creating }
+					onClick={ () => setCreating( ! creating ) }
+				>
+					{ __( 'New quiz', 'ohmylms' ) }
+				</Button>
 			</header>
+			{ creating && (
+				<form
+					className="oml-dash-card"
+					onSubmit={ ( event ) => {
+						event.preventDefault();
+						setBusy( 'create' );
+						createQuiz( newTitle )
+							.then( ( created ) => {
+								setNewTitle( '' );
+								setCreating( false );
+								setBusy( '' );
+								loadQuizzes();
+								setQuizId( created.id );
+								setCurrent( 0 );
+								setFailed( false );
+								setMessage(
+									__( 'Quiz created as a draft.', 'ohmylms' )
+								);
+							} )
+							.catch( ( failure: Error ) => {
+								setFailed( true );
+								setMessage( failure.message );
+								setBusy( '' );
+							} );
+					} }
+				>
+					<Input
+						label={ __( 'Quiz title', 'ohmylms' ) }
+						required
+						value={ newTitle }
+						onChange={ ( event ) =>
+							setNewTitle( event.target.value )
+						}
+					/>
+					<Button
+						type="submit"
+						variant="primary"
+						loading={ busy === 'create' }
+					>
+						{ __( 'Create quiz', 'ohmylms' ) }
+					</Button>
+				</form>
+			) }
 			{ quiz && (
 				<>
 					<ol className="oml-pills is-quiet">
@@ -165,6 +287,51 @@ export function QuizBuilder() {
 							open={ settingsOpen }
 							onToggle={ () => setSettingsOpen( ! settingsOpen ) }
 						>
+							<div className="oml-inline-form">
+								<Input
+									label={ __( 'Quiz name', 'ohmylms' ) }
+									value={ quizName }
+									onChange={ ( event ) =>
+										setQuizName( event.target.value )
+									}
+								/>
+								<Button
+									loading={ busy === 'rename' }
+									disabled={
+										! quizName || quizName === quiz.title
+									}
+									onClick={ () => {
+										setBusy( 'rename' );
+										renameQuiz( quiz.id, quizName )
+											.then( () => {
+												loadQuizzes();
+												setFailed( false );
+												setMessage(
+													__(
+														'Quiz renamed.',
+														'ohmylms'
+													)
+												);
+											} )
+											.catch( ( failure: Error ) => {
+												setFailed( true );
+												setMessage( failure.message );
+											} )
+											.finally( () => setBusy( '' ) );
+									} }
+								>
+									{ __( 'Rename quiz', 'ohmylms' ) }
+								</Button>
+								<Button
+									variant="tertiary"
+									onClick={ () => {
+										setPendingError( '' );
+										setPending( 'quiz' );
+									} }
+								>
+									{ __( 'Move quiz to trash', 'ohmylms' ) }
+								</Button>
+							</div>
 							<Input
 								label={ __( 'Pass mark %', 'ohmylms' ) }
 								type="number"
@@ -249,6 +416,11 @@ export function QuizBuilder() {
 										onChange={ ( next ) =>
 											updateQuestion( index, next )
 										}
+										onRemove={
+											quiz.canEdit
+												? removeQuestion
+												: undefined
+										}
 										onPreview={ () => {
 											setPreview( true );
 											setChecked( false );
@@ -316,6 +488,44 @@ export function QuizBuilder() {
 						</dialog>
 					) }
 				</>
+			) }
+			{ pending && quiz && (
+				<ConfirmRemove
+					title={
+						pending === 'quiz'
+							? __( 'Move this quiz to the trash?', 'ohmylms' )
+							: __( 'Remove this question?', 'ohmylms' )
+					}
+					confirm={
+						pending === 'quiz'
+							? __( 'Move to trash', 'ohmylms' )
+							: __( 'Remove question', 'ohmylms' )
+					}
+					busy={ busy === 'remove' }
+					error={ pendingError }
+					onConfirm={ confirmRemove }
+					onCancel={ () => setPending( null ) }
+				>
+					{ pending === 'quiz' ? (
+						<p>
+							{ sprintf(
+								/* translators: %s: quiz title. */
+								__(
+									'“%s” will be moved to the WordPress trash. You can restore it from there. A quiz with student attempts is never deleted permanently.',
+									'ohmylms'
+								),
+								quiz.title
+							) }
+						</p>
+					) : (
+						<p>
+							{ __(
+								'The question will be taken out of this quiz.',
+								'ohmylms'
+							) }
+						</p>
+					) }
+				</ConfirmRemove>
 			) }
 			{ message && (
 				<Alert tone={ failed ? 'danger' : 'success' }>

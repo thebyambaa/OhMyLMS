@@ -24,9 +24,9 @@ export function boot(): DashboardBoot {
  * Join a path onto the REST root. Plain permalinks put the route in `rest_route`, so extra query args use `&`.
  *
  * @param path Path beginning with `/`, optionally with a query string.
+ * @param root REST root to join onto.
  */
-function endpoint( path: string ) {
-	const root = boot().rest;
+function endpoint( path: string, root: string ) {
 	const queryAt = path.indexOf( '?' );
 	const extraPath = queryAt === -1 ? path : path.slice( 0, queryAt );
 	const extraQuery = queryAt === -1 ? '' : path.slice( queryAt + 1 );
@@ -42,12 +42,13 @@ function endpoint( path: string ) {
 	return `${ root }${ path }`;
 }
 
-export async function api< T >(
+async function request< T >(
+	base: string,
 	path: string,
-	options: RequestInit = {}
+	options: RequestInit
 ): Promise< T > {
 	const root = boot();
-	const response = await fetch( endpoint( path ), {
+	const response = await fetch( endpoint( path, base ), {
 		...options,
 		headers: {
 			'X-WP-Nonce': root.nonce,
@@ -74,4 +75,29 @@ export async function api< T >(
 		return ( await response.text() ) as T;
 	}
 	return ( await response.json() ) as T;
+}
+
+/**
+ * Call a Studio route (`ohmylms/v1/front-dashboard`).
+ *
+ * @param path    Path beginning with `/`.
+ * @param options Fetch options.
+ */
+export function api< T >( path: string, options: RequestInit = {} ) {
+	return request< T >( boot().rest, path, options );
+}
+
+/**
+ * Call the plugin's main REST API (`ohmylms/v1`), the endpoints wp-admin uses. They carry the existing
+ * safeguards for permissions, enrolments, quiz attempts and published courses.
+ *
+ * @param path    Path under ohmylms/v1, beginning with `/`.
+ * @param options Fetch options.
+ */
+export function coreApi< T >( path: string, options: RequestInit = {} ) {
+	return request< T >(
+		boot().rest.replace( '/front-dashboard', '' ),
+		path,
+		options
+	);
 }

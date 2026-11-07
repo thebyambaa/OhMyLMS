@@ -14,6 +14,7 @@ import { type Question, TYPES, blank, studioType } from './quiz-model';
  * @param props.readOnly  Whether editing is off.
  * @param props.onChange  New question value.
  * @param props.onPreview Open the preview.
+ * @param props.onRemove  Remove the question; absent when the person may not edit.
  */
 export function QuizPanel( {
 	question,
@@ -21,12 +22,14 @@ export function QuizPanel( {
 	readOnly,
 	onChange,
 	onPreview,
+	onRemove,
 }: {
 	question: Question;
 	skills: Array< { id: number; name: string } >;
 	readOnly: boolean;
 	onChange: ( next: Question ) => void;
 	onPreview: () => void;
+	onRemove?: () => void;
 } ) {
 	return (
 		<aside
@@ -96,6 +99,11 @@ export function QuizPanel( {
 					onChange( { ...question, explanation: event.target.value } )
 				}
 			/>
+			{ onRemove && (
+				<Button variant="tertiary" onClick={ onRemove }>
+					{ __( 'Remove question', 'ohmylms' ) }
+				</Button>
+			) }
 			<Button onClick={ onPreview }>
 				{ __( 'Preview question', 'ohmylms' ) }
 			</Button>

@@ -880,3 +880,14 @@ body.oml-dashboard-page {
 		grid-template-columns: minmax(0, 1fr);
 	}
 }
+
+.oml-inline-form {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-3);
+	align-items: flex-end;
+}
+
+.oml-inline-form .oml-field {
+	flex: 1 1 14rem;
+}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { Alert } from '../../ui/Alert';
 import { Badge } from '../../ui/Badge';
 import { Button } from '../../ui/Button';
@@ -7,6 +7,16 @@ import { IconButton } from '../../ui/IconButton';
 import { Input } from '../../ui/Input';
 import { Select } from '../../ui/Select';
 import { api } from './api';
+import { ConfirmRemove } from './confirm-remove';
+import {
+	createCourse,
+	deleteUnit,
+	removeItem,
+	renameCourse,
+	renameItem,
+	renameUnit,
+	trashCourse,
+} from './studio-actions';
 import { quizUrl } from './studio-links';
 
 interface CourseItem {
@@ -32,8 +42,29 @@ interface CourseTree {
 	skills: Array< { id: number; name: string } >;
 }
 
+type Pending =
+	| { kind: 'course' }
+	| { kind: 'unit'; unit: Unit }
+	| { kind: 'item'; unit: Unit; item: CourseItem };
+
 /**
- * Units, lessons and exercises. Reorder with the mouse or the keyboard.
+ * Question shown in the removal dialog.
+ *
+ * @param pending What is about to be removed.
+ */
+function removeTitle( pending: Pending ) {
+	if ( pending.kind === 'course' ) {
+		return __( 'Move this course to the trash?', 'ohmylms' );
+	}
+	if ( pending.kind === 'unit' ) {
+		return __( 'Remove this unit?', 'ohmylms' );
+	}
+	return __( 'Remove this item from the unit?', 'ohmylms' );
+}
+
+/**
+ * Units, lessons and exercises. Reorder with the mouse or the keyboard. Courses, units and items can
+ * be created, renamed and removed; removing a course moves it to the trash.
  */
 export function CourseBuilder() {
 	const initial = Number(
@@ -53,12 +84,22 @@ export function CourseBuilder() {
 	const [ selected, setSelected ] = useState< CourseItem | null >( null );
 	const [ addingUnit, setAddingUnit ] = useState( false );
 	const [ addingOn, setAddingOn ] = useState( 0 );
+	const [ creating, setCreating ] = useState( false );
+	const [ newCourse, setNewCourse ] = useState( '' );
+	const [ courseName, setCourseName ] = useState( '' );
+	const [ renamingUnit, setRenamingUnit ] = useState( 0 );
+	const [ unitName, setUnitName ] = useState( '' );
+	const [ itemName, setItemName ] = useState( '' );
+	const [ pending, setPending ] = useState< Pending | null >( null );
+	const [ pendingError, setPendingError ] = useState( '' );
 
-	useEffect( () => {
+	function loadCourses() {
 		void api< { courses: Array< { id: number; title: string } > } >(
 			'/studio/courses'
 		).then( ( body ) => setCourses( body.courses ) );
-	}, [] );
+	}
+
+	useEffect( loadCourses, [] );
 
 	useEffect( () => {
 		if ( ! courseId ) {
@@ -68,6 +109,7 @@ export function CourseBuilder() {
 		void api< CourseTree >( `/studio/courses/${ courseId }` ).then(
 			( body ) => {
 				setTree( body );
+				setCourseName( body.title );
 			}
 		);
 	}, [ courseId, message ] );
@@ -129,6 +171,46 @@ export function CourseBuilder() {
 		saveOrder( next );
 	}
 
+	function confirmRemove() {
+		if ( ! tree || ! pending ) {
+			return;
+		}
+		setBusy( 'remove' );
+		setPendingError( '' );
+		let request: Promise< unknown >;
+		let text = '';
+		if ( pending.kind === 'course' ) {
+			request = trashCourse( tree.id );
+			text = __( 'Course moved to the trash.', 'ohmylms' );
+		} else if ( pending.kind === 'unit' ) {
+			request = deleteUnit( tree.id, pending.unit.id );
+			text = __( 'Unit removed.', 'ohmylms' );
+		} else {
+			request = removeItem( tree.id, pending.unit.id, pending.item.id );
+			text = __( 'Item removed from the unit.', 'ohmylms' );
+		}
+		request
+			.then( () => {
+				if ( pending.kind === 'course' ) {
+					setCourseId( 0 );
+					loadCourses();
+				}
+				if (
+					pending.kind === 'item' &&
+					selected?.id === pending.item.id
+				) {
+					setSelected( null );
+				}
+				setPending( null );
+				done( text );
+			} )
+			.catch( ( failure: Error ) => {
+				// Keep the dialog open and show why the server refused.
+				setPendingError( failure.message );
+				setBusy( '' );
+			} );
+	}
+
 	function kindBadge( item: CourseItem ) {
 		return item.kind === 'quiz' ? (
 			<Badge tone="info">{ __( 'Quiz', 'ohmylms' ) }</Badge>
@@ -159,10 +241,103 @@ export function CourseBuilder() {
 						</option>
 					) ) }
 				</Select>
+				<Button
+					variant="primary"
+					aria-expanded={ creating }
+					onClick={ () => setCreating( ! creating ) }
+				>
+					{ __( 'New course', 'ohmylms' ) }
+				</Button>
 			</header>
+			{ creating && (
+				<form
+					className="oml-dash-card"
+					onSubmit={ ( event ) => {
+						event.preventDefault();
+						setBusy( 'course' );
+						createCourse( newCourse )
+							.then( ( created ) => {
+								setNewCourse( '' );
+								setCreating( false );
+								loadCourses();
+								setCourseId( created.id );
+								done(
+									__(
+										'Course created as a draft.',
+										'ohmylms'
+									)
+								);
+							} )
+							.catch( ( failure: Error ) => fail( failure ) );
+					} }
+				>
+					<Input
+						label={ __( 'Course title', 'ohmylms' ) }
+						required
+						value={ newCourse }
+						onChange={ ( event ) =>
+							setNewCourse( event.target.value )
+						}
+					/>
+					<Button
+						type="submit"
+						variant="primary"
+						loading={ busy === 'course' }
+					>
+						{ __( 'Create course', 'ohmylms' ) }
+					</Button>
+				</form>
+			) }
 			{ tree && (
 				<div className="oml-builder-grid">
 					<div>
+						{ tree.canEdit && (
+							<form
+								className="oml-dash-card oml-inline-form"
+								onSubmit={ ( event ) => {
+									event.preventDefault();
+									setBusy( 'rename-course' );
+									renameCourse( tree.id, courseName )
+										.then( () => {
+											loadCourses();
+											done(
+												__(
+													'Course renamed.',
+													'ohmylms'
+												)
+											);
+										} )
+										.catch( ( failure: Error ) =>
+											fail( failure )
+										);
+								} }
+							>
+								<Input
+									label={ __( 'Course name', 'ohmylms' ) }
+									required
+									value={ courseName }
+									onChange={ ( event ) =>
+										setCourseName( event.target.value )
+									}
+								/>
+								<Button
+									type="submit"
+									loading={ busy === 'rename-course' }
+									disabled={ courseName === tree.title }
+								>
+									{ __( 'Rename course', 'ohmylms' ) }
+								</Button>
+								<Button
+									variant="tertiary"
+									onClick={ () => {
+										setPendingError( '' );
+										setPending( { kind: 'course' } );
+									} }
+								>
+									{ __( 'Move course to trash', 'ohmylms' ) }
+								</Button>
+							</form>
+						) }
 						{ tree.canEdit &&
 							( addingUnit ? (
 								<form
@@ -219,27 +394,120 @@ export function CourseBuilder() {
 							) ) }
 						{ tree.units.map( ( unit, unitIndex ) => (
 							<section key={ unit.id } className="oml-dash-card">
-								<div className="oml-dash-actions">
-									<h2>{ unit.title }</h2>
-									{ tree.canEdit && (
-										<Button
-											variant="tertiary"
-											size="sm"
-											aria-expanded={
-												addingOn === unit.id
-											}
-											onClick={ () =>
-												setAddingOn(
-													addingOn === unit.id
-														? 0
-														: unit.id
+								{ renamingUnit === unit.id ? (
+									<form
+										className="oml-inline-form"
+										onSubmit={ ( event ) => {
+											event.preventDefault();
+											setBusy( 'rename-unit' );
+											renameUnit(
+												tree.id,
+												unit.id,
+												unitName
+											)
+												.then( () => {
+													setRenamingUnit( 0 );
+													done(
+														__(
+															'Unit renamed.',
+															'ohmylms'
+														)
+													);
+												} )
+												.catch( ( failure: Error ) =>
+													fail( failure )
+												);
+										} }
+									>
+										<Input
+											label={ __(
+												'Unit name',
+												'ohmylms'
+											) }
+											required
+											value={ unitName }
+											onChange={ ( event ) =>
+												setUnitName(
+													event.target.value
 												)
 											}
+										/>
+										<Button
+											type="submit"
+											variant="primary"
+											loading={ busy === 'rename-unit' }
 										>
-											{ __( 'Add item', 'ohmylms' ) }
+											{ __( 'Save name', 'ohmylms' ) }
 										</Button>
-									) }
-								</div>
+										<Button
+											onClick={ () =>
+												setRenamingUnit( 0 )
+											}
+										>
+											{ __( 'Cancel', 'ohmylms' ) }
+										</Button>
+									</form>
+								) : (
+									<div className="oml-dash-actions">
+										<h2>{ unit.title }</h2>
+										{ tree.canEdit && (
+											<>
+												<Button
+													variant="tertiary"
+													size="sm"
+													aria-expanded={
+														addingOn === unit.id
+													}
+													onClick={ () =>
+														setAddingOn(
+															addingOn === unit.id
+																? 0
+																: unit.id
+														)
+													}
+												>
+													{ __(
+														'Add item',
+														'ohmylms'
+													) }
+												</Button>
+												<Button
+													variant="tertiary"
+													size="sm"
+													onClick={ () => {
+														setUnitName(
+															unit.title
+														);
+														setRenamingUnit(
+															unit.id
+														);
+													} }
+												>
+													{ __(
+														'Rename unit',
+														'ohmylms'
+													) }
+												</Button>
+												<Button
+													variant="tertiary"
+													size="sm"
+													onClick={ () => {
+														setPendingError( '' );
+														setPending( {
+															kind: 'unit',
+															unit,
+														} );
+													} }
+												>
+													{ __(
+														'Remove unit',
+														'ohmylms'
+													) }
+												</Button>
+											</>
+										) }
+									</div>
+								) }
 								<ul className="oml-unit-list">
 									{ unit.items.map( ( item, itemIndex ) => (
 										<li
@@ -283,9 +551,10 @@ export function CourseBuilder() {
 												aria-pressed={
 													selected?.id === item.id
 												}
-												onClick={ () =>
-													setSelected( item )
-												}
+												onClick={ () => {
+													setSelected( item );
+													setItemName( item.title );
+												} }
 											>
 												{ item.title }
 											</Button>
@@ -321,6 +590,28 @@ export function CourseBuilder() {
 														}
 													>
 														↓
+													</IconButton>
+													<IconButton
+														label={ sprintf(
+															/* translators: %s: item title. */
+															__(
+																'Remove %s from the unit',
+																'ohmylms'
+															),
+															item.title
+														) }
+														onClick={ () => {
+															setPendingError(
+																''
+															);
+															setPending( {
+																kind: 'item',
+																unit,
+																item,
+															} );
+														} }
+													>
+														✕
 													</IconButton>
 													{ item.kind === 'lesson' &&
 														item.edit && (
@@ -456,7 +747,56 @@ export function CourseBuilder() {
 						<h2>{ __( 'Item', 'ohmylms' ) }</h2>
 						{ selected ? (
 							<>
-								<p>{ selected.title }</p>
+								{ tree.canEdit ? (
+									<form
+										onSubmit={ ( event ) => {
+											event.preventDefault();
+											setBusy( 'rename-item' );
+											renameItem(
+												selected.kind,
+												selected.id,
+												itemName
+											)
+												.then( () => {
+													setSelected( {
+														...selected,
+														title: itemName,
+													} );
+													done(
+														__(
+															'Item renamed.',
+															'ohmylms'
+														)
+													);
+												} )
+												.catch( ( failure: Error ) =>
+													fail( failure )
+												);
+										} }
+									>
+										<Input
+											label={ __( 'Name', 'ohmylms' ) }
+											required
+											value={ itemName }
+											onChange={ ( event ) =>
+												setItemName(
+													event.target.value
+												)
+											}
+										/>
+										<Button
+											type="submit"
+											loading={ busy === 'rename-item' }
+											disabled={
+												itemName === selected.title
+											}
+										>
+											{ __( 'Rename item', 'ohmylms' ) }
+										</Button>
+									</form>
+								) : (
+									<p>{ selected.title }</p>
+								) }
 								<p>{ kindBadge( selected ) }</p>
 								<p className="oml-dash-note">
 									{ selected.skills.length
@@ -509,6 +849,58 @@ export function CourseBuilder() {
 						) }
 					</aside>
 				</div>
+			) }
+			{ pending && tree && (
+				<ConfirmRemove
+					title={ removeTitle( pending ) }
+					confirm={
+						pending.kind === 'course'
+							? __( 'Move to trash', 'ohmylms' )
+							: __( 'Remove', 'ohmylms' )
+					}
+					busy={ busy === 'remove' }
+					error={ pendingError }
+					onConfirm={ confirmRemove }
+					onCancel={ () => setPending( null ) }
+				>
+					{ pending.kind === 'course' && (
+						<p>
+							{ sprintf(
+								/* translators: %s: course title. */
+								__(
+									'“%s” will be moved to the WordPress trash. You can restore it from there. Courses with enrolled students are not deleted permanently.',
+									'ohmylms'
+								),
+								tree.title
+							) }
+						</p>
+					) }
+					{ pending.kind === 'unit' && (
+						<p>
+							{ sprintf(
+								/* translators: %s: unit title. */
+								__(
+									'The unit “%s” will be removed. A unit that still holds items, or that a published program uses, cannot be removed.',
+									'ohmylms'
+								),
+								pending.unit.title
+							) }
+						</p>
+					) }
+					{ pending.kind === 'item' && (
+						<p>
+							{ sprintf(
+								/* translators: 1: item title, 2: unit title. */
+								__(
+									'“%1$s” will be taken out of “%2$s”. The lesson or quiz itself is kept in the library.',
+									'ohmylms'
+								),
+								pending.item.title,
+								pending.unit.title
+							) }
+						</p>
+					) }
+				</ConfirmRemove>
 			) }
 			{ message && (
 				<Alert tone={ failed ? 'danger' : 'success' }>
