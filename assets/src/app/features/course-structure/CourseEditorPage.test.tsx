@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { ApiError } from '../../lib/api';
 import * as api from './api';
+import * as plan from './skill-plan-api';
 import { OutlineWorkspace } from './CourseEditorPage';
 import { outline } from './fixtures';
 import type { Outline } from './model';
@@ -14,7 +15,12 @@ vi.mock( './api', () => ( {
 	findResources: vi.fn(),
 	createResource: vi.fn(),
 } ) );
-vi.mock( '../curriculum', () => ( { CoursePlacement: () => null } ) );
+// The skill panel has its own tests; here it just stays loading.
+vi.mock( './skill-plan-api', () => ( {
+	getSkillPlan: vi.fn(),
+	setUnitTopics: vi.fn(),
+	linkLessonSkills: vi.fn(),
+} ) );
 const bank = vi.hoisted( () => ( {
 	value: {
 		terms: { folders: [], tags: [] } as {
@@ -29,6 +35,9 @@ const bank = vi.hoisted( () => ( {
 vi.mock( '../content-bank', () => ( { useBankTerms: () => bank.value } ) );
 beforeEach( () => {
 	vi.resetAllMocks();
+	vi.mocked( plan.getSkillPlan ).mockReturnValue(
+		new Promise( () => undefined )
+	);
 	bank.value = {
 		terms: { folders: [], tags: [] },
 		paths: [],
@@ -106,44 +115,6 @@ it( 'opens on the placement another editor links to, and says when the item is n
 			selector: '.components-notice__content',
 		} )
 	).toBeInTheDocument();
-} );
-it( 'saves learning controls and targets while preserving placement and bank settings', async () => {
-	const user = userEvent.setup();
-	open();
-	vi.mocked( api.saveOutline ).mockResolvedValue( {
-		...outline,
-		revision: 'next',
-	} );
-	expect(
-		screen.queryByLabelText( 'Learning mode' )
-	).not.toBeInTheDocument();
-	await user.selectOptions(
-		screen.getByLabelText( 'Mastery target' ),
-		'mastered'
-	);
-	await user.click( screen.getByLabelText( 'Required for completion' ) );
-	await user.click(
-		screen.getByRole( 'button', { name: 'Save outline draft' } )
-	);
-	await screen.findAllByText(
-		'Outline draft saved. Learner publication is unchanged.'
-	);
-	expect( vi.mocked( api.saveOutline ).mock.calls[ 0 ]![ 1 ] ).toMatchObject(
-		{
-			program: {
-				...outline.program,
-				mode: outline.program.mode,
-				outcomes: [
-					{
-						term_id: 7,
-						chapter_id: 8,
-						required: true,
-						target: 'mastered',
-					},
-				],
-			},
-		}
-	);
 } );
 it( 'keeps all draft fields and new unit UUIDs when saving', async () => {
 	const user = userEvent.setup();
@@ -756,57 +727,5 @@ describe( 'adding content quickly', () => {
 			{ content_id: 30, chapter_id: 9 },
 			{ content_id: 32, chapter_id: 9 },
 		] );
-	} );
-} );
-
-describe( 'the side panels', () => {
-	it( 'start folded, with the shortcuts as links', () => {
-		open();
-		for ( const name of [
-			/Learning settings/,
-			/Skills and connections/,
-			/Syllabus and curriculum placement/,
-		] ) {
-			expect( screen.getByRole( 'button', { name } ) ).toHaveAttribute(
-				'aria-expanded',
-				'false'
-			);
-		}
-		const shortcuts = within(
-			screen.getByRole( 'navigation', { name: 'Shortcuts' } )
-		);
-		expect(
-			shortcuts.getByRole( 'link', { name: 'Course settings' } )
-		).toHaveAttribute( 'href', '/courses/12' );
-		expect(
-			shortcuts.getByRole( 'link', { name: 'Preview and publish' } )
-		).toHaveAttribute( 'href', '/courses/12/publish' );
-	} );
-
-	it( 'open Skills and connections when Skills is chosen beside an activity', async () => {
-		const user = userEvent.setup();
-		open();
-		const panel = screen.getByRole( 'button', {
-			name: /Skills and connections/,
-		} );
-		await user.click(
-			screen.getAllByRole( 'button', {
-				name: /Connect skills for/,
-			} )[ 0 ]!
-		);
-		expect( panel ).toHaveAttribute( 'aria-expanded', 'true' );
-	} );
-
-	it( 'keep learning settings editable and counted while folded', async () => {
-		const user = userEvent.setup();
-		open();
-		const toggle = screen.getByRole( 'button', {
-			name: /Learning settings/,
-		} );
-		expect( toggle ).toHaveTextContent( 'skill target' );
-		await user.click( toggle );
-		expect(
-			screen.getByLabelText( 'Recognize prior mastery' )
-		).toBeVisible();
 	} );
 } );

@@ -1,0 +1,204 @@
+.ohmylms-app .oml-plan-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(340px, 1fr);
+	gap: var(--oml-space-4);
+	align-items: start;
+
+	@media (max-width: 960px) {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.ohmylms-app .oml-skillplan {
+	position: sticky;
+	top: 112px;
+	display: flex;
+	flex-direction: column;
+	gap: var(--oml-space-3);
+	min-width: 0;
+	max-height: calc(100vh - 140px);
+	padding: var(--oml-space-3);
+	overflow: auto;
+	background: var(--oml-surface);
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-card);
+
+	@media (max-width: 960px) {
+		position: static;
+		max-height: none;
+	}
+}
+
+.ohmylms-app .oml-skillplan h3,
+.ohmylms-app .oml-skillplan h4 {
+	margin: 0;
+	color: var(--oml-heading);
+}
+
+.ohmylms-app .oml-skillplan-summary,
+.ohmylms-app .oml-skillplan-hint {
+	margin: 0;
+	color: var(--oml-muted);
+}
+
+.ohmylms-app .oml-skillplan-context {
+	display: flex;
+	flex-direction: column;
+	gap: var(--oml-space-2);
+	padding: var(--oml-space-3);
+	background: var(--oml-subtle);
+	border-radius: var(--oml-radius-card);
+}
+
+.ohmylms-app .oml-skillplan-context p {
+	margin: 0;
+}
+
+.ohmylms-app .oml-skillplan-filters {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--oml-space-2);
+}
+
+.ohmylms-app .oml-skillplan-topics,
+.ohmylms-app .oml-skillplan-group ul {
+	display: flex;
+	flex-direction: column;
+	gap: var(--oml-space-1);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.ohmylms-app .oml-skillplan-topiclist {
+	display: flex;
+	flex-direction: column;
+	gap: var(--oml-space-2);
+}
+
+.ohmylms-app .oml-skillplan-topic {
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-card);
+}
+
+.ohmylms-app .oml-skillplan-topic > summary {
+	padding: var(--oml-space-2) var(--oml-space-3);
+	cursor: pointer;
+}
+
+.ohmylms-app .oml-skillplan-count {
+	color: var(--oml-muted);
+}
+
+.ohmylms-app .oml-skillplan-group {
+	display: flex;
+	flex-direction: column;
+	gap: var(--oml-space-1);
+	padding: 0 var(--oml-space-3) var(--oml-space-2);
+}
+
+.ohmylms-app .oml-skillplan-skill {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--oml-space-1) var(--oml-space-2);
+	margin: 0;
+	padding: var(--oml-space-1) 0;
+	border-bottom: 1px solid var(--oml-subtle);
+}
+
+.ohmylms-app .oml-skillplan-skill-name {
+	min-width: 0;
+}
+
+.ohmylms-app .oml-skillplan-skill-meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-1);
+}
+
+/* Outline rows: the selected unit or lesson, and the button that selects it. */
+.ohmylms-app .oml-unit.is-selected > .oml-unit-header,
+.ohmylms-app .oml-outline-item.is-selected {
+	background: var(--oml-subtle);
+	box-shadow: inset 3px 0 0 var(--oml-primary);
+}
+
+.ohmylms-app .oml-unit-title-button {
+	padding: 0;
+	margin: 0;
+	font: inherit;
+	color: inherit;
+	text-align: start;
+	background: none;
+	border: 0;
+	cursor: pointer;
+}
+
+/* Keep the editor's full-width legend rule from widening the visually hidden legend of the units. */
+.ohmylms-app .oml-plan-grid fieldset > legend.screen-reader-text {
+	width: 1px;
+}
+
+/* The builder bar has Save, and the stale-outline notice has Reload; these only serve the outline outside the builder. */
+body.oml-builder-fullscreen .oml-outline-actions {
+	display: none;
+}
+
+.ohmylms-app .oml-outline-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--oml-space-2);
+	margin-bottom: var(--oml-space-3);
+}
+
+.ohmylms-app .oml-curriculum-branches {
+	margin: 0;
+	padding-inline-start: var(--oml-space-3);
+	list-style: none;
+}
+
+.ohmylms-app .oml-curriculum-node,
+.ohmylms-app .oml-authoring-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--oml-space-2);
+	padding: var(--oml-space-2);
+}
+
+.ohmylms-app .oml-curriculum-node {
+	border-bottom: 1px solid var(--oml-border);
+}
+
+.ohmylms-app .oml-skill-connections {
+	min-width: 0;
+}
+
+.ohmylms-app .oml-skill-connections .oml-connection-list {
+	margin: 0 0 var(--oml-space-3);
+	padding: 0;
+	list-style: none;
+}
+
+.ohmylms-app .oml-connection-list > li {
+	display: flex;
+	flex-direction: column;
+	gap: var(--oml-space-2);
+	padding: var(--oml-space-3) 0;
+	border-bottom: 1px solid var(--oml-border);
+}
+
+.ohmylms-app .oml-skill-connections > .components-button {
+	margin-block: var(--oml-space-3);
+	margin-inline-end: var(--oml-space-2);
+}
+
+.ohmylms-app .oml-outline-item-tools {
+	flex-wrap: wrap;
+}
+
+
+/*# sourceMappingURL=admin-app-course-structure.aa741f5a0e49.css.map*/

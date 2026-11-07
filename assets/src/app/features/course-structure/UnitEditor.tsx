@@ -62,13 +62,18 @@ const EDIT_ROUTES: Record< string, string > = {
  * @param root0.onAdd
  * @param root0.onDelete
  * @param root0.onDetach
- * @param root0.onConnect
- * @param root0.onCreated Places a draft that Quick add just created in this unit.
- * @param root0.collapsed Whether the unit body is folded away; the header always shows.
- * @param root0.onToggle  Folds or unfolds the unit body.
- * @param root0.onReorder Moves a unit or activity (source) before/after a target; see `dropOn`.
- * @param root0.drag      Current pointer drag, for row feedback.
- * @param root0.handle    Pointer handlers for a row's grip.
+ * @param root0.selectedUnit Whether this unit is the one selected for the skill panel.
+ * @param root0.selectedItem ID of the selected placement in this unit, if any.
+ * @param root0.onSelectUnit Selects the unit for the skill panel.
+ * @param root0.onSelectItem Selects a lesson placement for the skill panel.
+ * @param root0.skillCounts  Lesson ID to its number of connected skills.
+ * @param root0.topicCount   Number of curriculum topics chosen for this unit.
+ * @param root0.onCreated    Places a draft that Quick add just created in this unit.
+ * @param root0.collapsed    Whether the unit body is folded away; the header always shows.
+ * @param root0.onToggle     Folds or unfolds the unit body.
+ * @param root0.onReorder    Moves a unit or activity (source) before/after a target; see `dropOn`.
+ * @param root0.drag         Current pointer drag, for row feedback.
+ * @param root0.handle       Pointer handlers for a row's grip.
  */
 export function UnitEditor( {
 	unit,
@@ -78,7 +83,12 @@ export function UnitEditor( {
 	onAdd,
 	onDelete,
 	onDetach,
-	onConnect,
+	selectedUnit = false,
+	selectedItem = null,
+	onSelectUnit,
+	onSelectItem,
+	skillCounts,
+	topicCount = 0,
 	onReorder,
 	onCreated,
 	collapsed = false,
@@ -93,7 +103,12 @@ export function UnitEditor( {
 	onAdd: ( type: ResourceType ) => void;
 	onDelete: () => void;
 	onDetach: ( item: Activity ) => void;
-	onConnect?: ( item: Activity ) => void;
+	selectedUnit?: boolean;
+	selectedItem?: string | null;
+	onSelectUnit?: () => void;
+	onSelectItem?: ( item: Activity ) => void;
+	skillCounts?: ReadonlyMap< number, number >;
+	topicCount?: number;
 	onReorder: (
 		source: string,
 		target: string,
@@ -123,7 +138,7 @@ export function UnitEditor( {
 		);
 	return (
 		<section
-			className="oml-unit"
+			className={ `oml-unit${ selectedUnit ? ' is-selected' : '' }` }
 			aria-label={ unitName }
 			data-oml-drop={ key }
 			tabIndex={ -1 }
@@ -161,7 +176,20 @@ export function UnitEditor( {
 					/>
 				) }
 				<span className="oml-unit-number">{ unit.number }</span>
-				<h2 className="oml-unit-title">{ unitName }</h2>
+				<h2 className="oml-unit-title">
+					{ onSelectUnit ? (
+						<button
+							type="button"
+							className="oml-unit-title-button"
+							aria-pressed={ selectedUnit }
+							onClick={ onSelectUnit }
+						>
+							{ unitName }
+						</button>
+					) : (
+						unitName
+					) }
+				</h2>
 				<span className="oml-unit-count">
 					{ sprintf(
 						/* translators: %d: number of activities. */
@@ -173,6 +201,18 @@ export function UnitEditor( {
 						),
 						items.length
 					) }
+					{ topicCount > 0 &&
+						' · ' +
+							sprintf(
+								/* translators: %d: number of topics. */
+								_n(
+									'%d topic',
+									'%d topics',
+									topicCount,
+									'ohmylms'
+								),
+								topicCount
+							) }
 				</span>
 				<div className="oml-unit-tools">
 					<Button
@@ -244,10 +284,30 @@ export function UnitEditor( {
 						const name = item.name || String( item.content_id );
 						const edit = EDIT_ROUTES[ item.type ];
 						return (
+							// A click on the row is only a shortcut; the Skills button selects it for keyboard users.
+							// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
 							<li
 								key={ item.id }
-								className="oml-outline-item"
+								className={ `oml-outline-item${
+									selectedItem === item.id
+										? ' is-selected'
+										: ''
+								}` }
 								data-oml-drop={ item.id }
+								onClick={ ( event ) => {
+									// The Skills button is the keyboard way to select; a click on the row is the shortcut.
+									if (
+										'lesson' === item.type &&
+										onSelectItem &&
+										! (
+											event.target as HTMLElement
+										 ).closest(
+											'a, button, select, input, label'
+										)
+									) {
+										onSelectItem( item );
+									}
+								} }
 								tabIndex={ -1 }
 								style={ dragStyle( drag, item.id ) }
 							>
@@ -282,17 +342,16 @@ export function UnitEditor( {
 										item.type }
 								</Badge>
 								<span className="oml-outline-item-tools">
-									{ onConnect &&
-										[
-											'lesson',
-											'quiz',
-											'assignment',
-										].includes( item.type ) && (
+									{ onSelectItem &&
+										'lesson' === item.type && (
 											<Button
 												size="small"
 												variant="secondary"
+												isPressed={
+													selectedItem === item.id
+												}
 												onClick={ () =>
-													onConnect( item )
+													onSelectItem( item )
 												}
 												aria-label={ sprintf(
 													/* translators: %s: activity title. */ __(
@@ -302,7 +361,23 @@ export function UnitEditor( {
 													name
 												) }
 											>
-												{ __( 'Skills', 'ohmylms' ) }
+												{ skillCounts?.has(
+													item.content_id
+												)
+													? sprintf(
+															/* translators: %d: number of skills. */
+															__(
+																'Skills (%d)',
+																'ohmylms'
+															),
+															skillCounts.get(
+																item.content_id
+															) ?? 0
+														)
+													: __(
+															'Skills',
+															'ohmylms'
+														) }
 											</Button>
 										) }
 									{ [ 'lesson', 'quiz' ].includes(

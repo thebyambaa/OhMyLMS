@@ -99,8 +99,8 @@
 			"gzip": 5700
 		},
 		"chunks/admin-app-course-structure.css": {
-			"raw": 3500,
-			"gzip": 1100
+			"raw": 4900,
+			"gzip": 1250
 		},
 		"chunks/admin-app-course-structure.js": {
 			"raw": 44000,
@@ -369,14 +369,6 @@
 		"chunks/admin-app-setup.js": {
 			"raw": 30400,
 			"gzip": 9600
-		},
-		"chunks/admin-app-skill-coverage.css": {
-			"raw": 3100,
-			"gzip": 900
-		},
-		"chunks/admin-app-skill-coverage.js": {
-			"raw": 14500,
-			"gzip": 4500
 		},
 		"chunks/admin-app-skill-workspace.css": {
 			"raw": 3500,

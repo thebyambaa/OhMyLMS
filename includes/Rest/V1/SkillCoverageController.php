@@ -12,6 +12,7 @@ use OhMyLMS\Learning\Catalog;
 use OhMyLMS\Learning\Schema;
 use OhMyLMS\Learning\SkillCoverage;
 use OhMyLMS\Learning\SkillGapFix;
+use OhMyLMS\Learning\SkillPlan;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -24,6 +25,10 @@ defined( 'ABSPATH' ) || exit;
  *
  * The report is read-only and covers the saved draft program, for authors who can edit the course. The POST
  * fixes a missing-lesson gap in one step; it checks the draft revision like every other draft write.
+ *
+ * The skill plan routes serve the Curriculum step: `GET .../skill-plan` (a curriculum's topics and skills beside
+ * how the course teaches them), `PUT .../skill-plan/units/{unit}` (the topics a unit covers) and
+ * `PUT .../skill-plan/lessons/{lesson}` (connect or disconnect skills of a lesson placed in the course).
  */
 class SkillCoverageController extends RestController {
 
@@ -66,6 +71,64 @@ class SkillCoverageController extends RestController {
 							'required' => true,
 						),
 						'title'    => array( 'type' => 'string' ),
+					),
+				),
+			)
+		);
+		register_rest_route(
+			$this->namespace,
+			'/courses/(?P<id>\d+)/skill-plan',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'plan' ),
+					'permission_callback' => array( $this, 'permission' ),
+					'args'                => array(
+						'curriculum' => array(
+							'type'    => 'integer',
+							'default' => 0,
+						),
+					),
+				),
+			)
+		);
+		register_rest_route(
+			$this->namespace,
+			'/courses/(?P<id>\d+)/skill-plan/units/(?P<unit>\d+)',
+			array(
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'set_unit_topics' ),
+					'permission_callback' => array( $this, 'permission' ),
+					'args'                => array(
+						'topic_ids' => array(
+							'type'     => 'array',
+							'items'    => array( 'type' => 'integer' ),
+							'required' => true,
+						),
+					),
+				),
+			)
+		);
+		register_rest_route(
+			$this->namespace,
+			'/courses/(?P<id>\d+)/skill-plan/lessons/(?P<lesson>\d+)',
+			array(
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'link_lesson' ),
+					'permission_callback' => array( $this, 'permission' ),
+					'args'                => array(
+						'add'    => array(
+							'type'    => 'array',
+							'items'   => array( 'type' => 'integer' ),
+							'default' => array(),
+						),
+						'remove' => array(
+							'type'    => 'array',
+							'items'   => array( 'type' => 'integer' ),
+							'default' => array(),
+						),
 					),
 				),
 			)
@@ -113,5 +176,38 @@ class SkillCoverageController extends RestController {
 		$response = rest_ensure_response( $result );
 		$response->set_status( 201 );
 		return $response;
+	}
+
+	/**
+	 * The skill plan for a curriculum.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function plan( WP_REST_Request $request ) {
+		$result = SkillPlan::plan( (int) $request['id'], (int) $request['curriculum'] );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
+	}
+
+	/**
+	 * Choose the topics a unit covers.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function set_unit_topics( WP_REST_Request $request ) {
+		$result = SkillPlan::set_unit_topics( (int) $request['id'], (int) $request['unit'], (array) $request['topic_ids'] );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( array( 'unit_topics' => (object) $result ) );
+	}
+
+	/**
+	 * Connect or disconnect skills of a lesson.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function link_lesson( WP_REST_Request $request ) {
+		$result = SkillPlan::link_lesson( (int) $request['id'], (int) $request['lesson'], (array) $request['add'], (array) $request['remove'] );
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
 	}
 }

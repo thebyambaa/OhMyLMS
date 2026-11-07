@@ -4,7 +4,8 @@
 is it taught by a lesson in the course, and are there enough approved questions to assess it?
 
 It is read-only, needs the right to edit the course, and reports on the saved **draft** program. The course builder
-shows it as the **Skill coverage** step (`#/courses/{id}/coverage`). Implementation: `OhMyLMS\Learning\SkillCoverage`.
+no longer has a step of its own for it: the Curriculum step reads it through the skill plan below, and the old
+`#/courses/{id}/coverage` address opens Curriculum. Implementation: `OhMyLMS\Learning\SkillCoverage`.
 
 ## Which skills are listed
 
@@ -84,8 +85,48 @@ Errors: `400` for an unknown skill, a unit that is not in this course, or a titl
 (`ohmylms_program_stale`) when the outline changed since `revision` was read, in which case nothing is created; `403`,
 `404` and `503` as for the report. If placing the lesson fails the lesson is deleted again.
 
-In the course builder the buttons are disabled while any step has unsaved changes (a fix changes the saved outline) and
-in a course with no units. After a fix the Curriculum step reloads the changed outline.
+The course builder no longer calls this route (it connects skills to the lessons already in the outline, see the skill
+plan below); it stays for API and MCP clients.
 
-**Questions** are not created here: the **Add a question** link opens the question bank's new-question dialog with
-`?action=new&skill={id}`, and the new question starts linked to that skill as its primary skill.
+**Questions** are not created here. The question bank's new-question dialog opens with `?action=new&skill={id}`, and
+the new question starts linked to that skill as its primary skill.
+
+## Skill plan: the Curriculum step
+
+The Curriculum step shows the outline on the left and a skill panel on the right. The panel follows what is selected
+on the left. All three routes need the right to edit the course (`Catalog::can_edit`) and answer `404` for an ID that is
+not a course. Implementation: `OhMyLMS\Learning\SkillPlan`.
+
+`GET /ohmylms/v1/courses/{id}/skill-plan?curriculum={item}` returns one curriculum (a syllabus) with its topics,
+skill groups and skills, and how the course teaches them:
+
+```json
+{
+  "course_id": 7, "revision": "9f2c…",
+  "curricula": [ { "id": 1, "name": "Digital SAT Mathematics" } ],
+  "curriculum": 1,
+  "topics": [ { "id": 2, "name": "Algebra", "depth": 1,
+                "groups": [ { "id": 5, "name": "Linear equations", "skills": [ 12, 13 ] } ] } ],
+  "names": { "12": { "name": "Solve one-step equations", "code": "A.1" } },
+  "skills": { "12": { "name": "…", "code": "A.1", "status": "covered", "teaching": [ { "id": 9, "type": "lesson", "title": "Halves", "unit_id": 3, "unit": "Fractions" } ],
+                      "questions": 5, "questions_need": 3, "teaching_ok": true, "questions_ok": true } },
+  "units": [ { "id": 3, "title": "Fractions" } ],
+  "unit_topics": { "3": [ 2 ] }
+}
+```
+
+`curriculum` defaults to the syllabus the course is linked to, else the first one; an unknown ID answers `400`. `names`
+holds every skill of the curriculum; `skills` holds only the skills the course touches (the report's rows, without the
+fields the panel does not use). The syllabus routes under `/curriculum/items/{id}/syllabus` need administrator rights;
+this one is for course authors.
+
+`PUT /ohmylms/v1/courses/{id}/skill-plan/units/{unit}` with `{ "topic_ids": [2, 3] }` chooses the topics a unit covers
+(an empty list clears them) and answers `{ "unit_topics": { … } }` for the whole course. It only scopes the panel, so
+selecting a lesson of that unit lists the skills of those topics; it connects nothing. The unit must be saved in the
+course (`400` otherwise) and every topic must exist. The choice is course meta `_ohmylms_unit_topics`, kept apart from the
+outline draft and from publication.
+
+`PUT /ohmylms/v1/courses/{id}/skill-plan/lessons/{lesson}` with `{ "add": [12], "remove": [13] }` connects or
+disconnects skills of a lesson placed in the saved draft (`400` for a lesson that is not placed, or a skill that does
+not exist). The skills are the lesson's ordinary skill terms, so questions, practice and evidence see them as they see any
+other. It answers `{ "lesson_skills": […], "skills": { … } }` with the lesson's skills and the updated teaching map.

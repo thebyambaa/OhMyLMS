@@ -1,0 +1,48 @@
+.ohmylms-app .oml-curriculum-branches {
+	margin: 0;
+	padding-inline-start: var(--oml-space-3);
+	list-style: none;
+}
+
+.ohmylms-app .oml-curriculum-node,
+.ohmylms-app .oml-authoring-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--oml-space-2);
+	padding: var(--oml-space-2);
+}
+
+.ohmylms-app .oml-curriculum-node {
+	border-bottom: 1px solid var(--oml-border);
+}
+
+.ohmylms-app .oml-skill-connections {
+	min-width: 0;
+}
+
+.ohmylms-app .oml-skill-connections .oml-connection-list {
+	margin: 0 0 var(--oml-space-3);
+	padding: 0;
+	list-style: none;
+}
+
+.ohmylms-app .oml-connection-list > li {
+	display: flex;
+	flex-direction: column;
+	gap: var(--oml-space-2);
+	padding: var(--oml-space-3) 0;
+	border-bottom: 1px solid var(--oml-border);
+}
+
+.ohmylms-app .oml-skill-connections > .components-button {
+	margin-block: var(--oml-space-3);
+	margin-inline-end: var(--oml-space-2);
+}
+
+.ohmylms-app .oml-outline-item-tools {
+	flex-wrap: wrap;
+}
+
+
+/*# sourceMappingURL=admin-app-skill-workspace.42ee36280212.css.map*/

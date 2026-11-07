@@ -15,23 +15,18 @@ const CourseOutline = lazy( () =>
 		/* webpackChunkName: "admin-app-course-structure" */ '../course-structure/public'
 	).then( ( module ) => ( { default: module.CourseOutline } ) )
 );
-const SkillCoverage = lazy( () =>
-	import(
-		/* webpackChunkName: "admin-app-course-structure" */ '../course-structure/public'
-	).then( ( module ) => ( { default: module.SkillCoverage } ) )
-);
+
 const PublicationPanel = lazy( () =>
 	import(
 		/* webpackChunkName: "admin-app-course-structure" */ '../course-structure/public'
 	).then( ( module ) => ( { default: module.PublicationPanel } ) )
 );
 
-type Tab = 'details' | 'outline' | 'coverage';
+type Tab = 'details' | 'outline';
 
 const TABS: { id: Tab; label: () => string }[] = [
 	{ id: 'details', label: () => __( 'Basics', 'ohmylms' ) },
 	{ id: 'outline', label: () => __( 'Curriculum', 'ohmylms' ) },
-	{ id: 'coverage', label: () => __( 'Skill coverage', 'ohmylms' ) },
 ];
 
 /**
@@ -72,8 +67,8 @@ function CourseViewAction( { id, refresh }: { id: number; refresh: number } ) {
 }
 
 /**
- * Course editor at `#/courses/:id/:tab?`, shown as a builder with three steps: Basics (metadata and thumbnail), Curriculum (units and activity placements) and
- * Skill coverage. The bar has one Save, which runs the open step's own save, and Publish for
+ * Course editor at `#/courses/:id/:tab?`, shown as a builder with two steps: Basics (metadata and thumbnail) and Curriculum (units and activity placements beside the
+ * curriculum's skills). The bar has one Save, which runs the open step's own save, and Publish for
  * administrators, which opens the reviewed publication of the saved program. Publication needs
  * `manage_options`, as on the server. The old `/settings` step opens Basics.
  */
@@ -92,8 +87,7 @@ export default function CourseEditorPage() {
 	const tab = TABS.find( ( row ) => row.id === ( params.tab ?? 'details' ) );
 	// Steps the user has opened stay mounted, hidden, so their edits survive moving between steps.
 	const [ openedOutline, setOpenedOutline ] = useState( false );
-	// A fix made from the coverage step changes the saved outline; remounting makes the Curriculum step load it.
-	const [ outlineVersion, setOutlineVersion ] = useState( 0 );
+
 	const [ openedForm, setOpenedForm ] = useState( 'details' === tab?.id );
 	useEffect( () => {
 		if ( 'outline' === tab?.id ) {
@@ -107,8 +101,12 @@ export default function CourseEditorPage() {
 	const at = tab ? TABS.indexOf( tab ) : -1;
 	const previous = at > 0 ? TABS[ at - 1 ] : undefined;
 	const next = at >= 0 ? TABS[ at + 1 ] : undefined;
+	// The former Additional and Skill coverage steps live on Basics and Curriculum now.
 	if ( null !== id && 'settings' === params.tab ) {
 		return <Navigate to={ stepLink( id, 'details' ) } replace />;
+	}
+	if ( null !== id && 'coverage' === params.tab ) {
+		return <Navigate to={ stepLink( id, 'outline' ) } replace />;
 	}
 	if ( null === id || ! tab ) {
 		return (
@@ -203,21 +201,9 @@ export default function CourseEditorPage() {
 							<p role="status">{ __( 'Loading…', 'ohmylms' ) }</p>
 						}
 					>
-						{ 'coverage' === tab.id && (
-							<SkillCoverage
-								course={ id }
-								unsaved={ Boolean( step?.dirty ) }
-								onChanged={ () =>
-									setOutlineVersion( ( count ) => count + 1 )
-								}
-							/>
-						) }
 						{ ( 'outline' === tab.id || openedOutline ) && (
 							<div hidden={ 'outline' !== tab.id }>
-								<CourseOutline
-									key={ outlineVersion }
-									id={ id }
-								/>
+								<CourseOutline id={ id } />
 							</div>
 						) }
 					</Suspense>

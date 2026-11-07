@@ -1,23 +1,18 @@
 import { Button, Modal, Notice, VisuallyHidden } from '@wordpress/components';
 import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
-import { __, _n, sprintf } from '@wordpress/i18n';
-import { Link, useSearchParams } from 'react-router-dom';
+import { __, sprintf } from '@wordpress/i18n';
+import { useSearchParams } from 'react-router-dom';
 import { useBuilderSave } from '../../hooks/useBuilderSave';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
 import { isCourseEditorStep } from '../../routing/links';
 import { normalizeApiError, type ApiError } from '../../lib/api';
-import { CoursePlacement } from '../curriculum';
+
 import { deleteUnit, readOutline, saveOutline, type ResourceType } from './api';
 import { ResourcePicker } from './ResourcePicker';
 import { UnitEditor } from './UnitEditor';
-import { LearningSettings } from './LearningSettings';
-import { CollapsiblePanel } from './CollapsiblePanel';
-import {
-	CourseConnections,
-	type ConnectionTarget,
-	useConnectionTarget,
-} from './CourseConnections';
-import { OutlineNavigator } from './OutlineNavigator';
+
+import { SkillPlan, type PlanSelection } from './SkillPlan';
+
 import '../../styles/authoring.css';
 import {
 	removeNewUnit,
@@ -114,27 +109,90 @@ export function OutlineWorkspace( {
 			( item ) => `${ item.type }:${ item.content_id }` === opening
 		)
 	);
-	const connections = useConnectionTarget(
-		initial.course_id,
-		targeted && [ 'lesson', 'quiz', 'assignment' ].includes( targeted.type )
-			? {
-					kind: targeted.type as 'lesson' | 'quiz' | 'assignment',
-					id: targeted.content_id,
-				}
-			: undefined
-	);
 	const [ draft, setDraft ] = useState( initial );
+	// What the skill panel follows: a unit, or a lesson placed in a unit.
+	const [ selection, setSelection ] = useState< PlanSelection | null >( () =>
+		targeted && 'lesson' === targeted.type
+			? {
+					kind: 'lesson',
+					id: targeted.content_id,
+					unitId: targeted.chapter_id ?? 0,
+					name: targeted.name || String( targeted.content_id ),
+				}
+			: null
+	);
+	// Changes whenever the saved outline changes, so the skill panel reads the course again.
+	const [ planVersion, setPlanVersion ] = useState( 0 );
+	const [ skillCounts, setSkillCounts ] = useState<
+		ReadonlyMap< number, number >
+	>( () => new Map() );
+	// Topics chosen for each saved unit, as the skill panel reports them.
+	const [ unitTopics, setUnitTopics ] = useState<
+		Readonly< Record< number, number[] > >
+	>( {} );
 	const [ folded, setFolded ] = useState< ReadonlySet< Unit[ 'id' ] > >(
 		() => new Set()
 	);
-	const [ skillsOpen, setSkillsOpen ] = useState( Boolean( targeted ) );
-	/*
-	 * Choosing a record to connect skills for also opens the panel that shows them.
+	const selectUnit = ( unit: Unit ) =>
+		setSelection( ( current ) =>
+			'unit' === current?.kind && current.id === unit.id
+				? null
+				: { kind: 'unit', id: unit.id, name: unit.title }
+		);
+	const selectLesson = ( item: Activity ) =>
+		setSelection( ( current ) =>
+			'lesson' === current?.kind && current.id === item.content_id
+				? null
+				: {
+						kind: 'lesson',
+						id: item.content_id,
+						unitId: item.chapter_id ?? 0,
+						name: item.name || String( item.content_id ),
+					}
+		);
+	/**
+	 * Select a lesson by ID (from a skill row) and bring its row into view.
+	 *
+	 * @param lesson Lesson ID.
 	 */
-	const connect = ( next: ConnectionTarget ) => {
-		setSkillsOpen( true );
-		connections.choose( next );
-	};
+	function revealLesson( lesson: number ) {
+		const item = draft.program.items.find(
+			( row ) => 'lesson' === row.type && row.content_id === lesson
+		);
+		if ( ! item ) {
+			return;
+		}
+		if ( item.chapter_id ) {
+			setFolded( ( current ) => {
+				const next = new Set( current );
+				next.delete( item.chapter_id! );
+				return next;
+			} );
+		}
+		setSelection( {
+			kind: 'lesson',
+			id: item.content_id,
+			unitId: item.chapter_id ?? 0,
+			name: item.name || String( item.content_id ),
+		} );
+		setFocus( [ item.id, '' ] );
+	}
+	/**
+	 * The saved unit a lesson is placed in, when there is one.
+	 *
+	 * @param lesson Lesson ID.
+	 * @return Unit ID, or null.
+	 */
+	function unitOf( lesson: number ): number | null {
+		const item = draft.program.items.find(
+			( row ) => 'lesson' === row.type && row.content_id === lesson
+		);
+		return item &&
+			'number' === typeof item.chapter_id &&
+			item.chapter_id > 0
+			? item.chapter_id
+			: null;
+	}
 	const toggleUnit = ( id: Unit[ 'id' ] ) =>
 		setFolded( ( current ) => {
 			const next = new Set( current );
@@ -182,7 +240,7 @@ export function OutlineWorkspace( {
 		}
 	}, [ focus, busy ] );
 	const dirty = snapshot( draft ) !== saved;
-	const guard = useUnsavedChangesGuard( dirty || connections.dirty, {
+	const guard = useUnsavedChangesGuard( dirty, {
 		allow: ( path ) => isCourseEditorStep( initial.course_id, path ),
 	} );
 	// The builder bar has the Save button; it runs this draft save.
@@ -194,6 +252,7 @@ export function OutlineWorkspace( {
 	function accept( result: Outline, notice: string ) {
 		setDraft( result );
 		setSaved( snapshot( result ) );
+		setPlanVersion( ( count ) => count + 1 );
 		setMessage( notice );
 	}
 	async function write(
@@ -228,8 +287,7 @@ export function OutlineWorkspace( {
 			}
 		}
 	}
-	const askReload = () =>
-		dirty || connections.dirty ? setReloadConfirm( true ) : reload();
+	const askReload = () => ( dirty ? setReloadConfirm( true ) : reload() );
 	/**
 	 * Move a unit or activity (drag, move buttons or unit select), announce it and keep focus on it. On
 	 * a saved outline the move is saved at once and undone if that fails; otherwise it joins the draft.
@@ -406,43 +464,29 @@ export function OutlineWorkspace( {
 			aria-label={ __( 'Outline editor', 'ohmylms' ) }
 		>
 			<VisuallyHidden role="status">{ said }</VisuallyHidden>
-			<div className="oml-editor-header">
-				<div className="oml-editor-header-title">
-					<h2>{ __( 'Curriculum', 'ohmylms' ) }</h2>
-					<span className="oml-editor-status">
-						{ sprintf(
-							/* translators: 1: units, 2: activities. */
-							__( '%1$d units · %2$d activities', 'ohmylms' ),
-							draft.units.length,
-							draft.program.items.length
-						) }
-					</span>
-					<span className="oml-editor-saved" role="status">
-						{ dirty
-							? __( 'Unsaved changes', 'ohmylms' )
-							: __( 'Saved draft', 'ohmylms' ) }
-					</span>
-				</div>
-				<div className="oml-editor-header-actions">
-					<Button
-						variant="tertiary"
-						disabled={ busy || connections.dirty }
-						onClick={ askReload }
-					>
-						{ __( 'Reload saved outline', 'ohmylms' ) }
-					</Button>
-					<Button
-						variant="primary"
-						className="oml-builder-inner-save"
-						disabled={ busy || ! dirty }
-						isBusy={ busy }
-						onClick={ save }
-					>
-						{ __( 'Save outline draft', 'ohmylms' ) }
-					</Button>
-				</div>
+			<span className="screen-reader-text" role="status">
+				{ dirty
+					? __( 'Unsaved changes', 'ohmylms' )
+					: __( 'Saved draft', 'ohmylms' ) }
+			</span>
+			<div className="oml-outline-actions">
+				<Button
+					variant="tertiary"
+					disabled={ busy }
+					onClick={ askReload }
+				>
+					{ __( 'Reload saved outline', 'ohmylms' ) }
+				</Button>
+				<Button
+					variant="primary"
+					className="oml-builder-inner-save"
+					disabled={ busy || ! dirty }
+					isBusy={ busy }
+					onClick={ save }
+				>
+					{ __( 'Save outline draft', 'ohmylms' ) }
+				</Button>
 			</div>
-
 			{ error && (
 				<Notice
 					status="error"
@@ -490,12 +534,7 @@ export function OutlineWorkspace( {
 							) }
 				</Notice>
 			) }
-			<div className="oml-editor-grid oml-authoring-grid">
-				<OutlineNavigator
-					draft={ draft }
-					onNavigate={ ( key ) => setFocus( [ key, '' ] ) }
-					onConnect={ connect }
-				/>
+			<div className="oml-plan-grid">
 				<div className="oml-editor-main">
 					<p className="oml-editor-hint">
 						{ __(
@@ -568,12 +607,27 @@ export function OutlineWorkspace( {
 								}
 								onDelete={ () => setDeleting( unit ) }
 								onDetach={ setDetach }
-								onConnect={ ( item ) =>
-									connect( {
-										kind: item.type as
-											'lesson' | 'quiz' | 'assignment',
-										id: item.content_id,
-									} )
+								selectedUnit={
+									'unit' === selection?.kind &&
+									selection.id === unit.id
+								}
+								selectedItem={
+									'lesson' === selection?.kind
+										? ( draft.program.items.find(
+												( row ) =>
+													'lesson' === row.type &&
+													row.content_id ===
+														selection.id
+											)?.id ?? null )
+										: null
+								}
+								onSelectUnit={ () => selectUnit( unit ) }
+								onSelectItem={ selectLesson }
+								skillCounts={ skillCounts }
+								topicCount={
+									'number' === typeof unit.id
+										? ( unitTopics[ unit.id ]?.length ?? 0 )
+										: 0
 								}
 							/>
 						) ) }
@@ -643,79 +697,18 @@ export function OutlineWorkspace( {
 						</section>
 					) }
 				</div>
-				<aside className="oml-editor-aside">
-					<nav
-						className="oml-editor-shortcuts"
-						aria-label={ __( 'Shortcuts', 'ohmylms' ) }
-					>
-						<Link to={ `/courses/${ draft.course_id }` }>
-							{ __( 'Course settings', 'ohmylms' ) }
-						</Link>
-						<Link to={ `/courses/${ draft.course_id }/publish` }>
-							{ __( 'Preview and publish', 'ohmylms' ) }
-						</Link>
-						<Link to="/content-hub/curriculum">
-							{ __( 'Curriculum', 'ohmylms' ) }
-						</Link>
-					</nav>
-					<CollapsiblePanel
-						title={ __( 'Learning settings', 'ohmylms' ) }
-						summary={
-							draft.program.outcomes.length
-								? sprintf(
-										/* translators: %d: number of skill targets. */
-										_n(
-											'%d skill target',
-											'%d skill targets',
-											draft.program.outcomes.length,
-											'ohmylms'
-										),
-										draft.program.outcomes.length
-									)
-								: ''
-						}
-					>
-						<LearningSettings
-							draft={ draft }
-							change={ change }
-							disabled={ busy }
-						/>
-					</CollapsiblePanel>
-					<CollapsiblePanel
-						title={ __( 'Skills and connections', 'ohmylms' ) }
-						summary={
-							connections.dirty
-								? __( 'Unsaved', 'ohmylms' )
-								: __( 'Up to date', 'ohmylms' )
-						}
-						open={ skillsOpen }
-						onToggle={ setSkillsOpen }
-					>
-						<CourseConnections
-							target={ connections.target }
-							course={ draft.course_id }
-							dirty={ connections.dirty }
-							onDirtyChange={ connections.setDirty }
-							onCourse={ () =>
-								connect( {
-									kind: 'course',
-									id: draft.course_id,
-								} )
-							}
-						/>
-					</CollapsiblePanel>
-					<CollapsiblePanel
-						title={ __(
-							'Syllabus and curriculum placement',
-							'ohmylms'
-						) }
-						lazy
-					>
-						<CoursePlacement course={ draft.course_id } />
-					</CollapsiblePanel>
-				</aside>
+				<SkillPlan
+					course={ draft.course_id }
+					selection={ selection }
+					onSelect={ revealLesson }
+					unsaved={ dirty }
+					refresh={ planVersion }
+					onCounts={ setSkillCounts }
+					onTopics={ setUnitTopics }
+					unitOf={ unitOf }
+				/>
 			</div>
-			{ connections.confirmation }
+
 			{ picker && (
 				<ResourcePicker
 					course={ draft.course_id }
