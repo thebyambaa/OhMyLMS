@@ -451,8 +451,8 @@ body.oml-builder-fullscreen .ohmylms-admin-page {
 	position: sticky;
 	top: 32px;
 	z-index: 50;
-	display: flex;
-	flex-wrap: nowrap;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
 	align-items: center;
 	box-sizing: border-box;
 	height: var(--oml-builder-bar, 64px);
@@ -472,19 +472,37 @@ body.oml-builder-fullscreen .ohmylms-admin-page {
 }
 
 .ohmylms-app .oml-builder-bar .oml-editor-steps {
-	flex: 1;
+	flex-wrap: nowrap;
 	padding: 0;
 	border: 0;
 }
 
+.ohmylms-app .oml-builder-lead {
+	display: flex;
+	align-items: center;
+	gap: var(--oml-space-3);
+	min-width: 0;
+}
+
+.ohmylms-app .oml-builder-end {
+	display: flex;
+	justify-content: flex-end;
+}
+
 body.oml-builder-fullscreen .oml-editor {
-	max-width: 1240px;
-	margin: 0 auto;
-	padding: 0 var(--oml-space-4) var(--oml-space-6);
+	padding: 0 0 var(--oml-space-6);
+}
+
+body.oml-builder-fullscreen .oml-editor > :not(.oml-builder-bar),
+body.oml-builder-fullscreen .ohmylms-app-main > :not(.oml-editor) {
+	box-sizing: border-box;
+	width: min(1240px, calc(100% - 2 * var(--oml-space-4)));
+	margin-inline: auto;
 }
 
 body.oml-builder-fullscreen .oml-builder-bar {
-	margin: 0 calc(var(--oml-space-4) * -1) var(--oml-space-4);
+	margin: 0 0 var(--oml-space-4);
+	padding-inline: max(var(--oml-space-4), calc((100% - 1240px) / 2));
 }
 
 body.oml-builder-fullscreen .oml-editor-header {
@@ -496,8 +514,16 @@ body.oml-builder-fullscreen .oml-editor-header {
 
 	.ohmylms-app .oml-builder-bar {
 		position: static;
-		flex-wrap: wrap;
+		grid-template-columns: minmax(0, 1fr);
 		height: auto;
+	}
+
+	.ohmylms-app .oml-builder-bar .oml-editor-steps {
+		flex-wrap: wrap;
+	}
+
+	.ohmylms-app .oml-builder-end {
+		justify-content: flex-start;
 	}
 
 	body.oml-builder-fullscreen .oml-editor-header {
