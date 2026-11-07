@@ -78,19 +78,5 @@ table:has(.oml-courses-cell) th:not(.column-title):not(.check-column) {
 	outline-offset: 2px;
 }
 
-/* The thumbnail with its View link directly under it. */
-.oml-courses-media {
-	display: flex;
-	flex: none;
-	flex-direction: column;
-	gap: 6px;
-	align-items: center;
-}
 
-.oml-courses-view {
-	min-width: 64px;
-	text-align: center;
-}
-
-
-/*# sourceMappingURL=admin-app-courses.bd1860015305.css.map*/
+/*# sourceMappingURL=admin-app-courses.72300855ac5c.css.map*/
