@@ -175,7 +175,6 @@ describe( 'CourseEditorPage tabs', () => {
 			[ 'Basics', '/courses/7' ],
 			[ 'Curriculum', '/courses/7/outline' ],
 			[ 'Additional', '/courses/7/settings' ],
-			[ 'Publish', '/courses/7/publish' ],
 		] );
 		expect(
 			within( nav ).getByRole( 'link', { name: 'Additional' } )
@@ -207,17 +206,33 @@ describe( 'CourseEditorPage tabs', () => {
 			screen.queryByRole( 'link', { name: /View course/ } )
 		).not.toBeInTheDocument();
 	} );
-	it( 'renders the publication tab for administrators', async () => {
-		renderEditor( '/courses/7/publish' );
+	it( 'opens the publication panel from the Publish button for administrators', async () => {
+		const user = userEvent.setup();
+		renderEditor( '/courses/7/outline' );
+		await user.click(
+			await screen.findByRole( 'button', { name: 'Publish' } )
+		);
 		expect(
 			await screen.findByText( 'Publication of course 7' )
 		).toBeInTheDocument();
+	} );
+	it( 'has one Save in the bar that is enabled only when the open step has changes', async () => {
+		const user = userEvent.setup();
+		renderEditor();
+		await loaded();
+		const bar = screen.getByRole( 'banner' );
+		const barSave = within( bar ).getByRole( 'button', { name: 'Save' } );
+		expect( barSave ).toBeDisabled();
+		await setField( user, 'Title', 'Changed' );
+		expect( barSave ).toBeEnabled();
+		await user.click( barSave );
+		expect( api.updateCourse ).toHaveBeenCalled();
 	} );
 	it( 'hides publication and certificates from authors', async () => {
 		renderEditor( '/courses/7/settings', { edit_posts: true } );
 		await loaded();
 		expect(
-			screen.queryByRole( 'link', { name: 'Publish' } )
+			screen.queryByRole( 'button', { name: 'Publish' } )
 		).not.toBeInTheDocument();
 		expect(
 			screen.queryByRole( 'region', { name: 'Certificate' } )

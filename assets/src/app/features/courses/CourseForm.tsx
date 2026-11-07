@@ -28,6 +28,7 @@ import {
 } from './model';
 import { useCourseEditor } from './useCourseEditor';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
+import { useBuilderSave } from '../../hooks/useBuilderSave';
 import type {
 	FormErrors,
 	FormState,
@@ -126,6 +127,13 @@ export function CourseForm( {
 	const operation = useRef< AbortController | null >( null );
 	const dirty = Boolean( form && saved && isDirty( form, saved ) );
 	const guard = useUnsavedChangesGuard( dirty );
+	// The builder bar has the Save button; it runs this form's save.
+	useBuilderSave( {
+		save: () => void save(),
+		dirty,
+		busy,
+		course: editor.course ?? undefined,
+	} );
 	const course = editor.course;
 	const options = editor.options;
 
@@ -265,6 +273,7 @@ export function CourseForm( {
 						type="submit"
 						form="oml-course-form"
 						variant="primary"
+						className="oml-builder-inner-save"
 						disabled={ busy || ! dirty || trashed }
 						isBusy={ busy }
 					>

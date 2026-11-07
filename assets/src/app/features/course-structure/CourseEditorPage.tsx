@@ -8,6 +8,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Link, useSearchParams } from 'react-router-dom';
+import { useBuilderSave } from '../../hooks/useBuilderSave';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
 import { normalizeApiError, type ApiError } from '../../lib/api';
 import { CoursePlacement } from '../curriculum';
@@ -161,6 +162,8 @@ export function OutlineWorkspace( {
 	}, [ focus, busy ] );
 	const dirty = snapshot( draft ) !== saved;
 	const guard = useUnsavedChangesGuard( dirty || connections.dirty );
+	// The builder bar has the Save button; it runs this draft save.
+	useBuilderSave( { save, dirty, busy } );
 	function change( next: Outline ) {
 		setDraft( next );
 		setMessage( '' );
@@ -364,6 +367,7 @@ export function OutlineWorkspace( {
 					</Button>
 					<Button
 						variant="primary"
+						className="oml-builder-inner-save"
 						disabled={ busy || ! dirty }
 						isBusy={ busy }
 						onClick={ save }
