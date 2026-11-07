@@ -1,6 +1,6 @@
 import { Notice } from '@wordpress/components';
 import { lazy, Suspense, useEffect, useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { Link, useParams } from 'react-router-dom';
 import { useBootstrap } from '../../bootstrap/BootstrapContext';
 import { hasCapability } from '../../bootstrap/config';
@@ -24,20 +24,36 @@ const PublicationPanel = lazy( () =>
 type Tab = 'details' | 'outline' | 'settings' | 'publish';
 
 const TABS: { id: Tab; label: () => string; admin: boolean }[] = [
-	{ id: 'details', label: () => __( 'Details', 'ohmylms' ), admin: false },
-	{ id: 'outline', label: () => __( 'Outline', 'ohmylms' ), admin: false },
-	{ id: 'settings', label: () => __( 'Settings', 'ohmylms' ), admin: false },
+	{ id: 'details', label: () => __( 'Basics', 'ohmylms' ), admin: false },
+	{ id: 'outline', label: () => __( 'Curriculum', 'ohmylms' ), admin: false },
+	{
+		id: 'settings',
+		label: () => __( 'Additional', 'ohmylms' ),
+		admin: false,
+	},
 	{ id: 'publish', label: () => __( 'Publish', 'ohmylms' ), admin: true },
 ];
+
+/**
+ * Address of one step of the editor.
+ *
+ * @param id   Course id.
+ * @param step Step id.
+ */
+function stepLink( id: number, step: Tab ) {
+	return 'details' === step
+		? `/courses/${ id }`
+		: `/courses/${ id }/${ step }`;
+}
 
 function routeId( value: string | undefined ): number | null {
 	return value && /^[1-9]\d*$/.test( value ) ? Number( value ) : null;
 }
 
 /**
- * Course editor at `#/courses/:id/:tab?`: Details (metadata and thumbnail), Outline (units and activity
- * placements), Settings (membership guidance, reviews, capacity and certificate) and Publish (reviewed
- * publication of the saved program). Publication and certificates need `manage_options`, as on the server.
+ * Course editor at `#/courses/:id/:tab?`, shown as steps like a builder: Basics (metadata and thumbnail),
+ * Curriculum (units and activity placements), Additional (membership guidance, reviews, capacity and
+ * certificate) and Publish (reviewed publication of the saved program). Publication and certificates need `manage_options`, as on the server.
  */
 /**
  * View/Preview link for tabs without the course form header (Outline, Publish). Loads the course once.
@@ -65,6 +81,9 @@ export default function CourseEditorPage() {
 	const admin = hasCapability( user.capabilities, 'manage_options' );
 	const tabs = TABS.filter( ( tab ) => admin || ! tab.admin );
 	const tab = tabs.find( ( row ) => row.id === ( params.tab ?? 'details' ) );
+	const at = tab ? tabs.indexOf( tab ) : -1;
+	const previous = at > 0 ? tabs[ at - 1 ] : undefined;
+	const next = at >= 0 ? tabs[ at + 1 ] : undefined;
 	if ( null === id || ! tab ) {
 		return (
 			<>
@@ -91,7 +110,7 @@ export default function CourseEditorPage() {
 				) }
 			</div>
 			<nav
-				className="oml-editor-tabs"
+				className="oml-editor-tabs oml-editor-steps"
 				aria-label={ __( 'Course editor sections', 'ohmylms' ) }
 			>
 				{ tabs.map( ( row ) => (
@@ -133,6 +152,33 @@ export default function CourseEditorPage() {
 					/>
 				) }
 			</Suspense>
+			{ previous || next ? (
+				<nav
+					className="oml-editor-stepnav"
+					aria-label={ __( 'Course editor steps', 'ohmylms' ) }
+				>
+					{ previous ? (
+						<Link to={ stepLink( id, previous.id ) }>
+							{ sprintf(
+								/* translators: %s: name of the previous step. */
+								__( 'Previous: %s', 'ohmylms' ),
+								previous.label()
+							) }
+						</Link>
+					) : (
+						<span />
+					) }
+					{ next && (
+						<Link to={ stepLink( id, next.id ) }>
+							{ sprintf(
+								/* translators: %s: name of the next step. */
+								__( 'Next: %s', 'ohmylms' ),
+								next.label()
+							) }
+						</Link>
+					) }
+				</nav>
+			) : null }
 		</div>
 	);
 }

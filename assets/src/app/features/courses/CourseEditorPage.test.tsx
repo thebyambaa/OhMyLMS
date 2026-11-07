@@ -172,13 +172,13 @@ describe( 'CourseEditorPage tabs', () => {
 				link.getAttribute( 'href' ),
 			] )
 		).toEqual( [
-			[ 'Details', '/courses/7' ],
-			[ 'Outline', '/courses/7/outline' ],
-			[ 'Settings', '/courses/7/settings' ],
+			[ 'Basics', '/courses/7' ],
+			[ 'Curriculum', '/courses/7/outline' ],
+			[ 'Additional', '/courses/7/settings' ],
 			[ 'Publish', '/courses/7/publish' ],
 		] );
 		expect(
-			within( nav ).getByRole( 'link', { name: 'Settings' } )
+			within( nav ).getByRole( 'link', { name: 'Additional' } )
 		).toHaveAttribute( 'aria-current', 'page' );
 	} );
 	it( 'renders the outline and publication tabs from the course structure feature', async () => {
@@ -241,7 +241,7 @@ describe( 'CourseEditorPage tabs', () => {
 		renderEditor();
 		await loaded();
 		await setField( user, 'Title', 'Changed' );
-		await user.click( screen.getByRole( 'link', { name: 'Settings' } ) );
+		await user.click( screen.getByRole( 'link', { name: 'Additional' } ) );
 		expect(
 			await screen.findByRole( 'dialog', {
 				name: 'Discard unsaved changes?',
