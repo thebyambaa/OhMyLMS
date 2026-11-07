@@ -1,7 +1,7 @@
 # Skill workspace API
 
 The skill workspace rebuilds the curriculum workflows that only the deleted legacy admin had: combined
-mappings, AI runs, shared content links, domain placement, skill-owned quizzes and provenance review.
+mappings, AI runs, shared content links, domain placement and provenance review.
 The screens are sections of Curriculum › Tools (`features/curriculum/SkillWorkspace`, lazy chunk
 `admin-app-skill-workspace`), shown to site administrators only (the Tools tab itself needs
 `edit_posts`):
@@ -12,11 +12,10 @@ The screens are sections of Curriculum › Tools (`features/curriculum/SkillWork
 | AI runs | `/content-hub/skills/ai-runs[?syllabus=ID][&run=ID]` | `…&section=ai-runs` |
 | Content links | `/content-hub/skills/content-links?kind=lesson\|quiz\|assignment\|course\|question&content=ID` | `…&section=content-links` |
 | Domain placement | `/content-hub/skills/placement?subject=…[&domain=][&unplaced=0][&s=]` | `…&section=placement` |
-| Skill quizzes | `/content-hub/skills/skill-quizzes?skill=ID` | `…&section=skill-quizzes` |
 | Provenance review | `/content-hub/skills/provenance[?review=pending\|rejected\|approved\|all][&source=][&s=][&skill=ID]` | `…&section=provenance` |
 
 The former addresses on the comparison screen (`/content-hub/curriculum/compare?tab=mappings|ai|content|
-placement|quizzes|provenance`, `page=ohmylms-curriculum&tab=tools&view=compare&compare=…`) still work:
+placement|provenance`, `page=ohmylms-curriculum&tab=tools&view=compare&compare=…`) still work:
 the comparison screen replaces them with the section above and keeps the rest of the query.
 
 Every route is under `ohmylms/v1`, requires the curriculum administrator permission
@@ -80,8 +79,6 @@ The AI runs screen uses only these routes: runs call the configured provider thr
   changes".
 - **Domain placement**: per-row domain and level selects, bulk "Apply to selected", one batch save, a
   disabled save for an invalid band, and "Reload skills and keep my placements" after a stale refusal.
-- **Skill quizzes**: owned quizzes with how they belong, connect/disconnect, quiz search, and a draft
-  generator that is disabled while the bank cannot supply the draws.
 - **Provenance review**: views with counts, source filter, search, bulk approve/reject with an optional
   note, details with the audit trail and mapping provenance.
 

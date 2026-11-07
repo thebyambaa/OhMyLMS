@@ -524,7 +524,7 @@
 		],
 		[
 			"/content-hub/curriculum",
-			"/content-hub/curriculum"
+			"/curriculum"
 		],
 		[
 			"/content-hub/bundles",
@@ -854,7 +854,7 @@
 		},
 		{
 			"from": "/content-hub/curriculum",
-			"to": "/content-hub/curriculum"
+			"to": "/curriculum"
 		},
 		{
 			"from": "/content-hub/curriculum/compare",

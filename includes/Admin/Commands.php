@@ -128,7 +128,7 @@ final class Commands {
 			'question-bank'  => array( __( 'Question Bank', 'ohmylms' ), '/content-hub/question-bank' ),
 			'assignments'    => array( __( 'Assignments', 'ohmylms' ), '/content-hub/assignments' ),
 			'skills'         => array( __( 'Skills', 'ohmylms' ), '/content-hub/skills' ),
-			'curriculum'     => array( __( 'Curriculum', 'ohmylms' ), '/content-hub/curriculum' ),
+			'curriculum'     => array( __( 'Curriculum', 'ohmylms' ), '/curriculum' ),
 			'bundles'        => array( __( 'Course Bundles', 'ohmylms' ), '/content-hub/bundles' ),
 			'memberships'    => array( __( 'Membership', 'ohmylms' ), '/memberships' ),
 			'account-hub'    => array( __( 'Account Hub', 'ohmylms' ), '/accounthub' ),

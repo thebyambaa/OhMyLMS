@@ -29,7 +29,6 @@ const WORKSPACE_TABS: Readonly< Record< string, WorkspaceSection > > = {
 	ai: 'ai-runs',
 	content: 'content-links',
 	placement: 'placement',
-	quizzes: 'skill-quizzes',
 	provenance: 'provenance',
 };
 
@@ -45,7 +44,7 @@ function tabLabel( tab: Tab ): string {
 /**
  * Syllabus comparison at `#/content-hub/curriculum/compare` (`?tab=groups|roadmaps|shared|audit`).
  * The legacy `?roadmap=<id>` bookmark opens that roadmap in the syllabus editor; the former skill
- * workspace tabs (`?tab=mappings|ai|content|placement|quizzes|provenance`) open their Skills section
+ * workspace tabs (`?tab=mappings|ai|content|placement|provenance`) open their Skills section
  * with the rest of the query.
  */
 export default function ComparePage() {
@@ -88,7 +87,7 @@ function CompareScreen( { tab }: { tab: Tab } ) {
 	return (
 		<>
 			<p>
-				<Link to="/content-hub/curriculum">
+				<Link to="/curriculum">
 					{ __( '← Curriculum', 'ohmylms' ) }
 				</Link>
 			</p>

@@ -20,21 +20,6 @@ export const curriculumWorkspace: FeatureDefinition = {
 			)
 	),
 };
-export const curriculum: FeatureDefinition = {
-	id: 'curriculum',
-	title: __( 'Curriculum', 'ohmylms' ),
-	path: '/content-hub/curriculum',
-	group: 'curriculum',
-	tab: 'tools',
-	section: 'tree',
-	capability: 'manage_options',
-	component: lazy(
-		() =>
-			import(
-				/* webpackChunkName: "admin-app-curriculum" */ './CurriculumPage'
-			)
-	),
-};
 /**
  * The read-only skill map is also open to school administrators and teachers, whose learner overlays
  * the server limits to their schools and classes; editing stays in the administrator-only workspace.
@@ -123,17 +108,6 @@ export const skillWorkspacePlacement: FeatureDefinition = {
 	group: 'curriculum',
 	tab: 'tools',
 	section: 'placement',
-	capability: 'manage_options',
-	hidden: true,
-	component: skillWorkspace,
-};
-export const skillWorkspaceQuizzes: FeatureDefinition = {
-	id: 'skill-workspace-skill-quizzes',
-	title: __( 'Skill quizzes', 'ohmylms' ),
-	path: '/content-hub/skills/skill-quizzes',
-	group: 'curriculum',
-	tab: 'tools',
-	section: 'skill-quizzes',
 	capability: 'manage_options',
 	hidden: true,
 	component: skillWorkspace,

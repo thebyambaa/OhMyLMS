@@ -224,16 +224,8 @@ final class AdminNavigation {
 								'label'      => __( 'Domain placement', 'ohmylms' ),
 								'capability' => self::CAPABILITY,
 							),
-							'skill-quizzes' => array(
-								'label'      => __( 'Skill quizzes', 'ohmylms' ),
-								'capability' => self::CAPABILITY,
-							),
 							'provenance'    => array(
 								'label'      => __( 'Provenance review', 'ohmylms' ),
-								'capability' => self::CAPABILITY,
-							),
-							'tree'          => array(
-								'label'      => __( 'Item tree', 'ohmylms' ),
 								'capability' => self::CAPABILITY,
 							),
 							'bundles'       => array(
@@ -458,14 +450,6 @@ final class AdminNavigation {
 				),
 			),
 			array(
-				'skill-workspace-skill-quizzes',
-				'/content-hub/skills/skill-quizzes',
-				$curr + array(
-					'tab'     => 'tools',
-					'section' => 'skill-quizzes',
-				),
-			),
-			array(
 				'skill-workspace-provenance',
 				'/content-hub/skills/provenance',
 				$curr + array(
@@ -474,14 +458,6 @@ final class AdminNavigation {
 				),
 			),
 			array( 'curriculum-workspace', '/curriculum', $curr + array( 'tab' => 'workspace' ) ),
-			array(
-				'curriculum',
-				'/content-hub/curriculum',
-				$curr + array(
-					'tab'     => 'tools',
-					'section' => 'tree',
-				),
-			),
 			array(
 				'curriculum-skill-map',
 				'/content-hub/curriculum/skill-map',
@@ -976,6 +952,15 @@ final class AdminNavigation {
 		$read = static function ( $name ) use ( $query ) {
 			return isset( $query[ $name ] ) && is_string( $query[ $name ] ) ? sanitize_key( $query[ $name ] ) : '';
 		};
+		// Two Tools screens were removed: the Item tree (the Curriculum tab replaced it) and Skill quizzes.
+		if ( self::page_slug( 'curriculum' ) === $read( 'page' ) && 'tools' === $read( 'tab' ) && in_array( $read( 'section' ), array( 'tree', 'skill-quizzes' ), true ) ) {
+			$moved = $query;
+			if ( 'tree' === $read( 'section' ) ) {
+				$moved['tab'] = 'workspace';
+			}
+			unset( $moved['section'] );
+			return $moved;
+		}
 		if ( self::page_slug( 'content' ) !== $read( 'page' ) || ! in_array( $read( 'tab' ), array( 'skills', 'curriculum' ), true ) ) {
 			return null;
 		}

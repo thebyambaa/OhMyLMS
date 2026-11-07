@@ -96,7 +96,7 @@ export function SyllabusWorkspace( { initial }: { initial: SyllabusOutline } ) {
 	return (
 		<section aria-label={ __( 'Syllabus editor', 'ohmylms' ) }>
 			<p>
-				<Link to="/content-hub/curriculum">
+				<Link to="/curriculum">
 					{ __( 'Back to curriculum', 'ohmylms' ) }
 				</Link>
 			</p>

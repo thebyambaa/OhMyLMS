@@ -11,7 +11,6 @@ import {
 	skillWorkspaceMappings,
 	skillWorkspacePlacement,
 	skillWorkspaceProvenance,
-	skillWorkspaceQuizzes,
 } from './index';
 import SkillWorkspace from './SkillWorkspace';
 import * as mapApi from './skill-map';
@@ -33,9 +32,6 @@ vi.mock( './workspace', async ( original ) => ( {
 	updateContentLinks: vi.fn(),
 	readPlacement: vi.fn(),
 	savePlacement: vi.fn(),
-	readSkillQuizzes: vi.fn(),
-	linkQuiz: vi.fn(),
-	generateQuiz: vi.fn(),
 	readQueue: vi.fn(),
 	readProvenance: vi.fn(),
 	reviewSkills: vi.fn(),
@@ -76,7 +72,6 @@ const features = [
 		skillWorkspaceAiRuns,
 		skillWorkspaceContentLinks,
 		skillWorkspacePlacement,
-		skillWorkspaceQuizzes,
 		skillWorkspaceProvenance,
 	].map( ( feature ) => ( { ...feature, component: SkillWorkspace } ) ),
 ];
@@ -393,23 +388,5 @@ describe( 'Skill workspace', () => {
 				expect.any( AbortSignal )
 			)
 		);
-	} );
-
-	it( 'only generates a quiz the question bank can supply', async () => {
-		vi.mocked( api.readSkillQuizzes ).mockResolvedValue( {
-			skill: { id: 7, name: 'Linear equations' },
-			available: 2,
-			quizzes: [],
-		} );
-		open( '/content-hub/skills/skill-quizzes?skill=7' );
-		expect(
-			await screen.findByText( /2 approved question families/ )
-		).toBeInTheDocument();
-		expect(
-			screen.getByRole( 'button', { name: 'Generate draft quiz' } )
-		).toBeDisabled();
-		expect(
-			screen.getAllByText( /not have enough approved questions/ )[ 0 ]
-		).toBeInTheDocument();
 	} );
 } );

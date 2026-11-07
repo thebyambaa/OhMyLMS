@@ -5,7 +5,6 @@ import { ContentLinksPanel } from './ContentLinksPanel';
 import { MappingsPanel } from './MappingsPanel';
 import { PlacementPanel } from './PlacementPanel';
 import { ProvenancePanel } from './ProvenancePanel';
-import { SkillQuizzesPanel } from './SkillQuizzesPanel';
 import { WORKSPACE_SECTIONS, type WorkspaceSection } from './workspace';
 
 function Section( { section }: { section: WorkspaceSection } ) {
@@ -18,8 +17,6 @@ function Section( { section }: { section: WorkspaceSection } ) {
 			return <ContentLinksPanel />;
 		case 'placement':
 			return <PlacementPanel />;
-		case 'skill-quizzes':
-			return <SkillQuizzesPanel />;
 		case 'provenance':
 			return <ProvenancePanel />;
 	}
@@ -27,8 +24,7 @@ function Section( { section }: { section: WorkspaceSection } ) {
 
 /**
  * The skill workspace sections of Content Hub › Skills (`/content-hub/skills/<section>`, one chunk):
- * combined mappings, AI runs, shared content links, domain placement, skill-owned quizzes and
- * provenance review. The section is the last segment of the route.
+ * combined mappings, AI runs, shared content links, domain placement and provenance review. The section is the last segment of the route.
  */
 export default function SkillWorkspace() {
 	const { pathname } = useLocation();

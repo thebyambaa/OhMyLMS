@@ -27,7 +27,6 @@ import {
 } from './course-structure';
 import {
 	bundles,
-	curriculum,
 	curriculumCompare,
 	curriculumWorkspace,
 	skillMap,
@@ -36,7 +35,6 @@ import {
 	skillWorkspaceMappings,
 	skillWorkspacePlacement,
 	skillWorkspaceProvenance,
-	skillWorkspaceQuizzes,
 	subjectProfiles,
 } from './curriculum';
 import { courseReport, courseRoster, dashboard, earnings } from './dashboard';
@@ -82,10 +80,8 @@ export const features: readonly FeatureDefinition[] = [
 	skillWorkspaceAiRuns,
 	skillWorkspaceContentLinks,
 	skillWorkspacePlacement,
-	skillWorkspaceQuizzes,
 	skillWorkspaceProvenance,
 	curriculumWorkspace,
-	curriculum,
 	skillMap,
 	subjectProfiles,
 	curriculumCompare,

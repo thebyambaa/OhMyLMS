@@ -17,7 +17,6 @@ export const WORKSPACE_SECTIONS = [
 	'ai-runs',
 	'content-links',
 	'placement',
-	'skill-quizzes',
 	'provenance',
 ] as const;
 export type WorkspaceSection = ( typeof WORKSPACE_SECTIONS )[ number ];
@@ -666,86 +665,6 @@ export async function savePlacement(
 		)
 	);
 	return list( row.items ).length;
-}
-
-/* ---------- Skill-owned quizzes ---------- */
-
-export interface OwnedQuiz extends PostRef {
-	style: string;
-	connected: boolean;
-	drawn: number;
-	skills: number;
-	editable: boolean;
-}
-export interface SkillQuizzes {
-	skill: { id: number; name: string };
-	available: number;
-	quizzes: OwnedQuiz[];
-	created?: { id: number; title: string };
-}
-export function parseSkillQuizzes( value: unknown ): SkillQuizzes {
-	const row = record( value );
-	const skill = record( row.skill );
-	return {
-		skill: { id: positiveId( skill.id ), name: text( skill.name ) },
-		available: count( row.available ),
-		quizzes: list( row.quizzes ).map( ( raw ) => {
-			const quiz = record( raw );
-			return {
-				...postRef( raw ),
-				style: text( quiz.style ),
-				connected: bool( quiz.connected ),
-				drawn: count( quiz.drawn ),
-				skills: count( quiz.skills ),
-				editable: bool( quiz.editable ),
-			};
-		} ),
-		...( row.created
-			? {
-					created: {
-						id: positiveId( record( row.created ).id ),
-						title: text( record( row.created ).title ),
-					},
-				}
-			: {} ),
-	};
-}
-export async function readSkillQuizzes( skill: number, signal?: AbortSignal ) {
-	return parseSkillQuizzes(
-		await get< unknown >(
-			`${ WORKSPACE }/skills/${ positiveId( skill ) }/quizzes`,
-			{ signal }
-		)
-	);
-}
-export async function linkQuiz(
-	skill: number,
-	quiz: number,
-	linked: boolean,
-	signal?: AbortSignal
-) {
-	return parseSkillQuizzes(
-		await put< unknown >(
-			`${ WORKSPACE }/skills/${ positiveId( skill ) }/quizzes/${ positiveId(
-				quiz
-			) }`,
-			{ linked },
-			{ signal }
-		)
-	);
-}
-export async function generateQuiz(
-	skill: number,
-	input: { title: string; per_skill: number; time_limit: number },
-	signal?: AbortSignal
-) {
-	return parseSkillQuizzes(
-		await post< unknown >(
-			`${ WORKSPACE }/skills/${ positiveId( skill ) }/quizzes`,
-			input,
-			{ signal }
-		)
-	);
 }
 
 /* ---------- Provenance review ---------- */

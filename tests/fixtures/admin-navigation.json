@@ -114,9 +114,7 @@
 						"mappings",
 						"content-links",
 						"placement",
-						"skill-quizzes",
 						"provenance",
-						"tree",
 						"bundles",
 						"subjects",
 						"taxonomies"
@@ -417,13 +415,6 @@
 			"section": "placement"
 		},
 		{
-			"id": "skill-workspace-skill-quizzes",
-			"path": "/content-hub/skills/skill-quizzes",
-			"group": "curriculum",
-			"tab": "tools",
-			"section": "skill-quizzes"
-		},
-		{
 			"id": "skill-workspace-provenance",
 			"path": "/content-hub/skills/provenance",
 			"group": "curriculum",
@@ -435,13 +426,6 @@
 			"path": "/curriculum",
 			"group": "curriculum",
 			"tab": "workspace"
-		},
-		{
-			"id": "curriculum",
-			"path": "/content-hub/curriculum",
-			"group": "curriculum",
-			"tab": "tools",
-			"section": "tree"
 		},
 		{
 			"id": "curriculum-skill-map",
@@ -889,20 +873,12 @@
 			"page=ohmylms-curriculum&tab=tools&section=placement"
 		],
 		[
-			"/content-hub/skills/skill-quizzes?skill=7",
-			"page=ohmylms-curriculum&tab=tools&section=skill-quizzes&skill=7"
-		],
-		[
 			"/content-hub/skills/provenance",
 			"page=ohmylms-curriculum&tab=tools&section=provenance"
 		],
 		[
 			"/content-hub/curriculum/compare?tab=mappings&skill=7",
 			"page=ohmylms-curriculum&tab=tools&view=compare&compare=mappings&skill=7"
-		],
-		[
-			"/content-hub/curriculum",
-			"page=ohmylms-curriculum&tab=tools&section=tree"
 		],
 		[
 			"/content-hub/curriculum/skill-map",

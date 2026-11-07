@@ -314,7 +314,7 @@ final class LegacyRoutes {
 			),
 			array(
 				'from' => '/content-hub/curriculum',
-				'to'   => '/content-hub/curriculum',
+				'to'   => '/curriculum',
 			),
 			// The page itself opens `?roadmap=:id` bookmarks in the syllabus editor.
 			array(

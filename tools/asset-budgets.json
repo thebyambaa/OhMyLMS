@@ -138,14 +138,6 @@
 			"raw": 23700,
 			"gzip": 6900
 		},
-		"chunks/admin-app-curriculum.css": {
-			"raw": 3500,
-			"gzip": 1100
-		},
-		"chunks/admin-app-curriculum.js": {
-			"raw": 14700,
-			"gzip": 4900
-		},
 		"chunks/admin-app-dashboard-activity.css": {
 			"raw": 800,
 			"gzip": 500
