@@ -255,9 +255,9 @@ p.ohmylms-title-actions .page-title-action:first-child {
 /* Curriculum */
 .ohmylms-app .oml-outline-units { border: 0; padding: 0; margin: 0; }
 
-.ohmylms-app .oml-unit { background: var(--oml-surface); border: 1px solid var(--oml-border); border-radius: var(--oml-radius-card); margin: 0 0 var(--oml-space-3); }
+.ohmylms-app .oml-unit { background: var(--oml-surface); border: 1px solid var(--oml-border); border-radius: var(--oml-radius-card); margin: 0 0 var(--oml-space-3); box-shadow: var(--oml-shadow-sm); }
 
-.ohmylms-app .oml-unit-header { display: flex; align-items: center; gap: var(--oml-space-2); padding: var(--oml-space-2) var(--oml-space-3); background: var(--oml-subtle); border-bottom: 1px solid var(--oml-border); border-radius: var(--oml-radius-card) var(--oml-radius-card) 0 0; }
+.ohmylms-app .oml-unit-header { display: flex; align-items: center; gap: var(--oml-space-2); padding: var(--oml-space-2) var(--oml-space-3); background: var(--oml-surface); border-bottom: 1px solid var(--oml-border); border-radius: var(--oml-radius-card) var(--oml-radius-card) 0 0; }
 
 .ohmylms-app .oml-unit-number:not(:empty) { font-weight: 600; color: var(--oml-muted); }
 
@@ -291,7 +291,7 @@ p.ohmylms-title-actions .page-title-action:first-child {
 
 .ohmylms-app .oml-outline-item-tools select { max-width: 160px; }
 
-.ohmylms-app .oml-unit-add { display: flex; gap: var(--oml-space-1); padding: var(--oml-space-1) var(--oml-space-2); }
+.ohmylms-app .oml-unit-add { display: flex; flex-wrap: wrap; gap: var(--oml-space-1); padding: var(--oml-space-3); border-top: 1px solid var(--oml-border); }
 
 .ohmylms-app .oml-outline-add-unit { width: 100%; justify-content: center; border-style: dashed; }
 
@@ -352,6 +352,75 @@ p.ohmylms-title-actions .page-title-action:first-child {
 .ohmylms-app .oml-editor-topbar { display: flex; align-items: center; justify-content: space-between; gap: var(--oml-space-3); }
 
 .ohmylms-app .oml-editor-topbar .oml-editor-breadcrumb { margin: 0; }
+
+/* Course editor as a builder: numbered steps (Basics, Curriculum, Additional, Publish) and Previous / Next. */
+.ohmylms-app .oml-editor-steps {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--oml-space-2);
+	padding: var(--oml-space-3) var(--oml-space-4);
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-card);
+	background: var(--oml-surface);
+	counter-reset: oml-step;
+}
+
+.ohmylms-app .oml-editor-steps .oml-editor-tab {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--oml-space-2);
+	margin: 0;
+	padding: var(--oml-space-1) var(--oml-space-2);
+	border: 0;
+	border-radius: 999px;
+	counter-increment: oml-step;
+}
+
+.ohmylms-app .oml-editor-steps .oml-editor-tab::before {
+	display: inline-grid;
+	flex: none;
+	place-items: center;
+	box-sizing: border-box;
+	width: 1.75rem;
+	height: 1.75rem;
+	border: 1px solid var(--oml-border);
+	border-radius: 50%;
+	content: counter(oml-step);
+	font-size: 12px;
+}
+
+.ohmylms-app .oml-editor-steps .oml-editor-tab:not(:last-child)::after {
+	width: 2rem;
+	margin-left: var(--oml-space-2);
+	border-top: 1px solid var(--oml-border);
+	content: "";
+}
+
+.ohmylms-app .oml-editor-steps .oml-editor-tab.is-active {
+	font-weight: 600;
+}
+
+.ohmylms-app .oml-editor-steps .oml-editor-tab.is-active::before {
+	border-color: var(--oml-primary);
+	background: var(--oml-primary);
+	color: var(--oml-on-primary);
+}
+
+.ohmylms-app .oml-editor-stepnav {
+	display: flex;
+	justify-content: space-between;
+	margin: var(--oml-space-4) 0 0;
+	padding-top: var(--oml-space-3);
+	border-top: 1px solid var(--oml-border);
+}
+
+/* Curriculum: outlined add buttons inside the unit card. */
+.ohmylms-app .oml-unit-add .components-button {
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-control);
+	background: var(--oml-surface);
+}
 
 
 /*# sourceMappingURL=admin-app.css.map*/
