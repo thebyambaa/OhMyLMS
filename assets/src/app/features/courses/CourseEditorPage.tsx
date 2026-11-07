@@ -105,14 +105,16 @@ export default function CourseEditorPage() {
 	return (
 		<div className="oml-editor" key={ id }>
 			<header className="oml-builder-bar">
-				<p className="oml-editor-breadcrumb">
-					<Link to="/courses">
-						{ __( 'Back to courses', 'ohmylms' ) }
-					</Link>
-				</p>
-				<strong className="oml-builder-title">
-					{ __( 'Course builder', 'ohmylms' ) }
-				</strong>
+				<div className="oml-builder-lead">
+					<p className="oml-editor-breadcrumb">
+						<Link to="/courses">
+							{ __( 'Back to courses', 'ohmylms' ) }
+						</Link>
+					</p>
+					<strong className="oml-builder-title">
+						{ __( 'Course builder', 'ohmylms' ) }
+					</strong>
+				</div>
 				<nav
 					className="oml-editor-tabs oml-editor-steps"
 					aria-label={ __( 'Course editor sections', 'ohmylms' ) }
@@ -138,9 +140,11 @@ export default function CourseEditorPage() {
 						</Link>
 					) ) }
 				</nav>
-				{ ( 'outline' === tab.id || 'publish' === tab.id ) && (
-					<CourseViewAction key={ id } id={ id } />
-				) }
+				<div className="oml-builder-end">
+					{ ( 'outline' === tab.id || 'publish' === tab.id ) && (
+						<CourseViewAction key={ id } id={ id } />
+					) }
+				</div>
 			</header>
 			{ ( 'details' === tab.id || 'settings' === tab.id ) && (
 				<CourseForm key={ tab.id } id={ id } section={ tab.id } />
