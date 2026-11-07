@@ -68,5 +68,35 @@ table:has(.oml-courses-cell) th:not(.column-title):not(.check-column) {
 	white-space: nowrap;
 }
 
+/* Status control in each row, like Tutor's: a pill the author can change in place. */
+.oml-courses-status {
+	min-width: 120px;
+	padding: 2px 28px 2px 12px;
+	border: 1px solid #c3c4c7;
+	border-radius: 999px;
+	background-color: #fff;
+	color: #1d2327;
+	font-size: 13px;
+	line-height: 2;
+}
 
-/*# sourceMappingURL=admin-app-courses.0a3ba07c5f64.css.map*/
+.oml-courses-status[data-status="publish"] {
+	border-color: #00a32a;
+	background-color: #edfaef;
+	color: #007017;
+}
+
+.oml-courses-status[data-status="pending"],
+.oml-courses-status[data-status="future"] {
+	border-color: #dba617;
+	background-color: #fcf9e8;
+	color: #614200;
+}
+
+.oml-courses-status:focus-visible {
+	outline: 2px solid #2271b1;
+	outline-offset: 2px;
+}
+
+
+/*# sourceMappingURL=admin-app-courses.bc081788ff0c.css.map*/
