@@ -6,6 +6,7 @@ import { useBootstrap } from '../../bootstrap/BootstrapContext';
 import { hasCapability } from '../../bootstrap/config';
 import { BuilderSaveProvider } from '../../hooks/useBuilderSave';
 import { getCourse } from './api';
+import { CoursePlacement } from '../curriculum';
 import { CourseForm } from './CourseForm';
 import { CourseViewLink } from './CourseViewLink';
 import type { CourseDetail } from './types';
@@ -194,6 +195,9 @@ export default function CourseEditorPage() {
 					{ ( formStep || openedForm ) && (
 						<div hidden={ ! formStep }>
 							<CourseForm id={ id } />
+							<div className="oml-course-placement">
+								<CoursePlacement course={ id } />
+							</div>
 						</div>
 					) }
 					<Suspense

@@ -67,7 +67,7 @@ export function CoursePlacement( { course }: { course: number } ) {
 			<h2>{ __( 'Curriculum placement', 'ohmylms' ) }</h2>
 			<p>
 				{ __(
-					'Each placement change saves immediately, separately from the outline draft.',
+					'A published course appears in the student library under the subjects and curriculum items it is placed on. Each change saves immediately.',
 					'ohmylms'
 				) }
 			</p>

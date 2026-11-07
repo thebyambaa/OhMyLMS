@@ -17,6 +17,11 @@ vi.mock( './api', () => ( {
 let media: ReturnType< typeof mockMediaFrame >;
 
 afterEach( () => media.restore() );
+vi.mock( '../curriculum', () => ( {
+	CoursePlacement: ( { course }: { course: number } ) => (
+		<p>Placement of course { course }</p>
+	),
+} ) );
 vi.mock( '../course-structure/public', () => ( {
 	CourseOutline: ( { id }: { id: number } ) => (
 		<p>Outline of course { id }</p>
@@ -781,6 +786,22 @@ describe( 'the former steps', () => {
 		).toHaveAttribute( 'aria-current', 'page' );
 		expect(
 			screen.queryByRole( 'link', { name: 'Skill coverage' } )
+		).not.toBeInTheDocument();
+	} );
+} );
+
+describe( 'showing the course in the student library', () => {
+	it( 'puts the curriculum placement on Basics, under the form', async () => {
+		renderEditor();
+		await loaded();
+		expect( screen.getByText( 'Placement of course 7' ) ).toBeVisible();
+	} );
+
+	it( 'does not show it on the Curriculum step', async () => {
+		renderEditor( '/courses/7/outline' );
+		await screen.findByText( 'Outline of course 7' );
+		expect(
+			screen.queryByText( 'Placement of course 7' )
 		).not.toBeInTheDocument();
 	} );
 } );

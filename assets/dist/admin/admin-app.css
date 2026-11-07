@@ -888,5 +888,19 @@ body.oml-builder-fullscreen .oml-editor-header .oml-editor-view-link {
 	box-shadow: none;
 }
 
+/* Where the course appears in the student library, under the course form. */
+.ohmylms-app .oml-course-placement {
+	margin-top: var(--oml-space-4);
+	padding: var(--oml-space-4);
+	background: var(--oml-surface);
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-card);
+}
+
+.ohmylms-app .oml-course-placement h2 {
+	margin-top: 0;
+	font-size: var(--oml-font-size-lg);
+}
+
 
 /*# sourceMappingURL=admin-app.css.map*/
