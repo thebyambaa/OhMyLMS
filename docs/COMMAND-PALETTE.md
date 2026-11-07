@@ -20,7 +20,7 @@ Only users who can manage OhMyLMS see them.
   the current page and tab it sets `#<route>` instead, which the app's router opens without a reload. A command that
   sets its own `page` keeps it and opens `admin.php?page=<page>#<route>`.
 - An action is a route with `?action=`: `/content-hub/exams?action=new` opens
-  `admin.php?page=ohmylms-content&tab=exams&action=new`, the Exams tab with the New exam dialog open. The screen
+  `admin.php?page=ohmylms-bank&tab=exams&action=new`, the Exams tab with the New exam dialog open. The screen
   reads the parameter from its route and removes it once handled.
 
 ## Add a command

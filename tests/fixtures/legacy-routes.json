@@ -62,7 +62,7 @@
 		],
 		[
 			"/assignment-report/7/grade-assignment/3",
-			"page=ohmylms-content&tab=assignments&id=7&view=submissions&student=3"
+			"page=ohmylms-bank&tab=assignments&id=7&view=submissions&student=3"
 		],
 		[
 			"/accounthub",
@@ -78,11 +78,11 @@
 		],
 		[
 			"/quiz-report?search=unit",
-			"page=ohmylms-content&tab=quizzes&section=reports&search=unit"
+			"page=ohmylms-bank&tab=quizzes&section=reports&search=unit"
 		],
 		[
 			"/quiz-report/5/grade-quiz/9",
-			"page=ohmylms-content&tab=quizzes&id=5&view=attempts"
+			"page=ohmylms-bank&tab=quizzes&id=5&view=attempts"
 		],
 		[
 			"/content-hub",
@@ -94,7 +94,7 @@
 		],
 		[
 			"/lesson-edit/3",
-			"page=ohmylms-content&tab=lessons&id=3"
+			"page=ohmylms-bank&tab=lessons&id=3"
 		],
 		[
 			"/categories",
@@ -110,7 +110,7 @@
 		],
 		[
 			"/content-hub/exams?action=new",
-			"page=ohmylms-content&tab=exams&action=new"
+			"page=ohmylms-bank&tab=exams&action=new"
 		],
 		[
 			"/communities",

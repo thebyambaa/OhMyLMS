@@ -1,19 +1,18 @@
 // `NativeLessonEditor::return_url()` names the LMS screen to return to: an admin address
-// (`admin.php?page=ohmylms-content&tab=lessons`, see includes/Admin/AdminNavigation.php). Links saved
+// (`admin.php?page=ohmylms-bank&tab=lessons`, see includes/Admin/AdminNavigation.php). Links saved
 // before the admin pages had addresses name the legacy page or the retired app page with a hash route.
 const PAGES = [ 'ohmylms', 'ohmylms-app' ];
 const ROUTES =
 	/^#\/(?:content-hub|course-edit|courses|quizzes|exams|assignments)(?:[/?]|$)/;
 const CONTENT_PAGE = 'ohmylms-content';
-const CONTENT_TABS = [
-	'courses',
+const CONTENT_TABS = [ 'courses', 'skills', 'curriculum' ];
+const BANK_PAGE = 'ohmylms-bank';
+const BANK_TABS = [
 	'lessons',
 	'quizzes',
 	'exams',
 	'assignments',
 	'question-bank',
-	'skills',
-	'curriculum',
 ];
 
 /**
@@ -35,6 +34,9 @@ export function isReturnUrl( value, origin ) {
 		const page = url.searchParams.get( 'page' );
 		if ( CONTENT_PAGE === page ) {
 			return CONTENT_TABS.includes( url.searchParams.get( 'tab' ) ?? '' );
+		}
+		if ( BANK_PAGE === page ) {
+			return BANK_TABS.includes( url.searchParams.get( 'tab' ) ?? '' );
 		}
 		return PAGES.includes( page ?? '' ) && ROUTES.test( url.hash );
 	} catch {

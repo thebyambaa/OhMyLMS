@@ -275,7 +275,7 @@ try {
 	ok( call_private( \OhMyLMS\XApi\AdminPage::class, 'url', array( 'saved' ) ) === add_query_arg( 'xapi_notice', 'saved', address_url( 'page=ohmylms-settings&tab=settings&section=xapi' ) ), 'xAPI redirect opens the new section' );
 	ok( \OhMyLMS\Student\Hub::admin_home_url() === address_url( 'page=ohmylms-accounts&tab=schools' ), 'Student Home admin address opens Account Hub' );
 	ok( \OhMyLMS\Assessment\SkillAssessmentPage::url() === address_url( 'page=ohmylms-content&tab=skills&section=assessments' ), 'skill assessments are a Skills section' );
-	ok( \OhMyLMS\QuestionBank\ImportPage::url() === address_url( 'page=ohmylms-content&tab=question-bank&section=import-review' ), 'question import review is a Question bank section' );
+	ok( \OhMyLMS\QuestionBank\ImportPage::url() === address_url( 'page=ohmylms-bank&tab=question-bank&section=import-review' ), 'question import review is a Question bank section' );
 	add_filter(
 		'ohmylms_extension_admin_page_group',
 		static function ( $group, $id ) {
@@ -317,15 +317,15 @@ try {
 		'ohmylms/go-dashboard'      => array( OHMYLMS_SLUG, '/dashboard', 'page=ohmylms' ),
 		'ohmylms/go-content-hub'    => array( 'ohmylms-content', '/content-hub', 'page=ohmylms-content&tab=courses&section=overview' ),
 		'ohmylms/go-courses'        => array( 'ohmylms-content', '/courses', 'page=ohmylms-content&tab=courses' ),
-		'ohmylms/go-exams'          => array( 'ohmylms-content', '/exams', 'page=ohmylms-content&tab=exams' ),
-		'ohmylms/go-question-bank'  => array( 'ohmylms-content', '/content-hub/question-bank', 'page=ohmylms-content&tab=question-bank' ),
-		'ohmylms/go-assignments'    => array( 'ohmylms-content', '/assignments', 'page=ohmylms-content&tab=assignments' ),
+		'ohmylms/go-exams'          => array( 'ohmylms-content', '/exams', 'page=ohmylms-bank&tab=exams' ),
+		'ohmylms/go-question-bank'  => array( 'ohmylms-content', '/content-hub/question-bank', 'page=ohmylms-bank&tab=question-bank' ),
+		'ohmylms/go-assignments'    => array( 'ohmylms-content', '/assignments', 'page=ohmylms-bank&tab=assignments' ),
 		'ohmylms/go-account-hub'    => array( 'ohmylms-accounts', '/account-hub', 'page=ohmylms-accounts&tab=schools' ),
 		'ohmylms/go-memberships'    => array( 'ohmylms-commerce', '/memberships', 'page=ohmylms-commerce&tab=memberships' ),
 		'ohmylms/go-settings-pay'   => array( 'ohmylms-settings', '/settings?tab=payment-gateways', 'page=ohmylms-settings&tab=settings&section=payment-gateways' ),
 		'ohmylms/go-settings-email' => array( 'ohmylms-engagement', '/emails', 'page=ohmylms-engagement&tab=emails' ),
-		'ohmylms/new-question'      => array( 'ohmylms-content', '/content-hub/question-bank?action=new', 'page=ohmylms-content&tab=question-bank&action=new' ),
-		'ohmylms/new-exam'          => array( 'ohmylms-content', '/exams?action=new', 'page=ohmylms-content&tab=exams&action=new' ),
+		'ohmylms/new-question'      => array( 'ohmylms-content', '/content-hub/question-bank?action=new', 'page=ohmylms-bank&tab=question-bank&action=new' ),
+		'ohmylms/new-exam'          => array( 'ohmylms-content', '/exams?action=new', 'page=ohmylms-bank&tab=exams&action=new' ),
 		'addon/orders'              => array( 'ohmylms-commerce', '/orders', 'page=ohmylms-commerce&tab=orders' ),
 	);
 	foreach ( $expect as $name => $target ) {
@@ -737,8 +737,8 @@ try {
 	$attempts[] = $submission;
 	ok( $submission > 0, 'submission created' );
 	$grading = LegacyRoutes::assignment_grading_url( $assignment, $student );
-	ok( address_url( 'page=ohmylms-content&tab=assignments&id=' . $assignment . '&view=submissions&submissionId=' . $submission ) === $grading, 'grading url names the submission, got ' . $grading );
-	ok( LegacyRoutes::assignment_grading_url( $assignment, $student + 100000 ) === address_url( 'page=ohmylms-content&tab=assignments&id=' . $assignment . '&view=submissions&student=' . ( $student + 100000 ) ), 'grading url without a submission opens the list' );
+	ok( address_url( 'page=ohmylms-bank&tab=assignments&id=' . $assignment . '&view=submissions&submissionId=' . $submission ) === $grading, 'grading url names the submission, got ' . $grading );
+	ok( LegacyRoutes::assignment_grading_url( $assignment, $student + 100000 ) === address_url( 'page=ohmylms-bank&tab=assignments&id=' . $assignment . '&view=submissions&student=' . ( $student + 100000 ) ), 'grading url without a submission opens the list' );
 
 	$mails   = array();
 	$capture = static function ( $short_circuit, $atts ) use ( &$mails ) {
@@ -769,7 +769,7 @@ try {
 	ok( 2 === count( $mails ), 'single and digest emails rendered' );
 	ok( false !== strpos( $mails[0]['message'], 'href="' . esc_url( $grading ) . '"' ), 'single email button opens the grading screen' );
 	ok( false === strpos( $mails[0]['message'], 'page=' . OHMYLMS_SLUG . '#' ) && false === strpos( $mails[0]['message'], AppPage::SLUG ), 'single email has no hash link' );
-	ok( false !== strpos( $mails[1]['message'], 'href="' . esc_url( address_url( 'page=ohmylms-content&tab=assignments' ) ) . '"' ), 'digest email button opens the assignments list' );
+	ok( false !== strpos( $mails[1]['message'], 'href="' . esc_url( address_url( 'page=ohmylms-bank&tab=assignments' ) ) . '"' ), 'digest email button opens the assignments list' );
 
 	echo "Legacy routes and navigation: {$checks} checks passed.\n";
 } catch ( Throwable $error ) {

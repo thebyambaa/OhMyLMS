@@ -1,6 +1,6 @@
 <?php // phpcs:ignore WordPress.Files.FileName -- PSR-4 class/file mapping (OhMyLMS\ => includes/); see docs/CODING-STANDARDS.md.
 /**
- * The six OhMyLMS admin pages, their tabs and sections, and the addresses of the app's screens.
+ * The seven OhMyLMS admin pages, their tabs and sections, and the addresses of the app's screens.
  *
  * @package OhMyLMS
  */
@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * One source for the admin navigation (docs/ADMIN-REDESIGN.md, "Pages and tabs").
  *
- * - {@see AdminNavigation::groups()}: the pages (Dashboard, Content Hub, Account Hub, Commerce, Engagement,
+ * - {@see AdminNavigation::groups()}: the pages (Dashboard, Content Hub, Content Bank, Account Hub, Commerce, Engagement,
  *   Settings) with their tabs (`&tab=`) and sections (`&section=`, `.subsubsub` links), each tab with a
  *   capability and an optional flag filter.
  * - {@see AdminNavigation::routes()}: every screen of the admin app with its place on those pages; the
@@ -141,23 +141,6 @@ final class AdminNavigation {
 							'overview' => __( 'Overview', 'ohmylms' ),
 						),
 					),
-					'lessons'       => array( 'label' => __( 'Lessons', 'ohmylms' ) ),
-					'quizzes'       => array(
-						'label'      => __( 'Quizzes', 'ohmylms' ),
-						'capability' => 'edit_posts',
-						'sections'   => array(
-							''        => __( 'All quizzes', 'ohmylms' ),
-							'reports' => __( 'Reports', 'ohmylms' ),
-						),
-					),
-					'exams'         => array(
-						'label'      => __( 'Exams', 'ohmylms' ),
-						'capability' => 'edit_posts',
-					),
-					'assignments'   => array(
-						'label'      => __( 'Assignments', 'ohmylms' ),
-						'capability' => 'edit_posts',
-					),
 					'gradebook'     => array(
 						'label'      => __( 'Gradebook', 'ohmylms' ),
 						'capability' => \OhMyLMS\Gradebook\Access::CAPABILITY,
@@ -167,17 +150,6 @@ final class AdminNavigation {
 							'student' => __( 'Student transcript', 'ohmylms' ),
 							'mastery' => __( 'Skill mastery', 'ohmylms' ),
 							'rollup'  => __( 'Org roll-up', 'ohmylms' ),
-						),
-					),
-					'question-bank' => array(
-						'label'      => __( 'Question bank', 'ohmylms' ),
-						'capability' => 'edit_posts',
-						'sections'   => array(
-							''              => __( 'Questions', 'ohmylms' ),
-							'import-review' => array(
-								'label'  => __( 'Import review', 'ohmylms' ),
-								'render' => array( ImportPage::class, 'render' ),
-							),
 						),
 					),
 					'skills'        => array(
@@ -228,6 +200,40 @@ final class AdminNavigation {
 							),
 							'subjects'   => __( 'Subject profiles', 'ohmylms' ),
 							'taxonomies' => __( 'Categories and tags', 'ohmylms' ),
+						),
+					),
+				),
+			),
+			'bank'       => array(
+				'page'  => 'ohmylms-bank',
+				'label' => __( 'Content Bank', 'ohmylms' ),
+				'tabs'  => array(
+					'lessons'       => array( 'label' => __( 'Lessons', 'ohmylms' ) ),
+					'quizzes'       => array(
+						'label'      => __( 'Quizzes', 'ohmylms' ),
+						'capability' => 'edit_posts',
+						'sections'   => array(
+							''        => __( 'All quizzes', 'ohmylms' ),
+							'reports' => __( 'Reports', 'ohmylms' ),
+						),
+					),
+					'exams'         => array(
+						'label'      => __( 'Exams', 'ohmylms' ),
+						'capability' => 'edit_posts',
+					),
+					'assignments'   => array(
+						'label'      => __( 'Assignments', 'ohmylms' ),
+						'capability' => 'edit_posts',
+					),
+					'question-bank' => array(
+						'label'      => __( 'Question bank', 'ohmylms' ),
+						'capability' => 'edit_posts',
+						'sections'   => array(
+							''              => __( 'Questions', 'ohmylms' ),
+							'import-review' => array(
+								'label'  => __( 'Import review', 'ohmylms' ),
+								'render' => array( ImportPage::class, 'render' ),
+							),
 						),
 					),
 				),
@@ -370,6 +376,7 @@ final class AdminNavigation {
 	 */
 	public static function routes() {
 		$content  = array( 'group' => 'content' );
+		$bank     = array( 'group' => 'bank' );
 		$commerce = array( 'group' => 'commerce' );
 		$accounts = array( 'group' => 'accounts' );
 		$engage   = array( 'group' => 'engagement' );
@@ -518,12 +525,12 @@ final class AdminNavigation {
 					'params' => array( 'tab' => 'view' ),
 				),
 			),
-			array( 'quizzes', '/quizzes', $content + array( 'tab' => 'quizzes' ) ),
-			array( 'quizzes-editor', '/quizzes/:id', $content + array( 'tab' => 'quizzes' ) ),
+			array( 'quizzes', '/quizzes', $bank + array( 'tab' => 'quizzes' ) ),
+			array( 'quizzes-editor', '/quizzes/:id', $bank + array( 'tab' => 'quizzes' ) ),
 			array(
 				'quizzes-attempts',
 				'/quizzes/:id/attempts',
-				$content + array(
+				$bank + array(
 					'tab'  => 'quizzes',
 					'view' => 'attempts',
 				),
@@ -531,17 +538,17 @@ final class AdminNavigation {
 			array(
 				'quiz-reports',
 				'/reports/quizzes',
-				$content + array(
+				$bank + array(
 					'tab'     => 'quizzes',
 					'section' => 'reports',
 				),
 			),
-			array( 'assignments', '/assignments', $content + array( 'tab' => 'assignments' ) ),
-			array( 'assignments-editor', '/assignments/:id', $content + array( 'tab' => 'assignments' ) ),
+			array( 'assignments', '/assignments', $bank + array( 'tab' => 'assignments' ) ),
+			array( 'assignments-editor', '/assignments/:id', $bank + array( 'tab' => 'assignments' ) ),
 			array(
 				'assignments-submissions',
 				'/assignments/:id/submissions',
-				$content + array(
+				$bank + array(
 					'tab'  => 'assignments',
 					'view' => 'submissions',
 				),
@@ -549,7 +556,7 @@ final class AdminNavigation {
 			array(
 				'assignments-grading',
 				'/assignments/:id/submissions/:submissionId',
-				$content + array(
+				$bank + array(
 					'tab'  => 'assignments',
 					'view' => 'submissions',
 				),
@@ -587,16 +594,16 @@ final class AdminNavigation {
 					'section' => 'rollup',
 				),
 			),
-			array( 'exams', '/exams', $content + array( 'tab' => 'exams' ) ),
+			array( 'exams', '/exams', $bank + array( 'tab' => 'exams' ) ),
 			array(
 				'exams-import-review',
 				'/exams/imports/:jobId',
-				$content + array(
+				$bank + array(
 					'tab'  => 'exams',
 					'view' => 'import',
 				),
 			),
-			array( 'exams-editor', '/exams/:id', $content + array( 'tab' => 'exams' ) ),
+			array( 'exams-editor', '/exams/:id', $bank + array( 'tab' => 'exams' ) ),
 			array(
 				'course-settings-editor',
 				'/content-hub/courses/:id/settings',
@@ -605,10 +612,10 @@ final class AdminNavigation {
 					'view' => 'structure-settings',
 				),
 			),
-			array( 'lessons', '/content-hub/lessons', $content + array( 'tab' => 'lessons' ) ),
-			array( 'lesson-editor', '/content-hub/lessons/:id', $content + array( 'tab' => 'lessons' ) ),
-			array( 'questions', '/content-hub/question-bank', $content + array( 'tab' => 'question-bank' ) ),
-			array( 'questions-editor', '/content-hub/question-bank/:id', $content + array( 'tab' => 'question-bank' ) ),
+			array( 'lessons', '/content-hub/lessons', $bank + array( 'tab' => 'lessons' ) ),
+			array( 'lesson-editor', '/content-hub/lessons/:id', $bank + array( 'tab' => 'lessons' ) ),
+			array( 'questions', '/content-hub/question-bank', $bank + array( 'tab' => 'question-bank' ) ),
+			array( 'questions-editor', '/content-hub/question-bank/:id', $bank + array( 'tab' => 'question-bank' ) ),
 			array( 'orders', '/orders', $commerce + array( 'tab' => 'orders' ) ),
 			array( 'order-detail', '/orders/:id', $commerce + array( 'tab' => 'orders' ) ),
 			array( 'coupons', '/coupons', $commerce + array( 'tab' => 'coupons' ) ),

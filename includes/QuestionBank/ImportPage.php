@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Question review and bulk import: Content Hub > Question bank > Import review
- * (`admin.php?page=ohmylms-content&tab=question-bank&section=import-review`), a section the server renders
+ * (`admin.php?page=ohmylms-bank&tab=question-bank&section=import-review`), a section the server renders
  * ({@see \OhMyLMS\Admin\AdminNavigation}). It reviews the questions AI assistants added.
  */
 final class ImportPage {

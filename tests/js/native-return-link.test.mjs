@@ -17,10 +17,10 @@ test( 'native editors restore return links to the legacy page and the new app', 
 		`${ admin }?page=ohmylms-app#/quizzes`,
 		`${ admin }?page=ohmylms-app#/exams`,
 		`${ admin }?page=ohmylms-app#/content-hub/question-bank`,
-		`${ admin }?page=ohmylms-content&tab=lessons`,
+		`${ admin }?page=ohmylms-bank&tab=lessons`,
 		`${ admin }?page=ohmylms-content&tab=courses&id=5&view=outline`,
 		`${ admin }?page=ohmylms-content&tab=curriculum&id=24&view=syllabus&node=s%3A1`,
-		`${ admin }?page=ohmylms-content&tab=question-bank`,
+		`${ admin }?page=ohmylms-bank&tab=question-bank`,
 	] ) {
 		assert.equal( isReturnUrl( url, origin ), true, url );
 	}
@@ -30,7 +30,7 @@ test( 'native editors reject admin addresses outside the Content Hub', () => {
 	for ( const url of [
 		`${ admin }?page=ohmylms-settings&tab=settings`,
 		`${ admin }?page=ohmylms-content&tab=nope`,
-		`${ origin }/wp-admin/edit.php?page=ohmylms-content&tab=lessons`,
+		`${ origin }/wp-admin/edit.php?page=ohmylms-bank&tab=lessons`,
 	] ) {
 		assert.equal( isReturnUrl( url, origin ), false, url );
 	}

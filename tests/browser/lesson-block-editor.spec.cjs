@@ -23,7 +23,7 @@ test( 'native Gutenberg edits lessons and saves LMS settings together', async ( 
 		);
 	}
 	await page.goto(
-		'/wp-admin/admin.php?page=ohmylms-content&tab=lessons'
+		'/wp-admin/admin.php?page=ohmylms-bank&tab=lessons'
 	);
 	await page.waitForFunction( () => window.wp?.apiFetch );
 	const lesson = await page.evaluate( () =>

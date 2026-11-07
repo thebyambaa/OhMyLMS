@@ -1,12 +1,13 @@
 import type { ComponentType, Element } from '@wordpress/element';
 
 /**
- * The six WordPress admin pages of OhMyLMS (includes/Admin/AdminNavigation.php): Dashboard, Content Hub,
+ * The seven WordPress admin pages of OhMyLMS (includes/Admin/AdminNavigation.php): Dashboard, Content Hub, Content Bank,
  * Account Hub, Commerce, Engagement and Settings.
  */
 export type AdminGroup =
 	| 'dashboard'
 	| 'content'
+	| 'bank'
 	| 'accounts'
 	| 'commerce'
 	| 'engagement'

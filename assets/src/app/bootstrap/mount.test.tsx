@@ -89,9 +89,9 @@ describe( 'mountApp', () => {
 		expect(
 			readPlace(
 				document.createElement( 'div' ),
-				'?page=ohmylms-content&tab=quizzes'
+				'?page=ohmylms-bank&tab=quizzes'
 			)
-		).toEqual( { page: 'ohmylms-content', tab: 'quizzes', section: '' } );
+		).toEqual( { page: 'ohmylms-bank', tab: 'quizzes', section: '' } );
 	} );
 
 	it( 'uses its own registry when the host is not loaded', async () => {

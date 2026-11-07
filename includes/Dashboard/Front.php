@@ -190,11 +190,11 @@ final class Front {
 			'links'     => array(
 				'gradebook' => admin_url( 'admin.php?page=ohmylms-content&tab=gradebook' ),
 				'courses'   => admin_url( 'admin.php?page=ohmylms-content&tab=courses' ),
-				'lessons'   => admin_url( 'admin.php?page=ohmylms-content&tab=lessons' ),
-				'quizzes'   => admin_url( 'admin.php?page=ohmylms-content&tab=quizzes' ),
+				'lessons'   => admin_url( 'admin.php?page=ohmylms-bank&tab=lessons' ),
+				'quizzes'   => admin_url( 'admin.php?page=ohmylms-bank&tab=quizzes' ),
 				'skills'    => admin_url( 'admin.php?page=ohmylms-content&tab=skills' ),
 				'commerce'  => admin_url( 'admin.php?page=ohmylms-commerce' ),
-				'reports'   => admin_url( 'admin.php?page=ohmylms-content&tab=quizzes&section=reports' ),
+				'reports'   => admin_url( 'admin.php?page=ohmylms-bank&tab=quizzes&section=reports' ),
 			),
 		);
 	}

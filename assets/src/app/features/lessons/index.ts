@@ -6,7 +6,7 @@ export const lessons: FeatureDefinition = {
 	id: 'lessons',
 	title: __( 'Lessons', 'ohmylms' ),
 	path: '/content-hub/lessons',
-	group: 'content',
+	group: 'bank',
 	tab: 'lessons',
 	capability: 'manage_options',
 	component: lazy(
@@ -20,7 +20,7 @@ export const lessonEditor: FeatureDefinition = {
 	id: 'lesson-editor',
 	title: __( 'Lesson editor', 'ohmylms' ),
 	path: '/content-hub/lessons/:id',
-	group: 'content',
+	group: 'bank',
 	tab: 'lessons',
 	extensionRoute: '/lesson-edit/:id',
 	capability: 'manage_options',
