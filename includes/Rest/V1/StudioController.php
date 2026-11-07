@@ -16,6 +16,7 @@ use OhMyLMS\QuestionBank\DraftWriter;
 use OhMyLMS\Quiz\QuizSettings;
 use OhMyLMS\Quiz\QuizSkills;
 use OhMyLMS\Skills\Taxonomy;
+use OhMyLMS\Studio\CourseLayout;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -180,25 +181,15 @@ class StudioController extends RestController {
 		if ( ! $this->can_edit( $course ) || OHMYLMS_COURSE_CPT !== get_post_type( $course ) ) {
 			return new \WP_Error( 'ohmylms_studio_forbidden', __( 'You cannot reorder this course.', 'ohmylms' ), array( 'status' => 403 ) );
 		}
-		$body  = $request->get_json_params();
-		$units = isset( $body['units'] ) && is_array( $body['units'] ) ? $body['units'] : array();
-		global $wpdb;
+		$body     = $request->get_json_params();
+		$units    = isset( $body['units'] ) && is_array( $body['units'] ) ? $body['units'] : array();
 		$position = 1;
 		foreach ( $units as $unit ) {
 			$chapter = isset( $unit['id'] ) ? absint( $unit['id'] ) : 0;
-			if ( ! $chapter || ! $this->chapter_in_course( $chapter, $course ) ) {
+			if ( ! $chapter || ! CourseLayout::chapter_in_course( $chapter, $course ) ) {
 				continue;
 			}
-			$wpdb->update(
-				$wpdb->prefix . 'ohmylms_chapter_relationship',
-				array( 'order_number' => $position ),
-				array(
-					'course_id'  => $course,
-					'chapter_id' => $chapter,
-				),
-				array( '%d' ),
-				array( '%d', '%d' )
-			); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			CourseLayout::set_chapter_position( $course, $chapter, $position );
 			++$position;
 			$item_position = 1;
 			$items         = isset( $unit['items'] ) && is_array( $unit['items'] ) ? $unit['items'] : array();
@@ -207,16 +198,7 @@ class StudioController extends RestController {
 				if ( ! $content ) {
 					continue;
 				}
-				$wpdb->update(
-					$wpdb->prefix . 'ohmylms_content_relationship',
-					array( 'order_number' => $item_position ),
-					array(
-						'chapter_id' => $chapter,
-						'content_id' => $content,
-					),
-					array( '%d' ),
-					array( '%d', '%d' )
-				); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+				CourseLayout::set_content_position( $chapter, $content, $item_position );
 				++$item_position;
 			}
 		}
@@ -250,17 +232,7 @@ class StudioController extends RestController {
 		if ( is_wp_error( $chapter ) ) {
 			return $chapter;
 		}
-		global $wpdb;
-		$next = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT MAX(order_number) FROM %i WHERE course_id=%d', $wpdb->prefix . 'ohmylms_chapter_relationship', $course ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-			$wpdb->prefix . 'ohmylms_chapter_relationship',
-			array(
-				'course_id'    => $course,
-				'chapter_id'   => (int) $chapter,
-				'order_number' => $next + 1,
-			),
-			array( '%d', '%d', '%d' )
-		);
+		CourseLayout::append_chapter( $course, (int) $chapter );
 		return $this->course( $request );
 	}
 
@@ -304,20 +276,9 @@ class StudioController extends RestController {
 		if ( $quiz && $skills ) {
 			QuizSkills::set( (int) $post, $skills );
 		}
-		global $wpdb;
-		$next = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT MAX(order_number) FROM %i WHERE chapter_id=%d', $wpdb->prefix . 'ohmylms_content_relationship', $chapter ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$type = $quiz ? 'quiz' : ( 'video' === $kind ? 'video' : ( 'article' === $kind ? 'text' : 'lesson' ) );
-		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-			$wpdb->prefix . 'ohmylms_content_relationship',
-			array(
-				'chapter_id'   => $chapter,
-				'content_id'   => (int) $post,
-				'content_type' => $type,
-				'order_number' => $next + 1,
-			),
-			array( '%d', '%d', '%s', '%d' )
-		);
-		$course = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT course_id FROM %i WHERE chapter_id=%d LIMIT 1', $wpdb->prefix . 'ohmylms_chapter_relationship', $chapter ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		CourseLayout::append_content( $chapter, (int) $post, $type );
+		$course = CourseLayout::course_of( $chapter );
 		$request->set_param( 'id', $course );
 		return $this->course( $request );
 	}
@@ -591,13 +552,10 @@ class StudioController extends RestController {
 	 * @return array
 	 */
 	private function units( $course ) {
-		global $wpdb;
-		$chapters = $wpdb->get_results( $wpdb->prepare( 'SELECT chapter_id, order_number FROM %i WHERE course_id=%d ORDER BY order_number, chapter_id', $wpdb->prefix . 'ohmylms_chapter_relationship', $course ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-		$out      = array();
-		foreach ( (array) $chapters as $chapter ) {
-			$items = $wpdb->get_results( $wpdb->prepare( 'SELECT content_id, content_type, order_number FROM %i WHERE chapter_id=%d ORDER BY order_number, content_id', $wpdb->prefix . 'ohmylms_content_relationship', $chapter->chapter_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-			$rows  = array();
-			foreach ( (array) $items as $item ) {
+		$out = array();
+		foreach ( CourseLayout::chapters( $course ) as $chapter ) {
+			$rows = array();
+			foreach ( CourseLayout::contents( (int) $chapter->chapter_id ) as $item ) {
 				$post = get_post( (int) $item->content_id );
 				if ( ! $post ) {
 					continue;
@@ -622,37 +580,22 @@ class StudioController extends RestController {
 	}
 
 	/**
-	 * Whether the chapter belongs to the course.
-	 *
-	 * @param int $chapter Chapter ID.
-	 * @param int $course  Course ID.
-	 * @return bool
-	 */
-	private function chapter_in_course( $chapter, $course ) {
-		global $wpdb;
-		return (bool) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE course_id=%d AND chapter_id=%d', $wpdb->prefix . 'ohmylms_chapter_relationship', $course, $chapter ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-	}
-
-	/**
 	 * Questions placed on a quiz. Bodies are read from the question posts, not copied.
 	 *
 	 * @param int $quiz Quiz ID.
 	 * @return array
 	 */
 	private function questions( $quiz ) {
-		global $wpdb;
-		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT question_id FROM %i WHERE quiz_id=%d ORDER BY order_number, question_id', $wpdb->prefix . 'ohmylms_quiz_questions_relationship', $quiz ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-		$out  = array();
-		foreach ( (array) $rows as $row ) {
+		$out = array();
+		foreach ( CourseLayout::quiz_questions( $quiz ) as $row ) {
 			$post = get_post( (int) $row->question_id );
 			if ( ! $post ) {
 				continue;
 			}
 			$settings = get_post_meta( $post->ID, '_question_settings', true );
 			$settings = is_array( $settings ) ? $settings : array();
-			$answers  = $wpdb->get_results( $wpdb->prepare( 'SELECT id, answer, is_correct FROM %i WHERE question_id=%d ORDER BY order_number, id', $wpdb->prefix . 'ohmylms_question_answers', $post->ID ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 			$choices  = array();
-			foreach ( (array) $answers as $answer ) {
+			foreach ( CourseLayout::answers( $post->ID ) as $answer ) {
 				$choices[] = array(
 					'id'      => (int) $answer->id,
 					'text'    => wp_strip_all_tags( (string) $answer->answer ),
@@ -773,11 +716,7 @@ class StudioController extends RestController {
 			$grade = get_term( $parent, Taxonomy::NAME );
 			$depth = ( $grade && ! is_wp_error( $grade ) && $grade->parent ) ? 'skill' : 'grade';
 		}
-		$uses = (int) $term->count;
-		global $wpdb;
-		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->prefix . 'ohmylms_quiz_skills' ) ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-			$uses += (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE term_id=%d', $wpdb->prefix . 'ohmylms_quiz_skills', $term->term_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-		}
+		$uses = (int) $term->count + CourseLayout::quiz_skill_uses( (int) $term->term_id );
 		return array(
 			'id'            => (int) $term->term_id,
 			'name'          => $term->name,

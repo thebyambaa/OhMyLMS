@@ -13,6 +13,7 @@ use OhMyLMS\Dashboard\FrontSummary;
 use OhMyLMS\Design\DesignSystem;
 use OhMyLMS\Design\Mascot;
 use OhMyLMS\Design\Tokens;
+use OhMyLMS\Schools\PeopleSearch;
 use OhMyLMS\Schools\Service;
 use OhMyLMS\Schools\Settings as SchoolSettings;
 
@@ -567,19 +568,11 @@ class FrontDashboardController extends RestController {
 	 * @return array
 	 */
 	private function member_rows( array $scope, $role, $search ) {
-		global $wpdb;
 		if ( ! $scope['schema'] || ! $scope['school_ids'] ) {
 			return array();
 		}
-		$ids  = $scope['school_ids'];
-		$in   = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-		$like = '%' . $wpdb->esc_like( $search ) . '%';
-		if ( 'guardian' === $role ) {
-			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT i.id,i.email AS name,i.email,'' AS school FROM %i i WHERE i.role='guardian' AND i.consumed_at IS NULL AND i.revoked_at IS NULL AND i.school_id IN ($in) AND i.email LIKE %s ORDER BY i.id DESC LIMIT 50", array_merge( array( \OhMyLMS\Schools\Schema::table( 'school_invitations' ) ), $ids, array( $like ) ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		} else {
-			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT u.ID AS id,u.display_name AS name,u.user_email AS email,s.name AS school FROM %i m JOIN {$wpdb->users} u ON u.ID=m.user_id JOIN %i s ON s.id=m.school_id WHERE m.status='active' AND m.role=%s AND m.school_id IN ($in) AND (u.display_name LIKE %s OR u.user_email LIKE %s) ORDER BY u.display_name LIMIT 50", array_merge( array( \OhMyLMS\Schools\Schema::table( 'school_memberships' ), \OhMyLMS\Schools\Schema::table( 'schools' ), $role ), $ids, array( $like, $like ) ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		}
-		$out = array();
+		$rows = PeopleSearch::find( $scope['school_ids'], $role, $search );
+		$out  = array();
 		foreach ( (array) $rows as $row ) {
 			$out[] = array(
 				'id'     => (int) ( $row['id'] ?? 0 ),
@@ -630,12 +623,7 @@ class FrontDashboardController extends RestController {
 	 * @return int
 	 */
 	private function class_by_name( $school, $name ) {
-		global $wpdb;
-		$name = trim( $name );
-		if ( '' === $name ) {
-			return 0;
-		}
-		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE school_id=%d AND name=%s AND status=%s LIMIT 1', \OhMyLMS\Schools\Schema::table( 'classes' ), $school, $name, 'active' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		return PeopleSearch::class_id_by_name( $school, $name );
 	}
 
 	/**
