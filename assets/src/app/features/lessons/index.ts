@@ -28,7 +28,7 @@ export const lessonEditor: FeatureDefinition = {
 	component: lazy(
 		() =>
 			import(
-				/* webpackChunkName: "admin-app-lessons" */ './LessonEditorPage'
+				/* webpackChunkName: "admin-app-lessons" */ './LessonRedirect'
 			)
 	),
 };

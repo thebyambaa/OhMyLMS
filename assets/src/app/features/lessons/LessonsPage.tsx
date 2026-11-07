@@ -1,7 +1,6 @@
 import { Button, Modal, Notice, TextControl } from '@wordpress/components';
 import { useCallback, useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
-import { Link, useNavigate } from 'react-router-dom';
 import { useListState } from '../../components/listQuery';
 import { useRequest } from '../../hooks/useRequest';
 import { useOperation } from '../../hooks/useOperation';
@@ -12,6 +11,7 @@ import {
 import { newId } from '../../lib/uuid';
 import { ListTable } from '../../../ui/ListTable';
 import { createLesson, listLessons } from './api';
+import { blockEditorUrl } from './editUrl';
 import {
 	LearnerPreviewNotices,
 	useLearnerPreview,
@@ -25,7 +25,7 @@ const NO_FILTERS = { search: '' };
 
 /**
  * Lesson list (`tab=lessons`): paged and searchable, with the search and page in the address. "Add
- * lesson" names a draft in a dialog and opens it in the lesson editor.
+ * lesson" names a draft in a dialog and opens it in the WordPress block editor.
  */
 export default function LessonsPage() {
 	const list = useListState( NO_FILTERS, { search: 's' } );
@@ -36,7 +36,6 @@ export default function LessonsPage() {
 	const [ creating, setCreating ] = useState( false );
 	const [ title, setTitle ] = useState( '' );
 	const [ requestId, setRequestId ] = useState( newId );
-	const navigate = useNavigate();
 	const load = useCallback(
 		( signal: AbortSignal ) => listLessons( page, search, signal ),
 		[ page, search ]
@@ -107,12 +106,12 @@ export default function LessonsPage() {
 							primary: true,
 							render: ( lesson ) => (
 								<strong>
-									<Link
+									<a
 										className="row-title"
-										to={ `/content-hub/lessons/${ lesson.id }` }
+										href={ blockEditorUrl( lesson.id ) }
 									>
 										{ lesson.title }
-									</Link>
+									</a>
 								</strong>
 							),
 						},
@@ -126,13 +125,7 @@ export default function LessonsPage() {
 						{
 							key: 'edit',
 							label: __( 'Edit', 'ohmylms' ),
-							render: (
-								<Link
-									to={ `/content-hub/lessons/${ lesson.id }` }
-								>
-									{ __( 'Edit', 'ohmylms' ) }
-								</Link>
-							),
+							href: blockEditorUrl( lesson.id ),
 						},
 						{
 							key: 'view',
@@ -170,8 +163,8 @@ export default function LessonsPage() {
 								( signal ) =>
 									createLesson( title, requestId, signal ),
 								( lesson ) =>
-									navigate(
-										`/content-hub/lessons/${ lesson.id }`
+									window.location.assign(
+										blockEditorUrl( lesson.id )
 									)
 							);
 						} }
