@@ -1,6 +1,6 @@
 # Extension API version 1
 
-Skills is a core feature with no Add-ons switch. The skill library (catalogue, prerequisites and lesson/course links) is the Skills tab of the Content Hub (`admin.php?page=ohmylms-content&tab=skills`; the old `#/extensions/skills` address opens it). See [CONTENT-HUB.md](CONTENT-HUB.md).
+Skills is a core feature with no Add-ons switch. The skill library (catalogue, prerequisites and lesson/course links) is the first section of Curriculum › Tools (`admin.php?page=ohmylms-curriculum&tab=tools`; the old `#/extensions/skills` address and the old Content Hub Skills address open it). See [CURRICULUM.md](CURRICULUM.md).
 
 Feature code can live in `modules/<id>/` or a separate plugin. Internal modules load only via `OHMYLMS_ENABLED_MODULES` or `ohmylms_enabled_modules`. The examples module is disabled by default.
 

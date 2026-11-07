@@ -109,7 +109,7 @@ test( 'native Gutenberg edits lessons and saves LMS settings together', async ( 
 				.first()
 		).toHaveAttribute(
 			'href',
-			/admin\.php\?page=ohmylms-content&tab=curriculum&id=24&view=syllabus&node=s%3A1$/
+			/admin\.php\?page=ohmylms-curriculum&tab=workspace&id=24&view=syllabus&node=s%3A1$/
 		);
 		await page
 			.getByRole( 'button', { name: 'Block Inserter', exact: true } )

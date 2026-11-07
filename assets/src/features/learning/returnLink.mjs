@@ -5,7 +5,10 @@ const PAGES = [ 'ohmylms', 'ohmylms-app' ];
 const ROUTES =
 	/^#\/(?:content-hub|course-edit|courses|quizzes|exams|assignments)(?:[/?]|$)/;
 const CONTENT_PAGE = 'ohmylms-content';
+// `skills` and `curriculum` are the former tabs of the Content Hub; links saved before they moved still arrive.
 const CONTENT_TABS = [ 'courses', 'skills', 'curriculum' ];
+const CURRICULUM_PAGE = 'ohmylms-curriculum';
+const CURRICULUM_TABS = [ 'workspace', 'tools' ];
 const BANK_PAGE = 'ohmylms-bank';
 const BANK_TABS = [
 	'lessons',
@@ -34,6 +37,11 @@ export function isReturnUrl( value, origin ) {
 		const page = url.searchParams.get( 'page' );
 		if ( CONTENT_PAGE === page ) {
 			return CONTENT_TABS.includes( url.searchParams.get( 'tab' ) ?? '' );
+		}
+		if ( CURRICULUM_PAGE === page ) {
+			return CURRICULUM_TABS.includes(
+				url.searchParams.get( 'tab' ) ?? ''
+			);
 		}
 		if ( BANK_PAGE === page ) {
 			return BANK_TABS.includes( url.searchParams.get( 'tab' ) ?? '' );

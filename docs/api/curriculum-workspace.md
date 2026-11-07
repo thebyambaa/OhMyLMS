@@ -52,9 +52,9 @@ staff get the same 403 `ohmylms_skill_overlay_forbidden`; administrators keep 40
 `ohmylms_skill_map_student` for a missing user. Every write of the map (skill links, mappings, placement,
 subject profiles, the skill workspace) stays with curriculum administrators.
 
-**Navigation.** The Curriculum tab stays `manage_options`; its `skill-map` section carries the staff
-capability `ohmylms_view_dashboard`. `AdminNavigation::visible_tabs()` shows school staff a site tab
-through its staff sections only, so a teacher's Content Hub has Gradebook and a Curriculum tab holding
+**Navigation.** The Curriculum page (`ohmylms-curriculum`) holds the Curriculum workspace tab, which stays `manage_options`, and
+the Tools tab, whose `skill-map` section carries the staff capability `ohmylms_view_dashboard`. `AdminNavigation::visible_tabs()` shows school staff a site tab
+through its staff sections only, so a teacher's Content Hub has Gradebook and the Curriculum page has a Tools tab holding
 just **Skill map** (its default section; other `&section=` values fall back to it). The app feature
 `curriculum-skill-map` requires `ohmylms_view_dashboard`; the other curriculum features keep
 `manage_options`.
@@ -171,7 +171,7 @@ add from sources; folders are kept and new steps join the first) with the same k
 shows one learner's shared mastery and per-syllabus coverage by user ID.
 
 Combined mapping groups, AI runs and suggestions, shared content links, domain/level placement,
-skill-owned quizzes and provenance review are Content Hub › Skills sections (`/content-hub/skills/<section>`);
+skill-owned quizzes and provenance review are Curriculum › Tools sections (`/content-hub/skills/<section>`);
 this screen's former `?tab=mappings|ai|content|placement|quizzes|provenance` open them. See
 [skill workspace](skill-workspace.md). The
 `/mapping-groups*`, `/ai/*` and `/shared-skills/:id/content` routes now have typed arguments.
@@ -194,7 +194,7 @@ search (scoped, names only, bounded), no e-mails, and the map page for staff: te
 administrators and administrators read the subjects and the map, anonymous users and learners are
 refused, a teacher's `student_id` limited to their class (another class and a missing learner answer
 alike; administrators still get 404), the link and subject profile writes refused to a teacher, and the
-navigation (a teacher's Curriculum tab holds only the skill map and opens on it; learners get no tab;
+navigation (a teacher's Curriculum Tools tab holds only the skill map and opens on it; learners get no tab;
 administrators keep every section). Fixtures reuse `tests/php/support/mastery-fixture.php` and are
 removed in `finally`. `features/curriculum/skill-map-overlay.test.ts`, `SkillMapPage.test.tsx` and
 `WorkspaceScreens.test.tsx` (the map opened with only `ohmylms_view_dashboard`) cover the parser, the

@@ -491,24 +491,24 @@ try {
 	);
 	ok( 403 === rest_do_request( $link )->get_status(), 'a teacher cannot edit the links of the map' );
 	ok( 403 === get_as( $fx['teacher'], '/syllabus-comparison/subject-profiles' )[0], 'and cannot open the other curriculum screens' );
-	$tabs = \OhMyLMS\Admin\AdminNavigation::visible_tabs( 'content' );
-	ok( isset( $tabs['curriculum'] ) && array( 'skill-map' ) === array_keys( $tabs['curriculum']['sections'] ) && 'skill-map' === $tabs['curriculum']['default_section'], 'a teacher sees only the skill map in the Curriculum tab: ' . wp_json_encode( array_keys( $tabs ) ) );
-	ok( \OhMyLMS\Dashboard\Access::CAPABILITY === $tabs['curriculum']['capability'] && ! isset( $tabs['skills'] ) && ! isset( $tabs['courses'] ), 'through the staff capability, with no other site tab' );
+	$tabs = \OhMyLMS\Admin\AdminNavigation::visible_tabs( 'curriculum' );
+	ok( isset( $tabs['tools'] ) && array( 'skill-map' ) === array_keys( $tabs['tools']['sections'] ) && 'skill-map' === $tabs['tools']['default_section'], 'a teacher sees only the skill map in the Tools tab: ' . wp_json_encode( array_keys( $tabs ) ) );
+	ok( \OhMyLMS\Dashboard\Access::CAPABILITY === $tabs['tools']['capability'] && ! isset( $tabs['workspace'] ), 'through the staff capability, with no other site tab' );
 	$place = \OhMyLMS\Admin\AdminNavigation::current(
 		array(
-			'page' => 'ohmylms-content',
-			'tab'  => 'curriculum',
+			'page' => 'ohmylms-curriculum',
+			'tab'  => 'tools',
 		)
 	);
-	ok( 'curriculum' === $place['tab'] && 'skill-map' === $place['section'], 'the Curriculum tab opens the skill map for a teacher' );
-	ok( 'skill-map' === \OhMyLMS\Admin\AdminNavigation::current( array( 'page' => 'ohmylms-content', 'tab' => 'curriculum', 'section' => 'bundles' ) )['section'], 'other curriculum sections fall back to the skill map' ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+	ok( 'tools' === $place['tab'] && 'skill-map' === $place['section'], 'the Tools tab opens the skill map for a teacher' );
+	ok( 'skill-map' === \OhMyLMS\Admin\AdminNavigation::current( array( 'page' => 'ohmylms-curriculum', 'tab' => 'tools', 'section' => 'bundles' ) )['section'], 'other tool sections fall back to the skill map' ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 	wp_set_current_user( $l[1] );
 	ScopeResolver::reset();
-	ok( ! isset( \OhMyLMS\Admin\AdminNavigation::visible_tabs( 'content' )['curriculum'] ), 'a learner gets no Curriculum tab' );
+	ok( array() === \OhMyLMS\Admin\AdminNavigation::visible_tabs( 'curriculum' ), 'a learner gets no Curriculum page tabs' );
 	wp_set_current_user( $fx['admin'] );
 	ScopeResolver::reset();
-	$admin_tabs = \OhMyLMS\Admin\AdminNavigation::visible_tabs( 'content' );
-	ok( array( '', 'bundles', 'skill-map', 'subjects', 'taxonomies' ) === array_map( 'strval', array_keys( $admin_tabs['curriculum']['sections'] ) ) && 'manage_options' === $admin_tabs['curriculum']['capability'], 'administrators keep every curriculum section' );
+	$admin_tabs = \OhMyLMS\Admin\AdminNavigation::visible_tabs( 'curriculum' );
+	ok( array( 'workspace', 'tools' ) === array_keys( $admin_tabs ) && 'manage_options' === $admin_tabs['workspace']['capability'] && in_array( 'skill-map', array_keys( $admin_tabs['tools']['sections'] ), true ), 'administrators keep the workspace and every tool section' );
 } catch ( Throwable $error ) {
 	echo $error->getMessage() . "\n" . $error->getTraceAsString() . "\n";
 	masteryfx_delete( $tag );

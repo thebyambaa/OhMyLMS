@@ -192,7 +192,7 @@ final class Front {
 				'courses'   => admin_url( 'admin.php?page=ohmylms-content&tab=courses' ),
 				'lessons'   => admin_url( 'admin.php?page=ohmylms-bank&tab=lessons' ),
 				'quizzes'   => admin_url( 'admin.php?page=ohmylms-bank&tab=quizzes' ),
-				'skills'    => admin_url( 'admin.php?page=ohmylms-content&tab=skills' ),
+				'skills'    => admin_url( 'admin.php?page=ohmylms-curriculum&tab=tools' ),
 				'commerce'  => admin_url( 'admin.php?page=ohmylms-commerce' ),
 				'reports'   => admin_url( 'admin.php?page=ohmylms-bank&tab=quizzes&section=reports' ),
 			),

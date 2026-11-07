@@ -17,6 +17,7 @@ export const GROUP_PAGES: Readonly< Record< AdminGroup, string > > = {
 	dashboard: 'ohmylms',
 	content: 'ohmylms-content',
 	bank: 'ohmylms-bank',
+	curriculum: 'ohmylms-curriculum',
 	accounts: 'ohmylms-accounts',
 	commerce: 'ohmylms-commerce',
 	engagement: 'ohmylms-engagement',

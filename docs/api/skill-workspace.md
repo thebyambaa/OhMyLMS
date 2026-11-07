@@ -1,14 +1,14 @@
 # Skill workspace API
 
-The skill workspace rebuilds the Content Hub workflows that only the deleted legacy admin had: combined
+The skill workspace rebuilds the curriculum workflows that only the deleted legacy admin had: combined
 mappings, AI runs, shared content links, domain placement, skill-owned quizzes and provenance review.
-The screens are sections of Content Hub › Skills (`features/curriculum/SkillWorkspace`, lazy chunk
-`admin-app-skill-workspace`), shown to site administrators only (the Skills tab itself needs
+The screens are sections of Curriculum › Tools (`features/curriculum/SkillWorkspace`, lazy chunk
+`admin-app-skill-workspace`), shown to site administrators only (the Tools tab itself needs
 `edit_posts`):
 
 | Section | App route | Address |
 | --- | --- | --- |
-| Combined mappings | `/content-hub/skills/mappings?skill=ID` | `page=ohmylms-content&tab=skills&section=mappings&skill=ID` |
+| Combined mappings | `/content-hub/skills/mappings?skill=ID` | `page=ohmylms-curriculum&tab=tools&section=mappings&skill=ID` |
 | AI runs | `/content-hub/skills/ai-runs[?syllabus=ID][&run=ID]` | `…&section=ai-runs` |
 | Content links | `/content-hub/skills/content-links?kind=lesson\|quiz\|assignment\|course\|question&content=ID` | `…&section=content-links` |
 | Domain placement | `/content-hub/skills/placement?subject=…[&domain=][&unplaced=0][&s=]` | `…&section=placement` |
@@ -16,7 +16,7 @@ The screens are sections of Content Hub › Skills (`features/curriculum/SkillWo
 | Provenance review | `/content-hub/skills/provenance[?review=pending\|rejected\|approved\|all][&source=][&s=][&skill=ID]` | `…&section=provenance` |
 
 The former addresses on the comparison screen (`/content-hub/curriculum/compare?tab=mappings|ai|content|
-placement|quizzes|provenance`, `page=ohmylms-content&tab=curriculum&view=compare&compare=…`) still work:
+placement|quizzes|provenance`, `page=ohmylms-curriculum&tab=tools&view=compare&compare=…`) still work:
 the comparison screen replaces them with the section above and keeps the rest of the query.
 
 Every route is under `ohmylms/v1`, requires the curriculum administrator permission

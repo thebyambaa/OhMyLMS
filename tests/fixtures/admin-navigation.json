@@ -33,39 +33,6 @@
 					],
 					"serverSections": [],
 					"defaultSection": ""
-				},
-				{
-					"id": "skills",
-					"capability": "edit_posts",
-					"flag": "",
-					"sections": [
-						"",
-						"assessments",
-						"mappings",
-						"ai-runs",
-						"content-links",
-						"placement",
-						"skill-quizzes",
-						"provenance"
-					],
-					"serverSections": [
-						"assessments"
-					],
-					"defaultSection": ""
-				},
-				{
-					"id": "curriculum",
-					"capability": "manage_options",
-					"flag": "",
-					"sections": [
-						"",
-						"bundles",
-						"skill-map",
-						"subjects",
-						"taxonomies"
-					],
-					"serverSections": [],
-					"defaultSection": ""
 				}
 			]
 		},
@@ -118,6 +85,44 @@
 					],
 					"serverSections": [
 						"import-review"
+					],
+					"defaultSection": ""
+				}
+			]
+		},
+		{
+			"id": "curriculum",
+			"page": "ohmylms-curriculum",
+			"tabs": [
+				{
+					"id": "workspace",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [],
+					"serverSections": [],
+					"defaultSection": ""
+				},
+				{
+					"id": "tools",
+					"capability": "edit_posts",
+					"flag": "",
+					"sections": [
+						"",
+						"assessments",
+						"mappings",
+						"ai-runs",
+						"content-links",
+						"placement",
+						"skill-quizzes",
+						"provenance",
+						"tree",
+						"bundles",
+						"skill-map",
+						"subjects",
+						"taxonomies"
+					],
+					"serverSections": [
+						"assessments"
 					],
 					"defaultSection": ""
 				}
@@ -380,76 +385,83 @@
 		{
 			"id": "content-hub",
 			"path": "/content-hub/skills",
-			"group": "content",
-			"tab": "skills"
+			"group": "curriculum",
+			"tab": "tools"
 		},
 		{
 			"id": "skill-workspace-mappings",
 			"path": "/content-hub/skills/mappings",
-			"group": "content",
-			"tab": "skills",
+			"group": "curriculum",
+			"tab": "tools",
 			"section": "mappings"
 		},
 		{
 			"id": "skill-workspace-ai-runs",
 			"path": "/content-hub/skills/ai-runs",
-			"group": "content",
-			"tab": "skills",
+			"group": "curriculum",
+			"tab": "tools",
 			"section": "ai-runs"
 		},
 		{
 			"id": "skill-workspace-content-links",
 			"path": "/content-hub/skills/content-links",
-			"group": "content",
-			"tab": "skills",
+			"group": "curriculum",
+			"tab": "tools",
 			"section": "content-links"
 		},
 		{
 			"id": "skill-workspace-placement",
 			"path": "/content-hub/skills/placement",
-			"group": "content",
-			"tab": "skills",
+			"group": "curriculum",
+			"tab": "tools",
 			"section": "placement"
 		},
 		{
 			"id": "skill-workspace-skill-quizzes",
 			"path": "/content-hub/skills/skill-quizzes",
-			"group": "content",
-			"tab": "skills",
+			"group": "curriculum",
+			"tab": "tools",
 			"section": "skill-quizzes"
 		},
 		{
 			"id": "skill-workspace-provenance",
 			"path": "/content-hub/skills/provenance",
-			"group": "content",
-			"tab": "skills",
+			"group": "curriculum",
+			"tab": "tools",
 			"section": "provenance"
+		},
+		{
+			"id": "curriculum-workspace",
+			"path": "/curriculum",
+			"group": "curriculum",
+			"tab": "workspace"
 		},
 		{
 			"id": "curriculum",
 			"path": "/content-hub/curriculum",
-			"group": "content",
-			"tab": "curriculum"
+			"group": "curriculum",
+			"tab": "tools",
+			"section": "tree"
 		},
 		{
 			"id": "curriculum-skill-map",
 			"path": "/content-hub/curriculum/skill-map",
-			"group": "content",
-			"tab": "curriculum",
+			"group": "curriculum",
+			"tab": "tools",
 			"section": "skill-map"
 		},
 		{
 			"id": "curriculum-subjects",
 			"path": "/content-hub/curriculum/subjects",
-			"group": "content",
-			"tab": "curriculum",
+			"group": "curriculum",
+			"tab": "tools",
 			"section": "subjects"
 		},
 		{
 			"id": "curriculum-compare",
 			"path": "/content-hub/curriculum/compare",
-			"group": "content",
-			"tab": "curriculum",
+			"group": "curriculum",
+			"tab": "tools",
 			"view": "compare",
 			"params": {
 				"tab": "compare"
@@ -458,15 +470,15 @@
 		{
 			"id": "bundles",
 			"path": "/content-hub/bundles",
-			"group": "content",
-			"tab": "curriculum",
+			"group": "curriculum",
+			"tab": "tools",
 			"section": "bundles"
 		},
 		{
 			"id": "syllabus-editor",
 			"path": "/content-hub/curriculum/syllabus/:id",
-			"group": "content",
-			"tab": "curriculum",
+			"group": "curriculum",
+			"tab": "workspace",
 			"view": "syllabus"
 		},
 		{
@@ -801,8 +813,8 @@
 		{
 			"id": "taxonomies",
 			"path": "/taxonomies",
-			"group": "content",
-			"tab": "curriculum",
+			"group": "curriculum",
+			"tab": "tools",
 			"section": "taxonomies"
 		},
 		{
@@ -854,67 +866,67 @@
 		],
 		[
 			"/content-hub/skills",
-			"page=ohmylms-content&tab=skills"
+			"page=ohmylms-curriculum&tab=tools"
 		],
 		[
 			"/content-hub/skills?add=1",
-			"page=ohmylms-content&tab=skills&add=1"
+			"page=ohmylms-curriculum&tab=tools&add=1"
 		],
 		[
 			"/content-hub/skills/mappings?skill=7",
-			"page=ohmylms-content&tab=skills&section=mappings&skill=7"
+			"page=ohmylms-curriculum&tab=tools&section=mappings&skill=7"
 		],
 		[
 			"/content-hub/skills/ai-runs?run=1",
-			"page=ohmylms-content&tab=skills&section=ai-runs&run=1"
+			"page=ohmylms-curriculum&tab=tools&section=ai-runs&run=1"
 		],
 		[
 			"/content-hub/skills/content-links?kind=lesson&content=5",
-			"page=ohmylms-content&tab=skills&section=content-links&kind=lesson&content=5"
+			"page=ohmylms-curriculum&tab=tools&section=content-links&kind=lesson&content=5"
 		],
 		[
 			"/content-hub/skills/placement",
-			"page=ohmylms-content&tab=skills&section=placement"
+			"page=ohmylms-curriculum&tab=tools&section=placement"
 		],
 		[
 			"/content-hub/skills/skill-quizzes?skill=7",
-			"page=ohmylms-content&tab=skills&section=skill-quizzes&skill=7"
+			"page=ohmylms-curriculum&tab=tools&section=skill-quizzes&skill=7"
 		],
 		[
 			"/content-hub/skills/provenance",
-			"page=ohmylms-content&tab=skills&section=provenance"
+			"page=ohmylms-curriculum&tab=tools&section=provenance"
 		],
 		[
 			"/content-hub/curriculum/compare?tab=mappings&skill=7",
-			"page=ohmylms-content&tab=curriculum&view=compare&compare=mappings&skill=7"
+			"page=ohmylms-curriculum&tab=tools&view=compare&compare=mappings&skill=7"
 		],
 		[
 			"/content-hub/curriculum",
-			"page=ohmylms-content&tab=curriculum"
+			"page=ohmylms-curriculum&tab=tools&section=tree"
 		],
 		[
 			"/content-hub/curriculum/skill-map",
-			"page=ohmylms-content&tab=curriculum&section=skill-map"
+			"page=ohmylms-curriculum&tab=tools&section=skill-map"
 		],
 		[
 			"/content-hub/curriculum/subjects",
-			"page=ohmylms-content&tab=curriculum&section=subjects"
+			"page=ohmylms-curriculum&tab=tools&section=subjects"
 		],
 		[
 			"/content-hub/curriculum/compare?tab=roadmaps&roadmap=3",
-			"page=ohmylms-content&tab=curriculum&view=compare&compare=roadmaps&roadmap=3"
+			"page=ohmylms-curriculum&tab=tools&view=compare&compare=roadmaps&roadmap=3"
 		],
 		[
 			"/content-hub/bundles",
-			"page=ohmylms-content&tab=curriculum&section=bundles"
+			"page=ohmylms-curriculum&tab=tools&section=bundles"
 		],
 		[
 			"/content-hub/curriculum/syllabus/24?node=s%3A1",
-			"page=ohmylms-content&tab=curriculum&id=24&view=syllabus&node=s%3A1"
+			"page=ohmylms-curriculum&tab=workspace&id=24&view=syllabus&node=s%3A1"
 		],
 		[
 			"/taxonomies",
-			"page=ohmylms-content&tab=curriculum&section=taxonomies"
+			"page=ohmylms-curriculum&tab=tools&section=taxonomies"
 		],
 		[
 			"/content-hub/courses",

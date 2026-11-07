@@ -130,6 +130,14 @@
 			"raw": 13000,
 			"gzip": 4500
 		},
+		"chunks/admin-app-curriculum-workspace.css": {
+			"raw": 5500,
+			"gzip": 1200
+		},
+		"chunks/admin-app-curriculum-workspace.js": {
+			"raw": 23700,
+			"gzip": 6900
+		},
 		"chunks/admin-app-curriculum.css": {
 			"raw": 3500,
 			"gzip": 1100

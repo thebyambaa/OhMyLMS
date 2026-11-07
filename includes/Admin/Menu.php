@@ -18,6 +18,7 @@ class Menu {
 		add_action( 'admin_menu', array( $this, 'init_menu' ) );
 		add_action( 'admin_menu', array( $this, 'menu_highlight' ) );
 		add_action( 'admin_menu', array( $this, 'map_legacy_submenu' ), 9999 );
+		add_action( 'admin_init', array( AdminNavigation::class, 'redirect_moved_tabs' ), 1 );
 		add_action( 'admin_head', array( AdminNavigation::class, 'hide_dashboard_entry' ), 9999 );
 		add_action( 'wp_loaded', array( $this, 'save_settings' ) );
 		add_action( 'admin_footer', array( $this, 'open_link_with_new_page' ) );
@@ -27,7 +28,7 @@ class Menu {
 
 	/**
 	 * Register the OhMyLMS menu: the top-level entry and one submenu per page the user can open (Dashboard,
-	 * Content Hub, Account Hub, Commerce, Engagement, Settings; see AdminNavigation), with the
+	 * Content Hub, Content Bank, Curriculum, Account Hub, Commerce, Engagement, Settings; see AdminNavigation), with the
 	 * pending-orders badge on the top-level entry and Commerce.
 	 *
 	 * @since 1.0.0

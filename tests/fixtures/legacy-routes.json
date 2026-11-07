@@ -98,15 +98,15 @@
 		],
 		[
 			"/categories",
-			"page=ohmylms-content&tab=curriculum"
+			"page=ohmylms-curriculum&tab=workspace"
 		],
 		[
 			"/content-hub/curriculum/syllabus/24",
-			"page=ohmylms-content&tab=curriculum&id=24&view=syllabus"
+			"page=ohmylms-curriculum&tab=workspace&id=24&view=syllabus"
 		],
 		[
 			"/extensions/bundles",
-			"page=ohmylms-content&tab=curriculum&section=bundles"
+			"page=ohmylms-curriculum&tab=tools&section=bundles"
 		],
 		[
 			"/content-hub/exams?action=new",
@@ -130,7 +130,7 @@
 		],
 		[
 			"/extensions/skills?add=1",
-			"page=ohmylms-content&tab=skills&add=1"
+			"page=ohmylms-curriculum&tab=tools&add=1"
 		],
 		[
 			"/extensions/unknown-addon-page",
@@ -544,11 +544,11 @@
 		],
 		[
 			"/extensions/curriculum",
-			"/content-hub/curriculum"
+			"/curriculum"
 		],
 		[
 			"/categories",
-			"/content-hub/curriculum"
+			"/curriculum"
 		],
 		[
 			"/order-edit",
@@ -862,15 +862,15 @@
 		},
 		{
 			"from": "/extensions/curriculum",
-			"to": "/content-hub/curriculum"
+			"to": "/curriculum"
 		},
 		{
 			"from": "/categories",
-			"to": "/content-hub/curriculum"
+			"to": "/curriculum"
 		},
 		{
 			"from": "/tags",
-			"to": "/content-hub/curriculum"
+			"to": "/curriculum"
 		},
 		{
 			"from": "/content-hub/curriculum/skill-map",

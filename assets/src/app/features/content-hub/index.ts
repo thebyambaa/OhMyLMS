@@ -29,8 +29,8 @@ export const contentHub: FeatureDefinition = {
 	id: 'content-hub',
 	title: __( 'Skills', 'ohmylms' ),
 	path: '/content-hub/skills',
-	group: 'content',
-	tab: 'skills',
+	group: 'curriculum',
+	tab: 'tools',
 	capability: 'edit_posts',
 	component: lazy(
 		() =>

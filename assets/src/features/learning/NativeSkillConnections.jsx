@@ -28,8 +28,8 @@ function NativeSkillConnections() {
 		return null;
 	}
 	const url = new URL( 'admin.php', window.location.href );
-	url.searchParams.set( 'page', 'ohmylms-content' );
-	url.searchParams.set( 'tab', 'skills' );
+	url.searchParams.set( 'page', 'ohmylms-curriculum' );
+	url.searchParams.set( 'tab', 'tools' );
 	url.searchParams.set( 'section', 'content-links' );
 	url.searchParams.set( 'kind', kind );
 	url.searchParams.set( 'content', String( id ) );

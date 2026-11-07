@@ -7,7 +7,7 @@
  * address of every app route against tests/fixtures/admin-navigation.json (also used by the app's
  * routing/navigation-contract.test.ts), the legacy route map against tests/fixtures/legacy-routes.json
  * (also used by tests/js/legacy-redirects.test.mjs), that every legacy and app route has a new address,
- * the URLs of menus, commands and helpers, the seven submenus and their tabs, the server redirect of the
+ * the URLs of menus, commands and helpers, the eight submenus and their tabs, the server redirect of the
  * retired app page, the hash landing on the Dashboard, the unavailable notice and a rendered instructor
  * email. It creates a tagged course, assignment, learner and submission and removes them in `finally`;
  * mail is intercepted with `pre_wp_mail` and redirects with `wp_redirect`, so nothing is sent.
@@ -169,7 +169,7 @@ try {
 		$actual = null === $pairs ? null : AdminNavigation::format_query( $pairs );
 		ok( $actual === $case[1], sprintf( 'address(%s) is %s, got %s', $case[0], var_export( $case[1], true ), var_export( $actual, true ) ) );
 	}
-	ok( count( AdminNavigation::groups() ) === 7 && array( 'ohmylms', 'ohmylms-content', 'ohmylms-bank', 'ohmylms-accounts', 'ohmylms-commerce', 'ohmylms-engagement', 'ohmylms-settings' ) === array_column( AdminNavigation::groups(), 'page' ), 'seven pages, in menu order' );
+	ok( count( AdminNavigation::groups() ) === 8 && array( 'ohmylms', 'ohmylms-content', 'ohmylms-bank', 'ohmylms-curriculum', 'ohmylms-accounts', 'ohmylms-commerce', 'ohmylms-engagement', 'ohmylms-settings' ) === array_column( AdminNavigation::groups(), 'page' ), 'eight pages, in menu order' );
 	foreach ( AdminNavigation::routes() as $entry ) {
 		$sample = preg_replace( '#/:[A-Za-z]+\?$#', '', $entry['path'] );
 		$sample = preg_replace( '/:[A-Za-z]+/', '7', $sample );
@@ -274,7 +274,7 @@ try {
 	ok( \OhMyLMS\AI\AdminPage::url() === address_url( 'page=ohmylms-settings&tab=settings&section=ai-tutor' ), 'AI tutor bookmark opens the new section' );
 	ok( call_private( \OhMyLMS\XApi\AdminPage::class, 'url', array( 'saved' ) ) === add_query_arg( 'xapi_notice', 'saved', address_url( 'page=ohmylms-settings&tab=settings&section=xapi' ) ), 'xAPI redirect opens the new section' );
 	ok( \OhMyLMS\Student\Hub::admin_home_url() === address_url( 'page=ohmylms-accounts&tab=schools' ), 'Student Home admin address opens Account Hub' );
-	ok( \OhMyLMS\Assessment\SkillAssessmentPage::url() === address_url( 'page=ohmylms-content&tab=skills&section=assessments' ), 'skill assessments are a Skills section' );
+	ok( \OhMyLMS\Assessment\SkillAssessmentPage::url() === address_url( 'page=ohmylms-curriculum&tab=tools&section=assessments' ), 'skill assessments are a Curriculum tool' );
 	ok( \OhMyLMS\QuestionBank\ImportPage::url() === address_url( 'page=ohmylms-bank&tab=question-bank&section=import-review' ), 'question import review is a Question bank section' );
 	add_filter(
 		'ohmylms_extension_admin_page_group',
@@ -333,7 +333,7 @@ try {
 	}
 	ok( 'my-addon' === $commands['addon/own']['page'] && '/orders' === $commands['addon/own']['route'] && ! isset( $commands['addon/own']['url'] ), 'command addon/own keeps its page' );
 
-	// Menu: seven submenus, each a real page; the retired pages have no entry; add-on entries that open
+	// Menu: eight submenus, each a real page; the retired pages have no entry; add-on entries that open
 	// the legacy page or the retired app page are mapped or dropped; the badge is on the menu and Commerce.
 	$redirect_to = static function ( $location ) {
 		throw new RuntimeException( 'redirect:' . $location );
@@ -368,14 +368,15 @@ try {
 			array( 'Dashboard', OHMYLMS_SLUG ),
 			array( 'Content Hub', 'ohmylms-content' ),
 			array( 'Content Bank', 'ohmylms-bank' ),
+			array( 'Curriculum', 'ohmylms-curriculum' ),
 			array( 'Account Hub', 'ohmylms-accounts' ),
 			array( 'Commerce', 'ohmylms-commerce' ),
 			array( 'Engagement', 'ohmylms-engagement' ),
 			array( 'Settings', 'ohmylms-settings' ),
 		) === $entries,
-		'menu: exactly the seven pages, Dashboard first: ' . wp_json_encode( $entries )
+		'menu: exactly the eight pages, Dashboard first: ' . wp_json_encode( $entries )
 	);
-	foreach ( array( 'toplevel_page_ohmylms', 'ohmylms_page_ohmylms-content', 'ohmylms_page_ohmylms-bank', 'ohmylms_page_ohmylms-accounts', 'ohmylms_page_ohmylms-commerce', 'ohmylms_page_ohmylms-engagement', 'ohmylms_page_ohmylms-settings' ) as $hook ) {
+	foreach ( array( 'toplevel_page_ohmylms', 'ohmylms_page_ohmylms-content', 'ohmylms_page_ohmylms-bank', 'ohmylms_page_ohmylms-curriculum', 'ohmylms_page_ohmylms-accounts', 'ohmylms_page_ohmylms-commerce', 'ohmylms_page_ohmylms-engagement', 'ohmylms_page_ohmylms-settings' ) as $hook ) {
 		ok( isset( $GLOBALS['_registered_pages'][ $hook ] ) && false !== has_action( $hook, array( AdminNavigation::class, 'render' ) ), 'menu: ' . $hook . ' renders the page' );
 		ok( AdminNavigation::is_screen( $hook ) && AppPage::is_app_screen( $hook ), 'menu: ' . $hook . ' is an app screen' );
 	}
@@ -471,8 +472,8 @@ try {
 	ok(
 		'' === AdminNavigation::current(
 			array(
-				'page'    => 'ohmylms-content',
-				'tab'     => 'curriculum',
+				'page'    => 'ohmylms-curriculum',
+				'tab'     => 'workspace',
 				'section' => 'nope',
 			)
 		)['section'],
@@ -491,8 +492,8 @@ try {
 		is_callable(
 			AdminNavigation::current(
 				array(
-					'page'    => 'ohmylms-content',
-					'tab'     => 'skills',
+					'page'    => 'ohmylms-curriculum',
+					'tab'     => 'tools',
 					'section' => 'assessments',
 				)
 			)['render']
@@ -502,19 +503,19 @@ try {
 	ok(
 		null === AdminNavigation::current(
 			array(
-				'page' => 'ohmylms-content',
-				'tab'  => 'skills',
+				'page' => 'ohmylms-curriculum',
+				'tab'  => 'tools',
 			)
 		)['render'],
-		'the Skills tab shows the app'
+		'the Tools tab shows the app'
 	);
-	$workspace = AdminNavigation::groups()['content']['tabs']['skills']['sections'];
-	ok( array( 'mappings', 'ai-runs', 'content-links', 'placement', 'skill-quizzes', 'provenance' ) === array_slice( array_keys( $workspace ), 2 ) && array( AdminNavigation::CAPABILITY ) === array_values( array_unique( array_column( array_slice( $workspace, 2 ), 'capability' ) ) ), 'the skill workspace sections are Skills sections for site administrators only' );
+	$workspace = AdminNavigation::groups()['curriculum']['tabs']['tools']['sections'];
+	ok( array( 'mappings', 'ai-runs', 'content-links', 'placement', 'skill-quizzes', 'provenance' ) === array_slice( array_keys( $workspace ), 2, 6 ) && array( AdminNavigation::CAPABILITY ) === array_values( array_unique( array_column( array_slice( $workspace, 2, 6 ), 'capability' ) ) ), 'the skill workspace sections are Tools sections for site administrators only' );
 	ok(
 		'ai-runs' === AdminNavigation::current(
 			array(
-				'page'    => 'ohmylms-content',
-				'tab'     => 'skills',
+				'page'    => 'ohmylms-curriculum',
+				'tab'     => 'tools',
 				'section' => 'ai-runs',
 			)
 		)['section'],
@@ -569,9 +570,9 @@ try {
 	);
 	ok( false !== strpos( $content_html, '<h1 class="wp-heading-inline">Content Hub</h1>' ) && false !== strpos( $content_html, '<hr class="wp-header-end">' ), 'page: heading' );
 	ok( false !== strpos( $content_html, 'class="nav-tab-wrapper wp-clearfix" id="' . AdminNavigation::TABS_ID . '"' ), 'page: tab row' );
-	ok( 4 === preg_match_all( '/class="nav-tab(?: nav-tab-active)?"/', $content_html ), 'page: one link per Content Hub tab' );
+	ok( 2 === preg_match_all( '/class="nav-tab(?: nav-tab-active)?"/', $content_html ), 'page: one link per Content Hub tab' );
 	ok( false !== strpos( $content_html, 'href="' . esc_url( address_url( 'page=ohmylms-content&tab=courses' ) ) . '" class="nav-tab nav-tab-active" aria-current="page">Courses</a>' ), 'page: the current tab is a real, marked link' );
-	ok( false !== strpos( $content_html, '<a data-tab="skills" href="' ), 'page: tab links name their tab for the app' );
+	ok( false !== strpos( $content_html, '<a data-tab="gradebook" href="' ), 'page: tab links name their tab for the app' );
 	$bank_html = render_page(
 		array(
 			'page' => 'ohmylms-bank',
@@ -603,8 +604,8 @@ try {
 	ok( false !== strpos( $settings_html, 'data-default-section="general"' ) && false !== strpos( $settings_html, 'data-section="tax" class="current" aria-current="page">Tax</a>' ) && false !== strpos( $settings_html, 'data-tab="settings" data-section="tax"' ), 'page: Settings sections' );
 	$assessments_html = render_page(
 		array(
-			'page'    => 'ohmylms-content',
-			'tab'     => 'skills',
+			'page'    => 'ohmylms-curriculum',
+			'tab'     => 'tools',
 			'section' => 'assessments',
 		)
 	);
@@ -667,7 +668,7 @@ try {
 		$redirected = $redirect->getMessage();
 	}
 	remove_filter( 'wp_redirect', $redirect_to );
-	ok( 'redirect:' . address_url( 'page=ohmylms-content&tab=skills&section=assessments&course=5' ) === $redirected, 'the former skill assessments page redirects to the section with its filters, got ' . $redirected );
+	ok( 'redirect:' . address_url( 'page=ohmylms-curriculum&tab=tools&section=assessments&course=5' ) === $redirected, 'the former skill assessments page redirects to the section with its filters, got ' . $redirected );
 	$_GET = array();
 
 	// Hash landing: on the Dashboard, in the head, with the map.
@@ -781,6 +782,76 @@ try {
 	ok( false !== strpos( $mails[0]['message'], 'href="' . esc_url( $grading ) . '"' ), 'single email button opens the grading screen' );
 	ok( false === strpos( $mails[0]['message'], 'page=' . OHMYLMS_SLUG . '#' ) && false === strpos( $mails[0]['message'], AppPage::SLUG ), 'single email has no hash link' );
 	ok( false !== strpos( $mails[1]['message'], 'href="' . esc_url( address_url( 'page=ohmylms-bank&tab=assignments' ) ) . '"' ), 'digest email button opens the assignments list' );
+
+	// The Skills and Curriculum tabs left the Content Hub: their old addresses are sent to Curriculum, with every other parameter.
+	$moved_skills = AdminNavigation::moved_query(
+		array(
+			'page'    => 'ohmylms-content',
+			'tab'     => 'skills',
+			'section' => 'mappings',
+			'skill'   => '7',
+		)
+	);
+	ok(
+		array(
+			'page'    => 'ohmylms-curriculum',
+			'tab'     => 'tools',
+			'section' => 'mappings',
+			'skill'   => '7',
+		) === $moved_skills,
+		'the old Skills tab opens Curriculum > Tools, keeping its section and parameters'
+	);
+	$moved_tree = AdminNavigation::moved_query(
+		array(
+			'page'    => 'ohmylms-content',
+			'tab'     => 'curriculum',
+			'section' => 'nope',
+		)
+	);
+	ok( 'ohmylms-curriculum' === $moved_tree['page'] && 'workspace' === $moved_tree['tab'] && ! isset( $moved_tree['section'] ), 'the old Curriculum tab opens the Curriculum workspace' );
+	$moved_syllabus = AdminNavigation::moved_query(
+		array(
+			'page' => 'ohmylms-content',
+			'tab'  => 'curriculum',
+			'id'   => '24',
+			'view' => 'syllabus',
+		)
+	);
+	ok( 'workspace' === $moved_syllabus['tab'] && '24' === $moved_syllabus['id'] && 'syllabus' === $moved_syllabus['view'], 'the syllabus editor address keeps its id and view' );
+	foreach ( array( 'bundles', 'skill-map', 'subjects', 'taxonomies' ) as $moved_section ) {
+		$moved_tab = AdminNavigation::moved_query(
+			array(
+				'page'    => 'ohmylms-content',
+				'tab'     => 'curriculum',
+				'section' => $moved_section,
+			)
+		);
+		ok( 'tools' === $moved_tab['tab'] && $moved_section === $moved_tab['section'], 'the old ' . $moved_section . ' section opens under Tools' );
+	}
+	$moved_compare = AdminNavigation::moved_query(
+		array(
+			'page' => 'ohmylms-content',
+			'tab'  => 'curriculum',
+			'view' => 'compare',
+		)
+	);
+	ok( 'tools' === $moved_compare['tab'], 'the comparison opens under Tools' );
+	ok(
+		null === AdminNavigation::moved_query(
+			array(
+				'page' => 'ohmylms-content',
+				'tab'  => 'courses',
+			)
+		)
+		&& null === AdminNavigation::moved_query(
+			array(
+				'page' => 'ohmylms-bank',
+				'tab'  => 'skills',
+			)
+		)
+		&& null === AdminNavigation::moved_query( array( 'page' => 'ohmylms-curriculum' ) ),
+		'other addresses are not touched'
+	);
 
 	echo "Legacy routes and navigation: {$checks} checks passed.\n";
 } catch ( Throwable $error ) {

@@ -43,6 +43,8 @@ beforeEach( () => {
 	vi.mocked( api.readWorkspace ).mockResolvedValue( {
 		items: [ item ],
 		icons: [ { id: 'calculator', label: 'Calculator' } ],
+		types: [],
+		counts: {},
 	} );
 	vi.mocked( api.readDeletion ).mockResolvedValue( {
 		item,

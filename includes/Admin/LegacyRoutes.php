@@ -323,15 +323,15 @@ final class LegacyRoutes {
 			),
 			array(
 				'from' => '/extensions/curriculum',
-				'to'   => '/content-hub/curriculum',
+				'to'   => '/curriculum',
 			),
 			array(
 				'from' => '/categories',
-				'to'   => '/content-hub/curriculum',
+				'to'   => '/curriculum',
 			),
 			array(
 				'from' => '/tags',
-				'to'   => '/content-hub/curriculum',
+				'to'   => '/curriculum',
 			),
 			array(
 				'from' => '/content-hub/curriculum/skill-map',

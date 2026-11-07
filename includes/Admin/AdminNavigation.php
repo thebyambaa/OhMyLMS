@@ -133,7 +133,7 @@ final class AdminNavigation {
 				'page'  => 'ohmylms-content',
 				'label' => __( 'Content Hub', 'ohmylms' ),
 				'tabs'  => array(
-					'courses'    => array(
+					'courses'   => array(
 						'label'      => __( 'Courses', 'ohmylms' ),
 						'capability' => 'edit_posts',
 						'sections'   => array(
@@ -141,7 +141,7 @@ final class AdminNavigation {
 							'overview' => __( 'Overview', 'ohmylms' ),
 						),
 					),
-					'gradebook'  => array(
+					'gradebook' => array(
 						'label'      => __( 'Gradebook', 'ohmylms' ),
 						'capability' => \OhMyLMS\Gradebook\Access::CAPABILITY,
 						'sections'   => array(
@@ -150,56 +150,6 @@ final class AdminNavigation {
 							'student' => __( 'Student transcript', 'ohmylms' ),
 							'mastery' => __( 'Skill mastery', 'ohmylms' ),
 							'rollup'  => __( 'Org roll-up', 'ohmylms' ),
-						),
-					),
-					'skills'     => array(
-						'label'      => __( 'Skills', 'ohmylms' ),
-						'capability' => 'edit_posts',
-						'sections'   => array(
-							''              => __( 'Skill library', 'ohmylms' ),
-							'assessments'   => array(
-								'label'  => __( 'Assessments', 'ohmylms' ),
-								'render' => array( SkillAssessmentPage::class, 'render' ),
-							),
-							// The skill workspace, whose endpoints need the curriculum administrator.
-							'mappings'      => array(
-								'label'      => __( 'Combined mappings', 'ohmylms' ),
-								'capability' => self::CAPABILITY,
-							),
-							'ai-runs'       => array(
-								'label'      => __( 'AI runs', 'ohmylms' ),
-								'capability' => self::CAPABILITY,
-							),
-							'content-links' => array(
-								'label'      => __( 'Content links', 'ohmylms' ),
-								'capability' => self::CAPABILITY,
-							),
-							'placement'     => array(
-								'label'      => __( 'Domain placement', 'ohmylms' ),
-								'capability' => self::CAPABILITY,
-							),
-							'skill-quizzes' => array(
-								'label'      => __( 'Skill quizzes', 'ohmylms' ),
-								'capability' => self::CAPABILITY,
-							),
-							'provenance'    => array(
-								'label'      => __( 'Provenance review', 'ohmylms' ),
-								'capability' => self::CAPABILITY,
-							),
-						),
-					),
-					'curriculum' => array(
-						'label'    => __( 'Curriculum', 'ohmylms' ),
-						'sections' => array(
-							''           => __( 'Syllabuses', 'ohmylms' ),
-							'bundles'    => __( 'Course bundles', 'ohmylms' ),
-							// School staff open the read-only map too; its learner overlays are scoped server-side.
-							'skill-map'  => array(
-								'label'      => __( 'Skill map', 'ohmylms' ),
-								'capability' => \OhMyLMS\Dashboard\Access::CAPABILITY,
-							),
-							'subjects'   => __( 'Subject profiles', 'ohmylms' ),
-							'taxonomies' => __( 'Categories and tags', 'ohmylms' ),
 						),
 					),
 				),
@@ -233,6 +183,70 @@ final class AdminNavigation {
 							'import-review' => array(
 								'label'  => __( 'Import review', 'ohmylms' ),
 								'render' => array( ImportPage::class, 'render' ),
+							),
+						),
+					),
+				),
+			),
+			'curriculum' => array(
+				'page'  => 'ohmylms-curriculum',
+				'label' => __( 'Curriculum', 'ohmylms' ),
+				'tabs'  => array(
+					'workspace' => array( 'label' => __( 'Curriculum', 'ohmylms' ) ),
+					'tools'     => array(
+						'label'      => __( 'Tools', 'ohmylms' ),
+						'capability' => 'edit_posts',
+						'sections'   => array(
+							''              => __( 'Skill library', 'ohmylms' ),
+							'assessments'   => array(
+								'label'  => __( 'Assessments', 'ohmylms' ),
+								'render' => array( SkillAssessmentPage::class, 'render' ),
+							),
+							// The skill workspace, whose endpoints need the curriculum administrator.
+							'mappings'      => array(
+								'label'      => __( 'Combined mappings', 'ohmylms' ),
+								'capability' => self::CAPABILITY,
+							),
+							'ai-runs'       => array(
+								'label'      => __( 'AI runs', 'ohmylms' ),
+								'capability' => self::CAPABILITY,
+							),
+							'content-links' => array(
+								'label'      => __( 'Content links', 'ohmylms' ),
+								'capability' => self::CAPABILITY,
+							),
+							'placement'     => array(
+								'label'      => __( 'Domain placement', 'ohmylms' ),
+								'capability' => self::CAPABILITY,
+							),
+							'skill-quizzes' => array(
+								'label'      => __( 'Skill quizzes', 'ohmylms' ),
+								'capability' => self::CAPABILITY,
+							),
+							'provenance'    => array(
+								'label'      => __( 'Provenance review', 'ohmylms' ),
+								'capability' => self::CAPABILITY,
+							),
+							'tree'          => array(
+								'label'      => __( 'Item tree', 'ohmylms' ),
+								'capability' => self::CAPABILITY,
+							),
+							'bundles'       => array(
+								'label'      => __( 'Course bundles', 'ohmylms' ),
+								'capability' => self::CAPABILITY,
+							),
+							// School staff open the read-only map too; its learner overlays are scoped server-side.
+							'skill-map'     => array(
+								'label'      => __( 'Skill map', 'ohmylms' ),
+								'capability' => \OhMyLMS\Dashboard\Access::CAPABILITY,
+							),
+							'subjects'      => array(
+								'label'      => __( 'Subject profiles', 'ohmylms' ),
+								'capability' => self::CAPABILITY,
+							),
+							'taxonomies'    => array(
+								'label'      => __( 'Categories and tags', 'ohmylms' ),
+								'capability' => self::CAPABILITY,
 							),
 						),
 					),
@@ -377,6 +391,7 @@ final class AdminNavigation {
 	public static function routes() {
 		$content  = array( 'group' => 'content' );
 		$bank     = array( 'group' => 'bank' );
+		$curr     = array( 'group' => 'curriculum' );
 		$commerce = array( 'group' => 'commerce' );
 		$accounts = array( 'group' => 'accounts' );
 		$engage   = array( 'group' => 'engagement' );
@@ -409,77 +424,85 @@ final class AdminNavigation {
 					'section' => 'overview',
 				),
 			),
-			array( 'content-hub', '/content-hub/skills', $content + array( 'tab' => 'skills' ) ),
+			array( 'content-hub', '/content-hub/skills', $curr + array( 'tab' => 'tools' ) ),
 			array(
 				'skill-workspace-mappings',
 				'/content-hub/skills/mappings',
-				$content + array(
-					'tab'     => 'skills',
+				$curr + array(
+					'tab'     => 'tools',
 					'section' => 'mappings',
 				),
 			),
 			array(
 				'skill-workspace-ai-runs',
 				'/content-hub/skills/ai-runs',
-				$content + array(
-					'tab'     => 'skills',
+				$curr + array(
+					'tab'     => 'tools',
 					'section' => 'ai-runs',
 				),
 			),
 			array(
 				'skill-workspace-content-links',
 				'/content-hub/skills/content-links',
-				$content + array(
-					'tab'     => 'skills',
+				$curr + array(
+					'tab'     => 'tools',
 					'section' => 'content-links',
 				),
 			),
 			array(
 				'skill-workspace-placement',
 				'/content-hub/skills/placement',
-				$content + array(
-					'tab'     => 'skills',
+				$curr + array(
+					'tab'     => 'tools',
 					'section' => 'placement',
 				),
 			),
 			array(
 				'skill-workspace-skill-quizzes',
 				'/content-hub/skills/skill-quizzes',
-				$content + array(
-					'tab'     => 'skills',
+				$curr + array(
+					'tab'     => 'tools',
 					'section' => 'skill-quizzes',
 				),
 			),
 			array(
 				'skill-workspace-provenance',
 				'/content-hub/skills/provenance',
-				$content + array(
-					'tab'     => 'skills',
+				$curr + array(
+					'tab'     => 'tools',
 					'section' => 'provenance',
 				),
 			),
-			array( 'curriculum', '/content-hub/curriculum', $content + array( 'tab' => 'curriculum' ) ),
+			array( 'curriculum-workspace', '/curriculum', $curr + array( 'tab' => 'workspace' ) ),
+			array(
+				'curriculum',
+				'/content-hub/curriculum',
+				$curr + array(
+					'tab'     => 'tools',
+					'section' => 'tree',
+				),
+			),
 			array(
 				'curriculum-skill-map',
 				'/content-hub/curriculum/skill-map',
-				$content + array(
-					'tab'     => 'curriculum',
+				$curr + array(
+					'tab'     => 'tools',
 					'section' => 'skill-map',
 				),
 			),
 			array(
 				'curriculum-subjects',
 				'/content-hub/curriculum/subjects',
-				$content + array(
-					'tab'     => 'curriculum',
+				$curr + array(
+					'tab'     => 'tools',
 					'section' => 'subjects',
 				),
 			),
 			array(
 				'curriculum-compare',
 				'/content-hub/curriculum/compare',
-				$content + array(
-					'tab'    => 'curriculum',
+				$curr + array(
+					'tab'    => 'tools',
 					'view'   => 'compare',
 					'params' => array( 'tab' => 'compare' ),
 				),
@@ -487,16 +510,16 @@ final class AdminNavigation {
 			array(
 				'bundles',
 				'/content-hub/bundles',
-				$content + array(
-					'tab'     => 'curriculum',
+				$curr + array(
+					'tab'     => 'tools',
 					'section' => 'bundles',
 				),
 			),
 			array(
 				'syllabus-editor',
 				'/content-hub/curriculum/syllabus/:id',
-				$content + array(
-					'tab'  => 'curriculum',
+				$curr + array(
+					'tab'  => 'workspace',
 					'view' => 'syllabus',
 				),
 			),
@@ -700,8 +723,8 @@ final class AdminNavigation {
 			array(
 				'taxonomies',
 				'/taxonomies',
-				$content + array(
-					'tab'     => 'curriculum',
+				$curr + array(
+					'tab'     => 'tools',
 					'section' => 'taxonomies',
 				),
 			),
@@ -934,6 +957,61 @@ final class AdminNavigation {
 	 */
 	public static function shows_app( $hook_suffix ) {
 		return self::is_screen( $hook_suffix ) && null === self::current()['render'];
+	}
+
+	/**
+	 * Tab sections of the old Content Hub Curriculum tab that moved to the Curriculum page's Tools tab.
+	 */
+	const MOVED_TOOL_SECTIONS = array( 'bundles', 'skill-map', 'subjects', 'taxonomies' );
+
+	/**
+	 * Where an old Content Hub Skills or Curriculum address lives now: the Skills tab became Curriculum › Tools,
+	 * and the Curriculum tab became Curriculum (its syllabus editor and tree) with the other screens under Tools.
+	 * Every other query parameter is kept.
+	 *
+	 * @param array $query Query parameters of the old address.
+	 * @return array|null The new query parameters, or null when the address did not move.
+	 */
+	public static function moved_query( array $query ) {
+		$read = static function ( $name ) use ( $query ) {
+			return isset( $query[ $name ] ) && is_string( $query[ $name ] ) ? sanitize_key( $query[ $name ] ) : '';
+		};
+		if ( self::page_slug( 'content' ) !== $read( 'page' ) || ! in_array( $read( 'tab' ), array( 'skills', 'curriculum' ), true ) ) {
+			return null;
+		}
+		$moved         = $query;
+		$moved['page'] = self::page_slug( 'curriculum' );
+		if ( 'skills' === $read( 'tab' ) ) {
+			$moved['tab'] = 'tools';
+			return $moved;
+		}
+		$tool = in_array( $read( 'section' ), self::MOVED_TOOL_SECTIONS, true ) || 'compare' === $read( 'view' );
+		if ( $tool ) {
+			$moved['tab'] = 'tools';
+			return $moved;
+		}
+		$moved['tab'] = 'workspace';
+		unset( $moved['section'] );
+		return $moved;
+	}
+
+	/**
+	 * Send an old Content Hub Skills or Curriculum address to its new place (on `admin_init`).
+	 */
+	public static function redirect_moved_tabs() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Navigation only.
+		$moved = self::moved_query( wp_unslash( $_GET ) );
+		if ( null === $moved ) {
+			return;
+		}
+		$pairs = array();
+		foreach ( $moved as $name => $value ) {
+			if ( is_string( $value ) ) {
+				$pairs[] = array( (string) $name, $value );
+			}
+		}
+		wp_safe_redirect( admin_url( 'admin.php?' . self::format_query( $pairs ) ) );
+		exit;
 	}
 
 	/**

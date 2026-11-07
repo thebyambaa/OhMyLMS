@@ -12,7 +12,7 @@ use OhMyLMS\QuestionBank\SkillCatalogue;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Content Hub > Skills > Assessments (`admin.php?page=ohmylms-content&tab=skills&section=assessments`),
+ * Curriculum > Tools > Assessments (`admin.php?page=ohmylms-curriculum&tab=tools&section=assessments`),
  * a section the server renders ({@see \OhMyLMS\Admin\AdminNavigation}).
  */
 final class SkillAssessmentPage {
@@ -42,7 +42,7 @@ final class SkillAssessmentPage {
 	 * @return string
 	 */
 	public static function url( array $args = array() ) {
-		return add_query_arg( $args, \OhMyLMS\Admin\AdminNavigation::tab_url( 'content', 'skills', 'assessments' ) );
+		return add_query_arg( $args, \OhMyLMS\Admin\AdminNavigation::tab_url( 'curriculum', 'tools', 'assessments' ) );
 	}
 
 	/** Send the former page to the section, keeping its filters. */
