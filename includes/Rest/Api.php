@@ -117,6 +117,7 @@ class Api {
 			\OhMyLMS\Rest\V1\AccountHubUsersController::class,
 			\OhMyLMS\Rest\V1\ContentHubOverviewController::class,
 			\OhMyLMS\Rest\V1\ContentBankController::class,
+			\OhMyLMS\Rest\V1\SkillCoverageController::class,
 			\OhMyLMS\Rest\V1\QuizReportsController::class,
 			\OhMyLMS\Rest\V1\CheckoutSettingsController::class,
 			\OhMyLMS\Rest\V1\PointPurchasesController::class,
