@@ -47,7 +47,9 @@ export function CourseOutline( { id }: { id: number } ) {
 	const [ params ] = useSearchParams();
 	return (
 		<>
-			<h2>{ __( 'Outline', 'ohmylms' ) }</h2>
+			<h2 className="screen-reader-text">
+				{ __( 'Outline', 'ohmylms' ) }
+			</h2>
 			{ request.loading && (
 				<p role="status">
 					{ __( 'Loading course structure…', 'ohmylms' ) }
