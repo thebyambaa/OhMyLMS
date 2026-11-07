@@ -142,5 +142,18 @@
 	margin: 0 0 var(--oml-space-2);
 }
 
+.oml-coverage-fixes {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--oml-space-1);
+}
 
-/*# sourceMappingURL=admin-app-skill-coverage.ae5873b01565.css.map*/
+.oml-coverage-dialog-actions {
+	display: flex;
+	gap: var(--oml-space-2);
+	margin-top: var(--oml-space-3);
+}
+
+
+/*# sourceMappingURL=admin-app-skill-coverage.6e599054c9e6.css.map*/
