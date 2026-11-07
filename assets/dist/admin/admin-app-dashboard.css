@@ -80,7 +80,7 @@ body.oml-dashboard-page {
 
 .oml-dash-user {
 	padding: 0.2rem 0.65rem;
-	border-radius: 999px;
+	border-radius: var(--oml-radius-pill, 999px);
 	background: var(--oml-subtle, var(--oml-background));
 	color: var(--oml-heading);
 	font-size: var(--oml-font-size-sm, 13px);
@@ -205,7 +205,7 @@ body.oml-dashboard-page {
 	justify-content: center;
 	width: 1.4rem;
 	height: 1.4rem;
-	border-radius: 999px;
+	border-radius: var(--oml-radius-pill, 999px);
 	background: var(--oml-primary-soft);
 	color: var(--oml-primary);
 	font-size: var(--oml-font-size-xs, 12px);
@@ -257,7 +257,7 @@ body.oml-dashboard-page {
 .oml-dash-heat td {
 	text-align: center;
 	font-weight: 700;
-	border-radius: 6px;
+	border-radius: var(--oml-radius-card);
 }
 
 .oml-dash-heat .is-attempted,
@@ -398,7 +398,7 @@ body.oml-dashboard-page {
 .oml-dash-steps span {
 	flex: 1;
 	height: 5px;
-	border-radius: 9px;
+	border-radius: var(--oml-radius-card);
 	background: var(--oml-border);
 }
 
@@ -448,7 +448,7 @@ body.oml-dashboard-page {
 
 .oml-pills li {
 	padding: 0.2rem 0.55rem;
-	border-radius: 999px;
+	border-radius: var(--oml-radius-pill, 999px);
 	background: var(--oml-primary-soft);
 	color: var(--oml-primary);
 	font-size: var(--oml-font-size-xs, 12px);
