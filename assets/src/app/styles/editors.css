@@ -360,3 +360,19 @@ body.oml-builder-fullscreen .oml-editor-header .oml-editor-view-link {
 
 .ohmylms-app .oml-unit-quick-add-error { color: var(--oml-danger); font-size: var(--oml-font-size-xs); }
 .ohmylms-app .oml-unit-quick-add-status { color: var(--oml-muted); font-size: var(--oml-font-size-xs); }
+
+.ohmylms-app .oml-editor-aside > .oml-panel { padding: 0; }
+
+.ohmylms-app .oml-panel-title { margin: 0; font-size: inherit; }
+
+.ohmylms-app .oml-panel-toggle { display: flex; align-items: center; gap: var(--oml-space-2); width: 100%; padding: var(--oml-space-3); background: none; border: 0; cursor: pointer; text-align: start; font: inherit; font-weight: 600; color: var(--oml-heading); }
+
+.ohmylms-app .oml-panel-name { flex: 1; }
+
+.ohmylms-app .oml-panel-summary { font-weight: 400; font-size: var(--oml-font-size-xs); color: var(--oml-muted); }
+
+.ohmylms-app .oml-panel-body { padding: 0 var(--oml-space-3) var(--oml-space-3); }
+
+.ohmylms-app .oml-panel-body .oml-course-connections { padding: 0; border: 0; }
+
+.ohmylms-app .oml-editor-shortcuts { display: flex; flex-wrap: wrap; gap: var(--oml-space-1) var(--oml-space-3); font-size: var(--oml-font-size-xs); }

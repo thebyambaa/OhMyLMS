@@ -39,7 +39,6 @@ export function CourseConnections( {
 			className="oml-course-connections"
 			aria-label={ __( 'Course skill connections', 'ohmylms' ) }
 		>
-			<h2>{ __( 'Skills and connections', 'ohmylms' ) }</h2>
 			<p>
 				{ __(
 					'Choose Skills beside an activity to connect what it teaches or assesses. Save connections separately from the outline draft.',

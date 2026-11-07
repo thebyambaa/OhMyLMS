@@ -1,12 +1,6 @@
-import {
-	Button,
-	Modal,
-	Notice,
-	PanelBody,
-	VisuallyHidden,
-} from '@wordpress/components';
+import { Button, Modal, Notice, VisuallyHidden } from '@wordpress/components';
 import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
-import { __, sprintf } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useBuilderSave } from '../../hooks/useBuilderSave';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
@@ -16,7 +10,12 @@ import { deleteUnit, readOutline, saveOutline, type ResourceType } from './api';
 import { ResourcePicker } from './ResourcePicker';
 import { UnitEditor } from './UnitEditor';
 import { LearningSettings } from './LearningSettings';
-import { CourseConnections, useConnectionTarget } from './CourseConnections';
+import { CollapsiblePanel } from './CollapsiblePanel';
+import {
+	CourseConnections,
+	type ConnectionTarget,
+	useConnectionTarget,
+} from './CourseConnections';
 import { OutlineNavigator } from './OutlineNavigator';
 import '../../styles/authoring.css';
 import {
@@ -127,6 +126,14 @@ export function OutlineWorkspace( {
 	const [ folded, setFolded ] = useState< ReadonlySet< Unit[ 'id' ] > >(
 		() => new Set()
 	);
+	const [ skillsOpen, setSkillsOpen ] = useState( Boolean( targeted ) );
+	/*
+	 * Choosing a record to connect skills for also opens the panel that shows them.
+	 */
+	const connect = ( next: ConnectionTarget ) => {
+		setSkillsOpen( true );
+		connections.choose( next );
+	};
 	const toggleUnit = ( id: Unit[ 'id' ] ) =>
 		setFolded( ( current ) => {
 			const next = new Set( current );
@@ -484,7 +491,7 @@ export function OutlineWorkspace( {
 				<OutlineNavigator
 					draft={ draft }
 					onNavigate={ ( key ) => setFocus( [ key, '' ] ) }
-					onConnect={ connections.choose }
+					onConnect={ connect }
 				/>
 				<div className="oml-editor-main">
 					<p className="oml-editor-hint">
@@ -559,7 +566,7 @@ export function OutlineWorkspace( {
 								onDelete={ () => setDeleting( unit ) }
 								onDetach={ setDetach }
 								onConnect={ ( item ) =>
-									connections.choose( {
+									connect( {
 										kind: item.type as
 											'lesson' | 'quiz' | 'assignment',
 										id: item.content_id,
@@ -634,60 +641,75 @@ export function OutlineWorkspace( {
 					) }
 				</div>
 				<aside className="oml-editor-aside">
-					<CourseConnections
-						target={ connections.target }
-						course={ draft.course_id }
-						dirty={ connections.dirty }
-						onDirtyChange={ connections.setDirty }
-						onCourse={ () =>
-							connections.choose( {
-								kind: 'course',
-								id: draft.course_id,
-							} )
-						}
-					/>
-					<PanelBody
+					<nav
+						className="oml-editor-shortcuts"
+						aria-label={ __( 'Shortcuts', 'ohmylms' ) }
+					>
+						<Link to={ `/courses/${ draft.course_id }/settings` }>
+							{ __( 'Course settings', 'ohmylms' ) }
+						</Link>
+						<Link to={ `/courses/${ draft.course_id }/publish` }>
+							{ __( 'Preview and publish', 'ohmylms' ) }
+						</Link>
+						<Link to="/content-hub/curriculum">
+							{ __( 'Curriculum', 'ohmylms' ) }
+						</Link>
+					</nav>
+					<CollapsiblePanel
 						title={ __( 'Learning settings', 'ohmylms' ) }
-						initialOpen
+						summary={
+							draft.program.outcomes.length
+								? sprintf(
+										/* translators: %d: number of skill targets. */
+										_n(
+											'%d skill target',
+											'%d skill targets',
+											draft.program.outcomes.length,
+											'ohmylms'
+										),
+										draft.program.outcomes.length
+									)
+								: ''
+						}
 					>
 						<LearningSettings
 							draft={ draft }
 							change={ change }
 							disabled={ busy }
 						/>
-					</PanelBody>
-					<PanelBody
+					</CollapsiblePanel>
+					<CollapsiblePanel
+						title={ __( 'Skills and connections', 'ohmylms' ) }
+						summary={
+							connections.dirty
+								? __( 'Unsaved', 'ohmylms' )
+								: __( 'Up to date', 'ohmylms' )
+						}
+						open={ skillsOpen }
+						onToggle={ setSkillsOpen }
+					>
+						<CourseConnections
+							target={ connections.target }
+							course={ draft.course_id }
+							dirty={ connections.dirty }
+							onDirtyChange={ connections.setDirty }
+							onCourse={ () =>
+								connect( {
+									kind: 'course',
+									id: draft.course_id,
+								} )
+							}
+						/>
+					</CollapsiblePanel>
+					<CollapsiblePanel
 						title={ __(
 							'Syllabus and curriculum placement',
 							'ohmylms'
 						) }
-						initialOpen={ false }
+						lazy
 					>
 						<CoursePlacement course={ draft.course_id } />
-					</PanelBody>
-					<PanelBody title={ __( 'Shortcuts', 'ohmylms' ) }>
-						<ul className="oml-editor-links">
-							<li>
-								<Link
-									to={ `/courses/${ draft.course_id }/settings` }
-								>
-									{ __( 'Course settings', 'ohmylms' ) }
-								</Link>
-							</li>
-							<li>
-								<Link
-									to={ `/courses/${ draft.course_id }/publish` }
-								>
-									{ __( 'Preview and publish', 'ohmylms' ) }
-								</Link>
-							</li>
-							<li>
-								<Link to="/content-hub/curriculum">
-									{ __( 'Curriculum', 'ohmylms' ) }
-								</Link>
-							</li>
-						</ul>
-					</PanelBody>
+					</CollapsiblePanel>
 				</aside>
 			</div>
 			{ connections.confirmation }

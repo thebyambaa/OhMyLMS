@@ -758,3 +758,55 @@ describe( 'adding content quickly', () => {
 		] );
 	} );
 } );
+
+describe( 'the side panels', () => {
+	it( 'start folded, with the shortcuts as links', () => {
+		open();
+		for ( const name of [
+			/Learning settings/,
+			/Skills and connections/,
+			/Syllabus and curriculum placement/,
+		] ) {
+			expect( screen.getByRole( 'button', { name } ) ).toHaveAttribute(
+				'aria-expanded',
+				'false'
+			);
+		}
+		const shortcuts = within(
+			screen.getByRole( 'navigation', { name: 'Shortcuts' } )
+		);
+		expect(
+			shortcuts.getByRole( 'link', { name: 'Course settings' } )
+		).toHaveAttribute( 'href', '/courses/12/settings' );
+		expect(
+			shortcuts.getByRole( 'link', { name: 'Preview and publish' } )
+		).toHaveAttribute( 'href', '/courses/12/publish' );
+	} );
+
+	it( 'open Skills and connections when Skills is chosen beside an activity', async () => {
+		const user = userEvent.setup();
+		open();
+		const panel = screen.getByRole( 'button', {
+			name: /Skills and connections/,
+		} );
+		await user.click(
+			screen.getAllByRole( 'button', {
+				name: /Connect skills for/,
+			} )[ 0 ]!
+		);
+		expect( panel ).toHaveAttribute( 'aria-expanded', 'true' );
+	} );
+
+	it( 'keep learning settings editable and counted while folded', async () => {
+		const user = userEvent.setup();
+		open();
+		const toggle = screen.getByRole( 'button', {
+			name: /Learning settings/,
+		} );
+		expect( toggle ).toHaveTextContent( 'skill target' );
+		await user.click( toggle );
+		expect(
+			screen.getByLabelText( 'Recognize prior mastery' )
+		).toBeVisible();
+	} );
+} );
