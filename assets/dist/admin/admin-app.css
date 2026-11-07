@@ -259,6 +259,10 @@ p.ohmylms-title-actions .page-title-action:first-child {
 
 .ohmylms-app .oml-unit-header { display: flex; align-items: center; gap: var(--oml-space-2); padding: var(--oml-space-2) var(--oml-space-3); background: var(--oml-surface); border-bottom: 1px solid var(--oml-border); border-radius: var(--oml-radius-card) var(--oml-radius-card) 0 0; }
 
+.ohmylms-app .oml-unit-header.is-collapsed { border-bottom: 0; border-radius: var(--oml-radius-card); }
+
+.ohmylms-app .oml-outline-toolbar { display: flex; justify-content: flex-end; gap: var(--oml-space-2); margin: 0 0 var(--oml-space-2); }
+
 .ohmylms-app .oml-unit-number:not(:empty) { font-weight: 600; color: var(--oml-muted); }
 
 .ohmylms-app .oml-unit-title { margin: 0; font-size: 14px; flex: 1; min-width: 0; }
