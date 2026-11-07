@@ -110,11 +110,11 @@ export function OutlineWorkspace( {
 		)
 	);
 	const [ draft, setDraft ] = useState( initial );
-	// What the skill panel follows: a unit, or a lesson placed in a unit.
+	// What the skill panel follows: a unit, or a lesson or quiz placed in a unit.
 	const [ selection, setSelection ] = useState< PlanSelection | null >( () =>
-		targeted && 'lesson' === targeted.type
+		targeted && [ 'lesson', 'quiz' ].includes( targeted.type )
 			? {
-					kind: 'lesson',
+					kind: targeted.type as 'lesson' | 'quiz',
 					id: targeted.content_id,
 					unitId: targeted.chapter_id ?? 0,
 					name: targeted.name || String( targeted.content_id ),
@@ -139,25 +139,29 @@ export function OutlineWorkspace( {
 				? null
 				: { kind: 'unit', id: unit.id, name: unit.title }
 		);
-	const selectLesson = ( item: Activity ) =>
+	const selectContent = ( item: Activity ) =>
 		setSelection( ( current ) =>
-			'lesson' === current?.kind && current.id === item.content_id
+			current &&
+			'unit' !== current.kind &&
+			current.kind === item.type &&
+			current.id === item.content_id
 				? null
 				: {
-						kind: 'lesson',
+						kind: item.type as 'lesson' | 'quiz',
 						id: item.content_id,
 						unitId: item.chapter_id ?? 0,
 						name: item.name || String( item.content_id ),
 					}
 		);
 	/**
-	 * Select a lesson by ID (from a skill row) and bring its row into view.
+	 * Select a lesson or quiz by ID (from a skill row) and bring its row into view.
 	 *
-	 * @param lesson Lesson ID.
+	 * @param kind    `lesson` or `quiz`.
+	 * @param content Lesson or quiz ID.
 	 */
-	function revealLesson( lesson: number ) {
+	function revealContent( kind: 'lesson' | 'quiz', content: number ) {
 		const item = draft.program.items.find(
-			( row ) => 'lesson' === row.type && row.content_id === lesson
+			( row ) => kind === row.type && row.content_id === content
 		);
 		if ( ! item ) {
 			return;
@@ -170,7 +174,7 @@ export function OutlineWorkspace( {
 			} );
 		}
 		setSelection( {
-			kind: 'lesson',
+			kind,
 			id: item.content_id,
 			unitId: item.chapter_id ?? 0,
 			name: item.name || String( item.content_id ),
@@ -178,14 +182,16 @@ export function OutlineWorkspace( {
 		setFocus( [ item.id, '' ] );
 	}
 	/**
-	 * The saved unit a lesson is placed in, when there is one.
+	 * The saved unit a lesson or quiz is placed in, when there is one.
 	 *
-	 * @param lesson Lesson ID.
+	 * @param content Lesson or quiz ID.
 	 * @return Unit ID, or null.
 	 */
-	function unitOf( lesson: number ): number | null {
+	function unitOf( content: number ): number | null {
 		const item = draft.program.items.find(
-			( row ) => 'lesson' === row.type && row.content_id === lesson
+			( row ) =>
+				[ 'lesson', 'quiz' ].includes( row.type ) &&
+				row.content_id === content
 		);
 		return item &&
 			'number' === typeof item.chapter_id &&
@@ -612,17 +618,18 @@ export function OutlineWorkspace( {
 									selection.id === unit.id
 								}
 								selectedItem={
-									'lesson' === selection?.kind
+									selection && 'unit' !== selection.kind
 										? ( draft.program.items.find(
 												( row ) =>
-													'lesson' === row.type &&
+													selection.kind ===
+														row.type &&
 													row.content_id ===
 														selection.id
 											)?.id ?? null )
 										: null
 								}
 								onSelectUnit={ () => selectUnit( unit ) }
-								onSelectItem={ selectLesson }
+								onSelectItem={ selectContent }
 								skillCounts={ skillCounts }
 								topicCount={
 									'number' === typeof unit.id
@@ -700,7 +707,7 @@ export function OutlineWorkspace( {
 				<SkillPlan
 					course={ draft.course_id }
 					selection={ selection }
-					onSelect={ revealLesson }
+					onSelect={ revealContent }
 					unsaved={ dirty }
 					refresh={ planVersion }
 					onCounts={ setSkillCounts }

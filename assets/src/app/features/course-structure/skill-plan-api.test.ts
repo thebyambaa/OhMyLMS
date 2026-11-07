@@ -1,7 +1,7 @@
 import { ApiError, get, put } from '../../lib/api';
 import {
 	getSkillPlan,
-	linkLessonSkills,
+	linkContentSkills,
 	parsePlan,
 	setUnitTopics,
 } from './skill-plan-api';
@@ -42,6 +42,8 @@ const answer = ( over: Record< string, unknown > = {} ) => ( {
 					unit_id: 3,
 					unit: 'Fractions',
 				},
+			],
+			assessing: [
 				{
 					id: 30,
 					type: 'quiz',
@@ -71,9 +73,13 @@ describe( 'parsePlan', () => {
 		expect( plan.skills[ 5 ]!.questionsNeed ).toBe( 3 );
 	} );
 
-	it( 'keeps only lessons as what teaches a skill', () => {
-		expect( parsePlan( answer() ).skills[ 5 ]!.teaching ).toEqual( [
+	it( 'keeps only lessons as what teaches a skill, and quizzes as what assesses it', () => {
+		const skill = parsePlan( answer() ).skills[ 5 ]!;
+		expect( skill.teaching ).toEqual( [
 			{ id: 20, title: 'Halves', unitId: 3, unit: 'Fractions' },
+		] );
+		expect( skill.assessing ).toEqual( [
+			{ id: 30, title: 'Quiz', unitId: 3, unit: 'Fractions' },
 		] );
 	} );
 
@@ -139,16 +145,31 @@ describe( 'the skill plan requests', () => {
 
 	it( 'connects and disconnects a lesson, returning its skills and the teaching map', async () => {
 		vi.mocked( put ).mockResolvedValue( {
-			lesson_skills: [ 5 ],
+			content_skills: [ 5 ],
 			skills: answer().skills,
 		} );
-		const result = await linkLessonSkills( 7, 20, { add: [ 5 ] } );
+		const result = await linkContentSkills( 7, 'lesson', 20, {
+			add: [ 5 ],
+		} );
 		expect( put ).toHaveBeenCalledWith(
 			'/ohmylms/v1/courses/7/skill-plan/lessons/20',
 			{ add: [ 5 ], remove: [] },
 			{ signal: undefined }
 		);
-		expect( result.lessonSkills ).toEqual( [ 5 ] );
+		expect( result.contentSkills ).toEqual( [ 5 ] );
 		expect( result.skills[ 5 ]!.name ).toBe( 'One-step' );
+	} );
+
+	it( 'connects a quiz through its own route', async () => {
+		vi.mocked( put ).mockResolvedValue( {
+			content_skills: [ 5 ],
+			skills: answer().skills,
+		} );
+		await linkContentSkills( 7, 'quiz', 50, { remove: [ 6 ] } );
+		expect( put ).toHaveBeenCalledWith(
+			'/ohmylms/v1/courses/7/skill-plan/quizzes/50',
+			{ add: [], remove: [ 6 ] },
+			{ signal: undefined }
+		);
 	} );
 } );

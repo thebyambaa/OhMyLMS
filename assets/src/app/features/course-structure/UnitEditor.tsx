@@ -297,7 +297,9 @@ export function UnitEditor( {
 								onClick={ ( event ) => {
 									// The Skills button is the keyboard way to select; a click on the row is the shortcut.
 									if (
-										'lesson' === item.type &&
+										[ 'lesson', 'quiz' ].includes(
+											item.type
+										) &&
 										onSelectItem &&
 										! (
 											event.target as HTMLElement
@@ -343,7 +345,9 @@ export function UnitEditor( {
 								</Badge>
 								<span className="oml-outline-item-tools">
 									{ onSelectItem &&
-										'lesson' === item.type && (
+										[ 'lesson', 'quiz' ].includes(
+											item.type
+										) && (
 											<Button
 												size="small"
 												variant="secondary"

@@ -65,6 +65,14 @@ final class SkillCoverage {
 		foreach ( is_wp_error( $terms ) ? array() : $terms as $term ) {
 			$tagged[ (int) $term->object_id ][] = (int) $term->term_id;
 		}
+		// A quiz keeps its skills in its own table, apart from the skill terms of other content.
+		if ( \OhMyLMS\Assessment\Schema::ready() ) {
+			foreach ( $items as $item ) {
+				if ( 'quiz' === $item['type'] ) {
+					$tagged[ (int) $item['content_id'] ] = array_merge( $tagged[ (int) $item['content_id'] ] ?? array(), \OhMyLMS\Quiz\QuizSkills::get( (int) $item['content_id'] ) );
+				}
+			}
+		}
 		$placed = array();
 		foreach ( $items as $item ) {
 			$practice = 'practice' === $item['type'];

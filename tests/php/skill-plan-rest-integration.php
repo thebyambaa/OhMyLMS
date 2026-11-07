@@ -182,6 +182,14 @@ try {
 		);
 		$posts[]         = $lesson[ $name ];
 	}
+	$quiz    = wp_insert_post(
+		array(
+			'post_type'   => OHMYLMS_QUIZ_CPT,
+			'post_status' => 'publish',
+			'post_title'  => "$mark quiz",
+		)
+	);
+	$posts[] = $quiz;
 	$outside = wp_insert_post(
 		array(
 			'post_type'   => OHMYLMS_LESSON_CPT,
@@ -213,6 +221,13 @@ try {
 					'type'       => 'lesson',
 					'content_id' => $lesson['B'],
 					'chapter_id' => $unit['Two'],
+					'required'   => true,
+				),
+				array(
+					'id'         => wp_generate_uuid4(),
+					'type'       => 'quiz',
+					'content_id' => $quiz,
+					'chapter_id' => $unit['One'],
 					'required'   => true,
 				),
 			),
@@ -258,16 +273,30 @@ try {
 	$link = call_api( 'PUT', "/courses/$course_id/skill-plan/lessons/{$lesson['B']}", array( 'add' => array( $skill['two'], $skill['three'] ) ) );
 	ok( 200 === $link->get_status(), 'skills are connected to a lesson: ' . wp_json_encode( $link->get_data() ) );
 	$data = $link->get_data();
-	ok( array( $skill['three'], $skill['two'] ) === array_values( array_intersect( array( $skill['three'], $skill['two'] ), $data['lesson_skills'] ) ) || 2 === count( $data['lesson_skills'] ), 'the lesson has both skills' );
+	ok( array( $skill['three'], $skill['two'] ) === array_values( array_intersect( array( $skill['three'], $skill['two'] ), $data['content_skills'] ) ) || 2 === count( $data['content_skills'] ), 'the lesson has both skills' );
 	$taught = (array) $data['skills'];
 	ok( isset( $taught[ $skill['two'] ] ) && $lesson['B'] === $taught[ $skill['two'] ]['teaching'][0]['id'], 'the teaching map is updated at once' );
 	$after = wp_get_object_terms( $lesson['B'], Taxonomy::NAME, array( 'fields' => 'ids' ) );
 	ok( 2 === count( $after ), 'the skills are the ordinary terms of the lesson' );
 	$drop = call_api( 'PUT', "/courses/$course_id/skill-plan/lessons/{$lesson['B']}", array( 'remove' => array( $skill['three'] ) ) );
-	ok( 200 === $drop->get_status() && array( $skill['two'] ) === array_map( 'intval', $drop->get_data()['lesson_skills'] ), 'a skill is disconnected and the others stay' );
+	ok( 200 === $drop->get_status() && array( $skill['two'] ) === array_map( 'intval', $drop->get_data()['content_skills'] ), 'a skill is disconnected and the others stay' );
 	ok( 400 === call_api( 'PUT', "/courses/$course_id/skill-plan/lessons/$outside", array( 'add' => array( $skill['one'] ) ) )->get_status(), 'a lesson that is not in the course is refused' );
 	ok( empty( wp_get_object_terms( $outside, Taxonomy::NAME, array( 'fields' => 'ids' ) ) ), 'and nothing was connected to it' );
 	ok( 400 === call_api( 'PUT', "/courses/$course_id/skill-plan/lessons/{$lesson['A']}", array( 'add' => array( 99999999 ) ) )->get_status(), 'a skill that does not exist is refused' );
+
+	// Connecting quizzes: their skills live in the quiz's own table.
+	$qlink = call_api( 'PUT', "/courses/$course_id/skill-plan/quizzes/$quiz", array( 'add' => array( $skill['one'], $skill['two'] ) ) );
+	ok( 200 === $qlink->get_status(), 'skills are connected to a quiz: ' . wp_json_encode( $qlink->get_data() ) );
+	ok( 2 === count( \OhMyLMS\Quiz\QuizSkills::get( $quiz ) ), 'they are stored as the quiz skills the quiz editor and evidence use' );
+	$assessing = (array) $qlink->get_data()['skills'];
+	ok( isset( $assessing[ $skill['two'] ] ) && $quiz === $assessing[ $skill['two'] ]['assessing'][0]['id'], 'the quiz is listed as assessing the skill' );
+	ok( empty( $assessing[ $skill['two'] ]['teaching'] ) || $lesson['B'] === $assessing[ $skill['two'] ]['teaching'][0]['id'], 'a quiz never counts as teaching' );
+	$qdrop = call_api( 'PUT', "/courses/$course_id/skill-plan/quizzes/$quiz", array( 'remove' => array( $skill['one'] ) ) );
+	ok( 200 === $qdrop->get_status() && array( $skill['two'] ) === array_map( 'intval', $qdrop->get_data()['content_skills'] ), 'a skill is disconnected from the quiz and the others stay' );
+	ok( 400 === call_api( 'PUT', "/courses/$course_id/skill-plan/quizzes/{$lesson['A']}", array( 'add' => array( $skill['one'] ) ) )->get_status(), 'a lesson is not accepted on the quiz route' );
+	ok( 400 === call_api( 'PUT', "/courses/$course_id/skill-plan/lessons/$quiz", array( 'add' => array( $skill['one'] ) ) )->get_status(), 'a quiz is not accepted on the lesson route' );
+	$plan2 = (array) call_api( 'GET', "/courses/$course_id/skill-plan?curriculum=$syllabus" )->get_data()['skills'];
+	ok( isset( $plan2[ $skill['two'] ] ) && $quiz === $plan2[ $skill['two'] ]['assessing'][0]['id'], 'the plan reads the quiz connection back' );
 
 	// Who may use it.
 	ok( 404 === call_api( 'GET', "/courses/$lesson[A]/skill-plan" )->get_status(), 'a post that is not a course is refused' );
@@ -278,6 +307,7 @@ try {
 	ok( in_array( call_api( 'GET', "/courses/$course_id/skill-plan" )->get_status(), array( 401, 403 ), true ), 'a subscriber cannot read the plan' );
 	ok( in_array( call_api( 'PUT', "/courses/$course_id/skill-plan/units/{$unit['One']}", array( 'topic_ids' => array( $topic_id ) ) )->get_status(), array( 401, 403 ), true ), 'a subscriber cannot choose unit topics' );
 	ok( in_array( call_api( 'PUT', "/courses/$course_id/skill-plan/lessons/{$lesson['A']}", array( 'add' => array( $skill['two'] ) ) )->get_status(), array( 401, 403 ), true ), 'a subscriber cannot connect skills' );
+	ok( in_array( call_api( 'PUT', "/courses/$course_id/skill-plan/quizzes/$quiz", array( 'add' => array( $skill['one'] ) ) )->get_status(), array( 401, 403 ), true ), 'a subscriber cannot connect skills to a quiz' );
 	wp_set_current_user( (int) $admins[0] );
 
 	echo "Skill plan REST: $checks checks passed." . PHP_EOL;
@@ -287,6 +317,9 @@ try {
 } finally {
 	if ( $course_id ) {
 		$wpdb->delete( $wpdb->prefix . 'ohmylms_chapter_relationship', array( 'course_id' => $course_id ) );
+	}
+	if ( ! empty( $quiz ) ) {
+		$wpdb->delete( $wpdb->prefix . 'ohmylms_quiz_skills', array( 'quiz_id' => $quiz ) );
 	}
 	foreach ( $posts as $post_id ) {
 		if ( $post_id ) {

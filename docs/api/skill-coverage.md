@@ -12,7 +12,7 @@ no longer has a step of its own for it: the Curriculum step reads it through the
 A skill is listed when any of these is true:
 
 - the draft program has it as a skill **outcome** (required or optional, with a target level);
-- a placed lesson, quiz or assignment is **connected** to it, by the skill taxonomy on the post or by the placement's own
+- a placed lesson, quiz or assignment is **connected** to it, by the skill taxonomy on the post (a quiz: its `quiz_skills` connections) or by the placement's own
   skill list;
 - a **practice** activity of the course is on it;
 - the course targets it as a **syllabus objective** (`_ohmylms_course_objectives`).
@@ -126,7 +126,12 @@ selecting a lesson of that unit lists the skills of those topics; it connects no
 course (`400` otherwise) and every topic must exist. The choice is course meta `_ohmylms_unit_topics`, kept apart from the
 outline draft and from publication.
 
-`PUT /ohmylms/v1/courses/{id}/skill-plan/lessons/{lesson}` with `{ "add": [12], "remove": [13] }` connects or
-disconnects skills of a lesson placed in the saved draft (`400` for a lesson that is not placed, or a skill that does
-not exist). The skills are the lesson's ordinary skill terms, so questions, practice and evidence see them as they see any
-other. It answers `{ "lesson_skills": […], "skills": { … } }` with the lesson's skills and the updated teaching map.
+`PUT /ohmylms/v1/courses/{id}/skill-plan/lessons/{lesson}` and `PUT .../skill-plan/quizzes/{quiz}` with
+`{ "add": [12], "remove": [13] }` connect or disconnect skills of a lesson or quiz placed in the saved draft (`400` for an
+item that is not placed in this course, one of the other kind, or a skill that does not exist; `403` without the right to
+edit the post). A lesson's skills are its ordinary skill terms; a quiz's skills are its `quiz_skills` connections, which
+the quiz editor and skill evidence use. Either way, questions, practice and evidence see them as they see any other.
+They answer `{ "content_skills": […], "skills": { … } }` with the item's skills and the updated map.
+
+In the map, `teaching` lists the lessons connected to a skill and `assessing` the quizzes. A quiz never counts as
+teaching. The coverage report reads a placed quiz's `quiz_skills` as well as its skill terms.

@@ -10,6 +10,7 @@ namespace OhMyLMS\Learning;
 use OhMyLMS\Curriculum\Items;
 use OhMyLMS\Curriculum\Schema as CurriculumSchema;
 use OhMyLMS\Curriculum\Syllabus;
+use OhMyLMS\Quiz\QuizSkills;
 use OhMyLMS\Skills\Taxonomy;
 use OhMyLMS\Studio\CourseLayout;
 use WP_Error;
@@ -146,6 +147,14 @@ class SkillPlan {
 				'code'           => $skill['code'],
 				'status'         => $skill['status'],
 				'teaching'       => $skill['teaching'],
+				'assessing'      => array_values(
+					array_filter(
+						$skill['assessing'],
+						static function ( $row ) {
+							return 'quiz' === $row['type'];
+						}
+					)
+				),
 				'questions'      => $skill['questions'],
 				'questions_need' => $skill['questions_need'],
 				'teaching_ok'    => $skill['teaching_ok'],
@@ -204,40 +213,55 @@ class SkillPlan {
 	}
 
 	/**
-	 * Connect or disconnect skills for a lesson that is placed in the course.
+	 * Connect or disconnect skills for a lesson or quiz that is placed in the course.
 	 *
-	 * @param int   $course_id Course ID.
-	 * @param int   $lesson_id Lesson ID.
-	 * @param array $add       Skill IDs to connect.
-	 * @param array $remove    Skill IDs to disconnect.
-	 * @return array|WP_Error `{lesson_skills, skills}`: the lesson's skills and the updated teaching map.
+	 * A lesson's skills are its skill terms; a quiz's skills are its `quiz_skills` connections, which is what skill
+	 * evidence and the quiz editor use.
+	 *
+	 * @param int    $course_id Course ID.
+	 * @param string $kind      `lesson` or `quiz`.
+	 * @param int    $content_id Lesson or quiz ID.
+	 * @param array  $add       Skill IDs to connect.
+	 * @param array  $remove    Skill IDs to disconnect.
+	 * @return array|WP_Error `{content_skills, skills}`: the content's skills and the updated teaching map.
 	 */
-	public static function link_lesson( $course_id, $lesson_id, array $add, array $remove ) {
-		$course_id = (int) $course_id;
-		$lesson_id = (int) $lesson_id;
-		$placed    = false;
+	public static function link_content( $course_id, $kind, $content_id, array $add, array $remove ) {
+		$course_id  = (int) $course_id;
+		$content_id = (int) $content_id;
+		if ( ! in_array( $kind, array( 'lesson', 'quiz' ), true ) ) {
+			return new WP_Error( 'ohmylms_content_kind_invalid', __( 'Skills can be connected to lessons and quizzes.', 'ohmylms' ), array( 'status' => 400 ) );
+		}
+		$placed = false;
 		foreach ( CourseProgram::editor( $course_id )['draft']['items'] ?? array() as $item ) {
-			if ( 'lesson' === ( $item['type'] ?? '' ) && (int) $item['content_id'] === $lesson_id ) {
+			if ( ( $item['type'] ?? '' ) === $kind && (int) $item['content_id'] === $content_id ) {
 				$placed = true;
 				break;
 			}
 		}
 		if ( ! $placed ) {
-			return new WP_Error( 'ohmylms_lesson_not_in_course', __( 'That lesson is not in this course.', 'ohmylms' ), array( 'status' => 400 ) );
-		}
-		$current = wp_get_object_terms( $lesson_id, Taxonomy::NAME, array( 'fields' => 'ids' ) );
-		if ( is_wp_error( $current ) ) {
-			return $current;
+			return new WP_Error( 'ohmylms_content_not_in_course', __( 'That item is not in this course.', 'ohmylms' ), array( 'status' => 400 ) );
 		}
 		$remove = array_map( 'intval', $remove );
-		$next   = array_values( array_diff( array_unique( array_merge( array_map( 'intval', $current ), array_map( 'intval', $add ) ) ), $remove ) );
-		$saved  = Catalog::set_lesson_skills( $lesson_id, $next );
+		if ( 'quiz' === $kind ) {
+			if ( ! current_user_can( 'edit_post', $content_id ) ) {
+				return new WP_Error( 'ohmylms_rest_forbidden', __( 'You cannot change this quiz.', 'ohmylms' ), array( 'status' => rest_authorization_required_code() ) );
+			}
+			$next  = array_values( array_diff( array_unique( array_merge( QuizSkills::get( $content_id ), array_map( 'intval', $add ) ) ), $remove ) );
+			$saved = QuizSkills::set( $content_id, $next );
+		} else {
+			$current = wp_get_object_terms( $content_id, Taxonomy::NAME, array( 'fields' => 'ids' ) );
+			if ( is_wp_error( $current ) ) {
+				return $current;
+			}
+			$next  = array_values( array_diff( array_unique( array_merge( array_map( 'intval', $current ), array_map( 'intval', $add ) ) ), $remove ) );
+			$saved = Catalog::set_lesson_skills( $content_id, $next );
+		}
 		if ( is_wp_error( $saved ) ) {
 			return $saved;
 		}
 		return array(
-			'lesson_skills' => $saved,
-			'skills'        => (object) self::taught( SkillCoverage::report( $course_id ) ),
+			'content_skills' => $saved,
+			'skills'         => (object) self::taught( SkillCoverage::report( $course_id ) ),
 		);
 	}
 }

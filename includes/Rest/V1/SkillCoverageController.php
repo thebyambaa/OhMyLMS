@@ -28,7 +28,8 @@ defined( 'ABSPATH' ) || exit;
  *
  * The skill plan routes serve the Curriculum step: `GET .../skill-plan` (a curriculum's topics and skills beside
  * how the course teaches them), `PUT .../skill-plan/units/{unit}` (the topics a unit covers) and
- * `PUT .../skill-plan/lessons/{lesson}` (connect or disconnect skills of a lesson placed in the course).
+ * `PUT .../skill-plan/lessons/{id}` and `.../quizzes/{id}` (connect or disconnect skills of a lesson or quiz placed
+ * in the course).
  */
 class SkillCoverageController extends RestController {
 
@@ -112,7 +113,7 @@ class SkillCoverageController extends RestController {
 		);
 		register_rest_route(
 			$this->namespace,
-			'/courses/(?P<id>\d+)/skill-plan/lessons/(?P<lesson>\d+)',
+			'/courses/(?P<id>\d+)/skill-plan/(?P<kind>lessons|quizzes)/(?P<content>\d+)',
 			array(
 				array(
 					'methods'             => WP_REST_Server::EDITABLE,
@@ -201,13 +202,14 @@ class SkillCoverageController extends RestController {
 	}
 
 	/**
-	 * Connect or disconnect skills of a lesson.
+	 * Connect or disconnect skills of a lesson or quiz.
 	 *
 	 * @param WP_REST_Request $request Request.
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function link_lesson( WP_REST_Request $request ) {
-		$result = SkillPlan::link_lesson( (int) $request['id'], (int) $request['lesson'], (array) $request['add'], (array) $request['remove'] );
+		$kind   = 'quizzes' === $request['kind'] ? 'quiz' : 'lesson';
+		$result = SkillPlan::link_content( (int) $request['id'], $kind, (int) $request['content'], (array) $request['add'], (array) $request['remove'] );
 		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
 	}
 }

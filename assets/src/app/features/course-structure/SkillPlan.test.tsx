@@ -18,7 +18,7 @@ vi.mock( './api', () => ( {
 vi.mock( './skill-plan-api', () => ( {
 	getSkillPlan: vi.fn(),
 	setUnitTopics: vi.fn(),
-	linkLessonSkills: vi.fn(),
+	linkContentSkills: vi.fn(),
 } ) );
 vi.mock( '../content-bank', () => ( {
 	useBankTerms: () => ( {
@@ -53,6 +53,14 @@ const outline: Outline = {
 				name: 'Solving equations',
 			},
 			{
+				id: 'q1',
+				type: 'quiz',
+				content_id: 50,
+				chapter_id: 8,
+				required: true,
+				name: 'Equations quiz',
+			},
+			{
 				id: 'a2',
 				type: 'lesson',
 				content_id: 21,
@@ -80,6 +88,7 @@ const state = ( over: Partial< SkillState > = {} ): SkillState => ( {
 	code: '',
 	status: 'covered',
 	teaching: [],
+	assessing: [],
 	questions: 3,
 	questionsNeed: 3,
 	teachingOk: true,
@@ -172,7 +181,7 @@ describe( 'the skill panel beside the outline', () => {
 		).toBeInTheDocument();
 		expect(
 			within( panel() ).getByText(
-				'Select a unit to choose the topics it covers, or a lesson to connect it to skills.'
+				'Select a unit to choose the topics it covers, or a lesson or quiz to connect it to skills.'
 			)
 		).toBeInTheDocument();
 		expect( planApi.getSkillPlan ).toHaveBeenCalledWith(
@@ -218,8 +227,8 @@ describe( 'the skill panel beside the outline', () => {
 	} );
 
 	it( 'follows a selected lesson: its connected skills are checked and the others can be added', async () => {
-		vi.mocked( planApi.linkLessonSkills ).mockResolvedValue( {
-			lessonSkills: [ 7, 8 ],
+		vi.mocked( planApi.linkContentSkills ).mockResolvedValue( {
+			contentSkills: [ 7, 8 ],
 			skills: {
 				...plan().skills,
 				8: state( {
@@ -251,8 +260,9 @@ describe( 'the skill panel beside the outline', () => {
 		} );
 		expect( two ).not.toBeChecked();
 		await user.click( two );
-		expect( planApi.linkLessonSkills ).toHaveBeenCalledWith(
+		expect( planApi.linkContentSkills ).toHaveBeenCalledWith(
 			12,
+			'lesson',
 			20,
 			{ add: [ 8 ] },
 			expect.any( AbortSignal )
@@ -273,8 +283,8 @@ describe( 'the skill panel beside the outline', () => {
 	} );
 
 	it( 'disconnects a skill from the lesson', async () => {
-		vi.mocked( planApi.linkLessonSkills ).mockResolvedValue( {
-			lessonSkills: [],
+		vi.mocked( planApi.linkContentSkills ).mockResolvedValue( {
+			contentSkills: [],
 			skills: { ...plan().skills, 7: state( { name: 'x' } ) },
 		} );
 		const user = userEvent.setup();
@@ -290,8 +300,9 @@ describe( 'the skill panel beside the outline', () => {
 				name: /Solve one-step equations/,
 			} )
 		);
-		expect( planApi.linkLessonSkills ).toHaveBeenCalledWith(
+		expect( planApi.linkContentSkills ).toHaveBeenCalledWith(
 			12,
+			'lesson',
 			20,
 			{ remove: [ 7 ] },
 			expect.any( AbortSignal )
@@ -449,7 +460,7 @@ describe( 'the skill panel beside the outline', () => {
 	} );
 
 	it( 'shows a refusal from the server', async () => {
-		vi.mocked( planApi.linkLessonSkills ).mockRejectedValue(
+		vi.mocked( planApi.linkContentSkills ).mockRejectedValue(
 			new ApiError( {
 				status: 400,
 				code: 'ohmylms_lesson_not_in_course',
@@ -492,5 +503,70 @@ describe( 'the skill panel beside the outline', () => {
 			await within( panel() ).findByText( 'Algebra topic' )
 		).toBeInTheDocument();
 		expect( api.saveOutline ).not.toHaveBeenCalled();
+	} );
+
+	it( 'connects a quiz to skills the same way, and lists the quizzes beside a skill', async () => {
+		vi.mocked( planApi.getSkillPlan ).mockResolvedValue(
+			plan( {
+				skills: {
+					...plan().skills,
+					8: state( {
+						name: 'Solve two-step equations',
+						assessing: [ teaches( 50, 'Equations quiz', 8 ) ],
+					} ),
+				},
+			} )
+		);
+		vi.mocked( planApi.linkContentSkills ).mockResolvedValue( {
+			contentSkills: [ 8, 9 ],
+			skills: {
+				...plan().skills,
+				8: state( {
+					name: 'Solve two-step equations',
+					assessing: [ teaches( 50, 'Equations quiz', 8 ) ],
+				} ),
+			},
+		} );
+		const user = userEvent.setup();
+		open();
+		await within( panel() ).findByText( 'Algebra topic' );
+		// The quiz shows beside the skill it assesses, and can be selected from there.
+		expect(
+			within( panel() ).getByRole( 'button', {
+				name: 'Select quiz Equations quiz',
+			} )
+		).toBeInTheDocument();
+		await user.click(
+			screen.getByRole( 'button', {
+				name: 'Connect skills for Equations quiz',
+			} )
+		);
+		expect(
+			within( panel() ).getByRole( 'heading', {
+				name: 'Skills for Equations quiz',
+			} )
+		).toBeInTheDocument();
+		expect(
+			within( panel() ).getByRole( 'checkbox', {
+				name: /Solve two-step equations/,
+			} )
+		).toBeChecked();
+		expect(
+			within( panel() ).getByRole( 'checkbox', {
+				name: /Solve one-step equations/,
+			} )
+		).not.toBeChecked();
+		await user.click(
+			within( panel() ).getByRole( 'checkbox', {
+				name: /Factorise quadratics/,
+			} )
+		);
+		expect( planApi.linkContentSkills ).toHaveBeenCalledWith(
+			12,
+			'quiz',
+			50,
+			{ add: [ 9 ] },
+			expect.any( AbortSignal )
+		);
 	} );
 } );

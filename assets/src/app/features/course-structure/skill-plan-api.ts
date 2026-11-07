@@ -20,6 +20,8 @@ export interface SkillState {
 	code: string;
 	status: string;
 	teaching: TaughtIn[];
+	/** Quizzes the course places that are connected to the skill. */
+	assessing: TaughtIn[];
 	questions: number;
 	questionsNeed: number;
 	teachingOk: boolean;
@@ -103,6 +105,12 @@ function state( value: unknown ): SkillState {
 					.filter( ( entry ) => 'lesson' === entry.type )
 					.map( taught )
 			: invalid(),
+		assessing: Array.isArray( row.assessing )
+			? row.assessing
+					.map( record )
+					.filter( ( entry ) => 'quiz' === entry.type )
+					.map( taught )
+			: [],
 		questions: whole( row.questions ),
 		questionsNeed: whole( row.questions_need ),
 		teachingOk: Boolean( row.teaching_ok ),
@@ -233,32 +241,39 @@ export async function setUnitTopics(
 	return parseUnitTopics( result.unit_topics );
 }
 
+/** What a connection can be made to. */
+export type ConnectableKind = 'lesson' | 'quiz';
+
 /**
- * Connect or disconnect skills of a lesson placed in the saved outline.
+ * Connect or disconnect skills of a lesson or quiz placed in the saved outline.
  *
  * @param course        Course ID.
- * @param lesson        Lesson ID.
+ * @param kind          `lesson` or `quiz`.
+ * @param content       Lesson or quiz ID.
  * @param change        Skill IDs to add and remove.
  * @param change.add
  * @param change.remove
  * @param signal        Cancels the request.
- * @return The lesson's skills and the updated teaching states.
+ * @return The item's skills and the updated teaching states.
  */
-export async function linkLessonSkills(
+export async function linkContentSkills(
 	course: number,
-	lesson: number,
+	kind: ConnectableKind,
+	content: number,
 	change: { add?: number[]; remove?: number[] },
 	signal?: AbortSignal
 ) {
 	const result = record(
 		await put< unknown >(
-			`${ base( course ) }/lessons/${ positiveId( lesson ) }`,
+			`${ base( course ) }/${
+				'quiz' === kind ? 'quizzes' : 'lessons'
+			}/${ positiveId( content ) }`,
 			{ add: change.add ?? [], remove: change.remove ?? [] },
 			{ signal }
 		)
 	);
 	return {
-		lessonSkills: ids( result.lesson_skills ),
+		contentSkills: ids( result.content_skills ),
 		skills: parseSkillStates( result.skills ),
 	};
 }

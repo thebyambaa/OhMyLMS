@@ -12,7 +12,8 @@ import { useOperation } from '../../hooks/useOperation';
 import { useRequest } from '../../hooks/useRequest';
 import {
 	getSkillPlan,
-	linkLessonSkills,
+	linkContentSkills,
+	type ConnectableKind,
 	setUnitTopics,
 	type PlanTopic,
 	type SkillPlan as Plan,
@@ -20,12 +21,12 @@ import {
 } from './skill-plan-api';
 import './SkillPlan.css';
 
-/** What the author picked on the outline: a unit, or a lesson placed in a unit. */
+/** What the author picked on the outline: a unit, or a lesson or quiz placed in a unit. */
 export type PlanSelection =
 	| { kind: 'unit'; id: number | string; name: string }
 	| {
-			kind: 'lesson';
-			/** Lesson post ID. */
+			kind: ConnectableKind;
+			/** Lesson or quiz post ID. */
 			id: number;
 			unitId: number | string;
 			name: string;
@@ -34,16 +35,16 @@ export type PlanSelection =
 type Scope = 'unit' | 'all';
 
 /**
- * The lessons that teach each skill, turned around: lesson ID to its number of skills.
+ * The lessons and quizzes connected to each skill, turned around: content ID to its number of skills.
  *
  * @param skills How the course teaches each skill it touches.
- * @return Skills per lesson ID.
+ * @return Skills per lesson or quiz ID.
  */
 function countsByLesson( skills: Record< number, SkillState > ) {
 	const counts = new Map< number, number >();
 	for ( const state of Object.values( skills ) ) {
-		for ( const lesson of state.teaching ) {
-			counts.set( lesson.id, ( counts.get( lesson.id ) ?? 0 ) + 1 );
+		for ( const content of [ ...state.teaching, ...state.assessing ] ) {
+			counts.set( content.id, ( counts.get( content.id ) ?? 0 ) + 1 );
 		}
 	}
 	return counts;
@@ -64,12 +65,12 @@ function skillCount( topic: PlanTopic ) {
  * @param props           Component props.
  * @param props.course    Course ID.
  * @param props.selection What is selected on the outline, if anything.
- * @param props.onSelect  Selects a lesson that teaches a skill (chosen from a skill row); gets its ID.
+ * @param props.onSelect  Selects a lesson or quiz connected to a skill (chosen from a skill row).
  * @param props.unsaved   Whether the outline has changes that are not saved; connections need a saved outline.
  * @param props.refresh   Changes when the saved outline changes, so the teaching state is read again.
- * @param props.onCounts  Told how many skills each lesson is connected to.
+ * @param props.onCounts  Told how many skills each lesson or quiz is connected to.
  * @param props.onTopics  Told the topics chosen for each saved unit.
- * @param props.unitOf    Unit ID a lesson (by ID) is placed in, when it is saved.
+ * @param props.unitOf    Unit ID a lesson or quiz (by ID) is placed in, when it is saved.
  */
 export function SkillPlan( {
 	course,
@@ -83,12 +84,12 @@ export function SkillPlan( {
 }: {
 	course: number;
 	selection: PlanSelection | null;
-	onSelect: ( lesson: number ) => void;
+	onSelect: ( kind: ConnectableKind, id: number ) => void;
 	unsaved: boolean;
 	refresh: number;
 	onCounts?: ( counts: ReadonlyMap< number, number > ) => void;
 	onTopics?: ( topics: Record< number, number[] > ) => void;
-	unitOf: ( lesson: number ) => number | null;
+	unitOf: ( content: number ) => number | null;
 } ) {
 	const [ curriculum, setCurriculum ] = useState( 0 );
 	const load = useCallback(
@@ -127,7 +128,7 @@ export function SkillPlan( {
 		setConnectedOnly( false );
 	}, [ selection?.kind, selection?.id ] );
 
-	const lesson = 'lesson' === selection?.kind ? selection : null;
+	const lesson = selection && 'unit' !== selection.kind ? selection : null;
 	const unit = 'unit' === selection?.kind ? selection : null;
 	const lessonUnit = lesson ? unitOf( lesson.id ) : null;
 	const scopedTopics =
@@ -138,7 +139,9 @@ export function SkillPlan( {
 		const ids = new Set< number >();
 		if ( lesson ) {
 			for ( const [ id, state ] of Object.entries( skills ) ) {
-				if ( state.teaching.some( ( row ) => row.id === lesson.id ) ) {
+				const found =
+					'quiz' === lesson.kind ? state.assessing : state.teaching;
+				if ( found.some( ( row ) => row.id === lesson.id ) ) {
 					ids.add( Number( id ) );
 				}
 			}
@@ -191,8 +194,9 @@ export function SkillPlan( {
 		}
 		void operation.run(
 			( signal ) =>
-				linkLessonSkills(
+				linkContentSkills(
 					course,
+					lesson.kind,
 					lesson.id,
 					on ? { add: [ skill ] } : { remove: [ skill ] },
 					signal
@@ -221,9 +225,16 @@ export function SkillPlan( {
 			return null;
 		}
 		const state = skills[ id ];
-		const others = ( state?.teaching ?? [] ).filter(
-			( row ) => row.id !== lesson?.id
-		);
+		const others = [
+			...( state?.teaching ?? [] ).map( ( row ) => ( {
+				...row,
+				kind: 'lesson' as const,
+			} ) ),
+			...( state?.assessing ?? [] ).map( ( row ) => ( {
+				...row,
+				kind: 'quiz' as const,
+			} ) ),
+		].filter( ( row ) => row.id !== lesson?.id );
 		const label = name.code ? `${ name.name } (${ name.code })` : name.name;
 		return (
 			<li key={ id } className="oml-skillplan-skill">
@@ -241,18 +252,32 @@ export function SkillPlan( {
 				<span className="oml-skillplan-skill-meta">
 					{ others.map( ( row ) => (
 						<Button
-							key={ row.id }
+							key={ `${ row.kind }:${ row.id }` }
 							size="small"
 							variant="tertiary"
 							className="oml-skillplan-lesson"
-							onClick={ () => onSelect( row.id ) }
-							label={ sprintf(
-								/* translators: %s: lesson title. */
-								__( 'Select lesson %s', 'ohmylms' ),
-								row.title
-							) }
+							onClick={ () => onSelect( row.kind, row.id ) }
+							label={
+								'quiz' === row.kind
+									? sprintf(
+											/* translators: %s: quiz title. */
+											__( 'Select quiz %s', 'ohmylms' ),
+											row.title
+										)
+									: sprintf(
+											/* translators: %s: lesson title. */
+											__( 'Select lesson %s', 'ohmylms' ),
+											row.title
+										)
+							}
 						>
-							{ row.title }
+							{ 'quiz' === row.kind
+								? sprintf(
+										/* translators: %s: quiz title. */
+										__( 'Quiz: %s', 'ohmylms' ),
+										row.title
+									)
+								: row.title }
 						</Button>
 					) ) }
 					{ ! state?.teaching.length && ! lesson && (
@@ -386,7 +411,7 @@ export function SkillPlan( {
 			{ ! selection && (
 				<p className="oml-skillplan-hint">
 					{ __(
-						'Select a unit to choose the topics it covers, or a lesson to connect it to skills.',
+						'Select a unit to choose the topics it covers, or a lesson or quiz to connect it to skills.',
 						'ohmylms'
 					) }
 				</p>
