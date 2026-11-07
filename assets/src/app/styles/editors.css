@@ -683,3 +683,13 @@ body.oml-builder-fullscreen .oml-editor-header .oml-editor-view-link {
 	color: var(--oml-muted);
 	font-size: var(--oml-font-size-xs);
 }
+
+/* The course form's heading is a plain line above the form, not a second card under the builder bar. */
+.ohmylms-app .oml-course-header {
+	position: static;
+	padding: 0;
+	margin: 0 0 var(--oml-space-3);
+	background: none;
+	border: 0;
+	box-shadow: none;
+}

@@ -234,7 +234,7 @@ export function CourseForm( { id }: { id: number } ) {
 
 	return (
 		<>
-			<div className="oml-editor-header">
+			<div className="oml-editor-header oml-course-header">
 				<div className="oml-editor-header-title">
 					<h2>
 						{ sprintf(
@@ -348,7 +348,7 @@ export function CourseForm( { id }: { id: number } ) {
 						<TextareaControl
 							label={ __( 'Description', 'ohmylms' ) }
 							value={ form.description }
-							rows={ 8 }
+							rows={ 6 }
 							onChange={ ( next ) =>
 								update( 'description', next )
 							}
