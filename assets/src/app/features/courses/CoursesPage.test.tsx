@@ -52,7 +52,7 @@ beforeEach( () => {
 } );
 
 describe( 'CoursesPage', () => {
-	it( 'lists courses with status, students and author without individual prices', async () => {
+	it( 'lists courses with what they hold, a status control and a view link, without prices, level, author or students', async () => {
 		renderPage();
 		expect( screen.getByRole( 'status' ) ).toHaveTextContent(
 			'Loading courses'
@@ -64,16 +64,31 @@ describe( 'CoursesPage', () => {
 		expect(
 			first.getByRole( 'link', { name: 'Algebra I' } )
 		).toHaveAttribute( 'href', '/courses/7' );
-		expect( first.getByText( 'Published' ) ).toBeInTheDocument();
-		expect( first.getByText( 'Beginner' ) ).toBeInTheDocument();
+		// The status is a control the author can change in place.
+		expect(
+			first.getByRole( 'combobox', { name: 'Status of Algebra I' } )
+		).toHaveValue( 'publish' );
+		expect( first.getByText( '2 units' ) ).toBeInTheDocument();
+		expect( first.getByText( '5 lessons' ) ).toBeInTheDocument();
+		expect( first.getByText( '1 quiz' ) ).toBeInTheDocument();
+		// The view link sits with the thumbnail.
+		expect( first.getByRole( 'link', { name: /View/ } ) ).toHaveAttribute(
+			'href',
+			summary.permalink
+		);
+		for ( const gone of [ 'Level', 'Author', 'Students', 'Price' ] ) {
+			expect(
+				screen.queryByRole( 'columnheader', { name: gone } )
+			).not.toBeInTheDocument();
+		}
 		expect(
 			screen.queryByRole( 'columnheader', { name: 'Price' } )
 		).not.toBeInTheDocument();
 		expect( screen.queryByLabelText( 'Price' ) ).not.toBeInTheDocument();
-		expect( first.getByText( 'Ada Admin' ) ).toBeInTheDocument();
-		expect( first.getByText( '4' ) ).toBeInTheDocument();
 		const second = within( rows[ 2 ]! );
-		expect( second.getByText( 'Draft' ) ).toBeInTheDocument();
+		expect(
+			second.getByRole( 'combobox', { name: 'Status of Free draft' } )
+		).toHaveValue( 'draft' );
 		expect( second.queryByText( 'Free' ) ).not.toBeInTheDocument();
 		expect( screen.getAllByText( '2 courses found.' )[ 0 ] ).toHaveClass(
 			'displaying-num'

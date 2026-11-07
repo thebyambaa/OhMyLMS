@@ -26,7 +26,7 @@ import {
 } from './api';
 import './CoursesPage.css';
 import { CourseViewLink } from './CourseViewLink';
-import { levelLabel, statusLabel } from './model';
+import { statusLabel } from './model';
 import { useCourses } from './useCourses';
 import type {
 	Course,
@@ -66,21 +66,24 @@ function CourseCell( { item, inTrash }: { item: Course; inTrash: boolean } ) {
 	const counts = item.content_counts;
 	return (
 		<div className="oml-courses-cell">
-			{ item.thumbnail_url ? (
-				<img
-					className="oml-courses-thumb"
-					src={ item.thumbnail_url }
-					alt=""
-					width={ 64 }
-					height={ 44 }
-					loading="lazy"
-				/>
-			) : (
-				<span
-					className="oml-courses-thumb is-empty"
-					aria-hidden="true"
-				/>
-			) }
+			<div className="oml-courses-media">
+				{ item.thumbnail_url ? (
+					<img
+						className="oml-courses-thumb"
+						src={ item.thumbnail_url }
+						alt=""
+						width={ 64 }
+						height={ 44 }
+						loading="lazy"
+					/>
+				) : (
+					<span
+						className="oml-courses-thumb is-empty"
+						aria-hidden="true"
+					/>
+				) }
+				<CourseViewLink course={ item } compact />
+			</div>
 			<div>
 				<strong>
 					{ inTrash ? (
@@ -514,36 +517,6 @@ export default function CoursesPage() {
 							),
 						},
 						{
-							id: 'level',
-							label: __( 'Level', 'ohmylms' ),
-							render: ( item ) => levelLabel( item.level ),
-						},
-						{
-							id: 'author',
-							label: __( 'Author', 'ohmylms' ),
-							render: ( item ) =>
-								item.author_name ? (
-									<span className="oml-courses-author">
-										<span aria-hidden="true">
-											{
-												Array.from(
-													item.author_name
-												)[ 0 ]
-											}
-										</span>
-										{ item.author_name }
-									</span>
-								) : (
-									'—'
-								),
-						},
-						{
-							id: 'students',
-							label: __( 'Students', 'ohmylms' ),
-							className: 'num',
-							render: ( item ) => item.enrolled_count,
-						},
-						{
 							id: 'date',
 							label: __( 'Date', 'ohmylms' ),
 							render: ( item ) => item.created_at.slice( 0, 10 ),
@@ -597,13 +570,6 @@ export default function CoursesPage() {
 										) ) }
 									</select>
 								),
-						},
-						{
-							id: 'view',
-							label: __( 'View', 'ohmylms' ),
-							render: ( item ) => (
-								<CourseViewLink course={ item } />
-							),
 						},
 					] }
 					rowActions={ ( item ) =>

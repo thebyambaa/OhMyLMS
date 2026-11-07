@@ -34,26 +34,6 @@
 	margin: 0;
 }
 
-.oml-courses-author {
-	display: inline-flex;
-	gap: 8px;
-	align-items: center;
-}
-
-.oml-courses-author > span {
-	display: inline-grid;
-	flex: none;
-	place-items: center;
-	width: 24px;
-	height: 24px;
-	border-radius: 50%;
-	background: #2271b1;
-	color: #fff;
-	font-size: 12px;
-	font-weight: 600;
-	text-transform: uppercase;
-}
-
 /* Give the course column the room: the other columns are short. */
 table:has(.oml-courses-cell) .column-title {
 	width: 38%;
@@ -96,4 +76,18 @@ table:has(.oml-courses-cell) th:not(.column-title):not(.check-column) {
 .oml-courses-status:focus-visible {
 	outline: 2px solid #2271b1;
 	outline-offset: 2px;
+}
+
+/* The thumbnail with its View link directly under it. */
+.oml-courses-media {
+	display: flex;
+	flex: none;
+	flex-direction: column;
+	gap: 6px;
+	align-items: center;
+}
+
+.oml-courses-view {
+	min-width: 64px;
+	text-align: center;
 }
