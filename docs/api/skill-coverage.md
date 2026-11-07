@@ -32,6 +32,8 @@ judged against `proficient`, and `need_basis` says so (`target` or `default`).
 ```json
 {
   "course_id": 7,
+  "revision": "9f2c…",
+  "units": [ { "id": 3, "title": "Fractions" } ],
   "summary": {
     "skills": 4, "required": 2, "covered": 1,
     "needs_teaching": 0, "needs_questions": 1, "needs_both": 2,
@@ -57,5 +59,33 @@ judged against `proficient`, and `need_basis` says so (`target` or `default`).
 come last. `required_not_ready` counts required skills whose question pool is short, which is also what blocks
 publishing. It agrees with `CourseProgram::readiness_report()` for those skills.
 
+`revision` identifies the saved outline the report was read from; send it back when fixing a gap. `units` lists the
+course's units, which are where a fix can place a lesson.
+
 Errors: `404` for an ID that is not a course, `401` or `403` without the right to edit it, `503` when learning storage
 is not installed.
+
+## Fixing a gap: add a lesson
+
+`POST /ohmylms/v1/courses/{id}/skill-coverage/lessons` creates an empty **draft** lesson, connects it to the skill and
+places it at the end of a unit, in one step. Nothing is published; the author writes the lesson next.
+
+| Field | Required | Meaning |
+| --- | --- | --- |
+| `skill_id` | yes | The skill term the lesson teaches. |
+| `unit_id` | yes | A unit of this course. |
+| `revision` | yes | The `revision` from the report the author is looking at. |
+| `title` | no | Up to 200 characters; defaults to the skill's name. |
+
+It answers `201` with `lesson` (`id`, `title`, `unit_id`, `edit_url`), the new `revision` and the updated `report`, so
+the view needs no second request. Needs the right to edit the course.
+
+Errors: `400` for an unknown skill, a unit that is not in this course, or a title that is too long; `409`
+(`ohmylms_program_stale`) when the outline changed since `revision` was read, in which case nothing is created; `403`,
+`404` and `503` as for the report. If placing the lesson fails the lesson is deleted again.
+
+In the course builder the buttons are disabled while any step has unsaved changes (a fix changes the saved outline) and
+in a course with no units. After a fix the Curriculum step reloads the changed outline.
+
+**Questions** are not created here: the **Add a question** link opens the question bank's new-question dialog with
+`?action=new&skill={id}`, and the new question starts linked to that skill as its primary skill.

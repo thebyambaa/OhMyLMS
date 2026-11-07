@@ -1344,6 +1344,46 @@ describe( 'QuestionEditorPage', () => {
 			);
 		} );
 
+		it( 'starts linked to the skill named in the route and saves that link', async () => {
+			vi.mocked( api.createQuestion ).mockResolvedValue( {
+				...question,
+				id: 902,
+				name: 'Draft question',
+				version: 1,
+			} );
+			const user = userEvent.setup();
+			renderEditor( `${ draftRoute( 'single-choice' ) }&skill=5` );
+			await draftLoaded();
+			await user.click( saveButton() );
+			await waitFor( () =>
+				expect( api.createQuestion ).toHaveBeenCalled()
+			);
+			expect( api.createQuestion ).toHaveBeenCalledWith(
+				expect.objectContaining( {
+					skills: { p1: { primary: 5, supporting: [] } },
+				} ),
+				expect.any( AbortSignal )
+			);
+		} );
+
+		it( 'ignores a skill in the route that is not a positive number', async () => {
+			vi.mocked( api.createQuestion ).mockResolvedValue( {
+				...question,
+				id: 903,
+				version: 1,
+			} );
+			const user = userEvent.setup();
+			renderEditor( `${ draftRoute( 'single-choice' ) }&skill=abc` );
+			await draftLoaded();
+			await user.click( saveButton() );
+			await waitFor( () =>
+				expect( api.createQuestion ).toHaveBeenCalled()
+			);
+			expect(
+				vi.mocked( api.createQuestion ).mock.calls[ 0 ]![ 0 ]
+			).not.toHaveProperty( 'skills' );
+		} );
+
 		it( 'creates an option question with its seeded options', async () => {
 			vi.mocked( api.createQuestion ).mockResolvedValue( {
 				...question,

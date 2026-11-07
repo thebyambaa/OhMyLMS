@@ -43,9 +43,9 @@ function EditorRoute() {
 	);
 }
 
-function renderPage() {
+function renderPage( route = '/content-hub/question-bank' ) {
 	return render(
-		<MemoryRouter initialEntries={ [ '/content-hub/question-bank' ] }>
+		<MemoryRouter initialEntries={ [ route ] }>
 			<Routes>
 				<Route
 					path="/content-hub/question-bank"
@@ -377,6 +377,51 @@ describe( 'QuestionsPage', () => {
 				).not.toBeInTheDocument();
 			}
 		);
+
+		it( 'opens the dialog from a skill link and carries the skill to the editor', async () => {
+			const user = userEvent.setup();
+			renderPage( '/content-hub/question-bank?action=new&skill=5' );
+			const dialog = await screen.findByRole( 'dialog' );
+			expect(
+				within( dialog ).getByText(
+					/start linked to the skill you came from/
+				)
+			).toBeInTheDocument();
+			await user.type(
+				within( dialog ).getByRole( 'textbox', { name: 'Question' } ),
+				'Halves'
+			);
+			await user.click(
+				within( dialog ).getByRole( 'button', { name: 'Continue' } )
+			);
+			expect(
+				await screen.findByText( 'Editor for new' )
+			).toBeInTheDocument();
+			expect( screen.getByTestId( 'search' ) ).toHaveTextContent(
+				`?${ new URLSearchParams( {
+					type: 'single-choice',
+					name: 'Halves',
+					skill: '5',
+				} ) }`
+			);
+		} );
+
+		it( 'does not mention a skill or send one when the dialog was opened plainly', async () => {
+			const { user, dialog } = await openDialog();
+			expect(
+				within( dialog ).queryByText( /skill you came from/ )
+			).not.toBeInTheDocument();
+			await user.type(
+				within( dialog ).getByRole( 'textbox', { name: 'Question' } ),
+				'Halves'
+			);
+			await user.click(
+				within( dialog ).getByRole( 'button', { name: 'Continue' } )
+			);
+			expect(
+				await screen.findByTestId( 'search' )
+			).not.toHaveTextContent( 'skill=' );
+		} );
 
 		it( 'requires a name before continuing', async () => {
 			const { user, dialog } = await openDialog();
