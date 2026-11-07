@@ -16,16 +16,19 @@ const LazySkillCoverage = lazy( () =>
  * the chunk loads when the step is opened. This is a plain component, so a caller can load this module
  * lazily without nesting one lazy component inside another.
  *
- * @param props         Component props.
- * @param props.course  Course ID.
- * @param props.unsaved Whether any step has unsaved changes.
+ * @param props           Component props.
+ * @param props.course    Course ID.
+ * @param props.unsaved   Whether any step has unsaved changes.
+ * @param props.onChanged Called after a fix changed the course's draft.
  */
 export function SkillCoverage( {
 	course,
 	unsaved,
+	onChanged,
 }: {
 	course: number;
 	unsaved: boolean;
+	onChanged?: () => void;
 } ) {
 	return (
 		<Suspense
@@ -35,7 +38,11 @@ export function SkillCoverage( {
 				</p>
 			}
 		>
-			<LazySkillCoverage course={ course } unsaved={ unsaved } />
+			<LazySkillCoverage
+				course={ course }
+				unsaved={ unsaved }
+				onChanged={ onChanged }
+			/>
 		</Suspense>
 	);
 }

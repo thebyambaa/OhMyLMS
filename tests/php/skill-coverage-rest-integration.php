@@ -36,8 +36,9 @@ $checks  = 0;
 $posts   = array();
 $terms   = array();
 $chapter = array();
+// Not `$course`: the plugin assigns to a global of that name when a lesson is created, which would clobber it here.
 $users   = array();
-$course  = 0;
+$course_id  = 0;
 $failed  = false;
 $mark    = 'covtest' . strtolower( wp_generate_password( 6, false, false ) );
 
@@ -139,14 +140,14 @@ try {
 	}
 	$make_question( $skill['B'], "$mark-fam-b" );
 
-	$course  = wp_insert_post(
+	$course_id  = wp_insert_post(
 		array(
 			'post_type'   => OHMYLMS_COURSE_CPT,
 			'post_status' => 'draft',
 			'post_title'  => "$mark course",
 		)
 	);
-	$posts[] = $course;
+	$posts[] = $course_id;
 	$unit    = array();
 	foreach ( array( 'One', 'Two' ) as $name ) {
 		$id        = wp_insert_post(
@@ -158,7 +159,7 @@ try {
 		);
 		$posts[]   = $id;
 		$chapter[] = $id;
-		CourseLayout::append_chapter( $course, $id );
+		CourseLayout::append_chapter( $course_id, $id );
 		$unit[ $name ] = $id;
 	}
 	$lesson_a = wp_insert_post(
@@ -187,7 +188,7 @@ try {
 	wp_set_object_terms( $lesson_c, array( $skill['C'] ), Taxonomy::NAME );
 	wp_set_object_terms( $quiz, array( $skill['B'] ), Taxonomy::NAME );
 	update_post_meta(
-		$course,
+		$course_id,
 		CourseProgram::DRAFT,
 		array(
 			'mode'            => 'traditional',
@@ -237,7 +238,7 @@ try {
 		)
 	);
 	update_post_meta(
-		$course,
+		$course_id,
 		'_ohmylms_course_objectives',
 		array(
 			array(
@@ -247,10 +248,10 @@ try {
 		)
 	);
 
-	$response = call_api( 'GET', "/courses/$course/skill-coverage" );
+	$response = call_api( 'GET', "/courses/$course_id/skill-coverage" );
 	ok( 200 === $response->get_status(), 'the report is returned: ' . wp_json_encode( $response->get_data() ) );
 	$report = $response->get_data();
-	ok( $course === $report['course_id'], 'the report names the course' );
+	ok( $course_id === $report['course_id'], 'the report names the course' );
 	$by = array();
 	foreach ( $report['skills'] as $row ) {
 		$by[ $row['term_id'] ] = $row;
@@ -280,7 +281,7 @@ try {
 	ok( $by[ $skill['B'] ]['term_id'] === $report['skills'][0]['term_id'], 'the required gap is listed first' );
 
 	// Publication readiness agrees with the report on the required skills.
-	$ready = CourseProgram::readiness_report( CourseProgram::editor( $course )['draft'], $course );
+	$ready = CourseProgram::readiness_report( CourseProgram::editor( $course_id )['draft'], $course_id );
 	$flags = array();
 	foreach ( $ready['skills'] as $row ) {
 		$flags[ $row['term_id'] ] = $row['ready'];
@@ -289,10 +290,10 @@ try {
 	ok( $a['questions'] === $ready['skills'][0]['questions'] || $a['questions'] === $ready['skills'][1]['questions'], 'both count the same questions for a skill' );
 
 	// A fixed pool of banks limits what counts, as it does for publication.
-	$program             = CourseProgram::editor( $course )['draft'];
+	$program             = CourseProgram::editor( $course_id )['draft'];
 	$program['bank_ids'] = array( 999999 );
-	update_post_meta( $course, CourseProgram::DRAFT, $program );
-	$limited = call_api( 'GET', "/courses/$course/skill-coverage" )->get_data();
+	update_post_meta( $course_id, CourseProgram::DRAFT, $program );
+	$limited = call_api( 'GET', "/courses/$course_id/skill-coverage" )->get_data();
 	$limit_a = array_values(
 		array_filter(
 			$limited['skills'],
@@ -303,13 +304,121 @@ try {
 	)[0];
 	ok( 0 === $limit_a['questions'] && 'needs-questions' === $limit_a['status'], 'questions outside the course banks do not count' );
 
+	// Fixing a missing-lesson gap in one step: D is only a syllabus objective, with nothing behind it.
+	$program             = CourseProgram::editor( $course_id )['draft'];
+	$program['bank_ids'] = array();
+	update_post_meta( $course_id, CourseProgram::DRAFT, $program );
+	$before = call_api( 'GET', "/courses/$course_id/skill-coverage" )->get_data();
+	ok( is_string( $before['revision'] ) && 32 === strlen( $before['revision'] ), 'the report carries the draft revision' );
+	ok( array( $unit['One'], $unit['Two'] ) === array_column( $before['units'], 'id' ) && "$mark unit One" === $before['units'][0]['title'], 'the report lists the course units in order' );
+	$fix = call_api(
+		'POST',
+		"/courses/$course_id/skill-coverage/lessons",
+		array(
+			'skill_id' => $skill['D'],
+			'unit_id'  => $unit['Two'],
+			'revision' => $before['revision'],
+			'title'    => "$mark fix lesson",
+		)
+	);
+	ok( 201 === $fix->get_status(), 'a lesson is added for the skill: ' . wp_json_encode( $fix->get_data() ) );
+	$added   = $fix->get_data();
+	$posts[] = (int) $added['lesson']['id'];
+	ok( OHMYLMS_LESSON_CPT === get_post_type( $added['lesson']['id'] ) && 'draft' === get_post_status( $added['lesson']['id'] ), 'the new lesson is a draft lesson' );
+	ok( "$mark fix lesson" === $added['lesson']['title'] && $unit['Two'] === $added['lesson']['unit_id'], 'it has the title and unit that were asked for' );
+	ok( in_array( $skill['D'], wp_get_object_terms( $added['lesson']['id'], Taxonomy::NAME, array( 'fields' => 'ids' ) ), true ), 'the lesson is linked to the skill' );
+	$placed = array_values(
+		array_filter(
+			CourseProgram::editor( $course_id )['draft']['items'],
+			static function ( $item ) use ( $added ) {
+				return 'lesson' === $item['type'] && (int) $item['content_id'] === $added['lesson']['id'];
+			}
+		)
+	);
+	ok( 1 === count( $placed ) && $unit['Two'] === (int) $placed[0]['chapter_id'], 'the lesson is placed in the unit in the draft program' );
+	ok( 4 === count( CourseProgram::editor( $course_id )['draft']['items'] ), 'the three placements that were already there are kept' );
+	$after = $added['report'];
+	$d_now = array_values(
+		array_filter(
+			$after['skills'],
+			static function ( $row ) use ( $skill ) {
+				return $row['term_id'] === $skill['D'];
+			}
+		)
+	)[0];
+	ok( $d_now['teaching_ok'] && $added['lesson']['id'] === $d_now['teaching'][0]['id'] && "$mark unit Two" === $d_now['teaching'][0]['unit'], 'the returned report now shows the skill as taught, in that unit' );
+	ok( 'needs-questions' === $d_now['status'], 'it still needs questions, which a lesson cannot fix' );
+	ok( $added['revision'] === $after['revision'] && $added['revision'] !== $before['revision'], 'the draft has a new revision, which the response returns' );
+	ok( 1 === $after['summary']['objectives_taught'], 'the objective is now counted as taught' );
+
+	$stale = call_api(
+		'POST',
+		"/courses/$course_id/skill-coverage/lessons",
+		array(
+			'skill_id' => $skill['C'],
+			'unit_id'  => $unit['One'],
+			'revision' => $before['revision'],
+		)
+	);
+	ok( 409 === $stale->get_status(), 'a change based on an older revision is refused, not applied over newer work' );
+	ok( 4 === count( CourseProgram::editor( $course_id )['draft']['items'] ), 'the refused change added nothing' );
+	$lessons_in_db = static function () use ( $wpdb, $mark ) {
+		return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type=%s AND post_title LIKE %s", OHMYLMS_LESSON_CPT, $mark . '%' ) );
+	};
+	$lessons_before = $lessons_in_db();
+	foreach ( array(
+		'a skill that does not exist' => array( 'skill_id' => 999999 ),
+		'a unit of another course'    => array( 'unit_id' => 999999 ),
+		'a title that is too long'    => array( 'title' => str_repeat( 'x', 201 ) ),
+	) as $label => $change ) {
+		$bad = call_api(
+			'POST',
+			"/courses/$course_id/skill-coverage/lessons",
+			$change + array(
+				'skill_id' => $skill['C'],
+				'unit_id'  => $unit['One'],
+				'revision' => $added['revision'],
+			)
+		);
+		ok( 400 === $bad->get_status(), "$label is refused" );
+	}
+	ok( 4 === count( CourseProgram::editor( $course_id )['draft']['items'] ), 'refused changes added nothing' );
+	ok( $lessons_before === $lessons_in_db(), 'refused changes leave no lesson behind' );
+	$default_title = call_api(
+		'POST',
+		"/courses/$course_id/skill-coverage/lessons",
+		array(
+			'skill_id' => $skill['C'],
+			'unit_id'  => $unit['One'],
+			'revision' => $added['revision'],
+		)
+	);
+	ok( 201 === $default_title->get_status() && "$mark skill C" === $default_title->get_data()['lesson']['title'], 'without a title the lesson is named after the skill' );
+	$posts[] = (int) $default_title->get_data()['lesson']['id'];
+
 	// Who may read it.
 	ok( 404 === call_api( 'GET', "/courses/$lesson_a/skill-coverage" )->get_status(), 'a post that is not a course is refused' );
 	$sub     = wp_create_user( $mark . 'sub', wp_generate_password( 24 ), $mark . 'sub@example.invalid' );
 	$users[] = $sub;
 	( new WP_User( $sub ) )->set_role( 'subscriber' );
 	wp_set_current_user( $sub );
-	ok( in_array( call_api( 'GET', "/courses/$course/skill-coverage" )->get_status(), array( 401, 403 ), true ), 'a subscriber cannot read coverage' );
+	ok( in_array( call_api( 'GET', "/courses/$course_id/skill-coverage" )->get_status(), array( 401, 403 ), true ), 'a subscriber cannot read coverage' );
+	ok(
+		in_array(
+			call_api(
+				'POST',
+				"/courses/$course_id/skill-coverage/lessons",
+				array(
+					'skill_id' => $skill['C'],
+					'unit_id'  => $unit['One'],
+					'revision' => $added['revision'],
+				)
+			)->get_status(),
+			array( 401, 403 ),
+			true
+		),
+		'a subscriber cannot add a lesson'
+	);
 	wp_set_current_user( (int) $admins[0] );
 
 	echo "Skill coverage REST: $checks checks passed." . PHP_EOL;
@@ -317,8 +426,8 @@ try {
 	echo $error->getMessage() . PHP_EOL;
 	$failed = true;
 } finally {
-	if ( $course ) {
-		$wpdb->delete( $wpdb->prefix . 'ohmylms_chapter_relationship', array( 'course_id' => $course ) );
+	if ( $course_id ) {
+		$wpdb->delete( $wpdb->prefix . 'ohmylms_chapter_relationship', array( 'course_id' => $course_id ) );
 	}
 	foreach ( $posts as $post_id ) {
 		if ( $post_id ) {

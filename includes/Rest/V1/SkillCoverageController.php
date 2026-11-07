@@ -11,6 +11,7 @@ use OhMyLMS\Abstracts\RestController;
 use OhMyLMS\Learning\Catalog;
 use OhMyLMS\Learning\Schema;
 use OhMyLMS\Learning\SkillCoverage;
+use OhMyLMS\Learning\SkillGapFix;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -19,9 +20,10 @@ use WP_REST_Server;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * `GET ohmylms/v1/courses/{id}/skill-coverage` (see docs/api/skill-coverage.md).
+ * `GET ohmylms/v1/courses/{id}/skill-coverage` and `POST .../skill-coverage/lessons` (see docs/api/skill-coverage.md).
  *
- * Read-only. It reports on the saved draft program, for authors who can edit the course.
+ * The report is read-only and covers the saved draft program, for authors who can edit the course. The POST
+ * fixes a missing-lesson gap in one step; it checks the draft revision like every other draft write.
  */
 class SkillCoverageController extends RestController {
 
@@ -39,6 +41,32 @@ class SkillCoverageController extends RestController {
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'show' ),
 					'permission_callback' => array( $this, 'permission' ),
+				),
+			)
+		);
+		register_rest_route(
+			$this->namespace,
+			'/courses/(?P<id>\d+)/skill-coverage/lessons',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'add_lesson' ),
+					'permission_callback' => array( $this, 'permission' ),
+					'args'                => array(
+						'skill_id' => array(
+							'type'     => 'integer',
+							'required' => true,
+						),
+						'unit_id'  => array(
+							'type'     => 'integer',
+							'required' => true,
+						),
+						'revision' => array(
+							'type'     => 'string',
+							'required' => true,
+						),
+						'title'    => array( 'type' => 'string' ),
+					),
 				),
 			)
 		);
@@ -69,5 +97,21 @@ class SkillCoverageController extends RestController {
 	 */
 	public function show( WP_REST_Request $request ) {
 		return rest_ensure_response( SkillCoverage::report( (int) $request['id'] ) );
+	}
+
+	/**
+	 * Create a draft lesson for a skill and place it in a unit.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function add_lesson( WP_REST_Request $request ) {
+		$result = SkillGapFix::add_lesson( (int) $request['id'], (int) $request['skill_id'], (int) $request['unit_id'], (string) $request['title'], (string) $request['revision'] );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		$response = rest_ensure_response( $result );
+		$response->set_status( 201 );
+		return $response;
 	}
 }

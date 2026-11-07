@@ -1023,11 +1023,16 @@ export function createInput( name: string, type: string ): QuestionCreateInput {
  * type (`questionTypePatch`, also used by the native editors) and, for the option types, the options
  * of {@link createInput}. Nothing is sent until the first save.
  *
- * @param name Question name.
- * @param type Question type id.
+ * @param name  Question name.
+ * @param type  Question type id.
+ * @param skill
  * @return An editor view with id 0, version 0 and full permissions.
  */
-export function draftQuestion( name: string, type: string ): QuestionDetail {
+export function draftQuestion(
+	name: string,
+	type: string,
+	skill = 0
+): QuestionDetail {
 	const patched = questionTypePatch( {}, type ).settings ?? {};
 	const settings: QuestionSettings = { ...patched, type };
 	if ( 'unscored' === scoreMode( type ) ) {
@@ -1050,7 +1055,7 @@ export function draftQuestion( name: string, type: string ): QuestionDetail {
 			image_url: '',
 			matching_data: item.matching_data ?? null,
 		} ) ),
-		skills: {},
+		skills: skill > 0 ? { p1: { primary: skill, supporting: [] } } : {},
 		bank: {
 			bank_id: 0,
 			difficulty: 'standard',

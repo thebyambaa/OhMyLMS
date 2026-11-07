@@ -47,8 +47,13 @@ function NewQuestion( {
 	const [ search ] = useSearchParams();
 	const type = search.get( 'type' ) ?? '';
 	const name = search.get( 'name' ) ?? '';
+	// A question started from a skill (the skill coverage view) begins linked to it.
+	const skill = Number( search.get( 'skill' ) ) || 0;
 	const types = useRequest( listQuestionTypes );
-	const draft = useMemo( () => draftQuestion( name, type ), [ name, type ] );
+	const draft = useMemo(
+		() => draftQuestion( name, type, skill ),
+		[ name, type, skill ]
+	);
 	if ( types.loading ) {
 		return (
 			<>

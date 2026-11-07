@@ -1,4 +1,4 @@
-import { get } from '../../lib/api';
+import { get, post } from '../../lib/api';
 import {
 	invalid,
 	positiveId,
@@ -63,8 +63,17 @@ export interface CoverageSummary {
 	requiredNotReady: number;
 }
 
+/** A unit of the course, where a fix can put a new lesson. */
+export interface CoverageUnit {
+	id: number;
+	title: string;
+}
+
 export interface SkillCoverage {
 	courseId: number;
+	/** Draft revision the report was built from; a fix must quote it. */
+	revision: string;
+	units: CoverageUnit[];
 	summary: CoverageSummary;
 	skills: CoverageSkill[];
 }
@@ -125,12 +134,17 @@ function skill( value: unknown ): CoverageSkill {
  */
 export function parseCoverage( incoming: unknown ): SkillCoverage {
 	const row = record( incoming );
-	if ( ! Array.isArray( row.skills ) ) {
+	if ( ! Array.isArray( row.skills ) || ! Array.isArray( row.units ) ) {
 		return invalid();
 	}
 	const summary = record( row.summary );
 	return {
 		courseId: positiveId( row.course_id ),
+		revision: text( row.revision ),
+		units: row.units.map( ( value ) => {
+			const unit = record( value );
+			return { id: positiveId( unit.id ), title: text( unit.title ) };
+		} ),
 		summary: {
 			skills: whole( summary.skills ),
 			required: whole( summary.required ),
@@ -160,4 +174,63 @@ export async function getSkillCoverage( id: number, signal?: AbortSignal ) {
 		} )
 	);
 	return result.courseId === id ? result : invalid();
+}
+
+/** What a fix that adds a lesson sends. */
+export interface AddLessonInput {
+	skillId: number;
+	unitId: number;
+	/** Lesson title; the server uses the skill's name when it is empty. */
+	title: string;
+	/** Revision from the report the author is looking at. */
+	revision: string;
+}
+
+/** A lesson a fix created, and the report as it is afterwards. */
+export interface AddedLesson {
+	lesson: { id: number; title: string; unitId: number; editUrl: string };
+	revision: string;
+	report: SkillCoverage;
+}
+
+/**
+ * Create a draft lesson for a skill, link it to the skill and place it in a unit of the course. A stale
+ * revision answers 409 and nothing is changed.
+ *
+ * @param course Course ID.
+ * @param input  Skill, unit, title and the revision the author saw.
+ * @param signal Cancels the request.
+ * @return The new lesson and the updated report.
+ */
+export async function addLessonForSkill(
+	course: number,
+	input: AddLessonInput,
+	signal?: AbortSignal
+): Promise< AddedLesson > {
+	const row = record(
+		await post< unknown >(
+			`/ohmylms/v1/courses/${ course }/skill-coverage/lessons`,
+			{
+				skill_id: input.skillId,
+				unit_id: input.unitId,
+				title: input.title,
+				revision: input.revision,
+			},
+			{ signal }
+		)
+	);
+	const lesson = record( row.lesson );
+	const report = parseCoverage( row.report );
+	return report.courseId === course
+		? {
+				lesson: {
+					id: positiveId( lesson.id ),
+					title: text( lesson.title ),
+					unitId: whole( lesson.unit_id ),
+					editUrl: text( lesson.edit_url ),
+				},
+				revision: text( row.revision ),
+				report,
+			}
+		: invalid();
 }

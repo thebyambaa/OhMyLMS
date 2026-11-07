@@ -1,4 +1,5 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
+import { useEffect } from '@wordpress/element';
 import userEvent from '@testing-library/user-event';
 import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
 import { BootstrapProvider } from '../../bootstrap/BootstrapContext';
@@ -19,21 +20,32 @@ vi.mock( './api', () => ( {
 let media: ReturnType< typeof mockMediaFrame >;
 
 afterEach( () => media.restore() );
+const outline = vi.hoisted( () => ( { mounts: 0 } ) );
 vi.mock( '../course-structure/public', () => ( {
-	CourseOutline: ( { id }: { id: number } ) => (
-		<p>Outline of course { id }</p>
-	),
+	CourseOutline: ( { id }: { id: number } ) => {
+		useEffect( () => {
+			outline.mounts += 1;
+		}, [] );
+		return <p>Outline of course { id }</p>;
+	},
 	SkillCoverage: ( {
 		course,
 		unsaved,
+		onChanged,
 	}: {
 		course: number;
 		unsaved: boolean;
+		onChanged?: () => void;
 	} ) => (
-		<p>
-			Coverage of course { course }
-			{ unsaved ? ' (unsaved changes)' : '' }
-		</p>
+		<>
+			<p>
+				Coverage of course { course }
+				{ unsaved ? ' (unsaved changes)' : '' }
+			</p>
+			<button onClick={ onChanged }>
+				Pretend a fix changed the draft
+			</button>
+		</>
 	),
 	PublicationPanel: ( { course }: { course: number } ) => (
 		<p>Publication of course { course }</p>
@@ -109,6 +121,7 @@ async function save( user: ReturnType< typeof userEvent.setup > ) {
 }
 
 beforeEach( () => {
+	outline.mounts = 0;
 	vi.resetAllMocks();
 	media = mockMediaFrame();
 	vi.mocked( api.getCourse ).mockResolvedValue( detail );
@@ -976,5 +989,42 @@ describe( 'the skill coverage step', () => {
 		expect(
 			screen.getByRole( 'link', { name: 'Next: Additional' } )
 		).toBeInTheDocument();
+	} );
+} );
+
+describe( 'a fix made from the coverage step', () => {
+	it( 'makes the Curriculum step load the changed outline instead of showing the old one', async () => {
+		const user = userEvent.setup();
+		renderEditor( '/courses/7/outline' );
+		expect(
+			await screen.findByText( 'Outline of course 7' )
+		).toBeVisible();
+		expect( outline.mounts ).toBe( 1 );
+		await user.click(
+			screen.getByRole( 'link', { name: 'Skill coverage' } )
+		);
+		await user.click(
+			await screen.findByRole( 'button', {
+				name: 'Pretend a fix changed the draft',
+			} )
+		);
+		await user.click( screen.getByRole( 'link', { name: 'Curriculum' } ) );
+		expect(
+			await screen.findByText( 'Outline of course 7' )
+		).toBeVisible();
+		expect( outline.mounts ).toBe( 2 );
+	} );
+
+	it( 'does not reload the Curriculum step when nothing was fixed', async () => {
+		const user = userEvent.setup();
+		renderEditor( '/courses/7/outline' );
+		await screen.findByText( 'Outline of course 7' );
+		await user.click(
+			screen.getByRole( 'link', { name: 'Skill coverage' } )
+		);
+		await screen.findByText( 'Coverage of course 7' );
+		await user.click( screen.getByRole( 'link', { name: 'Curriculum' } ) );
+		await screen.findByText( 'Outline of course 7' );
+		expect( outline.mounts ).toBe( 1 );
 	} );
 } );

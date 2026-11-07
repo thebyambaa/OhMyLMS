@@ -371,12 +371,12 @@
 			"gzip": 9600
 		},
 		"chunks/admin-app-skill-coverage.css": {
-			"raw": 2800,
-			"gzip": 800
+			"raw": 3100,
+			"gzip": 900
 		},
 		"chunks/admin-app-skill-coverage.js": {
-			"raw": 10500,
-			"gzip": 3300
+			"raw": 14500,
+			"gzip": 4500
 		},
 		"chunks/admin-app-skill-workspace.css": {
 			"raw": 3500,

@@ -141,3 +141,16 @@
 .oml-coverage-empty p {
 	margin: 0 0 var(--oml-space-2);
 }
+
+.oml-coverage-fixes {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--oml-space-1);
+}
+
+.oml-coverage-dialog-actions {
+	display: flex;
+	gap: var(--oml-space-2);
+	margin-top: var(--oml-space-3);
+}

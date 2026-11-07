@@ -95,6 +95,8 @@ export default function CourseEditorPage() {
 	const tab = TABS.find( ( row ) => row.id === ( params.tab ?? 'details' ) );
 	// Steps the user has opened stay mounted, hidden, so their edits survive moving between steps.
 	const [ openedOutline, setOpenedOutline ] = useState( false );
+	// A fix made from the coverage step changes the saved outline; remounting makes the Curriculum step load it.
+	const [ outlineVersion, setOutlineVersion ] = useState( 0 );
 	const [ openedForm, setOpenedForm ] = useState( () =>
 		Boolean( tab && ( 'details' === tab.id || 'settings' === tab.id ) )
 	);
@@ -218,11 +220,17 @@ export default function CourseEditorPage() {
 							<SkillCoverage
 								course={ id }
 								unsaved={ Boolean( step?.dirty ) }
+								onChanged={ () =>
+									setOutlineVersion( ( count ) => count + 1 )
+								}
 							/>
 						) }
 						{ ( 'outline' === tab.id || openedOutline ) && (
 							<div hidden={ 'outline' !== tab.id }>
-								<CourseOutline id={ id } />
+								<CourseOutline
+									key={ outlineVersion }
+									id={ id }
+								/>
 							</div>
 						) }
 					</Suspense>

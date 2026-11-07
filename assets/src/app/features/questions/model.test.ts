@@ -207,6 +207,17 @@ describe( 'drafts', () => {
 		] );
 	} );
 
+	it( 'starts a draft linked to a skill when asked to, and unlinked otherwise', () => {
+		expect( draftQuestion( 'Q', 'single-choice', 12 ).skills ).toEqual( {
+			p1: { primary: 12, supporting: [] },
+		} );
+		expect( draftQuestion( 'Q', 'single-choice' ).skills ).toEqual( {} );
+		expect( draftQuestion( 'Q', 'single-choice', 0 ).skills ).toEqual( {} );
+		expect( draftQuestion( 'Q', 'single-choice', -3 ).skills ).toEqual(
+			{}
+		);
+	} );
+
 	it( 'builds the create body from the draft form', () => {
 		const form = {
 			...formFromQuestion( draftQuestion( 'Pick', 'multiple-choice' ) ),

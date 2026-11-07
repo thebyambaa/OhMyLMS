@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { ApiError } from '../../lib/api';
@@ -6,7 +6,10 @@ import * as api from './coverage-api';
 import type { CoverageSkill, SkillCoverage as Report } from './coverage-api';
 import { SkillCoverage } from './SkillCoverage';
 
-vi.mock( './coverage-api', () => ( { getSkillCoverage: vi.fn() } ) );
+vi.mock( './coverage-api', () => ( {
+	getSkillCoverage: vi.fn(),
+	addLessonForSkill: vi.fn(),
+} ) );
 
 const notice = { selector: '.components-notice__content' };
 
@@ -104,16 +107,31 @@ const summary = ( over = {} ) => ( {
 	...over,
 } );
 
-const report = ( skills: CoverageSkill[], over = {} ): Report => ( {
+const UNITS = [
+	{ id: 3, title: 'Fractions' },
+	{ id: 4, title: 'Decimals' },
+];
+
+const report = (
+	skills: CoverageSkill[],
+	over = {},
+	units = UNITS
+): Report => ( {
 	courseId: 7,
+	revision: 'rev-1',
+	units,
 	summary: summary( over ),
 	skills,
 } );
 
-function renderView( unsaved = false ) {
+function renderView( unsaved = false, onChanged?: () => void ) {
 	return render(
 		<MemoryRouter>
-			<SkillCoverage course={ 7 } unsaved={ unsaved } />
+			<SkillCoverage
+				course={ 7 }
+				unsaved={ unsaved }
+				onChanged={ onChanged }
+			/>
 		</MemoryRouter>
 	);
 }
@@ -361,5 +379,263 @@ describe( 'SkillCoverage', () => {
 		).toBeInTheDocument();
 		await user.click( screen.getByRole( 'button', { name: 'Try again' } ) );
 		expect( await screen.findByRole( 'table' ) ).toBeInTheDocument();
+	} );
+} );
+
+describe( 'fixing gaps from the view', () => {
+	const added = ( over = {} ) => ( {
+		lesson: {
+			id: 40,
+			title: 'Rounding basics',
+			unitId: 4,
+			editUrl: 'http://example.test/edit/40',
+		},
+		revision: 'rev-2',
+		report: report(
+			[
+				nothing,
+				{ ...noLesson, teachingOk: true, status: 'covered' as const },
+				noQuestions,
+				covered,
+			],
+			{ covered: 2, needsTeaching: 0 }
+		),
+		...over,
+	} );
+
+	const row = async ( name: string ) =>
+		( await screen.findByText( name ) ).closest( 'tr' )!;
+
+	it( 'offers a lesson where none teaches the skill and a question where the pool is short', async () => {
+		renderView();
+		const round = await row( 'Round' );
+		expect(
+			within( round ).getByRole( 'button', {
+				name: 'Add a lesson for Round',
+			} )
+		).toBeEnabled();
+		expect(
+			within( round ).queryByRole( 'link', { name: /Add a question/ } )
+		).not.toBeInTheDocument();
+
+		const tenths = await row( 'Compare tenths' );
+		expect(
+			within( tenths ).queryByRole( 'button', { name: /Add a lesson/ } )
+		).not.toBeInTheDocument();
+		expect(
+			within( tenths ).getByRole( 'link', {
+				name: 'Add a question for Compare tenths',
+			} )
+		).toHaveAttribute(
+			'href',
+			'/content-hub/question-bank?action=new&skill=2'
+		);
+
+		const both = await row( 'Estimate' );
+		expect(
+			within( both ).getByRole( 'button', {
+				name: 'Add a lesson for Estimate',
+			} )
+		).toBeInTheDocument();
+		expect(
+			within( both ).getByRole( 'link', {
+				name: 'Add a question for Estimate',
+			} )
+		).toBeInTheDocument();
+
+		const done = await row( 'Add halves' );
+		expect(
+			within( done ).queryByRole( 'button' )
+		).not.toBeInTheDocument();
+		expect(
+			within( done ).queryByRole( 'link', { name: /Add a/ } )
+		).not.toBeInTheDocument();
+	} );
+
+	it( 'opens a dialog that starts on the unit the skill is already tagged in, named after the skill', async () => {
+		const user = userEvent.setup();
+		renderView();
+		await user.click(
+			within( await row( 'Round' ) ).getByRole( 'button', {
+				name: 'Add a lesson for Round',
+			} )
+		);
+		const dialog = await screen.findByRole( 'dialog', {
+			name: 'Add a lesson for “Round”',
+		} );
+		expect(
+			within( dialog ).getByRole( 'combobox', { name: 'Unit' } )
+		).toHaveValue( '3' );
+		expect(
+			within( dialog ).getByRole( 'textbox', { name: 'Lesson title' } )
+		).toHaveValue( 'Round' );
+		expect(
+			within( dialog ).getByText( /Nothing is published/ )
+		).toBeInTheDocument();
+	} );
+
+	it( 'creates the lesson with the chosen unit and title, then shows the updated report', async () => {
+		vi.mocked( api.addLessonForSkill ).mockResolvedValue( added() );
+		const onChanged = vi.fn();
+		const user = userEvent.setup();
+		renderView( false, onChanged );
+		await user.click(
+			within( await row( 'Round' ) ).getByRole( 'button', {
+				name: 'Add a lesson for Round',
+			} )
+		);
+		const dialog = await screen.findByRole( 'dialog' );
+		await user.selectOptions(
+			within( dialog ).getByRole( 'combobox', { name: 'Unit' } ),
+			'4'
+		);
+		const title = within( dialog ).getByRole( 'textbox', {
+			name: 'Lesson title',
+		} );
+		await user.clear( title );
+		await user.type( title, 'Rounding basics' );
+		await user.click(
+			within( dialog ).getByRole( 'button', { name: 'Add lesson' } )
+		);
+
+		expect( api.addLessonForSkill ).toHaveBeenCalledWith(
+			7,
+			{
+				skillId: 3,
+				unitId: 4,
+				title: 'Rounding basics',
+				revision: 'rev-1',
+			},
+			expect.any( AbortSignal )
+		);
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		expect( onChanged ).toHaveBeenCalledOnce();
+		expect(
+			await screen.findByText(
+				/Added the draft lesson “Rounding basics” to Decimals/,
+				notice
+			)
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'link', { name: 'Open the lesson' } )
+		).toHaveAttribute( 'href', '/content-hub/lessons/40' );
+		const round = await row( 'Round' );
+		expect( within( round ).getByText( 'Covered' ) ).toBeInTheDocument();
+		expect(
+			within( round ).queryByRole( 'button', { name: /Add a lesson/ } )
+		).not.toBeInTheDocument();
+		expect( api.getSkillCoverage ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	it( 'sends an empty title when it is cleared, so the server names the lesson after the skill', async () => {
+		vi.mocked( api.addLessonForSkill ).mockResolvedValue( added() );
+		const user = userEvent.setup();
+		renderView();
+		await user.click(
+			within( await row( 'Round' ) ).getByRole( 'button', {
+				name: 'Add a lesson for Round',
+			} )
+		);
+		const dialog = await screen.findByRole( 'dialog' );
+		await user.clear(
+			within( dialog ).getByRole( 'textbox', { name: 'Lesson title' } )
+		);
+		await user.click(
+			within( dialog ).getByRole( 'button', { name: 'Add lesson' } )
+		);
+		expect( api.addLessonForSkill ).toHaveBeenCalledWith(
+			7,
+			expect.objectContaining( { title: '' } ),
+			expect.any( AbortSignal )
+		);
+	} );
+
+	it( 'keeps the dialog open with the reason when the course changed meanwhile', async () => {
+		vi.mocked( api.addLessonForSkill ).mockRejectedValue(
+			new ApiError( {
+				status: 409,
+				code: 'ohmylms_program_stale',
+				message:
+					'The course structure changed since you read it. Read it again.',
+			} )
+		);
+		const onChanged = vi.fn();
+		const user = userEvent.setup();
+		renderView( false, onChanged );
+		await user.click(
+			within( await row( 'Round' ) ).getByRole( 'button', {
+				name: 'Add a lesson for Round',
+			} )
+		);
+		const dialog = await screen.findByRole( 'dialog' );
+		await user.click(
+			within( dialog ).getByRole( 'button', { name: 'Add lesson' } )
+		);
+		expect(
+			await within( dialog ).findByText(
+				/The course structure changed since you read it/,
+				notice
+			)
+		).toBeInTheDocument();
+		expect( screen.getByRole( 'dialog' ) ).toBeInTheDocument();
+		expect( onChanged ).not.toHaveBeenCalled();
+		expect(
+			within( await row( 'Round' ) ).getByText( 'Needs a lesson' )
+		).toBeInTheDocument();
+	} );
+
+	it( 'closes without changing anything on Cancel', async () => {
+		const user = userEvent.setup();
+		renderView();
+		await user.click(
+			within( await row( 'Round' ) ).getByRole( 'button', {
+				name: 'Add a lesson for Round',
+			} )
+		);
+		await user.click(
+			within( await screen.findByRole( 'dialog' ) ).getByRole( 'button', {
+				name: 'Cancel',
+			} )
+		);
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		expect( api.addLessonForSkill ).not.toHaveBeenCalled();
+	} );
+
+	it( 'does not offer to add a lesson while there are unsaved changes, and says why', async () => {
+		const user = userEvent.setup();
+		renderView( true );
+		const button = within( await row( 'Round' ) ).getByRole( 'button', {
+			name: 'Add a lesson for Round',
+		} );
+		expect( button ).toBeDisabled();
+		expect( button ).toHaveAttribute(
+			'title',
+			'Save your changes first: a fix changes the saved outline.'
+		);
+		await user.click( button );
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		// Adding a question opens another screen and changes nothing in the outline.
+		expect(
+			within( await row( 'Estimate' ) ).getByRole( 'link', {
+				name: 'Add a question for Estimate',
+			} )
+		).toBeInTheDocument();
+	} );
+
+	it( 'does not offer to add a lesson to a course with no units, and says why', async () => {
+		vi.mocked( api.getSkillCoverage ).mockResolvedValue(
+			report( [ noLesson ], {}, [] )
+		);
+		renderView();
+		const button = within( await row( 'Round' ) ).getByRole( 'button', {
+			name: 'Add a lesson for Round',
+		} );
+		expect( button ).toBeDisabled();
+		expect( button ).toHaveAttribute(
+			'title',
+			'Add a unit in the Curriculum step first.'
+		);
 	} );
 } );

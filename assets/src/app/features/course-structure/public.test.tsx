@@ -28,6 +28,8 @@ describe( 'course structure public entry', () => {
 	it( 'renders the skill coverage step when it is loaded lazily by the courses feature', async () => {
 		vi.mocked( api.getSkillCoverage ).mockResolvedValue( {
 			courseId: 7,
+			revision: 'rev-1',
+			units: [],
 			summary: {
 				skills: 1,
 				required: 0,

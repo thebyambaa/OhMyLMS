@@ -49,7 +49,7 @@ function ok( $value, $message ) {
 	++$checks;
 }
 
-$course    = $base;
+$course_id    = $base;
 $chapters  = array( $base + 1, $base + 2 );
 $contents  = array( $base + 3, $base + 4, $base + 5 );
 $school    = $base + 6;
@@ -62,18 +62,18 @@ $content_t = $wpdb->prefix . 'ohmylms_content_relationship';
 
 try {
 	// Units: appended in order, then reordered.
-	CourseLayout::append_chapter( $course, $chapters[0] );
-	CourseLayout::append_chapter( $course, $chapters[1] );
-	$listed = CourseLayout::chapters( $course );
+	CourseLayout::append_chapter( $course_id, $chapters[0] );
+	CourseLayout::append_chapter( $course_id, $chapters[1] );
+	$listed = CourseLayout::chapters( $course_id );
 	ok( array( $chapters[0], $chapters[1] ) === array_map( 'intval', wp_list_pluck( $listed, 'chapter_id' ) ), 'units come back in the order they were added' );
 	ok( array( 1, 2 ) === array_map( 'intval', wp_list_pluck( $listed, 'order_number' ) ), 'appended units are numbered from 1' );
-	ok( CourseLayout::chapter_in_course( $chapters[0], $course ) && ! CourseLayout::chapter_in_course( $chapters[0], $course + 1 ), 'a unit belongs only to its own course' );
-	ok( CourseLayout::course_of( $chapters[1] ) === $course && 0 === CourseLayout::course_of( $base + 99 ), 'the course of a unit is found, and 0 for an unplaced one' );
-	CourseLayout::set_chapter_position( $course, $chapters[0], 2 );
-	CourseLayout::set_chapter_position( $course, $chapters[1], 1 );
-	ok( array( $chapters[1], $chapters[0] ) === array_map( 'intval', wp_list_pluck( CourseLayout::chapters( $course ), 'chapter_id' ) ), 'moving units changes their order' );
-	CourseLayout::set_chapter_position( $course + 1, $chapters[0], 9 );
-	ok( 2 === (int) wp_list_pluck( CourseLayout::chapters( $course ), 'order_number' )[1], 'moving a unit in another course leaves this course alone' );
+	ok( CourseLayout::chapter_in_course( $chapters[0], $course_id ) && ! CourseLayout::chapter_in_course( $chapters[0], $course_id + 1 ), 'a unit belongs only to its own course' );
+	ok( CourseLayout::course_of( $chapters[1] ) === $course_id && 0 === CourseLayout::course_of( $base + 99 ), 'the course of a unit is found, and 0 for an unplaced one' );
+	CourseLayout::set_chapter_position( $course_id, $chapters[0], 2 );
+	CourseLayout::set_chapter_position( $course_id, $chapters[1], 1 );
+	ok( array( $chapters[1], $chapters[0] ) === array_map( 'intval', wp_list_pluck( CourseLayout::chapters( $course_id ), 'chapter_id' ) ), 'moving units changes their order' );
+	CourseLayout::set_chapter_position( $course_id + 1, $chapters[0], 9 );
+	ok( 2 === (int) wp_list_pluck( CourseLayout::chapters( $course_id ), 'order_number' )[1], 'moving a unit in another course leaves this course alone' );
 
 	// Content: appended with a type, then reordered.
 	CourseLayout::append_content( $chapters[0], $contents[0], 'lesson' );
@@ -165,7 +165,7 @@ try {
 	echo $error->getMessage() . PHP_EOL;
 	$failed = true;
 } finally {
-	$wpdb->delete( $chapter_t, array( 'course_id' => $course ) );
+	$wpdb->delete( $chapter_t, array( 'course_id' => $course_id ) );
 	$wpdb->delete( $content_t, array( 'chapter_id' => $chapters[0] ) );
 	$wpdb->delete( $content_t, array( 'chapter_id' => $chapters[1] ) );
 	$wpdb->delete( Schema::table( 'school_invitations' ), array( 'school_id' => $school ) );

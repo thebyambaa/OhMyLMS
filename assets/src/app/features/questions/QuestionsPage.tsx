@@ -102,12 +102,15 @@ export default function QuestionsPage() {
 		null
 	);
 	const [ adding, setAdding ] = useState< QuestionSummary | null >( null );
+	// The skill a new question starts linked to, when the author came from the skill coverage view.
+	const [ forSkill, setForSkill ] = useState( 0 );
 	const registered = types.data ?? [];
 	const chosenType = type || defaultType( registered );
 
 	function openCreate() {
 		setName( '' );
 		setType( '' );
+		setForSkill( 0 );
 		setNameError( null );
 		setMessage( null );
 		operation.clearError();
@@ -115,6 +118,7 @@ export default function QuestionsPage() {
 	}
 	function closeCreate() {
 		setCreating( false );
+		setForSkill( 0 );
 		setNameError( null );
 	}
 	const action = params.get( 'action' );
@@ -124,6 +128,7 @@ export default function QuestionsPage() {
 		} else if ( 'new' === action ) {
 			setName( '' );
 			setType( '' );
+			setForSkill( Number( params.get( 'skill' ) ) || 0 );
 			setNameError( null );
 			setCreating( true );
 		} else {
@@ -133,10 +138,13 @@ export default function QuestionsPage() {
 			( current ) => {
 				const next = new URLSearchParams( current );
 				next.delete( 'action' );
+				next.delete( 'skill' );
 				return next;
 			},
 			{ replace: true }
 		);
+		// `params` is read once, when the action arrives; `skill` is removed with it.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ action, setParams ] );
 	function download( scope: 'selected' | 'filtered', format: ExportFormat ) {
 		setMessage( null );
@@ -191,12 +199,14 @@ export default function QuestionsPage() {
 		}
 		setNameError( null );
 		setCreating( false );
-		navigate(
-			`${ EDITOR }/new?${ new URLSearchParams( {
-				type: chosenType,
-				name: value,
-			} ).toString() }`
-		);
+		const query = new URLSearchParams( {
+			type: chosenType,
+			name: value,
+		} );
+		if ( forSkill ) {
+			query.set( 'skill', String( forSkill ) );
+		}
+		navigate( `${ EDITOR }/new?${ query.toString() }` );
 	}
 	function duplicate( item: QuestionSummary ) {
 		setMessage( null );
@@ -655,6 +665,14 @@ export default function QuestionsPage() {
 						} }
 						noValidate
 					>
+						{ forSkill > 0 && (
+							<p>
+								{ __(
+									'This question will start linked to the skill you came from, which you can change in the editor.',
+									'ohmylms'
+								) }
+							</p>
+						) }
 						<p>
 							{ __(
 								'Next you complete the question in the editor. It is added to the question bank when you save it.',

@@ -44,7 +44,7 @@ final class SkillCoverage {
 	 * Skill coverage of a course's draft program.
 	 *
 	 * @param int $course_id Course ID.
-	 * @return array{course_id:int,summary:array,skills:array}
+	 * @return array{course_id:int,revision:string,units:array,summary:array,skills:array}
 	 */
 	public static function report( $course_id ) {
 		$course_id = (int) $course_id;
@@ -92,6 +92,7 @@ final class SkillCoverage {
 		return self::assemble(
 			array(
 				'course_id'  => $course_id,
+				'revision'   => Catalog::revision( $course_id ),
 				'units'      => $units,
 				'placed'     => $placed,
 				'outcomes'   => $outcomes,
@@ -109,8 +110,9 @@ final class SkillCoverage {
 	 * @param array $in {
 	 *     Input.
 	 *
-	 *     @type int   $course_id  Course ID.
-	 *     @type array $units      Unit ID => title.
+	 *     @type int    $course_id  Course ID.
+	 *     @type string $revision   Draft revision, for the writes the report offers.
+	 *     @type array  $units      Unit ID => title.
 	 *     @type array $placed     Placed activities: type, content_id, chapter_id, title, skills (term IDs).
 	 *     @type array $outcomes   Skill outcomes: term_id, target, required, chapter_id.
 	 *     @type int[] $objectives Skill IDs of the syllabus objectives the course targets.
@@ -118,7 +120,7 @@ final class SkillCoverage {
 	 *     @type array $pools      Skill ID => questions and families in the allowed pool.
 	 *     @type array $rules      Mastery thresholds (`<target>_min`, `<target>_families`).
 	 * }
-	 * @return array{course_id:int,summary:array,skills:array}
+	 * @return array{course_id:int,revision:string,units:array,summary:array,skills:array}
 	 */
 	public static function assemble( array $in ) {
 		$units  = (array) ( $in['units'] ?? array() );
@@ -201,8 +203,17 @@ final class SkillCoverage {
 			}
 		);
 
+		$unit_list = array();
+		foreach ( $units as $unit_id => $unit_title ) {
+			$unit_list[] = array(
+				'id'    => (int) $unit_id,
+				'title' => (string) $unit_title,
+			);
+		}
 		return array(
 			'course_id' => (int) ( $in['course_id'] ?? 0 ),
+			'revision'  => (string) ( $in['revision'] ?? '' ),
+			'units'     => $unit_list,
 			'summary'   => self::summary( $list ),
 			'skills'    => $list,
 		);

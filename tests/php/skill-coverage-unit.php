@@ -55,6 +55,7 @@ $lesson = static function ( $id, $unit, array $skills, $title = '' ) {
 $report = C::assemble(
 	array(
 		'course_id'  => 7,
+		'revision'   => 'rev-1',
 		'units'      => array(
 			10 => 'Fractions',
 			11 => 'Decimals',
@@ -153,6 +154,20 @@ foreach ( $report['skills'] as $skill ) {
 }
 check( 6 === count( $by ), 'every skill the course touches is listed once: outcomes, tagged content, practice and objectives' );
 check( 7 === $report['course_id'], 'the course id is carried through' );
+check( 'rev-1' === $report['revision'], 'the draft revision is carried through, for the writes the report offers' );
+check(
+	array(
+		array(
+			'id'    => 10,
+			'title' => 'Fractions',
+		),
+		array(
+			'id'    => 11,
+			'title' => 'Decimals',
+		),
+	) === $report['units'],
+	'the units are listed in order, so a fix can choose where to put a lesson'
+);
 
 $halves = $by[100];
 check( $halves['outcome'] && $halves['required'] && 'mastered' === $halves['target'], 'a required outcome keeps its target' );
@@ -194,6 +209,7 @@ check( 1 === $summary['required_not_ready'], 'summary counts required skills who
 
 $empty = C::assemble( array( 'course_id' => 9 ) );
 check( array() === $empty['skills'] && 0 === $empty['summary']['skills'], 'a course with no skills has an empty report' );
+check( '' === $empty['revision'] && array() === $empty['units'], 'a report with no revision or units has empty ones' );
 $unknown = C::assemble(
 	array(
 		'outcomes' => array(
