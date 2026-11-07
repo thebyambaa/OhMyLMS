@@ -32,6 +32,27 @@
 	}
 }
 
+.ohmylms-app .oml-outline-navigation > details > summary {
+	display: flex;
+	align-items: center;
+	gap: var(--oml-space-2);
+	cursor: pointer;
+}
+
+.ohmylms-app .oml-outline-navigation > details > summary h2 {
+	margin: 0;
+	font-size: var(--oml-font-size-lg);
+}
+
+.ohmylms-app .oml-outline-navigation-count {
+	color: var(--oml-muted);
+	font-size: var(--oml-font-size-xs);
+}
+
+.ohmylms-app .oml-outline-navigation > details[open] > summary {
+	margin-block-end: var(--oml-space-3);
+}
+
 .ohmylms-app .oml-outline-navigation ol,
 .ohmylms-app .oml-outline-navigation ul,
 .ohmylms-app .oml-curriculum-branches {
@@ -101,7 +122,7 @@
 	}
 }
 
-.ohmylms-app .oml-outline-navigation > ol {
+.ohmylms-app .oml-outline-navigation > details > ol {
 	display: block;
 
 	@media (min-width: 961px) and (max-width: 1440px) {
@@ -112,4 +133,4 @@
 }
 
 
-/*# sourceMappingURL=admin-app-curriculum.9864e1efec4b.css.map*/
+/*# sourceMappingURL=admin-app-curriculum.ef8d950f7f75.css.map*/
