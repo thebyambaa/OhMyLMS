@@ -9,23 +9,23 @@
 	flex: none;
 	width: 64px;
 	height: 44px;
-	border-radius: 6px;
-	background: #f0f0f1;
+	border-radius: var(--oml-radius-card);
+	background: var(--oml-subtle);
 	object-fit: cover;
 }
 
 .oml-courses-thumb.is-empty {
 	display: block;
-	border: 1px dashed #c3c4c7;
+	border: 1px dashed var(--oml-border);
 }
 
 .oml-courses-counts {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 0 12px;
-	margin: 4px 0 0;
+	gap: 0 var(--oml-space-3);
+	margin: var(--oml-space-1) 0 0;
 	padding: 0;
-	color: #50575e;
+	color: var(--oml-muted);
 	font-size: 12px;
 	list-style: none;
 }
@@ -51,29 +51,30 @@ table:has(.oml-courses-cell) th:not(.column-title):not(.check-column) {
 /* Status control in each row, like Tutor's: a pill the author can change in place. */
 .oml-courses-status {
 	min-width: 120px;
-	padding: 2px 28px 2px 12px;
-	border: 1px solid #c3c4c7;
-	border-radius: 999px;
-	background-color: #fff;
-	color: #1d2327;
+	padding: 2px calc(var(--oml-space-5) + var(--oml-space-1)) 2px
+		var(--oml-space-3);
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-pill, 999px);
+	background-color: var(--oml-surface);
+	color: var(--oml-heading);
 	font-size: 13px;
 	line-height: 2;
 }
 
 .oml-courses-status[data-status="publish"] {
-	border-color: #00a32a;
-	background-color: #edfaef;
-	color: #007017;
+	border-color: var(--oml-success);
+	background-color: var(--oml-success-soft);
+	color: var(--oml-success-text);
 }
 
 .oml-courses-status[data-status="pending"],
 .oml-courses-status[data-status="future"] {
-	border-color: #dba617;
-	background-color: #fcf9e8;
-	color: #614200;
+	border-color: var(--oml-warning);
+	background-color: var(--oml-warning-soft);
+	color: var(--oml-warning-text);
 }
 
 .oml-courses-status:focus-visible {
-	outline: 2px solid #2271b1;
+	outline: 2px solid var(--oml-primary);
 	outline-offset: 2px;
 }

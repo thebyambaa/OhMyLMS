@@ -151,7 +151,7 @@ describe( 'membership settings extensions', () => {
 			} );
 		} );
 		expect(
-			screen.getByRole( 'textbox', {
+			await screen.findByRole( 'textbox', {
 				name: 'Member benefit for All access',
 			} )
 		).toHaveValue( 'Office hours' );

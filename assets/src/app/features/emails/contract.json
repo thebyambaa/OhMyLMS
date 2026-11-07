@@ -264,7 +264,11 @@
 				"quiz_name"
 			],
 			"student_exam_results_released": [ "student_name", "exam_name" ],
-			"student_at_risk_nudge": [ "student_name", "sender_name", "reasons" ],
+			"student_at_risk_nudge": [
+				"student_name",
+				"sender_name",
+				"reasons"
+			],
 			"instructor_assignment_comment": [
 				"student_name",
 				"course_name",
@@ -471,7 +475,9 @@
 						"button_text": { "type": "string" },
 						"button_link": { "type": "string" },
 						"footer_text": { "type": "string" },
-						"course_suggestion_text": { "type": [ "string", "null" ] }
+						"course_suggestion_text": {
+							"type": [ "string", "null" ]
+						}
 					}
 				},
 				"customized": {

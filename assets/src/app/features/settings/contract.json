@@ -54,7 +54,13 @@
 	],
 	"paymentGateways": {
 		"fieldTypes": [ "text", "textarea", "toggle", "secret" ],
-		"writeKeys": [ "enabled", "mode", "values", "secrets", "clear_secrets" ],
+		"writeKeys": [
+			"enabled",
+			"mode",
+			"values",
+			"secrets",
+			"clear_secrets"
+		],
 		"modes": [ "test", "live" ],
 		"maxLength": { "text": 200, "textarea": 2000, "secret": 500 },
 		"secretPattern": "^[\\x21-\\x7E]+$",

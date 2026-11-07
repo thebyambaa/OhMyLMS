@@ -226,12 +226,11 @@
 .ohmylms-app .ohmylms-gradebook-cell.is-not-assigned,
 .ohmylms-app .ohmylms-gradebook-swatch.is-not-assigned,
 .ohmylms-app .ohmylms-gradebook-cell.is-not-enrolled {
-	background:
-		repeating-linear-gradient(
-			45deg,
-			var(--oml-surface) 0 4px,
-			var(--oml-background) 4px 8px
-		);
+	background: repeating-linear-gradient(
+		45deg,
+		var(--oml-surface) 0 4px,
+		var(--oml-background) 4px 8px
+	);
 	color: var(--oml-muted);
 }
 
@@ -251,15 +250,27 @@
 }
 
 .ohmylms-app .ohmylms-gradebook-mastery.is-mastered {
-	background: color-mix(in srgb, var(--wp-admin-theme-color) 45%, var(--oml-surface));
+	background: color-mix(
+		in srgb,
+		var(--wp-admin-theme-color) 45%,
+		var(--oml-surface)
+	);
 }
 
 .ohmylms-app .ohmylms-gradebook-mastery.is-proficient {
-	background: color-mix(in srgb, var(--wp-admin-theme-color) 28%, var(--oml-surface));
+	background: color-mix(
+		in srgb,
+		var(--wp-admin-theme-color) 28%,
+		var(--oml-surface)
+	);
 }
 
 .ohmylms-app .ohmylms-gradebook-mastery.is-familiar {
-	background: color-mix(in srgb, var(--wp-admin-theme-color) 14%, var(--oml-surface));
+	background: color-mix(
+		in srgb,
+		var(--wp-admin-theme-color) 14%,
+		var(--oml-surface)
+	);
 }
 
 .ohmylms-app .ohmylms-gradebook-mastery.is-attempted {

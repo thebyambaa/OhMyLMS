@@ -88,7 +88,8 @@
 	width: 100%;
 }
 
-.ohmylms-app .components-button.ohmylms-skill-overlay__chip[aria-pressed="true"] {
+.ohmylms-app
+	.components-button.ohmylms-skill-overlay__chip[aria-pressed="true"] {
 	box-shadow: inset 0 0 0 2px var(--wp-admin-theme-color);
 }
 
@@ -122,37 +123,61 @@
 }
 
 .is-proficient.ohmylms-skill-overlay__swatch {
-	background:
-		repeating-linear-gradient(
-			90deg,
-			color-mix(in srgb, var(--wp-admin-theme-color) 70%, var(--oml-surface)) 0 4px,
-			color-mix(in srgb, var(--wp-admin-theme-color) 50%, var(--oml-surface)) 4px 6px
-		);
-	border-color: color-mix(in srgb, var(--wp-admin-theme-color) 70%, var(--oml-surface));
+	background: repeating-linear-gradient(
+		90deg,
+		color-mix(in srgb, var(--wp-admin-theme-color) 70%, var(--oml-surface))
+			0 4px,
+		color-mix(in srgb, var(--wp-admin-theme-color) 50%, var(--oml-surface))
+			4px 6px
+	);
+	border-color: color-mix(
+		in srgb,
+		var(--wp-admin-theme-color) 70%,
+		var(--oml-surface)
+	);
 }
 
 .is-proficient.ohmylms-skill-overlay__chip {
-	border-color: color-mix(in srgb, var(--wp-admin-theme-color) 70%, var(--oml-surface));
+	border-color: color-mix(
+		in srgb,
+		var(--wp-admin-theme-color) 70%,
+		var(--oml-surface)
+	);
 }
 
 .is-familiar.ohmylms-skill-overlay__swatch {
-	background-color: color-mix(in srgb, var(--wp-admin-theme-color) 22%, var(--oml-surface));
-	background-image: radial-gradient(color-mix(in srgb, var(--wp-admin-theme-color) 55%, var(--oml-surface)) 1px, transparent 1.5px);
+	background-color: color-mix(
+		in srgb,
+		var(--wp-admin-theme-color) 22%,
+		var(--oml-surface)
+	);
+	background-image: radial-gradient(
+		color-mix(in srgb, var(--wp-admin-theme-color) 55%, var(--oml-surface))
+			1px,
+		transparent 1.5px
+	);
 	background-size: 6px 6px;
-	border-color: color-mix(in srgb, var(--wp-admin-theme-color) 45%, var(--oml-surface));
+	border-color: color-mix(
+		in srgb,
+		var(--wp-admin-theme-color) 45%,
+		var(--oml-surface)
+	);
 }
 
 .is-familiar.ohmylms-skill-overlay__chip {
-	border-color: color-mix(in srgb, var(--wp-admin-theme-color) 45%, var(--oml-surface));
+	border-color: color-mix(
+		in srgb,
+		var(--wp-admin-theme-color) 45%,
+		var(--oml-surface)
+	);
 }
 
 .is-attempted.ohmylms-skill-overlay__swatch {
-	background:
-		repeating-linear-gradient(
-			45deg,
-			var(--oml-warning-soft) 0 4px,
-			color-mix(in srgb, var(--oml-warning) 55%, var(--oml-surface)) 4px 6px
-		);
+	background: repeating-linear-gradient(
+		45deg,
+		var(--oml-warning-soft) 0 4px,
+		color-mix(in srgb, var(--oml-warning) 55%, var(--oml-surface)) 4px 6px
+	);
 	border-color: var(--oml-warning);
 }
 

@@ -189,8 +189,10 @@ describe( 'marking rubric of short and long text questions', () => {
 		);
 		await user.click( save() );
 
-		expect( title ).toHaveAccessibleDescription(
-			'Enter a title of 1 to 200 characters.'
+		await waitFor( () =>
+			expect( title ).toHaveAccessibleDescription(
+				'Enter a title of 1 to 200 characters.'
+			)
 		);
 		expect(
 			within( rubric ).getByRole( 'spinbutton', {

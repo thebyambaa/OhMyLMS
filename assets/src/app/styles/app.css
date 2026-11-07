@@ -133,7 +133,7 @@ p.ohmylms-title-actions .page-title-action:first-child {
 .ohmylms-app .ohmylms-mascot-choice {
 	width: 76px;
 	height: 76px;
-	padding: 6px;
+	padding: var(--oml-space-2);
 	border: 2px solid var(--oml-border);
 	border-radius: var(--oml-radius-card);
 	background: var(--oml-surface);
@@ -177,7 +177,7 @@ p.ohmylms-title-actions .page-title-action:first-child {
 .ohmylms-app .ohmylms-brand-preview-bar {
 	height: 10px;
 	overflow: hidden;
-	border-radius: 999px;
+	border-radius: var(--oml-radius-pill, 999px);
 	background: var(--oml-border);
 }
 

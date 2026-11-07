@@ -8,6 +8,16 @@
 			"file": "assets/src/app/features/settings/BrandingForm.tsx",
 			"value": "#6e42d3",
 			"reason": "Example value in the translated help text of the learner branding colour fields; it is shown as text, not used as a colour."
+		},
+		{
+			"file": "assets/src/app/dashboard/Branding.tsx",
+			"value": "#000000",
+			"reason": "Contrast helper: it returns plain black or white as the readable text colour for a chosen brand colour, and falls back to black when the stored colour is invalid. These are computed data values, not styling."
+		},
+		{
+			"file": "assets/src/app/dashboard/Branding.tsx",
+			"value": "#ffffff",
+			"reason": "Contrast helper: it returns plain black or white as the readable text colour for a chosen brand colour, and falls back to black when the stored colour is invalid. These are computed data values, not styling."
 		}
 	],
 	"rawSpacing": [

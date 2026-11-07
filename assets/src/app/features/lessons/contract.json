@@ -29,7 +29,11 @@
 			"audio_id",
 			"video"
 		],
-		"readOnlyFields": [ "media_urls", "inline_questions", "video.poster_url" ],
+		"readOnlyFields": [
+			"media_urls",
+			"inline_questions",
+			"video.poster_url"
+		],
 		"videoFields": [
 			"provider",
 			"duration",
