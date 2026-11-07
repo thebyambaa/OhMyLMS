@@ -422,5 +422,88 @@ p.ohmylms-title-actions .page-title-action:first-child {
 	background: var(--oml-surface);
 }
 
+/* Full-screen builder: no admin menu, no hub header; one sticky bar with back, title, steps and view link. */
+body.oml-builder-fullscreen {
+	--oml-builder-bar: 64px;
+}
+
+body.oml-builder-fullscreen #adminmenumain,
+body.oml-builder-fullscreen #wpfooter,
+body.oml-builder-fullscreen .ohmylms-admin-page > .wp-heading-inline,
+body.oml-builder-fullscreen .ohmylms-admin-page > #ohmylms-admin-title-actions,
+body.oml-builder-fullscreen .ohmylms-admin-page > .wp-header-end,
+body.oml-builder-fullscreen .ohmylms-admin-page > #ohmylms-admin-tabs,
+body.oml-builder-fullscreen .ohmylms-admin-page > #ohmylms-admin-sections,
+body.oml-builder-fullscreen .ohmylms-admin-page > br.clear {
+	display: none;
+}
+
+body.oml-builder-fullscreen #wpcontent {
+	margin-left: 0;
+	padding-left: 0;
+}
+
+body.oml-builder-fullscreen .ohmylms-admin-page {
+	margin: 0;
+}
+
+.ohmylms-app .oml-builder-bar {
+	position: sticky;
+	top: 32px;
+	z-index: 50;
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: center;
+	box-sizing: border-box;
+	height: var(--oml-builder-bar, 64px);
+	gap: var(--oml-space-3);
+	padding: var(--oml-space-3) var(--oml-space-4);
+	border-bottom: 1px solid var(--oml-border);
+	background: var(--oml-surface);
+}
+
+.ohmylms-app .oml-builder-bar .oml-editor-breadcrumb {
+	margin: 0;
+}
+
+.ohmylms-app .oml-builder-title {
+	color: var(--oml-heading);
+	font-size: 16px;
+}
+
+.ohmylms-app .oml-builder-bar .oml-editor-steps {
+	flex: 1;
+	padding: 0;
+	border: 0;
+}
+
+body.oml-builder-fullscreen .oml-editor {
+	max-width: 1240px;
+	margin: 0 auto;
+	padding: 0 var(--oml-space-4) var(--oml-space-6);
+}
+
+body.oml-builder-fullscreen .oml-builder-bar {
+	margin: 0 calc(var(--oml-space-4) * -1) var(--oml-space-4);
+}
+
+body.oml-builder-fullscreen .oml-editor-header {
+	top: calc(32px + var(--oml-builder-bar));
+}
+
+/* Narrow screens: the bar wraps, so it scrolls with the page instead of covering the editor header. */
+@media (max-width: 1000px) {
+
+	.ohmylms-app .oml-builder-bar {
+		position: static;
+		flex-wrap: wrap;
+		height: auto;
+	}
+
+	body.oml-builder-fullscreen .oml-editor-header {
+		top: 32px;
+	}
+}
+
 
 /*# sourceMappingURL=admin-app.css.map*/
