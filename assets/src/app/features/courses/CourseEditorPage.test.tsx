@@ -251,17 +251,81 @@ describe( 'CourseEditorPage tabs', () => {
 		).toBeInTheDocument();
 		expect( api.getCourse ).not.toHaveBeenCalled();
 	} );
-	it( 'asks before switching tabs with unsaved changes', async () => {
+	it( 'moves between steps without asking and keeps what was typed', async () => {
 		const user = userEvent.setup();
 		renderEditor();
 		await loaded();
 		await setField( user, 'Title', 'Changed' );
 		await user.click( screen.getByRole( 'link', { name: 'Additional' } ) );
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		await user.click( screen.getByRole( 'link', { name: 'Curriculum' } ) );
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		expect(
+			await screen.findByText( 'Outline of course 7' )
+		).toBeVisible();
+		await user.click( screen.getByRole( 'link', { name: 'Basics' } ) );
+		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
+		expect( screen.getByLabelText( 'Title' ) ).toHaveValue( 'Changed' );
+		expect(
+			within( screen.getByRole( 'banner' ) ).getByRole( 'button', {
+				name: 'Save',
+			} )
+		).toBeEnabled();
+		expect( api.updateCourse ).not.toHaveBeenCalled();
+	} );
+	it( 'shows only the step that is open', async () => {
+		const user = userEvent.setup();
+		renderEditor();
+		await loaded();
+		await user.click( screen.getByRole( 'link', { name: 'Curriculum' } ) );
+		expect(
+			await screen.findByText( 'Outline of course 7' )
+		).toBeVisible();
+		expect( screen.getByLabelText( 'Title' ) ).not.toBeVisible();
+		await user.click( screen.getByRole( 'link', { name: 'Basics' } ) );
+		expect( screen.getByLabelText( 'Title' ) ).toBeVisible();
+		expect( screen.getByText( 'Outline of course 7' ) ).not.toBeVisible();
+	} );
+	it( 'saves the edits of every step from the bar, whichever step is open', async () => {
+		const user = userEvent.setup();
+		vi.mocked( api.updateCourse ).mockResolvedValue( {
+			...detail,
+			title: 'Changed',
+		} );
+		renderEditor();
+		await loaded();
+		await setField( user, 'Title', 'Changed' );
+		await user.click( screen.getByRole( 'link', { name: 'Curriculum' } ) );
+		await user.click(
+			within( screen.getByRole( 'banner' ) ).getByRole( 'button', {
+				name: 'Save',
+			} )
+		);
+		await waitFor( () =>
+			expect( api.updateCourse ).toHaveBeenCalledWith(
+				7,
+				expect.objectContaining( { title: 'Changed' } ),
+				expect.any( AbortSignal )
+			)
+		);
+	} );
+	it( 'still asks before leaving the editor with unsaved changes', async () => {
+		const user = userEvent.setup();
+		renderEditor();
+		await loaded();
+		await setField( user, 'Title', 'Changed' );
+		await user.click( screen.getByRole( 'link', { name: 'Curriculum' } ) );
+		await user.click(
+			screen.getByRole( 'link', { name: 'Back to courses' } )
+		);
 		expect(
 			await screen.findByRole( 'dialog', {
 				name: 'Discard unsaved changes?',
 			} )
 		).toBeInTheDocument();
+		expect(
+			screen.queryByText( 'List route reached' )
+		).not.toBeInTheDocument();
 	} );
 } );
 

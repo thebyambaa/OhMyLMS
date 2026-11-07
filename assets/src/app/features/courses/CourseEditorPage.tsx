@@ -87,6 +87,22 @@ export default function CourseEditorPage() {
 	const { user } = useBootstrap();
 	const admin = hasCapability( user.capabilities, 'manage_options' );
 	const tab = TABS.find( ( row ) => row.id === ( params.tab ?? 'details' ) );
+	// Steps the user has opened stay mounted, hidden, so their edits survive moving between steps.
+	const [ openedOutline, setOpenedOutline ] = useState( false );
+	const [ openedForm, setOpenedForm ] = useState( () =>
+		Boolean( tab && 'outline' !== tab.id )
+	);
+	const [ formSection, setFormSection ] = useState< 'details' | 'settings' >(
+		'details'
+	);
+	useEffect( () => {
+		if ( 'outline' === tab?.id ) {
+			setOpenedOutline( true );
+		} else if ( tab ) {
+			setOpenedForm( true );
+			setFormSection( tab.id as 'details' | 'settings' );
+		}
+	}, [ tab ] );
 	const at = tab ? TABS.indexOf( tab ) : -1;
 	const previous = at > 0 ? TABS[ at - 1 ] : undefined;
 	const next = at >= 0 ? TABS[ at + 1 ] : undefined;
@@ -173,13 +189,16 @@ export default function CourseEditorPage() {
 							) }
 						</div>
 					</header>
-					{ 'details' === tab.id || 'settings' === tab.id ? (
-						<CourseForm
-							key={ tab.id }
-							id={ id }
-							section={ tab.id }
-						/>
-					) : null }
+					{ ( 'outline' !== tab.id || openedForm ) && (
+						<div hidden={ 'outline' === tab.id }>
+							<CourseForm
+								id={ id }
+								section={
+									'outline' === tab.id ? formSection : tab.id
+								}
+							/>
+						</div>
+					) }
 					{ 'settings' === tab.id && admin && (
 						<CertificatePanel course={ id } />
 					) }
@@ -188,7 +207,11 @@ export default function CourseEditorPage() {
 							<p role="status">{ __( 'Loading…', 'ohmylms' ) }</p>
 						}
 					>
-						{ 'outline' === tab.id && <CourseOutline id={ id } /> }
+						{ ( 'outline' === tab.id || openedOutline ) && (
+							<div hidden={ 'outline' !== tab.id }>
+								<CourseOutline id={ id } />
+							</div>
+						) }
 					</Suspense>
 					{ previous || next ? (
 						<nav

@@ -4,6 +4,7 @@ import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useBuilderSave } from '../../hooks/useBuilderSave';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
+import { isCourseEditorStep } from '../../routing/links';
 import { normalizeApiError, type ApiError } from '../../lib/api';
 import { CoursePlacement } from '../curriculum';
 import { deleteUnit, readOutline, saveOutline, type ResourceType } from './api';
@@ -181,9 +182,11 @@ export function OutlineWorkspace( {
 		}
 	}, [ focus, busy ] );
 	const dirty = snapshot( draft ) !== saved;
-	const guard = useUnsavedChangesGuard( dirty || connections.dirty );
+	const guard = useUnsavedChangesGuard( dirty || connections.dirty, {
+		allow: ( path ) => isCourseEditorStep( initial.course_id, path ),
+	} );
 	// The builder bar has the Save button; it runs this draft save.
-	useBuilderSave( { save, dirty, busy } );
+	useBuilderSave( { save, dirty, busy }, 'outline' );
 	function change( next: Outline ) {
 		setDraft( next );
 		setMessage( '' );

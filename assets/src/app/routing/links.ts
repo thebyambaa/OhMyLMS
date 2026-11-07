@@ -13,6 +13,20 @@ export function setLinkResolver( resolver: LinkResolver | null ) {
 }
 
 /**
+ * Whether an in-app path is one of the steps of a course's editor (Basics, Curriculum or Additional).
+ * The steps keep their drafts while the user moves between them, so these links never need a prompt.
+ *
+ * @param course Course ID.
+ * @param path   In-app path of a link.
+ * @return True for the course's own editor steps.
+ */
+export function isCourseEditorStep( course: number, path: string ): boolean {
+	return new RegExp(
+		`^/courses/${ course }(/(outline|settings))?([?].*)?$`
+	).test( path );
+}
+
+/**
  * The internal route a link opens without leaving the document: an address on the current page and
  * tab, an old `#/route` hash, or (in a memory router) a bare route path. Unsaved-changes guards use it to
  * intercept links.

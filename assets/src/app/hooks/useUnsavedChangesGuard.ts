@@ -1,4 +1,4 @@
-import { useEffect, useState } from '@wordpress/element';
+import { useEffect, useRef, useState } from '@wordpress/element';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { routeFromHref } from '../routing/links';
 
@@ -23,6 +23,12 @@ export interface UnsavedChangesGuardOptions {
 	 * section is not leaving.
 	 */
 	ignoreSamePath?: boolean;
+	/**
+	 * Let links through when this returns true for their in-app path: for screens that keep their
+	 * draft while the user moves to another screen of the same editor (the course builder's steps).
+	 * Leaving the editor is still guarded.
+	 */
+	allow?: ( path: string ) => boolean;
 }
 
 /**
@@ -36,14 +42,17 @@ export interface UnsavedChangesGuardOptions {
  * @param dirty                  Whether there are unsaved changes.
  * @param options                Guard options.
  * @param options.ignoreSamePath Let links to the current path through (section switches).
+ * @param options.allow          Let links through that lead to another screen of the same editor.
  * @return `pendingPath` is the link waiting for a decision (or `null`); call `stay` to cancel it and
  *         `leave` to continue to it. `requestLeave` navigates in code: at once when clean, otherwise
  *         it waits for the same decision.
  */
 export function useUnsavedChangesGuard(
 	dirty: boolean,
-	{ ignoreSamePath = false }: UnsavedChangesGuardOptions = {}
+	{ ignoreSamePath = false, allow }: UnsavedChangesGuardOptions = {}
 ) {
+	const allowed = useRef( allow );
+	allowed.current = allow;
 	const navigate = useNavigate();
 	const { pathname } = useLocation();
 	const [ pendingPath, setPendingPath ] = useState< string | null >( null );
@@ -73,6 +82,9 @@ export function useUnsavedChangesGuard(
 				return;
 			}
 			if ( ignoreSamePath && path.split( '?' )[ 0 ] === pathname ) {
+				return;
+			}
+			if ( allowed.current?.( path ) ) {
 				return;
 			}
 			event.preventDefault();

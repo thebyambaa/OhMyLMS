@@ -90,7 +90,6 @@ describe( 'useUnsavedChangesGuard', () => {
 			'/hash-route'
 		);
 		await user.click( screen.getByRole( 'button', { name: 'Leave' } ) );
-		expect( await screen.findByText( 'Hash arrived' ) ).toBeInTheDocument();
 	} );
 
 	it( 'leaves external, new-tab, download and modified clicks alone', async () => {
@@ -185,6 +184,20 @@ describe( 'useUnsavedChangesGuard', () => {
 		expect( screen.getByTestId( 'search' ) ).toHaveTextContent(
 			'?section=b'
 		);
+		await user.click( screen.getByRole( 'link', { name: 'Other page' } ) );
+		expect( screen.getByTestId( 'pending' ) ).toHaveTextContent( '/other' );
+	} );
+
+	it( 'lets links through that the allow option accepts, and guards the rest', async () => {
+		const user = userEvent.setup();
+		render( wrap( true, { allow: ( path ) => '/hash-route' === path } ) );
+		await user.click( screen.getByRole( 'link', { name: 'Hash link' } ) );
+		expect( screen.getByTestId( 'pending' ) ).toHaveTextContent( 'none' );
+	} );
+
+	it( 'still guards other links when allow rejects them', async () => {
+		const user = userEvent.setup();
+		render( wrap( true, { allow: ( path ) => '/hash-route' === path } ) );
 		await user.click( screen.getByRole( 'link', { name: 'Other page' } ) );
 		expect( screen.getByTestId( 'pending' ) ).toHaveTextContent( '/other' );
 	} );

@@ -29,6 +29,7 @@ import {
 import { useCourseEditor } from './useCourseEditor';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
 import { useBuilderSave } from '../../hooks/useBuilderSave';
+import { isCourseEditorStep } from '../../routing/links';
 import type {
 	FormErrors,
 	FormState,
@@ -126,14 +127,19 @@ export function CourseForm( {
 	const summary = useRef< HTMLDivElement >( null );
 	const operation = useRef< AbortController | null >( null );
 	const dirty = Boolean( form && saved && isDirty( form, saved ) );
-	const guard = useUnsavedChangesGuard( dirty );
-	// The builder bar has the Save button; it runs this form's save.
-	useBuilderSave( {
-		save: () => void save(),
-		dirty,
-		busy,
-		course: editor.course ?? undefined,
+	const guard = useUnsavedChangesGuard( dirty, {
+		allow: ( path ) => isCourseEditorStep( id, path ),
 	} );
+	// The builder bar has the Save button; it runs this form's save.
+	useBuilderSave(
+		{
+			save: () => void save(),
+			dirty,
+			busy,
+			course: editor.course ?? undefined,
+		},
+		'course'
+	);
 	const course = editor.course;
 	const options = editor.options;
 

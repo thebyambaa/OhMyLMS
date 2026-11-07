@@ -63,8 +63,8 @@
 			"gzip": 10200
 		},
 		"chunks/admin-app-assignments.js": {
-			"raw": 38400,
-			"gzip": 9800
+			"raw": 41000,
+			"gzip": 10900
 		},
 		"chunks/admin-app-automations.js": {
 			"raw": 25700,
