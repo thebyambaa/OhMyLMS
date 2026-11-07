@@ -23,7 +23,8 @@ function NativeSkillConnections() {
 		'ohmylms-quiz': 'quiz',
 		'ohmylms-question': 'question',
 	}[ type ];
-	if ( ! kind || ! id ) {
+	// A quiz chooses its skills in its own Skills panel, and each question in its block sidebar.
+	if ( ! kind || ! id || 'quiz' === kind ) {
 		return null;
 	}
 	const url = new URL( 'admin.php', window.location.href );

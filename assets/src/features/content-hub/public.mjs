@@ -7,3 +7,4 @@ export { downloadText } from './quizExchange.mjs';
 export { ExamsPage } from './ExamsPage.jsx';
 export { ExportRowsButtons } from './ExportRowsButtons.jsx';
 export { ImportDialog } from './ImportDialog.jsx';
+export { SkillPicker } from './SkillPicker.jsx';

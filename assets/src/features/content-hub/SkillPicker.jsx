@@ -38,12 +38,14 @@ const label = ( skill ) =>
  * Choose skills from the shared library, or create one on the spot. Skills are shared, so choosing is a
  * reference: nothing is copied, and the same skill can sit in many courses and lessons.
  *
- * `initial` skills start checked. With `courseId`, skills the course already has are left out.
+ * `initial` skills start checked. With `courseId`, skills the course already has are left out. With `single`, choosing
+ * a skill replaces the previous choice, for a place that takes exactly one skill.
  * @param {Object}                          root0
  * @param {string}                          [root0.title]
  * @param {string}                          [root0.confirmLabel]
  * @param {PickedSkill[]}                   [root0.initial]
  * @param {number}                          [root0.courseId]
+ * @param {boolean}                         [root0.single]
  * @param {(skills: PickedSkill[]) => void} root0.onConfirm
  * @param {() => void}                      root0.onClose
  */
@@ -52,6 +54,7 @@ export function SkillPicker( {
 	confirmLabel,
 	initial = [],
 	courseId = 0,
+	single = false,
 	onConfirm,
 	onClose,
 } ) {
@@ -176,7 +179,7 @@ export function SkillPicker( {
 	 */
 	const toggle = ( skill, checked ) =>
 		setSelected( ( current ) => {
-			const next = new Map( current );
+			const next = new Map( single && checked ? [] : current );
 			if ( checked ) {
 				next.set( skill.id, skill );
 			} else {

@@ -1,14 +1,37 @@
 import { createElement, useEffect, useState } from '@wordpress/element';
-import { useDispatch, useSelect } from '@wordpress/data';
+import { select, useDispatch, useSelect } from '@wordpress/data';
 import {
-	CheckboxControl,
+	Button,
+	Notice,
 	PanelBody,
 	SelectControl,
 	TextControl,
 	ToggleControl,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { listSkills } from '../question-bank/public.mjs';
+import { listSkills, loadBankQuestion } from '../question-bank/public.mjs';
+import { SkillField } from './SkillField';
+
+/**
+ * IDs of the questions placed in the quiz, in document order.
+ *
+ * @return {number[]} Question IDs.
+ */
+function questionIds() {
+	/**
+	 * @param {import('@wordpress/blocks').BlockInstance} block Block.
+	 * @return {number[]} Question IDs in the block and its inner blocks.
+	 */
+	const collect = ( block ) =>
+		block.attributes?.questionId
+			? [ block.attributes.questionId ]
+			: ( block.innerBlocks || [] ).flatMap( collect );
+	return [
+		...new Set(
+			select( 'core/block-editor' ).getBlocks().flatMap( collect )
+		),
+	];
+}
 
 /**
  * Shared configuration in Gutenberg's normal save and publishing transaction.
@@ -26,13 +49,26 @@ export function NativeQuizConfiguration( { exam = false } ) {
 		[]
 	);
 	const { editPost } = useDispatch( 'core/editor' );
-	const [ skills, setSkills ] = useState(
-		/** @type {{ id: number, name: string }[]} */ ( [] )
+	const [ names, setNames ] = useState(
+		/** @type {Record<number, {name?: string, code?: string}>} */ ( {} )
 	);
+	const [ gathering, setGathering ] = useState( false );
+	const [ gatherNote, setGatherNote ] = useState( '' );
 	useEffect( () => {
 		let active = true;
 		listSkills( '' )
-			.then( ( data ) => active && setSkills( data.skills || [] ) )
+			.then(
+				( data ) =>
+					active &&
+					setNames(
+						Object.fromEntries(
+							( data.skills || [] ).map(
+								/** @param {{ id: number }} skill Skill. */
+								( skill ) => [ skill.id, skill ]
+							)
+						)
+					)
+			)
 			.catch( () => {} );
 		return () => {
 			active = false;
@@ -341,35 +377,87 @@ export function NativeQuizConfiguration( { exam = false } ) {
 					) }
 				</>
 			) }
-			<PanelBody
-				title={ __( 'Skills', 'ohmylms' ) }
-				initialOpen={ false }
-			>
-				<fieldset>
-					<legend>{ __( 'Assessment skills', 'ohmylms' ) }</legend>
-					{ skills.map( ( skill ) => (
-						<CheckboxControl
-							key={ skill.id }
-							label={ skill.name }
-							checked={ ( value.skill_ids || [] ).includes(
-								skill.id
-							) }
-							onChange={ ( checked ) =>
-								change( {
-									skill_ids: checked
-										? [
-												...( value.skill_ids || [] ),
-												skill.id,
-											]
-										: ( value.skill_ids || [] ).filter(
-												/** @param {number} id Skill ID. */
-												( id ) => id !== skill.id
-											),
-								} )
-							}
-						/>
-					) ) }
-				</fieldset>
+			<PanelBody title={ __( 'Skills', 'ohmylms' ) } initialOpen>
+				<p>
+					{ __(
+						'The skills this quiz assesses as a whole. What a student’s answers count towards is set on each question: select a question block to choose its skill.',
+						'ohmylms'
+					) }
+				</p>
+				<SkillField
+					label={ __( 'Quiz skills', 'ohmylms' ) }
+					value={ value.skill_ids || [] }
+					names={ names }
+					onChange={ ( ids, picked ) => {
+						setNames( ( current ) => ( {
+							...current,
+							...Object.fromEntries(
+								picked.map( ( skill ) => [ skill.id, skill ] )
+							),
+						} ) );
+						change( { skill_ids: ids } );
+					} }
+				/>
+				<Button
+					variant="tertiary"
+					isBusy={ gathering }
+					disabled={ gathering }
+					onClick={ async () => {
+						setGathering( true );
+						setGatherNote( '' );
+						try {
+							const loaded = await Promise.all(
+								questionIds().map( ( id ) =>
+									loadBankQuestion( id )
+								)
+							);
+							const found = loaded.flatMap( ( question ) =>
+								Object.values( question.skill_map || {} )
+									.map(
+										/** @param {{ primary?: number }} roles Roles. */
+										( roles ) =>
+											Number( roles.primary ) || 0
+									)
+									.filter( Boolean )
+							);
+							const merged = [
+								...new Set( [
+									...( value.skill_ids || [] ),
+									...found,
+								] ),
+							];
+							change( { skill_ids: merged } );
+							setGatherNote(
+								found.length
+									? __(
+											'Added the primary skills of the questions.',
+											'ohmylms'
+										)
+									: __(
+											'None of the questions has a primary skill yet.',
+											'ohmylms'
+										)
+							);
+						} catch ( cause ) {
+							setGatherNote(
+								/** @type {{ message: string }} */ ( cause )
+									.message
+							);
+						} finally {
+							setGathering( false );
+						}
+					} }
+				>
+					{ __( 'Add the skills of the questions', 'ohmylms' ) }
+				</Button>
+				{ gatherNote && (
+					<Notice
+						status="info"
+						onRemove={ () => setGatherNote( '' ) }
+					>
+						{ gatherNote }
+					</Notice>
+				) }
 			</PanelBody>
 		</>
 	);

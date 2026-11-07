@@ -17,8 +17,8 @@ import {
 	loadVersions,
 	pinQuestion,
 	saveQuestionAttributes,
-	SkillMapEditor,
 } from '../question-bank/public.mjs';
+import { QuestionSkillFields } from './QuestionSkillFields';
 import { QuestionLivePreview } from '../question-editor/public-ui.mjs';
 import { NativeSaveGuard, markNativeQuizDirty } from './NativeSaveGuard';
 
@@ -60,7 +60,8 @@ export function NativeQuestionDetails( {
 	const [ banks, setBanks ] = useState(
 		/** @type {{ id: number, name: string }[]} */ ( [] )
 	);
-	const [ skills, setSkills ] = useState( [] );
+	// Skills known by ID, for the names on the skill chips.
+	const [ names, setNames ] = useState( {} );
 	const [ bank, setBank ] = useState( /** @type {BankFields} */ ( {} ) );
 	const [ map, setMap ] = useState( {} );
 	const [ dirty, setDirty ] = useState( false );
@@ -100,7 +101,15 @@ export function NativeQuestionDetails( {
 				);
 				setMap( loaded.skill_map || {} );
 				setBanks( catalogue.banks || [] );
-				setSkills( taxonomy.skills || [] );
+				setNames( ( current ) => ( {
+					...Object.fromEntries(
+						( taxonomy.skills || [] ).map(
+							/** @param {{ id: number, name: string, code?: string }} skill Skill. */
+							( skill ) => [ skill.id, skill ]
+						)
+					),
+					...current,
+				} ) );
 			} )
 			.catch( ( cause ) => active && setError( cause.message ) );
 		return () => {
@@ -119,6 +128,19 @@ export function NativeQuestionDetails( {
 			setSaving( false );
 		}
 	}
+	/** Save the bank fields and the skills of the question together. */
+	async function saveAttributes() {
+		const current = await loadBankQuestion( id );
+		await saveQuestionAttributes( id, {
+			bank,
+			skills: map,
+			base_modified: current.modified,
+		} );
+		const fresh = await loadBankQuestion( id );
+		setDetail( fresh );
+		onRefresh( fresh );
+		setDirty( false );
+	}
 	/** @param {number} versionId Version to pin, 0 for the latest. */
 	async function pin( versionId ) {
 		await pinQuestion( quizId, id, versionId );
@@ -127,6 +149,60 @@ export function NativeQuestionDetails( {
 	return (
 		<InspectorControls>
 			<NativeSaveGuard dirty={ dirty } busy={ saving } />
+			<PanelBody
+				title={ __( 'Skills of this question', 'ohmylms' ) }
+				initialOpen
+			>
+				{ error && (
+					<Notice status="error" isDismissible={ false }>
+						{ error }
+					</Notice>
+				) }
+				{ detail && (
+					<>
+						<p>
+							{ __(
+								'The primary skill is what answers to this question count towards. The question is shared, so the skill applies wherever it is used.',
+								'ohmylms'
+							) }
+						</p>
+						<QuestionSkillFields
+							parts={
+								Array.isArray( detail.settings?.parts )
+									? detail.settings.parts.map(
+											/** @param {{ id: string }} part Question part. */
+											( part ) => part.id
+										)
+									: [ 'p1' ]
+							}
+							value={ map }
+							names={ names }
+							disabled={ busy || saving || ! detail.can_edit }
+							onChange={ ( value, picked ) => {
+								setMap( value );
+								setNames( ( current ) => ( {
+									...current,
+									...Object.fromEntries(
+										picked.map( ( skill ) => [
+											skill.id,
+											skill,
+										] )
+									),
+								} ) );
+								setDirty( true );
+							} }
+						/>
+						<Button
+							variant="primary"
+							disabled={ ! dirty || busy || saving }
+							isBusy={ saving }
+							onClick={ () => act( saveAttributes ) }
+						>
+							{ __( 'Save skills', 'ohmylms' ) }
+						</Button>
+					</>
+				) }
+			</PanelBody>
 			<PanelBody
 				title={ __( 'Question bank and versions', 'ohmylms' ) }
 				initialOpen={ false }
@@ -221,41 +297,10 @@ export function NativeQuestionDetails( {
 									setDirty( true );
 								} }
 							/>
-							<SkillMapEditor
-								parts={
-									Array.isArray( detail.settings?.parts )
-										? detail.settings.parts.map(
-												/** @param {{ id: string }} part Question part. */
-												( part ) => part.id
-											)
-										: [ 'p1' ]
-								}
-								skills={ skills }
-								value={ map }
-								onChange={ ( value ) => {
-									setMap( value );
-									setDirty( true );
-								} }
-							/>
 							<Button
 								variant="secondary"
 								disabled={ ! dirty }
-								onClick={ () =>
-									act( async () => {
-										const current =
-											await loadBankQuestion( id );
-										await saveQuestionAttributes( id, {
-											bank,
-											skills: map,
-											base_modified: current.modified,
-										} );
-										const fresh =
-											await loadBankQuestion( id );
-										setDetail( fresh );
-										onRefresh( fresh );
-										setDirty( false );
-									} )
-								}
+								onClick={ () => act( saveAttributes ) }
 							>
 								{ __( 'Save bank settings', 'ohmylms' ) }
 							</Button>

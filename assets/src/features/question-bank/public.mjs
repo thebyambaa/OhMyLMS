@@ -20,8 +20,10 @@ export {
 	addPart,
 	flattenTree,
 	listToNumbers,
+	normalizeSkillMap,
 	numbersToList,
 	removePart,
+	setPrimarySkill,
 	skillTree,
 	updatePart,
 } from './model.mjs';

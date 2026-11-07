@@ -30,9 +30,22 @@ final class NativeQuizEditor {
 	}
 
 	/**
-	 * Keep the quiz editor's block inserter to what a quiz uses. Site blocks of the plugin (registration,
-	 * sign in, dashboards, checkout, buy buttons, membership lists) do not belong in a quiz and buried the
-	 * question block; text, media and question blocks stay.
+	 * Text and media a quiz page may hold around its questions: the same short list a lesson uses, with the
+	 * equation blocks.
+	 */
+	const TEXT_BLOCKS = array(
+		'core/paragraph',
+		'core/heading',
+		'core/list',
+		'core/image',
+		'core/math',
+		'ohmylms/lesson-math',
+	);
+
+	/**
+	 * Keep the quiz editor's block inserter as short as the lesson editor's: text, images and equations, and the
+	 * question blocks. Everything else (the other core blocks, the plugin's site blocks such as registration,
+	 * sign in, dashboards and checkout, and other plugins' blocks) does not belong in a quiz.
 	 *
 	 * @param bool|string[]            $allowed Allowed block names, or true for all.
 	 * @param \WP_Block_Editor_Context $context Editor context.
@@ -44,18 +57,11 @@ final class NativeQuizEditor {
 			return $allowed;
 		}
 		// Question blocks always; the question player (practice runs) only when the kind allows that delivery.
-		$keep = array_merge( array( self::QUESTION_BLOCK, self::REFERENCE_BLOCK ), \OhMyLMS\Exams\PaperBlocks::names() );
+		$keep = array_merge( self::TEXT_BLOCKS, array( self::QUESTION_BLOCK, self::REFERENCE_BLOCK ), \OhMyLMS\Exams\PaperBlocks::names() );
 		if ( \OhMyLMS\Assessment\Profiles::allows( $post->ID, \OhMyLMS\Assessment\DeliveryPolicy::PRACTICE ) ) {
 			$keep[] = 'ohmylms/question-player';
 		}
-		$names = array();
-		foreach ( \WP_Block_Type_Registry::get_instance()->get_all_registered() as $name => $type ) {
-			if ( 0 === strpos( $name, 'ohmylms/' ) && ! in_array( $name, $keep, true ) && false === strpos( $name, 'math' ) ) {
-				continue;
-			}
-			$names[] = $name;
-		}
-		return is_array( $allowed ) ? array_values( array_intersect( $allowed, $names ) ) : $names;
+		return is_array( $allowed ) ? array_values( array_intersect( $allowed, $keep ) ) : $keep;
 	}
 
 	/** Register quiz configuration on the atomic native post save. */
