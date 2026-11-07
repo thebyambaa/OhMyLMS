@@ -303,49 +303,87 @@ export function OutlineWorkspace( {
 			)
 		);
 	}
+	/**
+	 * Place resources at the end of a unit. Items already in the course are skipped with a message; the
+	 * draft is updated from its latest value, so several quick adds in a row never overwrite each other.
+	 *
+	 * @param unit      Unit ID.
+	 * @param type      Resource type.
+	 * @param resources Resources to place.
+	 */
+	function place(
+		unit: Unit[ 'id' ],
+		type: ResourceType,
+		resources: ReadonlyArray< { id: number; title: string } >
+	) {
+		setFolded( ( current ) => {
+			const next = new Set( current );
+			next.delete( unit );
+			return next;
+		} );
+		const placed = new Set(
+			draft.program.items
+				.filter( ( item ) => item.type === type )
+				.map( ( item ) => item.content_id )
+		);
+		const fresh = resources.filter(
+			( resource, index ) =>
+				! placed.has( resource.id ) &&
+				resources.findIndex( ( row ) => row.id === resource.id ) ===
+					index
+		);
+		setError(
+			fresh.length < resources.length
+				? __(
+						'Some items are already placed in the course and were skipped.',
+						'ohmylms'
+					)
+				: ''
+		);
+		if ( ! fresh.length ) {
+			return;
+		}
+		setMessage( '' );
+		setDraft( ( current ) => ( {
+			...current,
+			program: {
+				...current.program,
+				items: fresh.reduce( ( items, resource ) => {
+					const item: Activity = {
+						id: newId(),
+						type,
+						content_id: resource.id,
+						chapter_id: 0,
+						required: true,
+						name: resource.title,
+					};
+					return placeActivity(
+						[ ...items, item ],
+						item.id,
+						unit,
+						Infinity
+					);
+				}, current.program.items ),
+			},
+		} ) );
+	}
 	function add( resource: { id: number; title: string } ) {
 		if ( ! picker ) {
 			return;
 		}
 		const { unit, type } = picker;
 		setPicker( null );
-		setFolded( ( current ) => {
-			const next = new Set( current );
-			next.delete( unit );
-			return next;
-		} );
-		if (
-			draft.program.items.some(
-				( item ) =>
-					item.type === type && item.content_id === resource.id
-			)
-		) {
-			setError(
-				__( 'This item is already placed in the course.', 'ohmylms' )
-			);
+		place( unit, type, [ resource ] );
+	}
+	function addMany(
+		resources: ReadonlyArray< { id: number; title: string } >
+	) {
+		if ( ! picker ) {
 			return;
 		}
-		setError( '' );
-		const item: Activity = {
-			id: newId(),
-			type,
-			content_id: resource.id,
-			chapter_id: 0,
-			required: true,
-			name: resource.title,
-		};
-		change( {
-			...draft,
-			program: {
-				...draft.program,
-				items: placeActivity(
-					[ ...draft.program.items, item ],
-					item.id,
-					unit,
-					Infinity
-				),
-			},
-		} );
+		const { unit, type } = picker;
+		setPicker( null );
+		place( unit, type, resources );
 	}
 	const unplaced = draft.program.items.filter(
 		( item ) =>
@@ -515,6 +553,9 @@ export function OutlineWorkspace( {
 								onAdd={ ( type ) =>
 									setPicker( { unit: unit.id, type } )
 								}
+								onCreated={ ( type, resource ) =>
+									place( unit.id, type, [ resource ] )
+								}
 								onDelete={ () => setDeleting( unit ) }
 								onDetach={ setDetach }
 								onConnect={ ( item ) =>
@@ -659,6 +700,7 @@ export function OutlineWorkspace( {
 						.map( ( item ) => item.content_id ) }
 					onClose={ () => setPicker( null ) }
 					onSelect={ add }
+					onSelectMany={ addMany }
 				/>
 			) }
 			{ deleting && (

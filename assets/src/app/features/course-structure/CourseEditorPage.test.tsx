@@ -588,3 +588,173 @@ describe( 'collapsing units', () => {
 		expect( api.saveOutline ).not.toHaveBeenCalled();
 	} );
 } );
+
+describe( 'adding content quickly', () => {
+	const quick = ( unit: string ) =>
+		within(
+			screen.getByRole( 'form', { name: `Quick add to ${ unit }` } )
+		);
+
+	it( 'creates a draft from a title and places it in the unit, ready for the next', async () => {
+		const user = userEvent.setup();
+		open();
+		vi.mocked( api.createResource )
+			.mockResolvedValueOnce( { id: 60, title: 'Ratios' } )
+			.mockResolvedValueOnce( { id: 61, title: 'Rates' } );
+		const form = quick( 'Geometry' );
+		await user.type(
+			form.getByLabelText( 'Title of new activity' ),
+			'Ratios{Enter}'
+		);
+		await waitFor( () =>
+			expect( api.createResource ).toHaveBeenCalledWith(
+				'lesson',
+				'Ratios',
+				expect.any( AbortSignal ),
+				expect.any( String )
+			)
+		);
+		const box = form.getByLabelText( 'Title of new activity' );
+		await waitFor( () => expect( box ).toHaveValue( '' ) );
+		expect( box ).toHaveFocus();
+		await user.type( box, 'Rates{Enter}' );
+		await waitFor( () =>
+			expect( api.createResource ).toHaveBeenCalledTimes( 2 )
+		);
+		const ids = vi
+			.mocked( api.createResource )
+			.mock.calls.map( ( call ) => call[ 3 ] );
+		expect( ids[ 0 ] ).not.toBe( ids[ 1 ] );
+		await waitFor( () =>
+			expect( screen.getAllByText( 'Rates' )[ 0 ] ).toBeInTheDocument()
+		);
+		const payload = await saveAndReadPayload( user );
+		expect( payload.program.items ).toMatchObject( [
+			outline.program.items[ 0 ],
+			{ type: 'lesson', content_id: 60, chapter_id: 9, name: 'Ratios' },
+			{ type: 'lesson', content_id: 61, chapter_id: 9, name: 'Rates' },
+		] );
+	} );
+
+	it( 'creates the type chosen beside the title', async () => {
+		const user = userEvent.setup();
+		open();
+		vi.mocked( api.createResource ).mockResolvedValue( {
+			id: 70,
+			title: 'Check',
+		} );
+		const form = quick( 'Algebra' );
+		await user.selectOptions(
+			form.getByLabelText( 'Type of new activity' ),
+			'quiz'
+		);
+		await user.type(
+			form.getByLabelText( 'Title of new activity' ),
+			'Check{Enter}'
+		);
+		await waitFor( () =>
+			expect( api.createResource ).toHaveBeenCalledWith(
+				'quiz',
+				'Check',
+				expect.any( AbortSignal ),
+				expect.any( String )
+			)
+		);
+	} );
+
+	it( 'does nothing for a blank title and brings a failed title back with the reason', async () => {
+		const user = userEvent.setup();
+		open();
+		vi.mocked( api.createResource ).mockRejectedValue(
+			new ApiError( {
+				status: 500,
+				code: 'server',
+				message: 'Could not create it.',
+			} )
+		);
+		const form = quick( 'Algebra' );
+		const box = form.getByLabelText( 'Title of new activity' );
+		await user.type( box, '   {Enter}' );
+		expect( api.createResource ).not.toHaveBeenCalled();
+		await user.clear( box );
+		await user.type( box, 'Vectors{Enter}' );
+		const alert = await screen.findByRole( 'alert' );
+		expect( alert ).toHaveTextContent( 'Vectors' );
+		expect( alert ).toHaveTextContent( 'Could not create it.' );
+		expect( box ).toHaveValue( 'Vectors' );
+	} );
+
+	it( 'takes the next title while the last is still being created, and creates them in order', async () => {
+		const user = userEvent.setup();
+		open();
+		let finish: ( value: { id: number; title: string } ) => void = () =>
+			undefined;
+		vi.mocked( api.createResource )
+			.mockReturnValueOnce(
+				new Promise( ( resolve ) => {
+					finish = resolve;
+				} )
+			)
+			.mockResolvedValueOnce( { id: 81, title: 'Second' } );
+		const box = quick( 'Geometry' ).getByLabelText(
+			'Title of new activity'
+		);
+		await user.type( box, 'First{Enter}' );
+		expect( box ).toHaveValue( '' );
+		await user.type( box, 'Second{Enter}' );
+		expect( box ).toHaveValue( '' );
+		expect( api.createResource ).toHaveBeenCalledTimes( 1 );
+		expect(
+			await quick( 'Geometry' ).findByRole( 'status' )
+		).toHaveTextContent( 'Creating 2…' );
+		finish( { id: 80, title: 'First' } );
+		await waitFor( () =>
+			expect( api.createResource ).toHaveBeenCalledTimes( 2 )
+		);
+		expect(
+			vi.mocked( api.createResource ).mock.calls.map( ( c ) => c[ 1 ] )
+		).toEqual( [ 'First', 'Second' ] );
+		const payload = await saveAndReadPayload( user );
+		expect( payload.program.items ).toMatchObject( [
+			outline.program.items[ 0 ],
+			{ content_id: 80, chapter_id: 9 },
+			{ content_id: 81, chapter_id: 9 },
+		] );
+	} );
+
+	it( 'adds several existing lessons from the picker in one go', async () => {
+		const user = userEvent.setup();
+		open();
+		vi.mocked( api.findResources ).mockResolvedValue( {
+			pages: 1,
+			items: [
+				{ id: 30, title: 'Fractions' },
+				{ id: 31, title: 'Decimals' },
+				{ id: 32, title: 'Percentages' },
+			],
+		} );
+		await user.click(
+			screen.getAllByRole( 'button', {
+				name: 'Attach lesson to unit',
+			} )[ 1 ]!
+		);
+		await user.click(
+			await screen.findByRole( 'checkbox', { name: 'Select Fractions' } )
+		);
+		await user.click(
+			screen.getByRole( 'checkbox', { name: 'Select Percentages' } )
+		);
+		await user.click(
+			screen.getByRole( 'button', { name: 'Add 2 selected items' } )
+		);
+		await waitFor( () =>
+			expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument()
+		);
+		const payload = await saveAndReadPayload( user );
+		expect( payload.program.items ).toMatchObject( [
+			outline.program.items[ 0 ],
+			{ content_id: 30, chapter_id: 9 },
+			{ content_id: 32, chapter_id: 9 },
+		] );
+	} );
+} );

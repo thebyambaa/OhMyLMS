@@ -6,7 +6,7 @@ import {
 	TextControl,
 } from '@wordpress/components';
 import { useCallback, useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import { createResource, findResources, type ResourceType } from './api';
 import { useOperation } from '../../hooks/useOperation';
 import { useRequest } from '../../hooks/useRequest';
@@ -27,7 +27,8 @@ const TITLES: Record< ResourceType, () => string > = {
  * @param root0.course
  * @param root0.type
  * @param root0.exclude
- * @param root0.onSelect
+ * @param root0.onSelect     Adds the one item that was clicked.
+ * @param root0.onSelectMany Adds every ticked item at once.
  * @param root0.onClose
  */
 export function ResourcePicker( {
@@ -35,12 +36,16 @@ export function ResourcePicker( {
 	type,
 	exclude = [],
 	onSelect,
+	onSelectMany,
 	onClose,
 }: {
 	course: number;
 	type: ResourceType;
 	exclude?: readonly number[];
 	onSelect: ( resource: { id: number; title: string } ) => void;
+	onSelectMany?: (
+		resources: ReadonlyArray< { id: number; title: string } >
+	) => void;
 	onClose: () => void;
 } ) {
 	const [ query, setQuery ] = useState( '' );
@@ -50,6 +55,17 @@ export function ResourcePicker( {
 	const [ tag, setTag ] = useState( '' );
 	const bank = useBankTerms();
 	const [ title, setTitle ] = useState( '' );
+	const [ chosen, setChosen ] = useState<
+		ReadonlyMap< number, { id: number; title: string } >
+	>( () => new Map() );
+	const toggle = ( resource: { id: number; title: string } ) =>
+		setChosen( ( current ) => {
+			const next = new Map( current );
+			if ( ! next.delete( resource.id ) ) {
+				next.set( resource.id, resource );
+			}
+			return next;
+		} );
 	const [ requestId ] = useState( newId );
 	const creation = useOperation();
 	const load = useCallback(
@@ -135,12 +151,43 @@ export function ResourcePicker( {
 					<ul>
 						{ items.map( ( resource ) => (
 							<li key={ resource.id }>
+								{ onSelectMany && (
+									<input
+										type="checkbox"
+										checked={ chosen.has( resource.id ) }
+										aria-label={ sprintf(
+											/* translators: %s: item title. */
+											__( 'Select %s', 'ohmylms' ),
+											resource.title
+										) }
+										onChange={ () => toggle( resource ) }
+									/>
+								) }
 								<Button onClick={ () => onSelect( resource ) }>
 									{ resource.title }
 								</Button>
 							</li>
 						) ) }
 					</ul>
+					{ onSelectMany && chosen.size > 0 && (
+						<Button
+							variant="primary"
+							onClick={ () =>
+								onSelectMany( [ ...chosen.values() ] )
+							}
+						>
+							{ sprintf(
+								/* translators: %d: number of ticked items. */
+								_n(
+									'Add %d selected item',
+									'Add %d selected items',
+									chosen.size,
+									'ohmylms'
+								),
+								chosen.size
+							) }
+						</Button>
+					) }
 					{ ! items.length && (
 						<p>
 							{ __(

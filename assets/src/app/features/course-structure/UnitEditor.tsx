@@ -9,6 +9,7 @@ import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
 import { Badge } from '../../../ui/Badge';
 import type { ResourceType } from './api';
+import { QuickAdd } from './QuickAdd';
 import type { Activity, Unit } from './model';
 import { unitKey } from './reorder';
 import {
@@ -62,6 +63,7 @@ const EDIT_ROUTES: Record< string, string > = {
  * @param root0.onDelete
  * @param root0.onDetach
  * @param root0.onConnect
+ * @param root0.onCreated Places a draft that Quick add just created in this unit.
  * @param root0.collapsed Whether the unit body is folded away; the header always shows.
  * @param root0.onToggle  Folds or unfolds the unit body.
  * @param root0.onReorder Moves a unit or activity (source) before/after a target; see `dropOn`.
@@ -78,6 +80,7 @@ export function UnitEditor( {
 	onDetach,
 	onConnect,
 	onReorder,
+	onCreated,
 	collapsed = false,
 	onToggle,
 	drag,
@@ -96,6 +99,10 @@ export function UnitEditor( {
 		target: string,
 		after: boolean,
 		control: string
+	) => void;
+	onCreated?: (
+		type: ResourceType,
+		resource: { id: number; title: string }
 	) => void;
 	collapsed?: boolean;
 	onToggle?: () => void;
@@ -402,6 +409,9 @@ export function UnitEditor( {
 						);
 					} ) }
 				</ol>
+				{ onCreated && (
+					<QuickAdd unitName={ unitName } onCreated={ onCreated } />
+				) }
 				<div className="oml-unit-add">
 					<Button
 						size="small"

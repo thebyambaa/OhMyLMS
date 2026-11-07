@@ -91,8 +91,8 @@
 			"gzip": 5700
 		},
 		"chunks/admin-app-course-structure.js": {
-			"raw": 39500,
-			"gzip": 11400
+			"raw": 44000,
+			"gzip": 12600
 		},
 		"chunks/admin-app-courses.js": {
 			"raw": 47600,
