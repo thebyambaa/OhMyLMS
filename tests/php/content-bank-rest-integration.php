@@ -235,6 +235,34 @@ try {
 		'folder and tag filters combine'
 	);
 
+	$course_id  = wp_insert_post(
+		array(
+			'post_type'   => OHMYLMS_COURSE_CPT,
+			'post_status' => 'draft',
+			'post_title'  => "$mark course",
+		)
+	);
+	$post_ids[] = $course_id;
+	$picker     = call_api(
+		'GET',
+		"/courses/$course_id/structure/resources",
+		array(
+			'type'     => 'lesson',
+			'search'   => $mark,
+			'bank_tag' => $tag_id,
+		)
+	)->get_data();
+	ok( array( $in_child ) === array_map( 'intval', wp_list_pluck( $picker['items'], 'id' ) ), 'the course attach picker can be narrowed by tag' );
+	$picker_all = call_api(
+		'GET',
+		"/courses/$course_id/structure/resources",
+		array(
+			'type'   => 'lesson',
+			'search' => $mark,
+		)
+	)->get_data();
+	ok( 3 === count( $picker_all['items'] ), 'the course attach picker lists every match without a filter' );
+
 	$quizzes = call_api(
 		'GET',
 		'/quizzes',

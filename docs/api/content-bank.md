@@ -16,8 +16,8 @@ Every plugin list endpoint for those types accepts two extra query parameters on
 - `bank_tag`: a tag ID.
 
 Both together narrow the list to items that match both. The filter is applied to the post query itself, so it
-works on `authoring/lessons`, `quizzes`, `assignments`, `exams/library` and `questions` without each controller
-knowing about it.
+works on `authoring/lessons`, `quizzes`, `assignments`, `exams/library`, `questions` and the course outline's
+attach picker (`courses/{id}/structure/resources`) without each controller knowing about it.
 
 ## Endpoints (`ohmylms/v1/content-bank/*`)
 

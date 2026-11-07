@@ -1,10 +1,17 @@
-import { Button, Modal, Notice, TextControl } from '@wordpress/components';
+import {
+	Button,
+	Modal,
+	Notice,
+	SelectControl,
+	TextControl,
+} from '@wordpress/components';
 import { useCallback, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { createResource, findResources, type ResourceType } from './api';
 import { useOperation } from '../../hooks/useOperation';
 import { useRequest } from '../../hooks/useRequest';
 import { newId } from '../../lib/uuid';
+import { useBankTerms } from '../content-bank';
 
 const TITLES: Record< ResourceType, () => string > = {
 	lesson: () => __( 'Add a lesson', 'ohmylms' ),
@@ -39,13 +46,19 @@ export function ResourcePicker( {
 	const [ query, setQuery ] = useState( '' );
 	const [ search, setSearch ] = useState( '' );
 	const [ page, setPage ] = useState( 1 );
+	const [ folder, setFolder ] = useState( '' );
+	const [ tag, setTag ] = useState( '' );
+	const bank = useBankTerms();
 	const [ title, setTitle ] = useState( '' );
 	const [ requestId ] = useState( newId );
 	const creation = useOperation();
 	const load = useCallback(
 		( signal: AbortSignal ) =>
-			findResources( course, type, search, page, signal ),
-		[ course, type, search, page ]
+			findResources( course, type, search, page, signal, {
+				folder,
+				tag,
+			} ),
+		[ course, type, search, page, folder, tag ]
 	);
 	const request = useRequest( load );
 	const items =
@@ -69,6 +82,43 @@ export function ResourcePicker( {
 				/>
 				<Button type="submit">{ __( 'Search', 'ohmylms' ) }</Button>
 			</form>
+			{ ( bank.paths.length > 0 || bank.terms.tags.length > 0 ) && (
+				<>
+					<SelectControl
+						label={ __( 'Folder', 'ohmylms' ) }
+						value={ folder }
+						options={ [
+							{
+								value: '',
+								label: __( 'All folders', 'ohmylms' ),
+							},
+							...bank.paths.map( ( item ) => ( {
+								value: String( item.id ),
+								label: item.label,
+							} ) ),
+						] }
+						onChange={ ( value ) => {
+							setPage( 1 );
+							setFolder( value );
+						} }
+					/>
+					<SelectControl
+						label={ __( 'Tag', 'ohmylms' ) }
+						value={ tag }
+						options={ [
+							{ value: '', label: __( 'All tags', 'ohmylms' ) },
+							...bank.terms.tags.map( ( item ) => ( {
+								value: String( item.id ),
+								label: item.name,
+							} ) ),
+						] }
+						onChange={ ( value ) => {
+							setPage( 1 );
+							setTag( value );
+						} }
+					/>
+				</>
+			) }
 			{ request.loading && (
 				<p role="status">{ __( 'Loading…', 'ohmylms' ) }</p>
 			) }

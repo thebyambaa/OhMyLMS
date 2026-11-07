@@ -7,16 +7,10 @@ import type {
 	ListTableColumn,
 } from '../../../ui/ListTable';
 import { useRequest } from '../../hooks/useRequest';
-import {
-	createBankTerm,
-	listBankTerms,
-	organizeItems,
-	readAssignments,
-} from './api';
-import { bulkRequest, folderPaths, organizationLabels } from './model';
-import type { BankAssignments, BankTerms } from './types';
-
-const NO_TERMS: BankTerms = { folders: [], tags: [] };
+import { createBankTerm, organizeItems, readAssignments } from './api';
+import { bulkRequest, organizationLabels } from './model';
+import { useBankTerms } from './useBankTerms';
+import type { BankAssignments } from './types';
 
 interface Options {
 	/** Current folder filter (a term ID as text, or `''`). */
@@ -41,8 +35,12 @@ interface Options {
  * @param options.ids      IDs of the items on the page.
  */
 export function useBankControls( { folder, tag, onFilter, ids }: Options ) {
-	const termsRequest = useRequest( listBankTerms );
-	const terms = termsRequest.data ?? NO_TERMS;
+	const {
+		terms,
+		paths,
+		error: termsError,
+		reload: reloadTerms,
+	} = useBankTerms();
 	const key = ids.join( ',' );
 	const assignmentRequest = useRequest(
 		useCallback(
@@ -59,7 +57,6 @@ export function useBankControls( { folder, tag, onFilter, ids }: Options ) {
 	const assignments = assignmentRequest.data ?? {};
 	const [ status, setStatus ] = useState( '' );
 	const [ error, setError ] = useState( '' );
-	const paths = folderPaths( terms.folders );
 
 	const filters = (
 		<>
@@ -189,7 +186,7 @@ export function useBankControls( { folder, tag, onFilter, ids }: Options ) {
 					? __( 'Folder created.', 'ohmylms' )
 					: __( 'Tag created.', 'ohmylms' )
 			);
-			termsRequest.reload();
+			reloadTerms();
 			return true;
 		} catch ( caught ) {
 			setError(
@@ -203,9 +200,9 @@ export function useBankControls( { folder, tag, onFilter, ids }: Options ) {
 
 	const notices = (
 		<>
-			{ termsRequest.error && (
+			{ termsError && (
 				<Notice status="error" isDismissible={ false }>
-					{ termsRequest.error }
+					{ termsError }
 				</Notice>
 			) }
 			{ error && (

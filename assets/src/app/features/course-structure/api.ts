@@ -72,11 +72,14 @@ export async function deleteUnit(
 /**
  * Search editable lessons, quizzes or assignments not yet placed in the course.
  *
- * @param id     Course ID.
- * @param type   Resource type.
- * @param search Title search.
- * @param page   Page number, from 1.
- * @param signal Cancels the request.
+ * @param id          Course ID.
+ * @param type        Resource type.
+ * @param search      Title search.
+ * @param page        Page number, from 1.
+ * @param signal      Cancels the request.
+ * @param bank        Content Bank folder and tag filters (term IDs as text).
+ * @param bank.folder Folder ID.
+ * @param bank.tag    Tag ID.
  * @return Validated resources and page count.
  */
 export async function findResources(
@@ -84,11 +87,18 @@ export async function findResources(
 	type: ResourceType,
 	search: string,
 	page: number,
-	signal?: AbortSignal
+	signal?: AbortSignal,
+	bank: { folder?: string; tag?: string } = {}
 ) {
 	const row = record(
 		await get< unknown >( `${ BASE }/courses/${ id }/structure/resources`, {
-			query: { type, search, page },
+			query: {
+				type,
+				search,
+				page,
+				bank_folder: bank.folder || undefined,
+				bank_tag: bank.tag || undefined,
+			},
 			signal,
 		} )
 	);

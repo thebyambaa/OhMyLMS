@@ -15,7 +15,27 @@ vi.mock( './api', () => ( {
 	createResource: vi.fn(),
 } ) );
 vi.mock( '../curriculum', () => ( { CoursePlacement: () => null } ) );
-beforeEach( () => vi.resetAllMocks() );
+const bank = vi.hoisted( () => ( {
+	value: {
+		terms: { folders: [], tags: [] } as {
+			folders: { id: number; name: string; parent: number }[];
+			tags: { id: number; name: string; parent: number }[];
+		},
+		paths: [] as { id: number; label: string }[],
+		error: '',
+		reload: () => undefined,
+	},
+} ) );
+vi.mock( '../content-bank', () => ( { useBankTerms: () => bank.value } ) );
+beforeEach( () => {
+	vi.resetAllMocks();
+	bank.value = {
+		terms: { folders: [], tags: [] },
+		paths: [],
+		error: '',
+		reload: () => undefined,
+	};
+} );
 function open( initial: Outline = outline ) {
 	const reload = vi.fn();
 	const result = render(
@@ -219,7 +239,8 @@ it( 'attaches an existing lesson without changing its shared post or other place
 		'lesson',
 		'',
 		1,
-		expect.any( AbortSignal )
+		expect.any( AbortSignal ),
+		{ folder: '', tag: '' }
 	);
 	const payload = await saveAndReadPayload( user );
 	expect( payload ).toMatchObject( {
@@ -452,4 +473,53 @@ describe( 'deleting units', () => {
 		expect( api.deleteUnit ).not.toHaveBeenCalled();
 		expect( screen.getByText( 'Saved draft' ) ).toBeInTheDocument();
 	} );
+} );
+it( 'narrows the attach picker to a Content Bank folder and tag', async () => {
+	const user = userEvent.setup();
+	bank.value = {
+		terms: {
+			folders: [
+				{ id: 4, name: 'Algebra', parent: 0 },
+				{ id: 5, name: 'Linear', parent: 4 },
+			],
+			tags: [ { id: 9, name: 'review', parent: 0 } ],
+		},
+		paths: [
+			{ id: 4, label: 'Algebra' },
+			{ id: 5, label: 'Algebra / Linear' },
+		],
+		error: '',
+		reload: () => undefined,
+	};
+	open();
+	vi.mocked( api.findResources ).mockResolvedValue( {
+		pages: 1,
+		items: [ { id: 30, title: 'Reusable lesson' } ],
+	} );
+	await user.click(
+		screen.getAllByRole( 'button', { name: 'Attach lesson to unit' } )[ 0 ]!
+	);
+	await screen.findByRole( 'button', { name: 'Reusable lesson' } );
+	await user.selectOptions( screen.getByLabelText( 'Folder' ), '5' );
+	await waitFor( () =>
+		expect( api.findResources ).toHaveBeenLastCalledWith(
+			12,
+			'lesson',
+			'',
+			1,
+			expect.any( AbortSignal ),
+			{ folder: '5', tag: '' }
+		)
+	);
+	await user.selectOptions( screen.getByLabelText( 'Tag' ), '9' );
+	await waitFor( () =>
+		expect( api.findResources ).toHaveBeenLastCalledWith(
+			12,
+			'lesson',
+			'',
+			1,
+			expect.any( AbortSignal ),
+			{ folder: '5', tag: '9' }
+		)
+	);
 } );
