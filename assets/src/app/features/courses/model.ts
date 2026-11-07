@@ -3,6 +3,7 @@ import { ApiError } from '../../lib/api';
 import type {
 	AccessType,
 	CertificateAssignment,
+	ContentCounts,
 	Course,
 	CourseDetail,
 	CourseInput,
@@ -101,6 +102,20 @@ function list( value: unknown ): unknown[] {
 		throw invalidResponse();
 	}
 	return value;
+}
+
+function contentCounts( value: unknown ): ContentCounts {
+	// A server that predates the field sends nothing: show zeros rather than reject the list.
+	if ( undefined === value ) {
+		return { units: 0, lessons: 0, quizzes: 0, assignments: 0 };
+	}
+	const item = record( value );
+	return {
+		units: count( item.units ),
+		lessons: count( item.lessons ),
+		quizzes: count( item.quizzes ),
+		assignments: count( item.assignments ),
+	};
 }
 
 function count( value: unknown ): number {
@@ -221,6 +236,7 @@ export function parseCourse( value: unknown ): Course {
 		thumbnail_id: nullableId( item.thumbnail_id ),
 		thumbnail_url: nullableText( item.thumbnail_url ),
 		enrolled_count: count( item.enrolled_count ),
+		content_counts: contentCounts( item.content_counts ),
 		scheduled_at: nullableText( item.scheduled_at ),
 		created_at: text( item.created_at ),
 		updated_at: text( item.updated_at ),

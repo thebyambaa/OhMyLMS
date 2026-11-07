@@ -70,7 +70,7 @@ only accepts taxonomies registered for courses. They are not otherwise audited (
 (`public|password_protected`), `password` (edit context only), `has_password`, `available_date`,
 `duration` (`{hours, minutes}` or null), `has_capacity`, `capacity`, `enable_reviews`,
 `learning_outcomes`, `target_audience`, `requirements` (edit), `thumbnail_id`, `thumbnail_url`,
-`enrolled_count`, `author_id`, `author_name`, `permalink`, `created_at`, `updated_at`.
+`enrolled_count`, `content_counts` (`units`, `lessons`, `quizzes`, `assignments`; lessons include videos and articles), `author_id`, `author_name`, `permalink`, `created_at`, `updated_at`.
 Other plugins may add fields through `ohmylms_rest_get_course_data`.
 
 Curriculum, lessons, quizzes, assignments, certificates, community, gamification, funnel and cohort

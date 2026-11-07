@@ -15,6 +15,14 @@ export interface Duration {
 	minutes: number;
 }
 
+/** What a course holds. */
+export interface ContentCounts {
+	units: number;
+	lessons: number;
+	quizzes: number;
+	assignments: number;
+}
+
 /** A course as listed (`context=view`). Money is a fixed-decimal string; dates are `YYYY-MM-DD`. */
 export interface Course {
 	id: number;
@@ -46,6 +54,8 @@ export interface Course {
 	thumbnail_id: number | null;
 	thumbnail_url: string | null;
 	enrolled_count: number;
+	/** Units, lessons (with videos and articles), quizzes and assignments in the course. */
+	content_counts: ContentCounts;
 	/** Site-local `YYYY-MM-DDTHH:MM:SS` publish time of a scheduled course. */
 	scheduled_at: string | null;
 	created_at: string;

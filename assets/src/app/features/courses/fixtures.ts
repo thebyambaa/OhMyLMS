@@ -67,6 +67,7 @@ export const summary: Course = {
 	thumbnail_id: 21,
 	thumbnail_url: 'https://example.test/thumb.png',
 	enrolled_count: 4,
+	content_counts: { units: 2, lessons: 5, quizzes: 1, assignments: 0 },
 	scheduled_at: null,
 	created_at: '2026-10-30T09:15:00',
 	updated_at: '2026-10-30T09:15:00',

@@ -8,6 +8,7 @@
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
+use OhMyLMS\Course\ContentCounts;
 use OhMyLMS\Course\CourseHelper;
 use OhMyLMS\Data\Course;
 use OhMyLMS\Data\Chapter;
@@ -113,6 +114,13 @@ class CourseController extends RestController {
 	 * @var array<int,int>
 	 */
 	private $enrolled_counts = array();
+
+	/**
+	 * Unit and content counts for the courses of the current collection page, keyed by course ID.
+	 *
+	 * @var array<int,array<string,int>>
+	 */
+	private $content_counts = array();
 
 	/**
 	 * Single place that answers "may the current user do this?".
@@ -518,6 +526,7 @@ class CourseController extends RestController {
 			$data[] = $this->prepare_response_for_collection( $this->prepare_item_for_response( $post, $request ) );
 		}
 		$this->enrolled_counts = array();
+		$this->content_counts  = array();
 
 		$response = rest_ensure_response( $data );
 		$response->header( 'X-WP-Total', (string) $total );
@@ -585,6 +594,7 @@ class CourseController extends RestController {
 			cache_users( array_values( array_unique( array_map( 'intval', wp_list_pluck( $posts, 'post_author' ) ) ) ) );
 		}
 		$this->enrolled_counts = $this->count_enrolled( $ids );
+		$this->content_counts  = ContentCounts::by_course( $ids );
 	}
 
 	/**
@@ -1434,6 +1444,7 @@ class CourseController extends RestController {
 			'requirements'      => (string) $meta( '_requirement' ),
 			'thumbnail_id'      => $thumb_id ? $thumb_id : null,
 			'thumbnail_url'     => $thumb ? $thumb : null,
+			'content_counts'    => $this->content_counts[ $id ] ?? ContentCounts::by_course( array( $id ) )[ $id ],
 			'enrolled_count'    => isset( $this->enrolled_counts[ $id ] ) ? $this->enrolled_counts[ $id ] : ( $this->count_enrolled( array( $id ) )[ $id ] ?? 0 ),
 			'scheduled_at'      => 'future' === $post->post_status ? str_replace( ' ', 'T', $post->post_date ) : null,
 			'created_at'        => mysql_to_rfc3339( $post->post_date ),
@@ -1626,6 +1637,18 @@ class CourseController extends RestController {
 					'type'        => array( 'string', 'null' ),
 					'context'     => $both,
 					'readonly'    => true,
+				),
+				'content_counts'    => array(
+					'description' => __( 'Units, lessons (including videos and articles), quizzes and assignments in the course.', 'ohmylms' ),
+					'type'        => 'object',
+					'context'     => $both,
+					'readonly'    => true,
+					'properties'  => array(
+						'units'       => array( 'type' => 'integer' ),
+						'lessons'     => array( 'type' => 'integer' ),
+						'quizzes'     => array( 'type' => 'integer' ),
+						'assignments' => array( 'type' => 'integer' ),
+					),
 				),
 				'enrolled_count'    => array(
 					'description' => __( 'Enrolled students.', 'ohmylms' ),

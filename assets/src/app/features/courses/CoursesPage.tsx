@@ -23,6 +23,7 @@ import {
 	restoreCourse,
 	trashCourse,
 } from './api';
+import './CoursesPage.css';
 import { levelLabel, statusLabel } from './model';
 import { useCourses } from './useCourses';
 import type { Course, CourseFilters, CourseStatus, Option } from './types';
@@ -43,6 +44,100 @@ function postStatusTone(
 			return undefined;
 	}
 }
+/**
+ * Course name with its thumbnail and what it holds: units, lessons, quizzes and assignments.
+ *
+ * @param props         Props.
+ * @param props.item    Course.
+ * @param props.inTrash Whether the list shows the trash, where the name is not a link.
+ */
+function CourseCell( { item, inTrash }: { item: Course; inTrash: boolean } ) {
+	const counts = item.content_counts;
+	return (
+		<div className="oml-courses-cell">
+			{ item.thumbnail_url ? (
+				<img
+					className="oml-courses-thumb"
+					src={ item.thumbnail_url }
+					alt=""
+					width={ 64 }
+					height={ 44 }
+					loading="lazy"
+				/>
+			) : (
+				<span
+					className="oml-courses-thumb is-empty"
+					aria-hidden="true"
+				/>
+			) }
+			<div>
+				<strong>
+					{ inTrash ? (
+						item.title
+					) : (
+						<Link
+							className="row-title"
+							to={ `/courses/${ item.id }` }
+						>
+							{ item.title }
+						</Link>
+					) }
+				</strong>
+				<ul className="oml-courses-counts">
+					<li>
+						{ sprintf(
+							/* translators: %d: number of units. */
+							_n(
+								'%d unit',
+								'%d units',
+								counts.units,
+								'ohmylms'
+							),
+							counts.units
+						) }
+					</li>
+					<li>
+						{ sprintf(
+							/* translators: %d: number of lessons. */
+							_n(
+								'%d lesson',
+								'%d lessons',
+								counts.lessons,
+								'ohmylms'
+							),
+							counts.lessons
+						) }
+					</li>
+					<li>
+						{ sprintf(
+							/* translators: %d: number of quizzes. */
+							_n(
+								'%d quiz',
+								'%d quizzes',
+								counts.quizzes,
+								'ohmylms'
+							),
+							counts.quizzes
+						) }
+					</li>
+					<li>
+						{ sprintf(
+							/* translators: %d: number of assignments. */
+							_n(
+								'%d assignment',
+								'%d assignments',
+								counts.assignments,
+								'ohmylms'
+							),
+							counts.assignments
+						) }
+					</li>
+				</ul>
+			</div>
+		</div>
+	);
+}
+
 const CourseFromSyllabusDialog = lazy( () =>
 	import(
 		/* webpackChunkName: "admin-app-syllabus" */ '../syllabus/public'
@@ -332,44 +427,83 @@ export default function CoursesPage() {
 						onChange: list.setPage,
 						href: list.pageHref,
 					} }
+					bulkActions={
+						inTrash
+							? undefined
+							: {
+									actions: [
+										{
+											value: 'trash',
+											label: __(
+												'Move to trash',
+												'ohmylms'
+											),
+										},
+									],
+									onApply: async ( action, keys ) => {
+										if (
+											'trash' !== action ||
+											! keys.length
+										) {
+											return false;
+										}
+										try {
+											for ( const key of keys ) {
+												await trashCourse(
+													Number( key )
+												);
+											}
+											setMessage(
+												__(
+													'Courses moved to the trash.',
+													'ohmylms'
+												)
+											);
+											list.afterRemoval();
+										} catch ( failure ) {
+											setError(
+												normalizeApiError( failure )
+													.message
+											);
+											list.reload();
+											return false;
+										}
+										return true;
+									},
+								}
+					}
 					columns={ [
 						{
 							id: 'title',
-							label: __( 'Title', 'ohmylms' ),
+							label: __( 'Course', 'ohmylms' ),
 							primary: true,
 							render: ( item ) => (
-								<strong>
-									{ inTrash ? (
-										item.title
-									) : (
-										<Link
-											className="row-title"
-											to={ `/courses/${ item.id }` }
-										>
-											{ item.title }
-										</Link>
-									) }
-								</strong>
-							),
-						},
-						{
-							id: 'author',
-							label: __( 'Author', 'ohmylms' ),
-							render: ( item ) => item.author_name || '—',
-						},
-						{
-							id: 'status',
-							label: __( 'Status', 'ohmylms' ),
-							render: ( item ) => (
-								<Badge tone={ postStatusTone( item.status ) }>
-									{ statusLabel( item.status ) }
-								</Badge>
+								<CourseCell item={ item } inTrash={ inTrash } />
 							),
 						},
 						{
 							id: 'level',
 							label: __( 'Level', 'ohmylms' ),
 							render: ( item ) => levelLabel( item.level ),
+						},
+						{
+							id: 'author',
+							label: __( 'Author', 'ohmylms' ),
+							render: ( item ) =>
+								item.author_name ? (
+									<span className="oml-courses-author">
+										<span aria-hidden="true">
+											{
+												Array.from(
+													item.author_name
+												)[ 0 ]
+											}
+										</span>
+										{ item.author_name }
+									</span>
+								) : (
+									'—'
+								),
 						},
 						{
 							id: 'students',
@@ -379,8 +513,17 @@ export default function CoursesPage() {
 						},
 						{
 							id: 'date',
-							label: __( 'Created', 'ohmylms' ),
+							label: __( 'Date', 'ohmylms' ),
 							render: ( item ) => item.created_at.slice( 0, 10 ),
+						},
+						{
+							id: 'status',
+							label: __( 'Status', 'ohmylms' ),
+							render: ( item ) => (
+								<Badge tone={ postStatusTone( item.status ) }>
+									{ statusLabel( item.status ) }
+								</Badge>
+							),
 						},
 					] }
 					rowActions={ ( item ) =>
