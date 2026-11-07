@@ -77,17 +77,3 @@ table:has(.oml-courses-cell) th:not(.column-title):not(.check-column) {
 	outline: 2px solid #2271b1;
 	outline-offset: 2px;
 }
-
-/* The thumbnail with its View link directly under it. */
-.oml-courses-media {
-	display: flex;
-	flex: none;
-	flex-direction: column;
-	gap: 6px;
-	align-items: center;
-}
-
-.oml-courses-view {
-	min-width: 64px;
-	text-align: center;
-}

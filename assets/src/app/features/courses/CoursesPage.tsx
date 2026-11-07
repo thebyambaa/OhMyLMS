@@ -66,24 +66,21 @@ function CourseCell( { item, inTrash }: { item: Course; inTrash: boolean } ) {
 	const counts = item.content_counts;
 	return (
 		<div className="oml-courses-cell">
-			<div className="oml-courses-media">
-				{ item.thumbnail_url ? (
-					<img
-						className="oml-courses-thumb"
-						src={ item.thumbnail_url }
-						alt=""
-						width={ 64 }
-						height={ 44 }
-						loading="lazy"
-					/>
-				) : (
-					<span
-						className="oml-courses-thumb is-empty"
-						aria-hidden="true"
-					/>
-				) }
-				<CourseViewLink course={ item } compact />
-			</div>
+			{ item.thumbnail_url ? (
+				<img
+					className="oml-courses-thumb"
+					src={ item.thumbnail_url }
+					alt=""
+					width={ 64 }
+					height={ 44 }
+					loading="lazy"
+				/>
+			) : (
+				<span
+					className="oml-courses-thumb is-empty"
+					aria-hidden="true"
+				/>
+			) }
 			<div>
 				<strong>
 					{ inTrash ? (
@@ -570,6 +567,13 @@ export default function CoursesPage() {
 										) ) }
 									</select>
 								),
+						},
+						{
+							id: 'view',
+							label: __( 'View', 'ohmylms' ),
+							render: ( item ) => (
+								<CourseViewLink course={ item } />
+							),
 						},
 					] }
 					rowActions={ ( item ) =>
