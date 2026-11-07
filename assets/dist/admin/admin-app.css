@@ -464,14 +464,17 @@ body.oml-builder-fullscreen .ohmylms-admin-page {
 
 .ohmylms-app .oml-builder-bar .oml-editor-breadcrumb {
 	margin: 0;
+	line-height: 1.4;
 }
 
 .ohmylms-app .oml-builder-title {
 	color: var(--oml-heading);
 	font-size: 16px;
+	line-height: 1.4;
 }
 
 .ohmylms-app .oml-builder-bar .oml-editor-steps {
+	align-self: center;
 	flex-wrap: nowrap;
 	padding: 0;
 	border: 0;
@@ -479,6 +482,7 @@ body.oml-builder-fullscreen .ohmylms-admin-page {
 
 .ohmylms-app .oml-builder-lead {
 	display: flex;
+	align-self: center;
 	align-items: center;
 	gap: var(--oml-space-3);
 	min-width: 0;
@@ -486,7 +490,10 @@ body.oml-builder-fullscreen .ohmylms-admin-page {
 
 .ohmylms-app .oml-builder-end {
 	display: flex;
+	align-self: center;
+	align-items: center;
 	justify-content: flex-end;
+	gap: var(--oml-space-2);
 }
 
 body.oml-builder-fullscreen .oml-editor {
@@ -529,6 +536,12 @@ body.oml-builder-fullscreen .oml-editor-header {
 	body.oml-builder-fullscreen .oml-editor-header {
 		top: 32px;
 	}
+}
+
+/* The builder bar has Save and Publish; the step headers keep their title and status only. */
+body.oml-builder-fullscreen .oml-editor-header .oml-builder-inner-save,
+body.oml-builder-fullscreen .oml-editor-header .oml-editor-view-link {
+	display: none;
 }
 
 
