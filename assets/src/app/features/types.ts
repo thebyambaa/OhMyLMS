@@ -12,6 +12,7 @@ export type AdminGroup =
 	| 'accounts'
 	| 'commerce'
 	| 'engagement'
+	| 'addons'
 	| 'settings';
 
 /** Address parameters that place a screen on its admin page (`&tab=`, `&section=`, `&view=`). */

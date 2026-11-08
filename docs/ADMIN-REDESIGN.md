@@ -47,7 +47,8 @@ order: menu and WordPress look, then the dashboard, then the gradebook. Also dec
 | Account Hub | `ohmylms-accounts` | students, schools, classes, teachers, parents, users (All accounts) |
 | Commerce | `ohmylms-commerce` | earnings, orders, memberships, subscriptions, coupons, payments (sections currency, tax, payment-gateways) |
 | Engagement | `ohmylms-engagement` | gamification (only with the Gamification add-on), certificates (templates and issued), automations, sessions (only with `ohmylms_show_sessions_menu`) |
-| Settings | `ohmylms-settings` | settings (sections = today's settings tabs incl. xAPI, AI tutor, migration), emails, integrations, webhooks, setup |
+| Add-ons | `ohmylms-addons` | integrations (the add-on list with switches and settings), and the tabs extension pages register (`ext-<id>`) |
+| Settings | `ohmylms-settings` | settings (sections = today's settings tabs incl. xAPI, AI tutor, migration), emails, webhooks, setup |
 
 Detail screens add `&id=` and `&view=` (`page=ohmylms-content&tab=courses&id=12&view=settings`); second-level
 sections use `&section=`, rendered as `.subsubsub` under the tab (courses: overview; curriculum tools: skill-map, subjects;
@@ -211,6 +212,7 @@ parameters (`AdminNavigation::MOVED_PLACES`):
 | Course bundles | Curriculum › Tools | Removed (see below) |
 | Categories and tags | Curriculum › Tools | Removed: the screen only listed curriculum items, read-only |
 | Currency, Tax, Payment gateways | Settings sections | Commerce › Payments sections |
+| Integrations (add-ons) | Settings | Add-ons page; extension pages open there by default |
 
 Gamification is hidden unless the add-on is on. The three payment tabs are still the settings screen
 (`SettingsPage scope="payments"`, route `/payments?tab=currency|tax|payment-gateways`). Not moved: Content Hub and

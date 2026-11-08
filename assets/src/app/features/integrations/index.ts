@@ -6,7 +6,7 @@ export const integrations: FeatureDefinition = {
 	id: 'integrations',
 	title: __( 'Integrations', 'ohmylms' ),
 	path: '/integrations',
-	group: 'settings',
+	group: 'addons',
 	tab: 'integrations',
 	capability: 'manage_options',
 	component: lazy(

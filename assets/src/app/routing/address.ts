@@ -21,6 +21,7 @@ export const GROUP_PAGES: Readonly< Record< AdminGroup, string > > = {
 	accounts: 'ohmylms-accounts',
 	commerce: 'ohmylms-commerce',
 	engagement: 'ohmylms-engagement',
+	addons: 'ohmylms-addons',
 	settings: 'ohmylms-settings',
 };
 
@@ -28,7 +29,7 @@ export const GROUP_PAGES: Readonly< Record< AdminGroup, string > > = {
 export const EXTENSION_PAGE_PATH = '/extensions/:id';
 
 /** Group of extension admin pages that declare none. */
-export const DEFAULT_EXTENSION_GROUP: AdminGroup = 'settings';
+export const DEFAULT_EXTENSION_GROUP: AdminGroup = 'addons';
 
 /**
  * Route query parameters stored under another address name, because the address uses the name itself:

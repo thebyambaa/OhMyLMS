@@ -169,7 +169,7 @@ try {
 		$actual = null === $pairs ? null : AdminNavigation::format_query( $pairs );
 		ok( $actual === $case[1], sprintf( 'address(%s) is %s, got %s', $case[0], var_export( $case[1], true ), var_export( $actual, true ) ) );
 	}
-	ok( count( AdminNavigation::groups() ) === 8 && array( 'ohmylms', 'ohmylms-content', 'ohmylms-bank', 'ohmylms-curriculum', 'ohmylms-accounts', 'ohmylms-commerce', 'ohmylms-engagement', 'ohmylms-settings' ) === array_column( AdminNavigation::groups(), 'page' ), 'eight pages, in menu order' );
+	ok( count( AdminNavigation::groups() ) === 9 && array( 'ohmylms', 'ohmylms-content', 'ohmylms-bank', 'ohmylms-curriculum', 'ohmylms-accounts', 'ohmylms-commerce', 'ohmylms-engagement', 'ohmylms-addons', 'ohmylms-settings' ) === array_column( AdminNavigation::groups(), 'page' ), 'nine pages, in menu order' );
 	foreach ( AdminNavigation::routes() as $entry ) {
 		$sample = preg_replace( '#/:[A-Za-z]+\?$#', '', $entry['path'] );
 		$sample = preg_replace( '/:[A-Za-z]+/', '7', $sample );
@@ -287,7 +287,7 @@ try {
 		10,
 		2
 	);
-	ok( LegacyRoutes::app_url( '/extensions/probe-page' ) === address_url( 'page=ohmylms-content&tab=ext-probe-page' ) && LegacyRoutes::app_url( '/extensions/other' ) === address_url( 'page=ohmylms-settings&tab=ext-other' ), 'extension pages open their group page, Settings by default' );
+	ok( LegacyRoutes::app_url( '/extensions/probe-page' ) === address_url( 'page=ohmylms-content&tab=ext-probe-page' ) && LegacyRoutes::app_url( '/extensions/other' ) === address_url( 'page=ohmylms-addons&tab=ext-other' ), 'extension pages open their group page, Add-ons by default' );
 
 	// The old switch filters no longer change anything.
 	add_filter( 'ohmylms_legacy_routes_enabled', '__return_false' );
@@ -375,9 +375,10 @@ try {
 			array( 'Account Hub', 'ohmylms-accounts' ),
 			array( 'Commerce', 'ohmylms-commerce' ),
 			array( 'Engagement', 'ohmylms-engagement' ),
+			array( 'Add-ons', 'ohmylms-addons' ),
 			array( 'Settings', 'ohmylms-settings' ),
 		) === $entries,
-		'menu: exactly the eight pages, Dashboard first: ' . wp_json_encode( $entries )
+		'menu: exactly the nine pages, Dashboard first: ' . wp_json_encode( $entries )
 	);
 	foreach ( array( 'toplevel_page_ohmylms', 'ohmylms_page_ohmylms-content', 'ohmylms_page_ohmylms-bank', 'ohmylms_page_ohmylms-curriculum', 'ohmylms_page_ohmylms-accounts', 'ohmylms_page_ohmylms-commerce', 'ohmylms_page_ohmylms-engagement', 'ohmylms_page_ohmylms-settings' ) as $hook ) {
 		ok( isset( $GLOBALS['_registered_pages'][ $hook ] ) && false !== has_action( $hook, array( AdminNavigation::class, 'render' ) ), 'menu: ' . $hook . ' renders the page' );
@@ -899,6 +900,7 @@ try {
 			array( array( 'ohmylms-content', 'courses', 'bundles' ), array( 'ohmylms-content', 'courses' ) ),
 			array( array( 'ohmylms-curriculum', 'tools', 'taxonomies' ), array( 'ohmylms-curriculum', 'workspace' ) ),
 			array( array( 'ohmylms-content', 'courses', 'taxonomies' ), array( 'ohmylms-curriculum', 'workspace' ) ),
+			array( array( 'ohmylms-settings', 'integrations', '' ), array( 'ohmylms-addons', 'integrations' ) ),
 			array( array( 'ohmylms-settings', 'settings', 'currency' ), array( 'ohmylms-commerce', 'payments' ) ),
 			array( array( 'ohmylms-settings', 'settings', 'tax' ), array( 'ohmylms-commerce', 'payments' ) ),
 			array( array( 'ohmylms-settings', 'settings', 'payment-gateways' ), array( 'ohmylms-commerce', 'payments' ) ),

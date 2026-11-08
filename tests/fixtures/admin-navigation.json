@@ -293,6 +293,20 @@
 			]
 		},
 		{
+			"id": "addons",
+			"page": "ohmylms-addons",
+			"tabs": [
+				{
+					"id": "integrations",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [],
+					"serverSections": [],
+					"defaultSection": ""
+				}
+			]
+		},
+		{
 			"id": "settings",
 			"page": "ohmylms-settings",
 			"tabs": [
@@ -323,14 +337,6 @@
 				},
 				{
 					"id": "emails",
-					"capability": "manage_options",
-					"flag": "",
-					"sections": [],
-					"serverSections": [],
-					"defaultSection": ""
-				},
-				{
-					"id": "integrations",
 					"capability": "manage_options",
 					"flag": "",
 					"sections": [],
@@ -781,7 +787,7 @@
 		{
 			"id": "integrations",
 			"path": "/integrations",
-			"group": "settings",
+			"group": "addons",
 			"tab": "integrations"
 		},
 		{
@@ -811,7 +817,7 @@
 		{
 			"id": "extension-pages",
 			"path": "/extensions/:id",
-			"group": "settings",
+			"group": "addons",
 			"tab": "ext-:id"
 		}
 	],
@@ -1100,7 +1106,7 @@
 		],
 		[
 			"/integrations?auth=success",
-			"page=ohmylms-settings&tab=integrations&auth=success"
+			"page=ohmylms-addons&tab=integrations&auth=success"
 		],
 		[
 			"/settings",
@@ -1116,7 +1122,7 @@
 		],
 		[
 			"/extensions/example-page",
-			"page=ohmylms-settings&tab=ext-example-page"
+			"page=ohmylms-addons&tab=ext-example-page"
 		],
 		[
 			"/no-such-screen",

@@ -68,7 +68,7 @@ final class AdminNavigation {
 	/**
 	 * Group of extension admin pages that declare none.
 	 */
-	const EXTENSION_GROUP = 'settings';
+	const EXTENSION_GROUP = 'addons';
 
 	/**
 	 * Route query parameters stored under another address name (list pagination is `paged`).
@@ -296,6 +296,13 @@ final class AdminNavigation {
 					),
 				),
 			),
+			'addons'     => array(
+				'page'  => 'ohmylms-addons',
+				'label' => __( 'Add-ons', 'ohmylms' ),
+				'tabs'  => array(
+					'integrations' => array( 'label' => __( 'Add-ons', 'ohmylms' ) ),
+				),
+			),
 			'settings'   => array(
 				'page'  => 'ohmylms-settings',
 				'label' => __( 'Settings', 'ohmylms' ),
@@ -306,7 +313,6 @@ final class AdminNavigation {
 						'default_section' => 'general',
 					),
 					'emails'       => array( 'label' => __( 'Emails', 'ohmylms' ) ),
-					'integrations' => array( 'label' => __( 'Integrations', 'ohmylms' ) ),
 					'webhooks'     => array(
 						'label' => __( 'Webhooks', 'ohmylms' ),
 						'flag'  => 'ohmylms_should_enable_webhooks',
@@ -388,6 +394,7 @@ final class AdminNavigation {
 		$commerce = array( 'group' => 'commerce' );
 		$accounts = array( 'group' => 'accounts' );
 		$engage   = array( 'group' => 'engagement' );
+		$addons   = array( 'group' => 'addons' );
 		$settings = array( 'group' => 'settings' );
 		$rows     = array(
 			array( 'dashboard', '/dashboard', array( 'group' => 'dashboard' ) ),
@@ -666,7 +673,7 @@ final class AdminNavigation {
 				),
 			),
 			array( 'emails', '/emails', $settings + array( 'tab' => 'emails' ) ),
-			array( 'integrations', '/integrations', $settings + array( 'tab' => 'integrations' ) ),
+			array( 'integrations', '/integrations', $addons + array( 'tab' => 'integrations' ) ),
 			array(
 				'settings',
 				'/settings',
@@ -684,7 +691,7 @@ final class AdminNavigation {
 				),
 			),
 			array( 'webhooks', '/webhooks', $settings + array( 'tab' => 'webhooks' ) ),
-			array( 'extension-pages', '/extensions/:id', $settings + array( 'tab' => 'ext-:id' ) ),
+			array( 'extension-pages', '/extensions/:id', $addons + array( 'tab' => 'ext-:id' ) ),
 		);
 		$routes   = array();
 		foreach ( $rows as list( $id, $path, $place ) ) {
@@ -933,6 +940,7 @@ final class AdminNavigation {
 		array( array( 'content', 'courses', 'bundles' ), array( 'content', 'courses', false ) ),
 		array( array( 'curriculum', 'tools', 'taxonomies' ), array( 'curriculum', 'workspace', false ) ),
 		array( array( 'content', 'courses', 'taxonomies' ), array( 'curriculum', 'workspace', false ) ),
+		array( array( 'settings', 'integrations', null ), array( 'addons', 'integrations', false ) ),
 		array( array( 'settings', 'settings', 'currency' ), array( 'commerce', 'payments', null ) ),
 		array( array( 'settings', 'settings', 'tax' ), array( 'commerce', 'payments', null ) ),
 		array( array( 'settings', 'settings', 'payment-gateways' ), array( 'commerce', 'payments', null ) ),

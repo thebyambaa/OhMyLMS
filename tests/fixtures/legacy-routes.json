@@ -114,7 +114,7 @@
 		],
 		[
 			"/communities",
-			"page=ohmylms-settings&tab=integrations"
+			"page=ohmylms-addons&tab=integrations"
 		],
 		[
 			"/courses/12/students",

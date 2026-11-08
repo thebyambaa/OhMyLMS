@@ -7,7 +7,7 @@ export const extensionPages: FeatureDefinition = {
 	id: 'extension-pages',
 	title: __( 'Extensions', 'ohmylms' ),
 	path: '/extensions/:id',
-	group: 'settings',
+	group: 'addons',
 	tab: 'ext-:id',
 	hidden: true,
 	component: lazy(
