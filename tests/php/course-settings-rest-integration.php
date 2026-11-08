@@ -303,6 +303,29 @@ try {
 		)
 	);
 	settings_check( (int) get_post_meta( $settings_basics, \OhMyLMS\Learning\CourseProgram::CURRENT, true ) > 0, 'Publishing from Basics publishes the learning program.' );
+	// A quiz without a question would send students to an error page, so it blocks publishing.
+	$settings_quiz = wp_insert_post(
+		array(
+			'post_type'   => OHMYLMS_QUIZ_CPT,
+			'post_status' => 'publish',
+			'post_title'  => 'Settings empty quiz',
+			'post_author' => get_current_user_id(),
+		),
+		true
+	);
+	$settings_posts[] = $settings_quiz;
+	$settings_quiz_program          = \OhMyLMS\Learning\CourseProgram::editor( $settings_basics )['draft'];
+	$settings_quiz_program['items'] = array(
+		array(
+			'id'         => wp_generate_uuid4(),
+			'type'       => 'quiz',
+			'content_id' => $settings_quiz,
+			'chapter_id' => 0,
+			'required'   => true,
+		),
+	);
+	$settings_empty = \OhMyLMS\Learning\CourseProgram::empty_quizzes( $settings_quiz_program );
+	settings_check( 1 === count( $settings_empty ) && false !== strpos( $settings_empty[0], 'Settings empty quiz' ), 'A quiz with no question blocks publishing.' );
 	settings_check(
 		409 === settings_publication(
 			'POST',

@@ -551,6 +551,34 @@ final class CourseProgram {
 	}
 
 	/**
+	 * Quizzes of the program that have no question and no random pool: a student who starts one gets an error.
+	 *
+	 * @param array $program Program.
+	 * @return string[] Messages, one per empty quiz.
+	 */
+	public static function empty_quizzes( array $program ) {
+		$messages = array();
+		foreach ( $program['items'] as $item ) {
+			if ( 'quiz' !== $item['type'] ) {
+				continue;
+			}
+			$quiz = ohmylms_get_quiz( (int) $item['content_id'] );
+			if ( ! $quiz || array() !== (array) $quiz->get_questions() ) {
+				continue;
+			}
+			$pools = \OhMyLMS\Assessment\Pools::slots_for( (int) $item['content_id'], 0 );
+			if ( is_array( $pools ) && $pools ) {
+				continue;
+			}
+			$messages[] = sprintf( /* translators: %s: quiz title. */
+				__( 'Add at least one question to the quiz %s first.', 'ohmylms' ),
+				get_the_title( $item['content_id'] )
+			);
+		}
+		return $messages;
+	}
+
+	/**
 	 * Publish the unpublished lessons, quizzes and assignments of a program, where the current user may.
 	 *
 	 * @param array $program Program.
@@ -584,7 +612,7 @@ final class CourseProgram {
 	 */
 	public static function readiness( array $program, $course_id = 0 ) {
 		$syllabus          = 0 < $course_id && \OhMyLMS\Curriculum\SyllabusCourse::owner( $course_id ) > 0;
-		$errors            = array_merge( self::completion_readiness( $program, $syllabus ), self::review_readiness( $program ) );
+		$errors            = array_merge( self::completion_readiness( $program, $syllabus ), self::review_readiness( $program ), self::empty_quizzes( $program ) );
 		$rules             = Mastery::rules();
 		$required_outcomes = array_filter(
 			$program['outcomes'],
@@ -656,7 +684,7 @@ final class CourseProgram {
 	public static function readiness_report( array $program, $course_id = 0 ) {
 		$syllabus   = 0 < $course_id && \OhMyLMS\Curriculum\SyllabusCourse::owner( $course_id ) > 0;
 		$rules      = Mastery::rules();
-		$completion = array_merge( self::completion_readiness( $program, $syllabus ), self::review_readiness( $program ) );
+		$completion = array_merge( self::completion_readiness( $program, $syllabus ), self::review_readiness( $program ), self::empty_quizzes( $program ) );
 		$resources  = array();
 		foreach ( $program['items'] as $item ) {
 			if ( self::resource_blocks( $item ) ) {

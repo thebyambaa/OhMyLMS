@@ -78,6 +78,23 @@ export function PublicationPanel( {
 							</ul>
 						</div>
 					) ) }
+					{ 0 === preview.published_program_id && (
+						<p role="status">
+							{ __(
+								'Students cannot see this course’s lessons yet: no version is published.',
+								'ohmylms'
+							) }
+						</p>
+					) }
+					{ preview.published_program_id > 0 &&
+						preview.unpublished_changes && (
+							<p role="status">
+								{ __(
+									'Students still see the last published version. Publish to show them your latest changes; students already in the course keep their version.',
+									'ohmylms'
+								) }
+							</p>
+						) }
 					{ preview.readiness.length > 0 ? (
 						<Notice status="warning" isDismissible={ false }>
 							<p>

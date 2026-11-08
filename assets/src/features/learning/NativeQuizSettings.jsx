@@ -111,6 +111,7 @@ function NativeQuizSettings() {
 		return null;
 	}
 	// Imported questions are appended as question blocks; saving the quiz links them, as with the bank picker.
+	/** @param {number[]} ids Question IDs to append as blocks. */
 	const addQuestions = ( ids ) =>
 		insertBlocks(
 			ids.map( ( questionId ) =>

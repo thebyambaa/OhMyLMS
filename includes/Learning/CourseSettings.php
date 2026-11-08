@@ -50,6 +50,7 @@ final class CourseSettings {
 			'units'                => array_values( $units ),
 			'readiness'            => CourseProgram::readiness( $program, $course_id ),
 			'published_program_id' => (int) get_post_meta( $course_id, CourseProgram::CURRENT, true ),
+			'unpublished_changes'  => Catalog::has_unpublished_changes( $course_id ),
 		);
 	}
 

@@ -206,6 +206,8 @@ export function ImportDialog( {
 	const schemeId = useId();
 	const nameId = useId();
 	const info = targetInfo();
+	const infoById =
+		/** @type {Record<string, {label: string, help: string}>} */ ( info );
 	const kind = file ? kindOf( file ) : '';
 	const format = kind === 'csv' || kind === 'json' ? kind : 'auto';
 	const defaultSkills = skills
@@ -318,7 +320,10 @@ export function ImportDialog( {
 					skip_invalid: skipInvalid,
 					default_skills: defaultSkills,
 				} );
-				onQuestions( job.question_ids || [] );
+				onQuestions?.(
+					/** @type {{question_ids?: number[]}} */ ( job )
+						.question_ids || []
+				);
 				onClose();
 			} else if ( target === 'exam' ) {
 				const job = /** @type {{id: number}} */ (
@@ -438,8 +443,8 @@ export function ImportDialog( {
 								checked={ target === id }
 								onChange={ () => setTarget( id ) }
 							/>{ ' ' }
-							<strong>{ info[ id ].label }</strong> —{ ' ' }
-							{ info[ id ].help }
+							<strong>{ infoById[ id ].label }</strong> —{ ' ' }
+							{ infoById[ id ].help }
 						</label>
 					) ) }
 				</fieldset>

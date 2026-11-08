@@ -14,6 +14,8 @@ export interface Publication {
 	mode: string;
 	outcomes: number;
 	published_program_id: number;
+	/** The saved outline differs from what students see. */
+	unpublished_changes: boolean;
 	readiness: string[];
 	units: {
 		id: number;
@@ -47,6 +49,7 @@ export function parsePublication( incoming: unknown ): Publication {
 		mode: text( row.mode ),
 		outcomes: Number( row.outcomes ),
 		published_program_id: Number( row.published_program_id ),
+		unpublished_changes: true === row.unpublished_changes,
 		readiness: row.readiness.map( text ),
 		units: row.units.map( ( value ) => {
 			const unit = record( value );

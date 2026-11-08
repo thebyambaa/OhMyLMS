@@ -534,6 +534,17 @@ final class Catalog {
 	}
 
 	/**
+	 * Whether the saved outline differs from the program students see.
+	 *
+	 * @param int $course_id Course ID.
+	 * @return bool
+	 */
+	public static function has_unpublished_changes( $course_id ) {
+		$editor = CourseProgram::editor( (int) $course_id );
+		return self::fingerprint( $editor['draft'] ) !== self::fingerprint( $editor['published'] );
+	}
+
+	/**
 	 * The structure in a compact, read-only form: units, lesson groups, skills and attachments.
 	 *
 	 * @param int $course_id Course ID.

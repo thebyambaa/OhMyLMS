@@ -15,6 +15,7 @@ const preview: api.Publication = {
 	mode: 'traditional',
 	outcomes: 0,
 	published_program_id: 0,
+	unpublished_changes: true,
 	readiness: [],
 	units: [],
 };
@@ -88,4 +89,40 @@ it( 'blocks publication while readiness issues remain and blocks preview for uns
 		screen.getByRole( 'button', { name: 'Review publication' } )
 	).toBeDisabled();
 	expect( api.publishCourse ).not.toHaveBeenCalled();
+} );
+
+it( 'says what students see: nothing yet, or the last published version', async () => {
+	const user = userEvent.setup();
+	vi.mocked( api.previewPublication ).mockResolvedValueOnce( preview );
+	const { unmount } = render(
+		<PublicationPanel
+			course={ 12 }
+			disabled={ false }
+			onPublished={ vi.fn() }
+		/>
+	);
+	await user.click(
+		screen.getByRole( 'button', { name: 'Preview saved course' } )
+	);
+	expect(
+		await screen.findByText( /no version is published/ )
+	).toBeInTheDocument();
+	unmount();
+	vi.mocked( api.previewPublication ).mockResolvedValueOnce( {
+		...preview,
+		published_program_id: 4,
+	} );
+	render(
+		<PublicationPanel
+			course={ 12 }
+			disabled={ false }
+			onPublished={ vi.fn() }
+		/>
+	);
+	await user.click(
+		screen.getByRole( 'button', { name: 'Preview saved course' } )
+	);
+	expect(
+		await screen.findByText( /still see the last published version/ )
+	).toBeInTheDocument();
 } );

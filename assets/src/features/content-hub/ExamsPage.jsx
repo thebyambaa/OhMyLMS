@@ -1349,7 +1349,9 @@ export function ExamsPage( {
 											variant="primary"
 											disabled={ busy }
 											onClick={ () => {
-												onQuestions( job.question_ids );
+												onQuestions(
+													job.question_ids || []
+												);
 												setJob( null );
 											} }
 										>
@@ -1358,10 +1360,12 @@ export function ExamsPage( {
 												_n(
 													'Add %d question to this assessment',
 													'Add %d questions to this assessment',
-													job.question_ids.length,
+													( job.question_ids || [] )
+														.length,
 													'ohmylms'
 												),
-												job.question_ids.length
+												( job.question_ids || [] )
+													.length
 											) }
 										</Button>
 									</p>
