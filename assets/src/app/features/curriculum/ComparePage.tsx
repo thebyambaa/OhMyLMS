@@ -1,5 +1,4 @@
 import { ListTable } from '../../../ui/ListTable';
-import { WidefatTable } from '../../components/WidefatTable';
 import { Button, Notice, TextControl } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -9,10 +8,8 @@ import { useRequest } from '../../hooks/useRequest';
 import {
 	isStale,
 	MAX_SOURCES,
-	readAudit,
 	readGroups,
 	saveGroup,
-	type AuditSubject,
 	type ComparisonGroups,
 } from './compare';
 import { CompareRoadmaps } from './CompareRoadmaps';
@@ -20,7 +17,7 @@ import { CompareSharedSkills } from './CompareSharedSkills';
 import { SourcePicker } from './SourcePicker';
 import type { WorkspaceSection } from './workspace';
 
-const TABS = [ 'groups', 'roadmaps', 'shared', 'audit' ] as const;
+const TABS = [ 'groups', 'roadmaps', 'shared' ] as const;
 type Tab = ( typeof TABS )[ number ];
 
 /** Former `?tab=` values of the skill workspace sections, now Content Hub › Skills sections. */
@@ -36,12 +33,11 @@ function tabLabel( tab: Tab ): string {
 		groups: __( 'Comparison groups', 'ohmylms' ),
 		roadmaps: __( 'Roadmaps', 'ohmylms' ),
 		shared: __( 'Shared skills', 'ohmylms' ),
-		audit: __( 'Learner audit', 'ohmylms' ),
 	}[ tab ];
 }
 
 /**
- * Syllabus comparison at `#/content-hub/curriculum/compare` (`?tab=groups|roadmaps|shared|audit`).
+ * Syllabus comparison at `#/content-hub/curriculum/compare` (`?tab=groups|roadmaps|shared`).
  * The legacy `?roadmap=<id>` bookmark opens that roadmap in the syllabus editor; the former skill
  * workspace tabs (`?tab=mappings|ai|placement|provenance`) open their Skills section
  * with the rest of the query.
@@ -63,6 +59,10 @@ export default function ComparePage() {
 				to={ `/content-hub/curriculum/syllabus/${ roadmap }` }
 			/>
 		);
+	}
+	// The learner audit was replaced by the Skill map, which shows one learner (or a class or school) on the map.
+	if ( 'audit' === requested ) {
+		return <Navigate replace to="/content-hub/curriculum/skill-map" />;
 	}
 	if ( workspace ) {
 		const rest = new URLSearchParams( params );
@@ -93,7 +93,7 @@ function CompareScreen( { tab }: { tab: Tab } ) {
 			<h2>{ __( 'Compare syllabuses', 'ohmylms' ) }</h2>
 			<p>
 				{ __(
-					'Shared skills connect objectives of different syllabuses. Group the syllabuses learners are measured against, build roadmaps from them, review where skills and mappings came from and check one learner across a subject.',
+					'Shared skills connect objectives of different syllabuses. Group the syllabuses learners are measured against, build roadmaps from them, and review where skills and mappings came from. A learner’s mastery is on the Skill map.',
 					'ohmylms'
 				) }
 			</p>
@@ -132,9 +132,6 @@ function CompareScreen( { tab }: { tab: Tab } ) {
 				<CompareRoadmaps sources={ groups.data.items } />
 			) }
 			{ 'shared' === tab && <CompareSharedSkills /> }
-			{ groups.data && 'audit' === tab && (
-				<Audit groups={ groups.data } />
-			) }
 		</>
 	);
 }
@@ -350,135 +347,6 @@ function Groups( {
 					</Button>
 				) }
 			</form>
-		</section>
-	);
-}
-
-function Audit( { groups }: { groups: ComparisonGroups } ) {
-	const [ value, setValue ] = useState( '' );
-	const [ problem, setProblem ] = useState< string | null >( null );
-	const [ result, setResult ] = useState< AuditSubject[] | null >( null );
-	const operation = useOperation();
-	const configured = Object.keys( groups.selected ).length > 0;
-
-	function load() {
-		const id = Number( value.trim() );
-		if ( ! Number.isSafeInteger( id ) || id < 1 ) {
-			setProblem( __( 'Enter the learner’s user ID.', 'ohmylms' ) );
-			return;
-		}
-		setProblem( null );
-		setResult( null );
-		void operation.run( ( signal ) => readAudit( id, signal ), setResult );
-	}
-
-	return (
-		<section aria-labelledby="oml-compare-audit">
-			<h3 id="oml-compare-audit">{ __( 'Learner audit', 'ohmylms' ) }</h3>
-			<p>
-				{ __(
-					'Shared mastery and syllabus coverage of one learner in every configured subject. Unassessed is not failed mastery.',
-					'ohmylms'
-				) }
-			</p>
-			{ ! configured && (
-				<Notice status="info" isDismissible={ false }>
-					{ __(
-						'Add a comparison group first; the audit reports configured subjects only.',
-						'ohmylms'
-					) }
-				</Notice>
-			) }
-			<form
-				noValidate
-				role="search"
-				aria-label={ __( 'Learner audit', 'ohmylms' ) }
-				onSubmit={ ( event ) => {
-					event.preventDefault();
-					load();
-				} }
-			>
-				<TextControl
-					label={ __( 'Learner user ID', 'ohmylms' ) }
-					value={ value }
-					inputMode="numeric"
-					help={ problem ?? undefined }
-					onChange={ setValue }
-				/>
-				<Button
-					type="submit"
-					variant="secondary"
-					disabled={ operation.busy }
-					isBusy={ operation.busy }
-				>
-					{ __( 'Show audit', 'ohmylms' ) }
-				</Button>
-			</form>
-			{ operation.error && (
-				<Notice status="error" isDismissible={ false }>
-					{ operation.error }
-				</Notice>
-			) }
-			{ result && ! result.length && (
-				<p>{ __( 'No configured subjects to report.', 'ohmylms' ) }</p>
-			) }
-			{ result?.map( ( subject ) => (
-				<section key={ subject.subject }>
-					<h4>{ subject.subject }</h4>
-					<WidefatTable
-						caption={ sprintf(
-							/* translators: %s: subject. */
-							__( 'Shared mastery in %s', 'ohmylms' ),
-							subject.subject
-						) }
-					>
-						<thead>
-							<tr>
-								<th scope="col">
-									{ __( 'Shared skill', 'ohmylms' ) }
-								</th>
-								<th scope="col">
-									{ __( 'Level', 'ohmylms' ) }
-								</th>
-								<th scope="col">
-									{ __( 'Evidence answers', 'ohmylms' ) }
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							{ subject.shared.map( ( skill ) => (
-								<tr key={ skill.id }>
-									<th scope="row">{ skill.name }</th>
-									<td>
-										{ skill.level ||
-											__( 'Not assessed', 'ohmylms' ) }
-									</td>
-									<td>{ skill.evidence }</td>
-								</tr>
-							) ) }
-						</tbody>
-					</WidefatTable>
-					<ul>
-						{ subject.syllabuses.map( ( syllabus ) => (
-							<li key={ syllabus.id }>
-								{ sprintf(
-									/* translators: 1: syllabus, 2: equivalent, 3: related only, 4: unmapped, 5: unassessed, 6: developing. */
-									__(
-										'%1$s: %2$d equivalent, %3$d related only, %4$d unmapped; %5$d unassessed and %6$d developing objectives.',
-										'ohmylms'
-									),
-									syllabus.name,
-									syllabus.equivalent,
-									syllabus.related_only,
-									syllabus.unmapped,
-									syllabus.unassessed,
-									syllabus.developing
-								) }
-							</li>
-						) ) }
-					</ul>
-				</section>
-			) ) }
 		</section>
 	);
 }

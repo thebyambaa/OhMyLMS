@@ -1,4 +1,4 @@
-import { moved, parseAudit, parseGroups, sharedSkillProblem } from './compare';
+import { moved, parseGroups, sharedSkillProblem } from './compare';
 
 describe( 'compare model', () => {
 	it( 'accepts an empty PHP group map and requires a revision', () => {
@@ -34,8 +34,7 @@ describe( 'compare model', () => {
 		).toThrow();
 	} );
 
-	it( 'reads an empty audit and moves steps within bounds', () => {
-		expect( parseAudit( [] ) ).toEqual( [] );
+	it( 'moves steps within bounds', () => {
 		expect( moved( [ 1, 2, 3 ], 0, -1 ) ).toEqual( [ 1, 2, 3 ] );
 		expect( moved( [ 1, 2, 3 ], 2, -1 ) ).toEqual( [ 1, 3, 2 ] );
 	} );

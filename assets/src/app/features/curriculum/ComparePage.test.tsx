@@ -16,7 +16,6 @@ vi.mock( './compare', async ( original ) => ( {
 	createRoadmap: vi.fn(),
 	readRoadmap: vi.fn(),
 	saveRoadmap: vi.fn(),
-	readAudit: vi.fn(),
 } ) );
 
 const notice = { selector: '.components-notice__content' };
@@ -85,6 +84,10 @@ function open( route = '/content-hub/curriculum/compare' ) {
 				<Route
 					path="/content-hub/curriculum/syllabus/:id"
 					element={ <p>Syllabus editor reached</p> }
+				/>
+				<Route
+					path="/content-hub/curriculum/skill-map"
+					element={ <p>Skill map page</p> }
 				/>
 			</Routes>
 		</MemoryRouter>
@@ -299,58 +302,8 @@ describe( 'ComparePage', () => {
 		);
 	} );
 
-	it( 'validates the learner ID and shows the audit', async () => {
-		const user = userEvent.setup();
-		vi.mocked( compare.readAudit ).mockResolvedValue( [
-			{
-				subject: 'Mathematics',
-				shared: [
-					{
-						id: 7,
-						name: 'Solve equations',
-						level: 'Secure',
-						evidence: 4,
-					},
-				],
-				syllabuses: [
-					{
-						id: 11,
-						name: 'Cambridge',
-						equivalent: 3,
-						related_only: 1,
-						unmapped: 2,
-						unassessed: 5,
-						developing: 1,
-					},
-				],
-			},
-		] );
+	it( 'sends the former learner audit address to the Skill map', async () => {
 		open( '/content-hub/curriculum/compare?tab=audit' );
-		const field = await screen.findByLabelText( 'Learner user ID' );
-		await user.type( field, 'abc' );
-		await user.click(
-			screen.getByRole( 'button', { name: 'Show audit' } )
-		);
-		expect(
-			screen.getByText( 'Enter the learner’s user ID.' )
-		).toBeVisible();
-		expect( compare.readAudit ).not.toHaveBeenCalled();
-		await user.clear( field );
-		await user.type( field, '42' );
-		await user.click(
-			screen.getByRole( 'button', { name: 'Show audit' } )
-		);
-		expect(
-			await screen.findByRole( 'table', {
-				name: 'Shared mastery in Mathematics',
-			} )
-		).toBeVisible();
-		expect(
-			screen.getByText( /3 equivalent, 1 related only/ )
-		).toBeVisible();
-		expect( compare.readAudit ).toHaveBeenCalledWith(
-			42,
-			expect.any( AbortSignal )
-		);
+		expect( await screen.findByText( 'Skill map page' ) ).toBeVisible();
 	} );
 } );

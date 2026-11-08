@@ -5,7 +5,6 @@ import {
 	positiveId,
 	record,
 	text,
-	type Row,
 } from '../../lib/authoring-validation';
 
 const BASE = '/ohmylms/v1/syllabus-comparison';
@@ -72,25 +71,6 @@ export interface RoadmapState {
 	syllabus_ids: number[];
 	skills: { id: number; name: string; folder_id: number }[];
 	revision: string;
-}
-
-export interface AuditSubject {
-	subject: string;
-	shared: {
-		id: number;
-		name: string;
-		level: string;
-		evidence: number;
-	}[];
-	syllabuses: {
-		id: number;
-		name: string;
-		equivalent: number;
-		related_only: number;
-		unmapped: number;
-		unassessed: number;
-		developing: number;
-	}[];
 }
 
 function count( value: unknown ): number {
@@ -229,49 +209,6 @@ export function parsePreview( value: unknown ): RoadmapPreview {
 		} ),
 		unmapped: count( row.unmapped ),
 	};
-}
-
-/**
- * Parse a learner audit into per-subject summaries.
- *
- * @param value Parsed JSON (subject => progress).
- * @return Subjects.
- */
-export function parseAudit( value: unknown ): AuditSubject[] {
-	if ( Array.isArray( value ) && ! value.length ) {
-		return [];
-	}
-	return Object.entries( record( value ) ).map( ( [ subject, raw ] ) => {
-		const data = record( raw );
-		return {
-			subject,
-			shared: list( data.shared ).map( ( entry ) => {
-				const skill = record( entry );
-				const shared = record( skill.shared );
-				return {
-					id: positiveId( shared.id ),
-					name: text( shared.name ),
-					level: optionalText( skill.level_label ),
-					evidence: count( skill.evidence_count ?? 0 ),
-				};
-			} ),
-			syllabuses: list( data.syllabuses ).map( ( entry ) => {
-				const syllabus = record( entry );
-				const head = record( syllabus.syllabus );
-				const coverage = record( syllabus.coverage );
-				const audit: Row = record( syllabus.audit );
-				return {
-					id: positiveId( head.id ),
-					name: text( head.name ),
-					equivalent: count( coverage.equivalent ),
-					related_only: count( coverage.related_only ),
-					unmapped: count( coverage.unmapped ),
-					unassessed: list( audit.unassessed ).length,
-					developing: list( audit.developing ).length,
-				};
-			} ),
-		};
-	} );
 }
 
 /**
@@ -541,19 +478,4 @@ export interface RoadmapInput {
 	name: string;
 	syllabus_ids: number[];
 	skill_ids: number[];
-}
-
-/**
- * Read one learner's subject audit.
- *
- * @param studentId Learner user ID.
- * @param signal    Cancels the request.
- * @return Subjects.
- */
-export async function readAudit( studentId: number, signal?: AbortSignal ) {
-	return parseAudit(
-		await get< unknown >( `${ BASE }/audit/${ positiveId( studentId ) }`, {
-			signal,
-		} )
-	);
 }

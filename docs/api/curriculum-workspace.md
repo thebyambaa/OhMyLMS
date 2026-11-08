@@ -144,7 +144,7 @@ publishes/unpublishes and deletes with a follower warning. Stale saves keep loca
 
 ## Compare syllabuses (`#/content-hub/curriculum/compare`)
 
-`features/curriculum/ComparePage` with `?tab=groups|roadmaps|shared|audit`; the legacy
+`features/curriculum/ComparePage` with `?tab=groups|roadmaps|shared`; the legacy
 `?roadmap=<id>` bookmark redirects to that roadmap's syllabus editor. Routes are registered with
 typed arguments in `ComparisonController::register_compare_routes()`; malformed input answers 400
 (`rest_invalid_param` / `rest_missing_callback_param`) before any domain code runs. All except the
@@ -167,8 +167,9 @@ The screen: **groups** lists subjects and their sources, saves with the loaded r
 stale refusal offers "Reload groups and keep my edits"; **roadmaps** previews the shared skills of
 chosen sources before creating a draft, and edits name, sources and step order (up, down, remove,
 add from sources; folders are kept and new steps join the first) with the same keep-edits reload;
-**shared skills** searches, shows the mapped objectives and edits against the revision; **audit**
-shows one learner's shared mastery and per-syllabus coverage by user ID.
+**shared skills** searches, shows the mapped objectives and edits against the revision. The former **audit** tab (one learner's shared mastery by user ID) was removed:
+`?tab=audit` opens the Skill map, which shows a learner, class or school on the map. The audit routes stay for
+the learner's own `GET /audit` and the MCP tools.
 
 Combined mapping groups, AI runs and suggestions, domain/level placement,
 and provenance review are Curriculum › Tools sections (`/content-hub/skills/<section>`);
@@ -203,4 +204,4 @@ overlay and the staff screen.
 `OHMYLMS_CURRICULUM_COMPARE_TEST=1` runs `tests/php/curriculum-compare-rest-integration.php`:
 route registration, editor/subscriber/anonymous refusal, schema rejections, group save and stale
 refusal without writes, group removal, shared skill search/detail/stale/save, roadmap preview,
-creation, stale and current saves, and the learner audit. The comparison option is restored.
+creation, stale and current saves. The comparison option is restored.
