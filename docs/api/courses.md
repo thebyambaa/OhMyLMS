@@ -203,7 +203,8 @@ classic builder.
 
 Every course is open to signed-in students unless its author switches **Free access for all students**
 off in the Basics step (`free_access`, stored as `_free_access`; a course without the meta counts as on).
-`Course::has_access()` then enrols the student on first open (`Student\FreeAccess::grant()`, source `self`),
+`Course::has_access()` and the student library's course overview (`Student\CourseOutline::get()`, which reads the
+enrolment row) then enrol the student on first open (`Student\FreeAccess::grant()`, source `self`),
 so progress, the gradebook and course lists work as for any enrolment. Nothing is granted for a course that
 is not published, has a password or a seat limit, or is an exam wrapper; for a student whose enrolment already
 exists in any status (an ended enrolment stays ended) or who is blocked; for visitors; or for users who can

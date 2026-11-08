@@ -77,6 +77,10 @@ final class CourseOutline {
 		}
 		$student    = $student_id ? new Student( $student_id ) : null;
 		$enrollment = $student_id ? CourseProgram::enrollment( $student_id, $course_id ) : null;
+		// Opening a free-access course is what enrols the student; the outline reads the enrolment row, not Course::has_access().
+		if ( ! $enrollment && $student_id && FreeAccess::grant( $student_id, $course ) ) {
+			$enrollment = CourseProgram::enrollment( $student_id, $course_id );
+		}
 		$state      = null;
 		if ( $enrollment && LearningSchema::ready() ) {
 			$status = CompletionPolicy::status( $student_id, $course_id );

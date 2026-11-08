@@ -172,6 +172,13 @@ try {
 	);
 	ok( ! opens( $draft ), 'a draft is not open' );
 
+	// The library's course overview reads the enrolment row, so opening it must enrol too.
+	$reader  = make_student();
+	$outline = \OhMyLMS\Student\CourseOutline::get( $open, $reader );
+	ok( is_array( $outline ) && ! empty( $outline['enrolled'] ) && array( 'enrolled' ) === rows( $reader, $open ), 'the library overview enrols a student in a free-access course' );
+	$shut = \OhMyLMS\Student\CourseOutline::get( $closed, $reader );
+	ok( is_array( $shut ) && empty( $shut['enrolled'] ), 'the library overview does not enrol for a course with free access off' );
+
 	// The author is not enrolled by previewing their own course.
 	$author = make_student();
 	( new WP_User( $author ) )->set_role( 'administrator' );
