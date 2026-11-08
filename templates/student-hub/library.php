@@ -19,7 +19,7 @@ if ( $hub_subject ) {
 
 $hub_query = get_query_var( 'hub_q', '' );
 $hub_query = is_string( $hub_query ) ? sanitize_text_field( $hub_query ) : '';
-$subjects  = LearnerCatalog::subjects( $hub_query, array_values( array_unique( array_merge( array( 'subject' ), $config['library_types'] ) ) ), true );
+$subjects  = LearnerCatalog::subjects( $hub_query, \OhMyLMS\Student\Subjects::types(), true );
 $unplaced  = LearnerCatalog::unplaced_courses(
 	array_reduce(
 		$subjects,

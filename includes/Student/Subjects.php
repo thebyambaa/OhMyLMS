@@ -72,14 +72,25 @@ final class Subjects {
 	}
 
 	/**
+	 * Curriculum item types listed as subjects: `subject` plus the types the Library settings add (for example a syllabus),
+	 * so every tile in the Library opens.
+	 *
+	 * @return string[]
+	 */
+	public static function types() {
+		return array_values( array_unique( array_merge( array( 'subject' ), Hub::settings()['library_types'] ) ) );
+	}
+
+	/**
 	 * Public subject and its ordered courses. No drafts/private/roadmap records are returned.
 	 *
 	 * @param int $subject_id Subject ID.
 	 * @return array|\WP_Error
 	 */
 	public static function get( $subject_id ) {
-		$item = Items::get( $subject_id );
-		$node = $item && 'subject' === $item['item_type'] ? self::find( $subject_id, LearnerCatalog::subjects( '', array( 'subject' ), true ) ) : null;
+		$item  = Items::get( $subject_id );
+		$types = self::types();
+		$node  = $item && in_array( $item['item_type'], $types, true ) ? self::find( $subject_id, LearnerCatalog::subjects( '', $types, true ) ) : null;
 		if ( ! $node ) {
 			return new \WP_Error( 'ohmylms_subject_missing', __( 'Subject not available.', 'ohmylms' ), array( 'status' => 404 ) );
 		}
