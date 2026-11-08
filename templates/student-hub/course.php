@@ -184,8 +184,12 @@ $hub_course_object = $hub_outline['locked'] ? null : ohmylms_get_course( $hub_co
 		<?php if ( ! $hub_outline['enrolled'] && $hub_course_object ) : ?>
 			<?php // Keep the existing anchor for links from subject cards and locked activities. ?>
 			<p id="oml-course-enroll" class="oml-course-progress">
-				<?php esc_html_e( 'Access this course through an active membership plan that includes it.', 'ohmylms' ); ?>
-				<a href="<?php echo esc_url( Hub::url( 'membership', 'plans' ) ); ?>"><?php esc_html_e( 'View membership plans', 'ohmylms' ); ?></a>
+				<?php if ( current_user_can( 'edit_post', $hub_course_id ) ) : ?>
+					<?php esc_html_e( 'You are previewing this course as its author. Lessons and quizzes open as a learner preview and record no progress.', 'ohmylms' ); ?>
+				<?php else : ?>
+					<?php esc_html_e( 'Access this course through an active membership plan that includes it.', 'ohmylms' ); ?>
+					<a href="<?php echo esc_url( Hub::url( 'membership', 'plans' ) ); ?>"><?php esc_html_e( 'View membership plans', 'ohmylms' ); ?></a>
+				<?php endif; ?>
 			</p>
 		<?php endif; ?>
 		<?php if ( ! $hub_units ) : ?>
