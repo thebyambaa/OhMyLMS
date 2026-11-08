@@ -526,6 +526,50 @@ final class CourseProgram {
 	}
 
 	/**
+	 * Whether a lesson, quiz or assignment of the program keeps the course from publishing: it is not
+	 * published and the current user cannot publish it as part of the course.
+	 *
+	 * @param array $item Program item.
+	 * @return bool
+	 */
+	public static function resource_blocks( array $item ) {
+		if ( 'practice' === $item['type'] ) {
+			return false;
+		}
+		$status = get_post_status( $item['content_id'] );
+		if ( 'publish' === $status ) {
+			return false;
+		}
+		return ! ( in_array( $status, array( 'draft', 'pending', 'future' ), true ) && current_user_can( 'publish_post', $item['content_id'] ) );
+	}
+
+	/**
+	 * Publish the unpublished lessons, quizzes and assignments of a program, where the current user may.
+	 *
+	 * @param array $program Program.
+	 * @return int[] IDs published now.
+	 */
+	public static function publish_resources( array $program ) {
+		$published = array();
+		foreach ( $program['items'] as $item ) {
+			if ( 'practice' === $item['type'] || 'publish' === get_post_status( $item['content_id'] ) || self::resource_blocks( $item ) ) {
+				continue;
+			}
+			$result = wp_update_post(
+				array(
+					'ID'          => (int) $item['content_id'],
+					'post_status' => 'publish',
+				),
+				true
+			);
+			if ( ! is_wp_error( $result ) ) {
+				$published[] = (int) $item['content_id'];
+			}
+		}
+		return $published;
+	}
+
+	/**
 	 * Readiness for Course program.
 	 *
 	 * @param array $program Program.
@@ -542,7 +586,7 @@ final class CourseProgram {
 			}
 		);
 		foreach ( $program['items'] as $item ) {
-			if ( 'practice' !== $item['type'] && get_post_status( $item['content_id'] ) !== 'publish' ) {
+			if ( self::resource_blocks( $item ) ) {
 				$errors[] = sprintf( /* translators: %s: text value. */
 					__( 'Publish the learning resource %s first.', 'ohmylms' ),
 					get_the_title( $item['content_id'] )
@@ -608,7 +652,7 @@ final class CourseProgram {
 		$completion = array_merge( self::completion_readiness( $program, $syllabus ), self::review_readiness( $program ) );
 		$resources  = array();
 		foreach ( $program['items'] as $item ) {
-			if ( 'practice' !== $item['type'] && get_post_status( $item['content_id'] ) !== 'publish' ) {
+			if ( self::resource_blocks( $item ) ) {
 				$resources[] = array(
 					'content_id' => (int) $item['content_id'],
 					'type'       => (string) $item['type'],
@@ -709,6 +753,10 @@ final class CourseProgram {
 					'report' => self::readiness_report( $program, $course_id ),
 				)
 			); }
+		if ( $publish ) {
+			// Drafts the author may publish go live with the course, so no resource has to be published by hand first.
+			self::publish_resources( $program );
+		}
 		if ( ! $publish ) {
 			update_post_meta( $course_id, self::DRAFT, $program );
 			return self::editor( $course_id ) + array( 'readiness' => $errors ); }

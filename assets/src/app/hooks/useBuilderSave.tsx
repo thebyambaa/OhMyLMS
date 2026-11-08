@@ -26,10 +26,15 @@ interface BuilderSaveContext {
 
 const Context = createContext< BuilderSaveContext | null >( null );
 
+/** Quiet time after the first unsaved change before the builder saves by itself, in milliseconds. */
+export const BUILDER_AUTOSAVE_DELAY = 2500;
+
 /**
  * Holds the save of every step that is mounted, so one Save button in the builder bar can save them all.
  * Steps stay mounted while the user moves between them, so a step the user has left keeps its edits and
- * its own save; the bar is unsaved while any step is, and Save runs each step that has changes.
+ * its own save; the bar is unsaved while any step is, and Save runs each step that has changes. The builder
+ * also saves by itself once, a moment after the first unsaved change, and when the tab is hidden, so nobody
+ * has to press Save; if that save fails (a field needs fixing) it is not repeated until the step is saved.
  *
  * @param props          Props.
  * @param props.children The builder: the bar reads `step`, the step components register themselves.
@@ -74,6 +79,37 @@ export function BuilderSaveProvider( {
 			course: all.find( ( one ) => one.course )?.course,
 		};
 	}, [ steps ] );
+	const latest = useRef( step );
+	latest.current = step;
+	const tried = useRef( false );
+	const dirty = Boolean( step?.dirty );
+	const busy = Boolean( step?.busy );
+	useEffect( () => {
+		if ( ! dirty ) {
+			tried.current = false;
+			return undefined;
+		}
+		if ( busy || tried.current ) {
+			return undefined;
+		}
+		const timer = window.setTimeout( () => {
+			tried.current = true;
+			latest.current?.save();
+		}, BUILDER_AUTOSAVE_DELAY );
+		return () => window.clearTimeout( timer );
+	}, [ dirty, busy ] );
+	useEffect( () => {
+		const hide = () => {
+			if (
+				'hidden' === document.visibilityState &&
+				latest.current?.dirty
+			) {
+				latest.current.save();
+			}
+		};
+		document.addEventListener( 'visibilitychange', hide );
+		return () => document.removeEventListener( 'visibilitychange', hide );
+	}, [] );
 	return (
 		<Context.Provider value={ value }>{ render( step ) }</Context.Provider>
 	);

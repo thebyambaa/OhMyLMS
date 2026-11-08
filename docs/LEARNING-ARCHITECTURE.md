@@ -109,7 +109,7 @@ The intended unified workflow is: choose syllabus objectives → generate an ind
 3. Write lesson content and configure quizzes/questions in their resource editors. Placing a resource does not author its body. Resource creation/saves and outline placement are separate operations.
 4. Select learning mode, required activities/checkpoints and skill targets. Distinguish planned connections from actual question coverage. Configure allowed pools and evidence reuse deliberately.
 5. Save the outline draft. Resolve conflicts by reloading/reviewing, not by silently overwriting. Resource and organization writes have their own boundaries.
-6. In the current typed app, preview the saved course and use its reviewed Publish panel with the required administrative capability. Resources must already be published. Publication makes the course and saved program available to new enrollments; existing learners retain their assigned version.
+6. In the current typed app, preview the saved course and use its reviewed Publish panel with the required administrative capability. Draft lessons, quizzes and assignments in the program are published with the course when the user may publish them (`CourseProgram::publish_resources()`); someone who cannot publish them is told to ask a reviewer. Setting a course to Published in its Basics also publishes its saved outline when none is published (`Learning\AutoPublish`), so learners never see a live but empty course. Publication makes the course and saved program available to new enrollments; existing learners retain their assigned version.
 7. Check the enrolled learner experience and reports. Access, pricing and enrollment rules still apply after publication.
 
 ### Current behavior versus retained activation

@@ -51,7 +51,11 @@ final class Bootstrap {
 			'transition_post_status',
 			static function ( $new, $old, $post ) {
 				if ( $post && OHMYLMS_COURSE_CPT === $post->post_type && $new !== $old ) {
-					Placements::flush(); }
+					Placements::flush();
+					if ( 'publish' === $new ) {
+						AutoPublish::program( (int) $post->ID );
+					}
+				}
 			},
 			10,
 			3

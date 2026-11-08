@@ -21,6 +21,16 @@ $hub_query = get_query_var( 'hub_q', '' );
 $hub_query = is_string( $hub_query ) ? sanitize_text_field( $hub_query ) : '';
 $subjects  = LearnerCatalog::subjects( $hub_query, array_values( array_unique( array_merge( array( 'subject' ), $config['library_types'] ) ) ), true );
 $bundles   = $config['library_bundles'] ? LearnerCatalog::bundles( $hub_query ) : array();
+$unplaced  = LearnerCatalog::unplaced_courses(
+	array_reduce(
+		$subjects,
+		static function ( $ids, $subject ) {
+			return array_merge( $ids, LearnerCatalog::course_ids( $subject ) );
+		},
+		array()
+	),
+	$hub_query
+);
 
 /**
  * Print a group of courses, then its nested groups.
@@ -58,7 +68,7 @@ $hub_render_group = static function ( array $node, $depth ) use ( &$hub_render_g
 	<button type="submit" class="oml-hub-button"><?php esc_html_e( 'Search', 'ohmylms' ); ?></button>
 </form>
 <h2 class="oml-hub-library-heading"><?php echo esc_html( '' === $hub_query ? __( 'All subjects', 'ohmylms' ) : __( 'Search results', 'ohmylms' ) ); ?></h2>
-<?php if ( ! $subjects && ! $bundles ) : ?>
+<?php if ( ! $subjects && ! $bundles && ! $unplaced ) : ?>
 	<div class="oml-hub-empty">
 		<h2><?php echo esc_html( '' === $hub_query ? __( 'No subjects yet', 'ohmylms' ) : __( 'No courses match your search', 'ohmylms' ) ); ?></h2>
 		<p><?php echo esc_html( '' === $hub_query ? __( 'Subjects appear here once courses are published and placed in the curriculum.', 'ohmylms' ) : __( 'Try a different word, or clear the search to see every subject.', 'ohmylms' ) ); ?></p>
@@ -85,6 +95,14 @@ $hub_render_group = static function ( array $node, $depth ) use ( &$hub_render_g
 			</details>
 		<?php endforeach; ?>
 	</div>
+	<?php if ( $unplaced ) : ?>
+		<h2 class="oml-hub-library-heading"><?php echo esc_html( $subjects ? __( 'More courses', 'ohmylms' ) : __( 'All courses', 'ohmylms' ) ); ?></h2>
+		<ul class="oml-hub-course-links">
+			<?php foreach ( $unplaced as $course ) : ?>
+				<li><a class="oml-hub-course-link" href="<?php echo esc_url( $course['url'] ); ?>"><?php echo esc_html( $course['title'] ); ?></a></li>
+			<?php endforeach; ?>
+		</ul>
+	<?php endif; ?>
 	<?php if ( $bundles ) : ?>
 		<h2 class="oml-hub-library-heading"><?php esc_html_e( 'Course bundles', 'ohmylms' ); ?></h2>
 		<div class="oml-hub-subjects">

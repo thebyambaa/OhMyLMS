@@ -179,6 +179,15 @@ try {
 	$shut = \OhMyLMS\Student\CourseOutline::get( $closed, $reader );
 	ok( is_array( $shut ) && empty( $shut['enrolled'] ), 'the library overview does not enrol for a course with free access off' );
 
+	// A published course nobody placed in the curriculum is still listed in the library.
+	$listed = array_column( \OhMyLMS\Student\LearnerCatalog::unplaced_courses( array() ), 'id' );
+	ok( in_array( $open, $listed, true ), 'a published course that is not placed in the curriculum is listed' );
+	ok( ! in_array( $draft, $listed, true ), 'a draft is not listed' );
+	ok( ! in_array( $open, array_column( \OhMyLMS\Student\LearnerCatalog::unplaced_courses( array( $open ) ), 'id' ), true ), 'a course a subject already lists is not listed twice' );
+	$exam = make_course( array( '_ohmylms_exam_wrapper' => '1' ) );
+	ok( ! in_array( $exam, array_column( \OhMyLMS\Student\LearnerCatalog::unplaced_courses( array() ), 'id' ), true ), 'an exam wrapper course is not listed' );
+	ok( array() === \OhMyLMS\Student\LearnerCatalog::unplaced_courses( array(), 'zzz-no-such-title' ), 'the search text filters them' );
+
 	// The author is not enrolled by previewing their own course.
 	$author = make_student();
 	( new WP_User( $author ) )->set_role( 'administrator' );

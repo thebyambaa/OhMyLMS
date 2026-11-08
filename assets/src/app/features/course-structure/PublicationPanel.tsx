@@ -26,7 +26,7 @@ export function PublicationPanel( {
 			<h2>{ __( 'Preview and publish', 'ohmylms' ) }</h2>
 			<p>
 				{ __(
-					'Save the outline before previewing. Publishing makes this course and the saved learning program available to new enrollments. Existing learners keep their current program version. Learning resources must already be published.',
+					'Save the outline before previewing. Publishing makes this course and the saved learning program available to new enrollments. Existing learners keep their current program version. Draft lessons and quizzes in the course are published with it.',
 					'ohmylms'
 				) }
 			</p>
@@ -123,7 +123,7 @@ export function PublicationPanel( {
 					<p>{ preview.title }</p>
 					<p>
 						{ __(
-							'This publishes the course and saved learning program. Pricing and access settings still apply. Existing learner versions are retained.',
+							'This publishes the course, the saved learning program and any draft lessons and quizzes in it. Access settings still apply. Existing learner versions are retained.',
 							'ohmylms'
 						) }
 					</p>

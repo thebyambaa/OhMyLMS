@@ -130,6 +130,50 @@ final class LearnerCatalog {
 	}
 
 	/**
+	 * Published courses the subjects do not list: those never placed in the curriculum. A new course is
+	 * open to students as soon as it is published, so it must be findable before anyone places it.
+	 *
+	 * @param int[]  $shown  Course IDs the subject tiles already list.
+	 * @param string $search Search text; matches the title.
+	 * @return array<int,array{id:int,title:string,url:string}>
+	 */
+	public static function unplaced_courses( array $shown, $search = '' ) {
+		$ids = get_posts(
+			array(
+				'post_type'      => OHMYLMS_COURSE_CPT,
+				'post_status'    => 'publish',
+				'fields'         => 'ids',
+				'nopaging'       => true,
+				'orderby'        => 'title',
+				'order'          => 'ASC',
+				'no_found_rows'  => true,
+				'post__not_in'   => array_map( 'intval', $shown ),
+				'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Skips exam wrapper courses.
+					array(
+						'key'     => '_ohmylms_exam_wrapper',
+						'compare' => 'NOT EXISTS',
+					),
+				),
+			)
+		);
+		$hidden  = array_flip( self::roadmap_course_ids() );
+		$search  = trim( (string) $search );
+		$courses = array();
+		foreach ( $ids as $id ) {
+			$title = get_the_title( $id );
+			if ( isset( $hidden[ (int) $id ] ) || self::excluded_by_search( $title, $search ) ) {
+				continue;
+			}
+			$courses[] = array(
+				'id'    => (int) $id,
+				'title' => $title,
+				'url'   => Hub::course_url( $id ),
+			);
+		}
+		return $courses;
+	}
+
+	/**
 	 * Published course bundles with their published courses.
 	 *
 	 * Viewing a bundle grants nothing; each course keeps its own access rules.

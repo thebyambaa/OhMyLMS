@@ -216,25 +216,13 @@ try {
 	);
 	settings_check( ! is_wp_error( \OhMyLMS\Learning\CourseProgram::save( $settings_course, $settings_program ) ), 'Fixture program saved.' );
 	$settings_preview = settings_publication( 'GET', $settings_course )->get_data();
-	settings_check( ! empty( $settings_preview['readiness'] ), 'Unpublished resource blocks readiness.' );
-	settings_check(
-		409 === settings_publication(
-			'POST',
-			$settings_course,
-			array(
-				'revision'  => $settings_preview['revision'],
-				'confirmed' => true,
-			)
-		)->get_status(),
-		'Publication cannot implicitly publish shared resources.'
-	);
-	wp_update_post(
-		array(
-			'ID'          => $settings_lesson,
-			'post_status' => 'publish',
-		)
-	);
-	$settings_preview = settings_publication( 'GET', $settings_course )->get_data();
+	settings_check( empty( $settings_preview['readiness'] ), 'A draft lesson the author may publish does not block readiness.' );
+	$settings_item = $settings_program['items'][0];
+	settings_check( ! \OhMyLMS\Learning\CourseProgram::resource_blocks( $settings_item ), 'A draft resource does not block an author who can publish it.' );
+	$settings_admin = get_current_user_id();
+	wp_set_current_user( 0 );
+	settings_check( \OhMyLMS\Learning\CourseProgram::resource_blocks( $settings_item ), 'A draft resource blocks someone who cannot publish it.' );
+	wp_set_current_user( $settings_admin );
 	settings_check( empty( $settings_preview['readiness'] ) && 'Settings test lesson' === $settings_preview['units'][0]['items'][0]['title'], 'Preview shows the saved lesson and ready state.' );
 	settings_check( 400 === settings_publication( 'POST', $settings_course, array( 'revision' => $settings_preview['revision'] ) )->get_status(), 'Explicit confirmation required.' );
 	wp_update_post(
@@ -284,6 +272,37 @@ try {
 		)
 	);
 	settings_check( 200 === $settings_published->get_status() && $settings_published->get_data()['published_program_id'] > 0 && 'publish' === get_post_status( $settings_course ), 'Reviewed program and course publish together.' );
+	settings_check( 'publish' === get_post_status( $settings_lesson ), 'Publishing the course publishes its draft lesson.' );
+	// Setting a course to Published in its Basics publishes its saved outline too.
+	$settings_basics = wp_insert_post(
+		array(
+			'post_type'   => OHMYLMS_COURSE_CPT,
+			'post_status' => 'draft',
+			'post_title'  => 'Settings basics course',
+			'post_author' => get_current_user_id(),
+		),
+		true
+	);
+	$settings_posts[] = $settings_basics;
+	$settings_basics_program          = \OhMyLMS\Learning\CourseProgram::editor( $settings_basics )['draft'];
+	$settings_basics_program['items'] = array(
+		array(
+			'id'         => wp_generate_uuid4(),
+			'type'       => 'lesson',
+			'content_id' => $settings_lesson,
+			'chapter_id' => 0,
+			'required'   => true,
+		),
+	);
+	settings_check( ! is_wp_error( \OhMyLMS\Learning\CourseProgram::save( $settings_basics, $settings_basics_program ) ), 'Basics fixture program saved.' );
+	settings_check( ! get_post_meta( $settings_basics, \OhMyLMS\Learning\CourseProgram::CURRENT, true ), 'A draft course has no published program.' );
+	wp_update_post(
+		array(
+			'ID'          => $settings_basics,
+			'post_status' => 'publish',
+		)
+	);
+	settings_check( (int) get_post_meta( $settings_basics, \OhMyLMS\Learning\CourseProgram::CURRENT, true ) > 0, 'Publishing from Basics publishes the learning program.' );
 	settings_check(
 		409 === settings_publication(
 			'POST',

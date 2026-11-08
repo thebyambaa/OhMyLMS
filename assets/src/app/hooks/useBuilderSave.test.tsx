@@ -1,6 +1,10 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { BuilderSaveProvider, useBuilderSave } from './useBuilderSave';
+import {
+	BUILDER_AUTOSAVE_DELAY,
+	BuilderSaveProvider,
+	useBuilderSave,
+} from './useBuilderSave';
 import type { StepSave } from './useBuilderSave';
 
 function Step( { id, step }: { id: string; step: StepSave } ) {
@@ -106,5 +110,43 @@ describe( 'builder save', () => {
 			rerender( builder( {} ) );
 		} );
 		expect( screen.getByTestId( 'dirty' ) ).toHaveTextContent( 'false' );
+	} );
+
+	it( 'saves by itself shortly after the first unsaved change, once', () => {
+		vi.useFakeTimers();
+		try {
+			const basics = step( { dirty: true } );
+			const settled = step();
+			render( builder( { basics, settled } ) );
+			expect( basics.save ).not.toHaveBeenCalled();
+			act( () => {
+				vi.advanceTimersByTime( BUILDER_AUTOSAVE_DELAY + 10 );
+			} );
+			expect( basics.save ).toHaveBeenCalledOnce();
+			expect( settled.save ).not.toHaveBeenCalled();
+			// A save that failed leaves the step unsaved: it is not retried on its own.
+			act( () => {
+				vi.advanceTimersByTime( BUILDER_AUTOSAVE_DELAY * 4 );
+			} );
+			expect( basics.save ).toHaveBeenCalledOnce();
+		} finally {
+			vi.useRealTimers();
+		}
+	} );
+
+	it( 'does not save by itself while a save runs or when nothing changed', () => {
+		vi.useFakeTimers();
+		try {
+			const saving = step( { dirty: true, busy: true } );
+			const clean = step();
+			render( builder( { saving, clean } ) );
+			act( () => {
+				vi.advanceTimersByTime( BUILDER_AUTOSAVE_DELAY * 2 );
+			} );
+			expect( saving.save ).not.toHaveBeenCalled();
+			expect( clean.save ).not.toHaveBeenCalled();
+		} finally {
+			vi.useRealTimers();
+		}
 	} );
 } );
