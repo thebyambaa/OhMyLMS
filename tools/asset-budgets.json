@@ -38,6 +38,10 @@
 			"raw": 6400,
 			"gzip": 2100
 		},
+		"chunks/admin-app-addon-settings.js": {
+			"raw": 1000,
+			"gzip": 650
+		},
 		"chunks/admin-app-account-hub-report.js": {
 			"raw": 5700,
 			"gzip": 1800

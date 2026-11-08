@@ -434,3 +434,6 @@ export function authNotice(
 		text: `${ __( 'Google Meet could not be connected.', 'ohmylms' ) } ${ reason }`,
 	};
 }
+
+/** Add-ons whose settings are a full form of their own (shown in a popup) rather than credential fields. */
+export const FORM_ADDON_IDS = [ 'xapi', 'ai-tutor', 'mcp' ];

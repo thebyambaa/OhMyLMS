@@ -8,6 +8,8 @@ import * as design from './designSystem';
 import * as gateways from './gateways';
 import * as hub from './hubIcons';
 import * as mcp from './mcp';
+import AddonSettingsDialog from '../integrations/AddonSettingsDialog';
+import { zoom } from '../integrations/fixtures';
 import SettingsPage from './SettingsPage';
 import {
 	aiRaw,
@@ -85,7 +87,26 @@ beforeEach( () => {
 
 const PAYMENT_TABS = [ 'currency', 'tax', 'payment-gateways' ];
 
+const ADDON_FORMS = {
+	xapi: 'xAPI',
+	'ai-tutor': 'AI tutor',
+	mcp: 'MCP',
+};
+
 function renderTab( tab: string ) {
+	if ( tab in ADDON_FORMS ) {
+		// xAPI, AI tutor and MCP are popups on the Add-ons page, not Settings tabs.
+		return render(
+			<AddonSettingsDialog
+				integration={ {
+					...zoom,
+					id: tab,
+					label: ADDON_FORMS[ tab as keyof typeof ADDON_FORMS ],
+				} }
+				onClose={ () => undefined }
+			/>
+		);
+	}
 	const payments = PAYMENT_TABS.includes( tab );
 	return render(
 		<MemoryRouter

@@ -2,11 +2,11 @@
 
 OhMyLMS can send learning activity to a Learning Record Store (LRS) as xAPI 1.0.3 statements. This is phase 1: OhMyLMS as an activity provider. It does not launch third-party content or act as an LRS (see "Not built yet").
 
-Code: `includes/XApi/`. Configure the LRS under **OhMyLMS > Settings > xAPI**. The bundled **xAPI** add-on under **OhMyLMS > Add-ons > Connections** opens this same Settings tab through **Manage**. Off by default; no additional plugin is required.
+Code: `includes/XApi/`. Configure the LRS under **OhMyLMS > Add-ons**: the **xAPI** row's **Settings** button opens the connection form in a popup. Off by default; no additional plugin is required.
 
 The Add-ons switch and the settings screen's **Send statements** checkbox control the same setting. Existing enabled installations retain their configuration when the add-on card is introduced. Enabling the add-on does not send anything until a valid LRS endpoint is configured. Disabling it stops collection and delivery and removes the delivery cron job; queued statements and credentials are retained for re-enabling. Daily retention housekeeping continues while OhMyLMS is active. Deactivating OhMyLMS removes both xAPI cron jobs.
 
-There is no standalone xAPI submenu. The Settings tab and the add-on's **Manage** button remain available while disabled for connection setup. Settings save and delivery actions run in place, without reloading the admin screen. The legacy hidden `admin.php?page=ohmylms-xapi` page and admin-post handlers remain registered for compatibility; their actions return to the Settings tab.
+There is no standalone xAPI submenu. The popup remains available while disabled for connection setup. Settings save and delivery actions run in place, without reloading the admin screen. The legacy hidden `admin.php?page=ohmylms-xapi` page and admin-post handlers remain registered for compatibility; their actions return to the Add-ons page (xAPI popup).
 
 ## What is sent
 

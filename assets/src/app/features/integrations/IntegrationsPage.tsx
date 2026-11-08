@@ -1,6 +1,6 @@
 import { ListTable, ListTableSelect } from '../../../ui/ListTable';
 import { Button, Notice, ToggleControl } from '@wordpress/components';
-import { useState } from '@wordpress/element';
+import { lazy, Suspense, useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { useSearchParams } from 'react-router-dom';
 import { useListQuery } from '../../components/listQuery';
@@ -14,9 +14,18 @@ import {
 	categoryOptions,
 	EMPTY_FILTERS,
 	filterIntegrations,
+	FORM_ADDON_IDS,
 } from './model';
 import { SettingsDialog } from './SettingsDialog';
 import type { Integration } from './types';
+
+// The xAPI, AI tutor and MCP forms are large, so they load only when a popup opens.
+const AddonSettingsDialog = lazy(
+	() =>
+		import(
+			/* webpackChunkName: "admin-app-addon-settings" */ './AddonSettingsDialog'
+		)
+);
 
 const ALL = EMPTY_FILTERS.category;
 
@@ -60,6 +69,24 @@ export default function IntegrationsPage() {
 	const [ needsReload, setNeedsReload ] = useState( false );
 	const [ params, setParams ] = useSearchParams();
 	const auth = authNotice( params.get( 'auth' ), params.get( 'message' ) );
+
+	// `?configure=xapi` (old bookmarks and links) opens that add-on's settings popup.
+	const configure = params.get( 'configure' );
+	useEffect( () => {
+		const target = list.items.find( ( item ) => item.id === configure );
+		if ( ! configure || ! target ) {
+			return;
+		}
+		setSettingsFor( target );
+		setParams(
+			( current ) => {
+				const next = new URLSearchParams( current );
+				next.delete( 'configure' );
+				return next;
+			},
+			{ replace: true }
+		);
+	}, [ configure, list.items, setParams ] );
 
 	const matches =
 		STATES.find( ( state ) => state.value === status )?.matches ??
@@ -294,7 +321,8 @@ export default function IntegrationsPage() {
 						},
 					] }
 					rowActions={ ( item ) => [
-						item.configurable && {
+						( item.configurable ||
+							FORM_ADDON_IDS.includes( item.id ) ) && {
 							key: 'settings',
 							label: __( 'Settings', 'ohmylms' ),
 							disabled: toggle.busy,
@@ -308,7 +336,15 @@ export default function IntegrationsPage() {
 					] }
 				/>
 			) }
-			{ settingsFor && (
+			{ settingsFor && FORM_ADDON_IDS.includes( settingsFor.id ) && (
+				<Suspense fallback={ null }>
+					<AddonSettingsDialog
+						integration={ settingsFor }
+						onClose={ () => setSettingsFor( null ) }
+					/>
+				</Suspense>
+			) }
+			{ settingsFor && ! FORM_ADDON_IDS.includes( settingsFor.id ) && (
 				<SettingsDialog
 					integration={ settingsFor }
 					onClose={ () => setSettingsFor( null ) }

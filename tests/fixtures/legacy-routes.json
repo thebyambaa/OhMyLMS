@@ -50,7 +50,7 @@
 		],
 		[
 			"/settings/xapi-settings",
-			"page=ohmylms-settings&tab=settings&section=xapi"
+			"page=ohmylms-addons&tab=integrations&configure=xapi"
 		],
 		[
 			"/settings/gamification-settings/badge-settings",
@@ -284,7 +284,7 @@
 		],
 		[
 			"/settings/ai-tutor-settings",
-			"/settings?tab=ai-tutor"
+			"/integrations?configure=ai-tutor"
 		],
 		[
 			"/settings/design-system-settings",
@@ -292,7 +292,7 @@
 		],
 		[
 			"/settings/xapi-settings",
-			"/settings?tab=xapi"
+			"/integrations?configure=xapi"
 		],
 		[
 			"/settings/payments-settings",
@@ -1115,7 +1115,7 @@
 		},
 		{
 			"from": "/settings/ai-tutor-settings/*",
-			"to": "/settings?tab=ai-tutor"
+			"to": "/integrations?configure=ai-tutor"
 		},
 		{
 			"from": "/settings/design-system-settings/*",
@@ -1123,7 +1123,7 @@
 		},
 		{
 			"from": "/settings/xapi-settings/*",
-			"to": "/settings?tab=xapi"
+			"to": "/integrations?configure=xapi"
 		},
 		{
 			"from": "/settings/migration-settings/*",

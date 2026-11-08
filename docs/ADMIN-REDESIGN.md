@@ -48,7 +48,7 @@ order: menu and WordPress look, then the dashboard, then the gradebook. Also dec
 | Commerce | `ohmylms-commerce` | earnings, orders, memberships, subscriptions, coupons, payments (sections currency, tax, payment-gateways) |
 | Engagement | `ohmylms-engagement` | gamification (only with the Gamification add-on), certificates (templates and issued), automations, sessions (only with `ohmylms_show_sessions_menu`) |
 | Add-ons | `ohmylms-addons` | integrations (the add-on list with switches and settings), and the tabs extension pages register (`ext-<id>`) |
-| Settings | `ohmylms-settings` | settings (sections = today's settings tabs incl. xAPI, AI tutor, migration), emails, webhooks, setup |
+| Settings | `ohmylms-settings` | settings (sections = today's settings tabs incl. migration; xAPI, AI tutor and MCP are Settings popups on Add-ons), emails, webhooks, setup |
 
 Detail screens add `&id=` and `&view=` (`page=ohmylms-content&tab=courses&id=12&view=settings`); second-level
 sections use `&section=`, rendered as `.subsubsub` under the tab (courses: overview; curriculum tools: skill-map, subjects;

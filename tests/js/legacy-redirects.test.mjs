@@ -86,7 +86,7 @@ test( 'landingUrl maps a legacy hash on the Dashboard to its app route', () => {
 			)
 		),
 		{
-			url: '/wp-admin/admin.php?page=ohmylms&xapi_notice=saved#/settings?tab=xapi',
+			url: '/wp-admin/admin.php?page=ohmylms&xapi_notice=saved#/integrations?configure=xapi',
 			unavailable: null,
 		},
 		'older links with the legacy marker'

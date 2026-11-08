@@ -16,7 +16,7 @@ Choose it for all practice under **Settings → AI tools → Practice style**, f
 
 ## Independent AI tools and model pricing
 
-Settings now labels this tab **AI tools**. **Enable AI tutor** and **Enable PDF exam
+The settings open from the **AI tutor** row of OhMyLMS → Add-ons (a popup). **Enable AI tutor** and **Enable PDF exam
 converter** are independent switches, sharing the provider, model and encrypted API key.
 Tutor limits apply to tutoring; PDF jobs retain separate request and retry limits. Turning
 conversion off blocks new requests, including queued stages, and keeps papers/reviews/exams.
@@ -61,7 +61,7 @@ Optional. It never marks an answer, changes a score or affects mastery: grading,
 
 - **Learner features:** *Ask the tutor for a hint* before answering, and *Explain my answer* after a wrong one. A tutor hint marks the question as assisted, like the authored hint. Replies are plain text, shown in their own block, with math typeset by the site's KaTeX.
 - **Providers:** Anthropic (Messages API), OpenAI (Responses API) and Gemini (generateContent). Each adapter only builds a request and reads a response (`includes/AI/Providers/`), so another provider can be added through the `ohmylms_ai_providers` filter. Model names are entered, not hard coded, because providers retire them.
-- **Connection:** Settings → AI tools (administrators; the old OhMyLMS → AI tutor address forwards there). The API key is posted once, sealed with libsodium under a key derived from the site's salts, and only its last four characters are ever shown again. In production define `OHMYLMS_AI_API_KEY` in `wp-config.php` (or the environment variable); constants `OHMYLMS_AI_PROVIDER` and `OHMYLMS_AI_MODEL` also work and win over stored values. Changing the site's AUTH salts invalidates a stored key.
+- **Connection:** Add-ons → AI tutor → Settings (administrators; the old OhMyLMS → AI tutor address forwards there). The API key is posted once, sealed with libsodium under a key derived from the site's salts, and only its last four characters are ever shown again. In production define `OHMYLMS_AI_API_KEY` in `wp-config.php` (or the environment variable); constants `OHMYLMS_AI_PROVIDER` and `OHMYLMS_AI_MODEL` also work and win over stored values. Changing the site's AUTH salts invalidates a stored key.
 - **What is sent:** the question as the learner saw it, their answer and, for an explanation, the reference answer and worked solution. A hint is written **without** the answer or the solution; a reply that still contains the expected answer is discarded and refused. Never names, e-mails, user or site identifiers. The question and the learner's words are fenced as data in the prompt, with angle brackets neutralised, so they cannot add instructions.
 - **Cost and abuse controls:** one reply per kind per question (kept and reused), a shared cache for identical questions and answers (a week), a daily limit per learner, three attempts per item and kind when the provider fails or a hint leaks (the daily credit is refunded on failure), guests off by default and capped at ten a day, a reply length cap, and a timeout. Totals are shown on the settings page.
 - **Language:** the tutor replies in the language the question is written in.

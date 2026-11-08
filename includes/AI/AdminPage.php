@@ -18,7 +18,7 @@ defined( 'ABSPATH' ) || exit;
  * sealed; it is never returned, only its last four characters.
  */
 final class AdminPage {
-	/** The old WordPress submenu slug; it now forwards to the Settings tab. */
+	/** The old WordPress submenu slug; it now opens the AI tutor popup on the Add-ons page. */
 	const SLUG = 'ohmylms-ai';
 
 	/** Where the tab lives in the admin app. */
@@ -29,9 +29,9 @@ final class AdminPage {
 		add_action( 'admin_menu', array( __CLASS__, 'legacy_menu' ), 99 );
 	}
 
-	/** URL of the Settings tab. */
+	/** URL of the Add-ons page with the AI tutor settings popup open. */
 	public static function url() {
-		return \OhMyLMS\Admin\LegacyRoutes::app_url( '/settings?tab=' . self::TAB );
+		return \OhMyLMS\Admin\LegacyRoutes::app_url( '/integrations?configure=' . self::TAB );
 	}
 
 	/** Keep old bookmarks working: a hidden page that forwards to the tab. */

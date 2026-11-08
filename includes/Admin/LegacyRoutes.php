@@ -423,9 +423,11 @@ final class LegacyRoutes {
 			);
 		}
 		foreach ( self::SETTINGS_TABS as $legacy => $tab ) {
+			// xAPI and AI tutor settings are a popup on the Add-ons list now.
+			$to       = in_array( $tab, array( 'xapi', 'ai-tutor' ), true ) ? '/integrations?configure=' . $tab : '/settings?tab=' . $tab;
 			$routes[] = array(
 				'from' => '/settings/' . $legacy . '/*',
-				'to'   => '/settings?tab=' . $tab,
+				'to'   => $to,
 			);
 		}
 		foreach ( self::GAMIFICATION_TABS as $legacy => $tab ) {

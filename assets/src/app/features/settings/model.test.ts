@@ -298,7 +298,9 @@ describe( 'helpers', () => {
 			'account-and-privacy'
 		);
 		expect( tabFromParam( 'payment-gateways' ) ).toBe( 'payment-gateways' );
-		expect( tabFromParam( 'mcp' ) ).toBe( 'mcp' );
+		expect( tabFromParam( 'hub-icons' ) ).toBe( 'hub-icons' );
+		// These moved to popups on the Add-ons page.
+		expect( tabFromParam( 'mcp' ) ).toBe( 'general' );
 		expect( tabFromParam( 'bogus' ) ).toBe( 'general' );
 		expect( tabFromParam( null ) ).toBe( 'general' );
 	} );

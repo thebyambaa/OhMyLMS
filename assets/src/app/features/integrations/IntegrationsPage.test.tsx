@@ -440,3 +440,54 @@ describe( 'IntegrationsPage settings dialog', () => {
 		).not.toBeInTheDocument();
 	} );
 } );
+
+vi.mock( '../settings/XapiForm', () => ( {
+	XapiForm: () => <p>xAPI form</p>,
+} ) );
+vi.mock( '../settings/AiTutorForm', () => ( {
+	AiTutorForm: () => <p>AI tutor form</p>,
+} ) );
+vi.mock( '../settings/McpForm', () => ( {
+	McpForm: () => <p>MCP form</p>,
+} ) );
+
+describe( 'IntegrationsPage add-on settings popups', () => {
+	const xapi = { ...gamification, id: 'xapi', label: 'xAPI' };
+	const tutor = { ...gamification, id: 'ai-tutor', label: 'AI tutor' };
+	beforeEach( () => {
+		vi.mocked( api.listIntegrations ).mockResolvedValue( [
+			zoom,
+			xapi,
+			tutor,
+		] );
+	} );
+
+	it( 'opens the xAPI and AI tutor forms in a popup from the Settings action', async () => {
+		const user = userEvent.setup();
+		renderPage();
+		await user.click(
+			await screen.findByRole( 'button', { name: 'Settings for xAPI' } )
+		);
+		const dialog = within( await screen.findByRole( 'dialog' ) );
+		expect( dialog.getByText( 'xAPI form' ) ).toBeInTheDocument();
+		await user.click( dialog.getByRole( 'button', { name: 'Done' } ) );
+		await user.click(
+			screen.getByRole( 'button', { name: 'Settings for AI tutor' } )
+		);
+		expect(
+			within( await screen.findByRole( 'dialog' ) ).getByText(
+				'AI tutor form'
+			)
+		).toBeInTheDocument();
+	} );
+
+	it( 'opens the popup named by ?configure= and clears it from the address', async () => {
+		renderPage( '/integrations?configure=ai-tutor&tab=x' );
+		expect(
+			within( await screen.findByRole( 'dialog' ) ).getByText(
+				'AI tutor form'
+			)
+		).toBeInTheDocument();
+		expect( screen.getByTestId( 'search' ) ).toHaveTextContent( '?tab=x' );
+	} );
+} );

@@ -323,7 +323,7 @@ component tests. Items named "not rebuilt" had a legacy screen that no longer ex
 | Categories and tags | Done | Read-only by design (writes answer 410) |
 | Orders, coupons, subscriptions | Done | No refund button by design (server route is guarded); cancel at end of term impossible in the schema |
 | Memberships | Done | Plans, rules and `registerMembershipSettings` panels |
-| Settings (all tabs incl. design, course archive, quiz design, xAPI, AI tutor, MCP, migration) | Done | Checkout extras (gateway order, guest checkout, login form, content protection, read-only Stripe status) on the Payment gateways tab |
+| Settings (all tabs incl. design, course archive, quiz design, migration; xAPI, AI tutor and MCP are Add-ons popups) | Done | Checkout extras (gateway order, guest checkout, login form, content protection, read-only Stripe status) on the Payment gateways tab |
 | Dashboard, earnings, course report | Done | Scoped widget dashboard for admins, school administrators and teachers (each widget its own chunk); teachers may create review-set draft quizzes for their own classes, which an administrator publishes. Mixed-currency totals; refunds dated by order |
 | Gradebook | Done | Course × students, roster × assignments, student transcript, skill mastery and roll-up on the `ohmylms_enrolments` table; overrides keep a reason and history; per-course weighting with class override; site-wide letter scale (Settings › Letter grades) |
 | Setup wizard, Gamification (incl. Rewards) | Done | |

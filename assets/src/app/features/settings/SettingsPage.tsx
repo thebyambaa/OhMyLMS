@@ -4,7 +4,6 @@ import { __ } from '@wordpress/i18n';
 import { useSearchParams } from 'react-router-dom';
 import { AccountForm } from './AccountForm';
 import { AdvancedForm } from './AdvancedForm';
-import { AiTutorForm } from './AiTutorForm';
 import { AtRiskForm } from './AtRiskForm';
 import { BrandingForm } from './BrandingForm';
 import { CourseArchiveForm } from './CourseArchiveForm';
@@ -15,7 +14,6 @@ import { GeneralForm } from './GeneralForm';
 import { GradeScaleForm } from './GradeScaleForm';
 import { useSettingsGroup } from './hooks';
 import { HubIconsForm } from './HubIconsForm';
-import { McpForm } from './McpForm';
 import { MigrationForm } from './MigrationForm';
 import { tabFromParam } from './model';
 import { PaymentGatewaysForm } from './PaymentGatewaysForm';
@@ -33,7 +31,6 @@ import {
 	type TabId,
 } from './types';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
-import { XapiForm } from './XapiForm';
 
 const LABELS: Record< TabId, string > = {
 	general: __( 'General', 'ohmylms' ),
@@ -47,9 +44,6 @@ const LABELS: Record< TabId, string > = {
 	'design-system': __( 'Design system', 'ohmylms' ),
 	fonts: __( 'Fonts', 'ohmylms' ),
 	'hub-icons': __( 'Hub icons', 'ohmylms' ),
-	xapi: __( 'xAPI', 'ohmylms' ),
-	'ai-tutor': __( 'AI tutor', 'ohmylms' ),
-	mcp: __( 'MCP', 'ohmylms' ),
 	'course-archive': __( 'Course archive', 'ohmylms' ),
 	'quiz-design': __( 'Quiz design', 'ohmylms' ),
 	migration: __( 'Migration', 'ohmylms' ),
@@ -139,9 +133,6 @@ export default function SettingsPage( {
 		'design-system': Boolean( extraDirty[ 'design-system' ] ),
 		fonts: Boolean( extraDirty.fonts ),
 		'hub-icons': Boolean( extraDirty[ 'hub-icons' ] ),
-		xapi: Boolean( extraDirty.xapi ),
-		'ai-tutor': Boolean( extraDirty[ 'ai-tutor' ] ),
-		mcp: false,
 		'course-archive': Boolean( extraDirty[ 'course-archive' ] ),
 		'quiz-design': Boolean( extraDirty[ 'quiz-design' ] ),
 		migration: false,
@@ -196,19 +187,6 @@ export default function SettingsPage( {
 				onDirty={ reporters[ 'hub-icons' ] }
 			/>
 		),
-		xapi: (
-			<XapiForm
-				active={ 'xapi' === selected }
-				onDirty={ reporters.xapi }
-			/>
-		),
-		'ai-tutor': (
-			<AiTutorForm
-				active={ 'ai-tutor' === selected }
-				onDirty={ reporters[ 'ai-tutor' ] }
-			/>
-		),
-		mcp: <McpForm active={ 'mcp' === selected } />,
 		'course-archive': (
 			<CourseArchiveForm
 				active={ 'course-archive' === selected }

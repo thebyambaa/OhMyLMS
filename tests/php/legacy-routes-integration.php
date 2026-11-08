@@ -274,8 +274,8 @@ try {
 		) === LegacyRoutes::target( '/extensions/unknown-addon-page' ),
 		'target of an unmapped route is the Dashboard'
 	);
-	ok( \OhMyLMS\AI\AdminPage::url() === address_url( 'page=ohmylms-settings&tab=settings&section=ai-tutor' ), 'AI tutor bookmark opens the new section' );
-	ok( call_private( \OhMyLMS\XApi\AdminPage::class, 'url', array( 'saved' ) ) === add_query_arg( 'xapi_notice', 'saved', address_url( 'page=ohmylms-settings&tab=settings&section=xapi' ) ), 'xAPI redirect opens the new section' );
+	ok( \OhMyLMS\AI\AdminPage::url() === address_url( 'page=ohmylms-addons&tab=integrations&configure=ai-tutor' ), 'AI tutor bookmark opens the popup on Add-ons' );
+	ok( call_private( \OhMyLMS\XApi\AdminPage::class, 'url', array( 'saved' ) ) === add_query_arg( 'xapi_notice', 'saved', address_url( 'page=ohmylms-addons&tab=integrations&configure=xapi' ) ), 'xAPI redirect opens the popup on Add-ons' );
 	ok( \OhMyLMS\Student\Hub::admin_home_url() === address_url( 'page=ohmylms-accounts&tab=schools' ), 'Student Home admin address opens Account Hub' );
 	ok( \OhMyLMS\Assessment\SkillAssessmentPage::url() === address_url( 'page=ohmylms-curriculum&tab=tools&section=assessments' ), 'skill assessments are a Curriculum tool' );
 	ok( \OhMyLMS\QuestionBank\ImportPage::url() === address_url( 'page=ohmylms-bank&tab=question-bank&section=import-review' ), 'question import review is a Question bank section' );
