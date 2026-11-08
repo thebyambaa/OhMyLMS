@@ -230,6 +230,18 @@
 					"sections": [],
 					"serverSections": [],
 					"defaultSection": ""
+				},
+				{
+					"id": "payments",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [
+						"currency",
+						"tax",
+						"payment-gateways"
+					],
+					"serverSections": [],
+					"defaultSection": "currency"
 				}
 			]
 		},
@@ -296,9 +308,6 @@
 						"account-and-privacy",
 						"permalink",
 						"advanced",
-						"currency",
-						"tax",
-						"payment-gateways",
 						"design-system",
 						"fonts",
 						"course-archive",
@@ -794,6 +803,15 @@
 			}
 		},
 		{
+			"id": "payments",
+			"path": "/payments",
+			"group": "commerce",
+			"tab": "payments",
+			"params": {
+				"tab": "section"
+			}
+		},
+		{
 			"id": "taxonomies",
 			"path": "/taxonomies",
 			"group": "content",
@@ -1113,8 +1131,8 @@
 			"page=ohmylms-settings&tab=settings"
 		],
 		[
-			"/settings?tab=tax",
-			"page=ohmylms-settings&tab=settings&section=tax"
+			"/payments?tab=tax",
+			"page=ohmylms-commerce&tab=payments&section=tax"
 		],
 		[
 			"/webhooks",

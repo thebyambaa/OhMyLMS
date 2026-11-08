@@ -45,7 +45,7 @@ order: menu and WordPress look, then the dashboard, then the gradebook. Also dec
 | Dashboard | `ohmylms` | none (Home and Dashboard merged; Help & Feedback becomes a link here) |
 | Content Hub | `ohmylms-content` | courses, lessons, quizzes, exams, assignments, gradebook (phase C), question-bank, skills, curriculum |
 | Account Hub | `ohmylms-accounts` | students, schools, classes, teachers, parents, users (All accounts) |
-| Commerce | `ohmylms-commerce` | earnings, orders, memberships, subscriptions, coupons |
+| Commerce | `ohmylms-commerce` | earnings, orders, memberships, subscriptions, coupons, payments (sections currency, tax, payment-gateways) |
 | Engagement | `ohmylms-engagement` | gamification (only with the Gamification add-on), certificates (templates and issued), automations, sessions (only with `ohmylms_show_sessions_menu`) |
 | Settings | `ohmylms-settings` | settings (sections = today's settings tabs incl. xAPI, AI tutor, migration), emails, integrations, webhooks, setup |
 
@@ -209,6 +209,8 @@ parameters (`AdminNavigation::MOVED_PLACES`):
 | Emails | Engagement | Settings |
 | Certificates, Issued certificates | Engagement › Gamification sections | Engagement › Certificates tab |
 | Course bundles, Categories and tags | Curriculum › Tools | Content Hub › Courses sections |
+| Currency, Tax, Payment gateways | Settings sections | Commerce › Payments sections |
 
-Gamification is hidden unless the add-on is on. Not moved: Currency, Tax and Payment gateways stay Settings
-sections (they are sections of one settings screen), and Content Hub and Content Bank stay two pages.
+Gamification is hidden unless the add-on is on. The three payment tabs are still the settings screen
+(`SettingsPage scope="payments"`, route `/payments?tab=currency|tax|payment-gateways`). Not moved: Content Hub and
+Content Bank stay two pages.

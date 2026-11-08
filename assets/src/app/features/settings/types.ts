@@ -31,6 +31,13 @@ export type ExtraTabId = ( typeof EXTRA_TAB_IDS )[ number ];
 
 export type TabId = GroupId | ExtraTabId;
 
+/** Tabs shown on Commerce › Payments instead of Settings, in order. */
+export const PAYMENT_TAB_IDS = [
+	'currency',
+	'tax',
+	'payment-gateways',
+] as const;
+
 /** Field names per group; the server rejects any other key with 400. */
 export const FIELD_NAMES = {
 	general: [

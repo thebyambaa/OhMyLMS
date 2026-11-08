@@ -199,19 +199,19 @@ final class LegacyRoutes {
 			),
 			array(
 				'from' => '/settings/payments-settings',
-				'to'   => '/settings?tab=payment-gateways',
+				'to'   => '/payments?tab=payment-gateways',
 			),
 			array(
 				'from' => '/settings/payments-settings/payments/*',
-				'to'   => '/settings?tab=payment-gateways',
+				'to'   => '/payments?tab=payment-gateways',
 			),
 			array(
 				'from' => '/settings/payments-settings/currency/*',
-				'to'   => '/settings?tab=currency',
+				'to'   => '/payments?tab=currency',
 			),
 			array(
 				'from' => '/settings/payments-settings/tax/*',
-				'to'   => '/settings?tab=tax',
+				'to'   => '/payments?tab=tax',
 			),
 			array(
 				'from' => '/settings/gamification-settings',
@@ -392,7 +392,7 @@ final class LegacyRoutes {
 			),
 			array(
 				'from' => '/settings/design-settings/checkout-page/*',
-				'to'   => '/settings?tab=payment-gateways',
+				'to'   => '/payments?tab=payment-gateways',
 			),
 			array(
 				'from' => '/settings/design-settings/*',

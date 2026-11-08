@@ -27,6 +27,7 @@ import { Tabs, useTabPanelProps, type TabItem } from './Tabs';
 import {
 	EXTRA_TAB_IDS,
 	GROUP_IDS,
+	PAYMENT_TAB_IDS,
 	type ExtraTabId,
 	type GroupId,
 	type TabId,
@@ -56,17 +57,30 @@ const LABELS: Record< TabId, string > = {
 	'grade-scale': __( 'Letter grades', 'ohmylms' ),
 };
 
-const TAB_IDS: readonly TabId[] = [ ...GROUP_IDS, ...EXTRA_TAB_IDS ];
+/** Tabs of the Settings page, then those of Commerce › Payments. */
+const ALL_TAB_IDS: readonly TabId[] = [ ...GROUP_IDS, ...EXTRA_TAB_IDS ];
+const PAYMENT_IDS: readonly TabId[] = PAYMENT_TAB_IDS;
+const SETTINGS_TAB_IDS = ALL_TAB_IDS.filter(
+	( id ) => ! PAYMENT_IDS.includes( id )
+);
 
 /**
  * Settings screen at `#/settings`. The selected tab lives in the `tab` query parameter
  * (`#/settings?tab=currency`), so a tab can be linked and survives a reload. Each tab loads the
  * first time it is opened, keeps its own draft while other tabs are shown and saves independently.
  * Registry groups use `useSettingsGroup`; the other tabs own their state and report unsaved edits.
+ *
+ * @param props       Props.
+ * @param props.scope `payments` shows Currency, Tax and Payment gateways (Commerce › Payments); `settings` the rest.
  */
-export default function SettingsPage() {
+export default function SettingsPage( {
+	scope = 'settings',
+}: {
+	scope?: 'settings' | 'payments';
+} ) {
 	const [ params, setParams ] = useSearchParams();
-	const selected = tabFromParam( params.get( 'tab' ) );
+	const TAB_IDS = 'payments' === scope ? PAYMENT_IDS : SETTINGS_TAB_IDS;
+	const selected = tabFromParam( params.get( 'tab' ), TAB_IDS );
 
 	const general = useSettingsGroup( 'general', 'general' === selected );
 	const branding = useSettingsGroup( 'branding', 'branding' === selected );

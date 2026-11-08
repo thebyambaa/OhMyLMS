@@ -4,7 +4,11 @@ import legacy from '../../../../tests/fixtures/legacy-routes.json';
 import { TAB_IDS as ACCOUNT_TABS } from '../features/account-hub/types';
 import { TAB_IDS as GAMIFICATION_TABS } from '../features/gamification/types';
 import { features } from '../features/registry';
-import { EXTRA_TAB_IDS, GROUP_IDS } from '../features/settings/types';
+import {
+	EXTRA_TAB_IDS,
+	GROUP_IDS,
+	PAYMENT_TAB_IDS,
+} from '../features/settings/types';
 import type { FeatureDefinition } from '../features/types';
 import {
 	formatQuery,
@@ -129,9 +133,14 @@ describe( 'admin navigation contract', () => {
 			groups
 				.find( ( item ) => item.id === group )
 				?.tabs.find( ( item ) => item.id === tab )?.sections;
-		expect( tabsOf( 'settings', 'settings' ) ).toEqual( [
-			...GROUP_IDS,
-			...EXTRA_TAB_IDS,
+		expect( tabsOf( 'settings', 'settings' ) ).toEqual(
+			[ ...GROUP_IDS, ...EXTRA_TAB_IDS ].filter(
+				( id ) =>
+					! ( PAYMENT_TAB_IDS as readonly string[] ).includes( id )
+			)
+		);
+		expect( tabsOf( 'commerce', 'payments' ) ).toEqual( [
+			...PAYMENT_TAB_IDS,
 		] );
 		expect( tabsOf( 'engagement', 'gamification' ) ).toEqual( [
 			...GAMIFICATION_TABS,

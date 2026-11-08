@@ -83,10 +83,17 @@ beforeEach( () => {
 	vi.mocked( hub.getHubIcons ).mockResolvedValue( hubSlots );
 } );
 
+const PAYMENT_TABS = [ 'currency', 'tax', 'payment-gateways' ];
+
 function renderTab( tab: string ) {
+	const payments = PAYMENT_TABS.includes( tab );
 	return render(
-		<MemoryRouter initialEntries={ [ `/settings?tab=${ tab }` ] }>
-			<SettingsPage />
+		<MemoryRouter
+			initialEntries={ [
+				`/${ payments ? 'payments' : 'settings' }?tab=${ tab }`,
+			] }
+		>
+			<SettingsPage scope={ payments ? 'payments' : 'settings' } />
 		</MemoryRouter>
 	);
 }

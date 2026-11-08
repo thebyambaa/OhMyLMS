@@ -226,11 +226,12 @@ try {
 		return $ids[1];
 	};
 	$tabs    = array(
-		'/settings'     => array_merge( $tab_ids( 'settings/types.ts', 'GROUP_IDS' ), $tab_ids( 'settings/types.ts', 'EXTRA_TAB_IDS' ) ),
+		'/settings'     => array_values( array_diff( array_merge( $tab_ids( 'settings/types.ts', 'GROUP_IDS' ), $tab_ids( 'settings/types.ts', 'EXTRA_TAB_IDS' ) ), $tab_ids( 'settings/types.ts', 'PAYMENT_TAB_IDS' ) ) ),
+		'/payments'     => $tab_ids( 'settings/types.ts', 'PAYMENT_TAB_IDS' ),
 		'/gamification' => $tab_ids( 'gamification/types.ts', 'TAB_IDS' ),
 		'/account-hub'  => $tab_ids( 'account-hub/types.ts', 'TAB_IDS' ),
 	);
-	ok( in_array( 'payment-gateways', $tabs['/settings'], true ) && in_array( 'xp', $tabs['/gamification'], true ), 'tab ids were read from the app' );
+	ok( in_array( 'payment-gateways', $tabs['/payments'], true ) && in_array( 'xp', $tabs['/gamification'], true ), 'tab ids were read from the app' );
 	foreach ( LegacyRoutes::routes() as $rule ) {
 		$target = explode( '?', $rule['to'], 2 );
 		ok( in_array( preg_replace( '/:[A-Za-z]+/', ':', $target[0] ), $paths, true ), 'new app has route ' . $target[0] );
@@ -241,6 +242,7 @@ try {
 	}
 	$settings_tab = AdminNavigation::groups()['settings']['tabs']['settings'];
 	ok( array_keys( $settings_tab['sections'] ) === $tabs['/settings'], 'Settings sections are the settings screen tabs, in order' );
+	ok( array_keys( AdminNavigation::groups()['commerce']['tabs']['payments']['sections'] ) === $tabs['/payments'], 'Payments sections are Currency, Tax and Payment gateways, in order' );
 	ok( array_keys( AdminNavigation::groups()['engagement']['tabs']['gamification']['sections'] ) === $tabs['/gamification'], 'Gamification sections are its screen tabs' );
 	ok( array( '', 'issued-certificates' ) === array_keys( AdminNavigation::groups()['engagement']['tabs']['certificates']['sections'] ), 'Certificates has the templates and the issued list' );
 	ok( array_slice( array_keys( AdminNavigation::groups()['accounts']['tabs'] ), 1, -1 ) === $tabs['/account-hub'] && 'cohorts' === array_key_last( AdminNavigation::groups()['accounts']['tabs'] ), 'Account Hub tabs are Students, the Account Hub screen tabs and Cohorts' );
@@ -256,10 +258,10 @@ try {
 	ok( LegacyRoutes::app_url( '/no-such-screen' ) === $dashboard . '&' . LegacyRoutes::FROM_APP . '=1#/no-such-screen', 'app_url of an unknown route keeps it in the hash for the app' );
 	ok(
 		array(
-			'page'  => 'ohmylms-settings',
-			'tab'   => 'settings',
-			'route' => '/settings?tab=tax',
-			'url'   => address_url( 'page=ohmylms-settings&tab=settings&section=tax' ),
+			'page'  => 'ohmylms-commerce',
+			'tab'   => 'payments',
+			'route' => '/payments?tab=tax',
+			'url'   => address_url( 'page=ohmylms-commerce&tab=payments&section=tax' ),
 		) === LegacyRoutes::target( '/settings/payments-settings/tax' ),
 		'target of a mapped route'
 	);
@@ -323,7 +325,7 @@ try {
 		'ohmylms/go-assignments'    => array( 'ohmylms-bank', '/assignments', 'page=ohmylms-bank&tab=assignments' ),
 		'ohmylms/go-account-hub'    => array( 'ohmylms-accounts', '/account-hub', 'page=ohmylms-accounts&tab=schools' ),
 		'ohmylms/go-memberships'    => array( 'ohmylms-commerce', '/memberships', 'page=ohmylms-commerce&tab=memberships' ),
-		'ohmylms/go-settings-pay'   => array( 'ohmylms-settings', '/settings?tab=payment-gateways', 'page=ohmylms-settings&tab=settings&section=payment-gateways' ),
+		'ohmylms/go-settings-pay'   => array( 'ohmylms-commerce', '/payments?tab=payment-gateways', 'page=ohmylms-commerce&tab=payments&section=payment-gateways' ),
 		'ohmylms/go-settings-email' => array( 'ohmylms-settings', '/emails', 'page=ohmylms-settings&tab=emails' ),
 		'ohmylms/new-question'      => array( 'ohmylms-bank', '/content-hub/question-bank?action=new', 'page=ohmylms-bank&tab=question-bank&action=new' ),
 		'ohmylms/new-exam'          => array( 'ohmylms-bank', '/exams?action=new', 'page=ohmylms-bank&tab=exams&action=new' ),
@@ -535,7 +537,7 @@ try {
 		)['section'],
 		'a skill workspace section opens in the app'
 	);
-	ok( array( 'earnings', 'orders', 'memberships', 'subscriptions', 'coupons' ) === array_keys( AdminNavigation::groups()['commerce']['tabs'] ), 'Commerce holds sales: earnings, orders, memberships, subscriptions and coupons' );
+	ok( array( 'earnings', 'orders', 'memberships', 'subscriptions', 'coupons', 'payments' ) === array_keys( AdminNavigation::groups()['commerce']['tabs'] ), 'Commerce holds sales and payment settings: earnings, orders, memberships, subscriptions, coupons and payments' );
 	ok( array( 'gamification', 'certificates', 'automations', 'sessions' ) === array_keys( AdminNavigation::groups()['engagement']['tabs'] ), 'Engagement holds gamification, certificates, automations and sessions' );
 	ok( isset( AdminNavigation::groups()['settings']['tabs']['emails'] ) && isset( AdminNavigation::groups()['accounts']['tabs']['cohorts'] ), 'Emails is a Settings tab and Cohorts an Account Hub tab' );
 	ok( array( 'bundles', 'taxonomies' ) === array_values( array_intersect( array( 'bundles', 'taxonomies' ), array_keys( AdminNavigation::groups()['content']['tabs']['courses']['sections'] ) ) ) && ! isset( AdminNavigation::groups()['curriculum']['tabs']['tools']['sections']['bundles'] ), 'Course bundles and Categories and tags are Courses sections, not Curriculum tools' );
@@ -615,10 +617,18 @@ try {
 		array(
 			'page'    => 'ohmylms-settings',
 			'tab'     => 'settings',
+			'section' => 'fonts',
+		)
+	);
+	ok( false !== strpos( $settings_html, 'data-default-section="general"' ) && false !== strpos( $settings_html, 'data-section="fonts" class="current" aria-current="page">Fonts</a>' ) && false !== strpos( $settings_html, 'data-tab="settings" data-section="fonts"' ), 'page: Settings sections' );
+	$payments_html = render_page(
+		array(
+			'page'    => 'ohmylms-commerce',
+			'tab'     => 'payments',
 			'section' => 'tax',
 		)
 	);
-	ok( false !== strpos( $settings_html, 'data-default-section="general"' ) && false !== strpos( $settings_html, 'data-section="tax" class="current" aria-current="page">Tax</a>' ) && false !== strpos( $settings_html, 'data-tab="settings" data-section="tax"' ), 'page: Settings sections' );
+	ok( false !== strpos( $payments_html, 'data-default-section="currency"' ) && false !== strpos( $payments_html, 'data-section="tax" class="current" aria-current="page">Tax</a>' ) && false !== strpos( $payments_html, 'data-tab="payments" data-section="tax"' ), 'page: Payments sections' );
 	$assessments_html = render_page(
 		array(
 			'page'    => 'ohmylms-curriculum',
@@ -882,6 +892,9 @@ try {
 			array( array( 'ohmylms-engagement', 'gamification', 'issued-certificates' ), array( 'ohmylms-engagement', 'certificates' ) ),
 			array( array( 'ohmylms-curriculum', 'tools', 'bundles' ), array( 'ohmylms-content', 'courses' ) ),
 			array( array( 'ohmylms-curriculum', 'tools', 'taxonomies' ), array( 'ohmylms-content', 'courses' ) ),
+			array( array( 'ohmylms-settings', 'settings', 'currency' ), array( 'ohmylms-commerce', 'payments' ) ),
+			array( array( 'ohmylms-settings', 'settings', 'tax' ), array( 'ohmylms-commerce', 'payments' ) ),
+			array( array( 'ohmylms-settings', 'settings', 'payment-gateways' ), array( 'ohmylms-commerce', 'payments' ) ),
 		) as list( $old, $new )
 	) {
 		$old_query = array(

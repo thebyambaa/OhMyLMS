@@ -108,9 +108,6 @@ final class AdminNavigation {
 			'account-and-privacy' => __( 'Account and privacy', 'ohmylms' ),
 			'permalink'           => __( 'Permalinks', 'ohmylms' ),
 			'advanced'            => __( 'Advanced', 'ohmylms' ),
-			'currency'            => __( 'Currency', 'ohmylms' ),
-			'tax'                 => __( 'Tax', 'ohmylms' ),
-			'payment-gateways'    => __( 'Payment gateways', 'ohmylms' ),
 			'design-system'       => __( 'Design system', 'ohmylms' ),
 			'fonts'               => __( 'Fonts', 'ohmylms' ),
 			'course-archive'      => __( 'Course archive', 'ohmylms' ),
@@ -259,6 +256,15 @@ final class AdminNavigation {
 					'memberships'   => array( 'label' => __( 'Memberships', 'ohmylms' ) ),
 					'subscriptions' => array( 'label' => __( 'Subscriptions', 'ohmylms' ) ),
 					'coupons'       => array( 'label' => __( 'Coupons', 'ohmylms' ) ),
+					'payments'      => array(
+						'label'           => __( 'Payments', 'ohmylms' ),
+						'sections'        => array(
+							'currency'         => __( 'Currency', 'ohmylms' ),
+							'tax'              => __( 'Tax', 'ohmylms' ),
+							'payment-gateways' => __( 'Payment gateways', 'ohmylms' ),
+						),
+						'default_section' => 'currency',
+					),
 				),
 			),
 			'engagement' => array(
@@ -683,6 +689,14 @@ final class AdminNavigation {
 				),
 			),
 			array(
+				'payments',
+				'/payments',
+				$commerce + array(
+					'tab'    => 'payments',
+					'params' => array( 'tab' => 'section' ),
+				),
+			),
+			array(
 				'taxonomies',
 				'/taxonomies',
 				$content + array(
@@ -938,6 +952,9 @@ final class AdminNavigation {
 		array( array( 'engagement', 'gamification', 'issued-certificates' ), array( 'engagement', 'certificates', null ) ),
 		array( array( 'curriculum', 'tools', 'bundles' ), array( 'content', 'courses', null ) ),
 		array( array( 'curriculum', 'tools', 'taxonomies' ), array( 'content', 'courses', null ) ),
+		array( array( 'settings', 'settings', 'currency' ), array( 'commerce', 'payments', null ) ),
+		array( array( 'settings', 'settings', 'tax' ), array( 'commerce', 'payments', null ) ),
+		array( array( 'settings', 'settings', 'payment-gateways' ), array( 'commerce', 'payments', null ) ),
 	);
 
 	/**

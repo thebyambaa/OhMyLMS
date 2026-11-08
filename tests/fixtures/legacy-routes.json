@@ -46,7 +46,7 @@
 		],
 		[
 			"/settings/payments-settings/tax",
-			"page=ohmylms-settings&tab=settings&section=tax"
+			"page=ohmylms-commerce&tab=payments&section=tax"
 		],
 		[
 			"/settings/xapi-settings",
@@ -296,23 +296,23 @@
 		],
 		[
 			"/settings/payments-settings",
-			"/settings?tab=payment-gateways"
+			"/payments?tab=payment-gateways"
 		],
 		[
 			"/settings/payments-settings/payments",
-			"/settings?tab=payment-gateways"
+			"/payments?tab=payment-gateways"
 		],
 		[
 			"/settings/payments-settings/payments/stripe",
-			"/settings?tab=payment-gateways"
+			"/payments?tab=payment-gateways"
 		],
 		[
 			"/settings/payments-settings/currency",
-			"/settings?tab=currency"
+			"/payments?tab=currency"
 		],
 		[
 			"/settings/payments-settings/tax",
-			"/settings?tab=tax"
+			"/payments?tab=tax"
 		],
 		[
 			"/settings/gamification-settings",
@@ -568,7 +568,7 @@
 		],
 		[
 			"/settings/design-settings/checkout-page",
-			"/settings?tab=payment-gateways"
+			"/payments?tab=payment-gateways"
 		],
 		[
 			"/extensions/question-bank?action=import",
@@ -726,19 +726,19 @@
 		},
 		{
 			"from": "/settings/payments-settings",
-			"to": "/settings?tab=payment-gateways"
+			"to": "/payments?tab=payment-gateways"
 		},
 		{
 			"from": "/settings/payments-settings/payments/*",
-			"to": "/settings?tab=payment-gateways"
+			"to": "/payments?tab=payment-gateways"
 		},
 		{
 			"from": "/settings/payments-settings/currency/*",
-			"to": "/settings?tab=currency"
+			"to": "/payments?tab=currency"
 		},
 		{
 			"from": "/settings/payments-settings/tax/*",
-			"to": "/settings?tab=tax"
+			"to": "/payments?tab=tax"
 		},
 		{
 			"from": "/settings/gamification-settings",
@@ -937,7 +937,7 @@
 		},
 		{
 			"from": "/settings/design-settings/checkout-page/*",
-			"to": "/settings?tab=payment-gateways"
+			"to": "/payments?tab=payment-gateways"
 		},
 		{
 			"from": "/settings/design-settings/*",

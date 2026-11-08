@@ -53,12 +53,19 @@ beforeEach( () => {
 	vi.mocked( api.listStates ).mockResolvedValue( usStates );
 } );
 
+const PAYMENT_TABS = [ 'currency', 'tax', 'payment-gateways' ];
+
 function renderPage( tab?: string ) {
+	const payments = PAYMENT_TABS.includes( tab ?? '' );
 	return render(
 		<MemoryRouter
-			initialEntries={ [ tab ? `/settings?tab=${ tab }` : '/settings' ] }
+			initialEntries={ [
+				tab
+					? `/${ payments ? 'payments' : 'settings' }?tab=${ tab }`
+					: '/settings',
+			] }
 		>
-			<SettingsPage />
+			<SettingsPage scope={ payments ? 'payments' : 'settings' } />
 		</MemoryRouter>
 	);
 }
@@ -175,23 +182,23 @@ describe( 'on the admin page', () => {
 		const sections = document.createElement( 'ul' );
 		sections.id = SECTIONS_ID;
 		sections.innerHTML =
-			'<li><a data-section="currency" href="/settings?tab=currency">Currency</a></li>' +
-			'<li><a data-section="tax" href="/settings?tab=tax">Tax</a></li>' +
+			'<li><a data-section="currency" href="/payments?tab=currency">Currency</a></li>' +
+			'<li><a data-section="tax" href="/payments?tab=tax">Tax</a></li>' +
 			'<li><a href="/orders">Orders</a></li>';
 		document.body.append( sections );
 		try {
 			render(
 				<PlaceProvider
 					value={ {
-						page: 'ohmylms-settings',
-						tab: 'settings',
+						page: 'ohmylms-commerce',
+						tab: 'payments',
 						section: 'currency',
 					} }
 				>
 					<MemoryRouter
-						initialEntries={ [ '/settings?tab=currency' ] }
+						initialEntries={ [ '/payments?tab=currency' ] }
 					>
-						<SettingsPage />
+						<SettingsPage scope="payments" />
 					</MemoryRouter>
 				</PlaceProvider>
 			);

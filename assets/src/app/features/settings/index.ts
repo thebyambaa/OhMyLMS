@@ -22,3 +22,23 @@ export const settings: FeatureDefinition = {
 			)
 	),
 };
+
+/**
+ * Currency, Tax and Payment gateways at `#/payments` (`?tab=currency|tax|payment-gateways`): the payment
+ * tabs of the settings screen, on Commerce. They were Settings sections.
+ */
+export const payments: FeatureDefinition = {
+	id: 'payments',
+	title: __( 'Payments', 'ohmylms' ),
+	path: '/payments',
+	group: 'commerce',
+	tab: 'payments',
+	params: { tab: 'section' },
+	capability: 'manage_options',
+	component: lazy(
+		() =>
+			import(
+				/* webpackChunkName: "admin-app-settings" */ './PaymentSettingsPage'
+			)
+	),
+};

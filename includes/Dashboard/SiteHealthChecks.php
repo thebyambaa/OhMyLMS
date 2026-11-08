@@ -75,7 +75,7 @@ final class SiteHealthChecks {
 			/* translators: %s: gateway names. */
 			? sprintf( __( 'Enabled but missing credentials: %s.', 'ohmylms' ), implode( ', ', $incomplete ) )
 			: __( 'No payment gateway is enabled, so paid courses cannot be bought.', 'ohmylms' );
-		return self::check( 'payment_gateway', 'warning', __( 'Payment gateway connected', 'ohmylms' ), $detail, __( 'Set up payments', 'ohmylms' ), '/settings?tab=payment-gateways', null );
+		return self::check( 'payment_gateway', 'warning', __( 'Payment gateway connected', 'ohmylms' ), $detail, __( 'Set up payments', 'ohmylms' ), '/payments?tab=payment-gateways', null );
 	}
 
 	/**

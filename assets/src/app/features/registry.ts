@@ -54,7 +54,7 @@ import { membershipEditor, memberships } from './memberships';
 import { questionEditor, questions } from './questions';
 import { quizAttempts, quizEditor, quizReports, quizzes } from './quizzes';
 import { sessionEditor, sessions } from './sessions';
-import { settings } from './settings';
+import { payments, settings } from './settings';
 import { setup } from './setup';
 import { studentReport, students } from './students';
 import { syllabusEditor } from './syllabus';
@@ -134,6 +134,7 @@ export const features: readonly FeatureDefinition[] = [
 	emails,
 	integrations,
 	settings,
+	payments,
 	taxonomies,
 	webhooks,
 	extensionPages,

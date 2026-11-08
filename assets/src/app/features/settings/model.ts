@@ -668,10 +668,13 @@ export function describeFailure( error: ApiError ): FailureView {
 /**
  * Tab id from the `tab` query parameter.
  *
- * @param value Raw parameter.
- * @return A known tab id, `general` otherwise.
+ * @param value   Raw parameter.
+ * @param allowed Tabs the screen shows; the first is the default.
+ * @return A known tab id, the first allowed tab otherwise.
  */
-export function tabFromParam( value: string | null ): TabId {
-	const ids: readonly TabId[] = [ ...GROUP_IDS, ...EXTRA_TAB_IDS ];
-	return ids.find( ( id ) => id === value ) ?? 'general';
+export function tabFromParam(
+	value: string | null,
+	allowed: readonly TabId[] = [ ...GROUP_IDS, ...EXTRA_TAB_IDS ]
+): TabId {
+	return allowed.find( ( id ) => id === value ) ?? allowed[ 0 ] ?? 'general';
 }
