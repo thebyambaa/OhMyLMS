@@ -6,8 +6,8 @@ export const taxonomies: FeatureDefinition = {
 	id: 'taxonomies',
 	title: __( 'Categories and tags', 'ohmylms' ),
 	path: '/taxonomies',
-	group: 'curriculum',
-	tab: 'tools',
+	group: 'content',
+	tab: 'courses',
 	section: 'taxonomies',
 	capability: 'edit_posts',
 	component: lazy(

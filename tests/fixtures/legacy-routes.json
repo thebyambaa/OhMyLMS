@@ -30,15 +30,15 @@
 		],
 		[
 			"/gamification/certificates",
-			"page=ohmylms-engagement&tab=gamification&section=certificates"
+			"page=ohmylms-engagement&tab=certificates"
 		],
 		[
 			"/certificate-edit/5",
-			"page=ohmylms-engagement&tab=gamification&section=certificates&id=5"
+			"page=ohmylms-engagement&tab=certificates&id=5"
 		],
 		[
 			"/emails/new-order",
-			"page=ohmylms-engagement&tab=emails&email=new-order"
+			"page=ohmylms-settings&tab=emails&email=new-order"
 		],
 		[
 			"/settings/webhooks-settings",
@@ -106,7 +106,7 @@
 		],
 		[
 			"/extensions/bundles",
-			"page=ohmylms-curriculum&tab=tools&section=bundles"
+			"page=ohmylms-content&tab=courses&section=bundles"
 		],
 		[
 			"/content-hub/exams?action=new",

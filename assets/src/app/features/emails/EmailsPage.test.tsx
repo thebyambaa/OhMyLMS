@@ -66,7 +66,7 @@ describe( 'emails feature', () => {
 		expect( api.listEmails ).not.toHaveBeenCalled();
 	} );
 
-	it( 'opens as the Engagement > Emails tab for administrators', async () => {
+	it( 'opens as the Settings > Emails tab for administrators', async () => {
 		renderShell( [ emails ], {
 			route: '/emails',
 			capabilities: { manage_options: true },
@@ -75,7 +75,7 @@ describe( 'emails feature', () => {
 			await screen.findByRole( 'table', { name: 'System emails' } )
 		).toBeInTheDocument();
 		expect( emails ).toMatchObject( {
-			group: 'engagement',
+			group: 'settings',
 			tab: 'emails',
 		} );
 	} );

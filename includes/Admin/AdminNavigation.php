@@ -137,8 +137,13 @@ final class AdminNavigation {
 						'label'      => __( 'Courses', 'ohmylms' ),
 						'capability' => 'edit_posts',
 						'sections'   => array(
-							''         => __( 'All courses', 'ohmylms' ),
-							'overview' => __( 'Overview', 'ohmylms' ),
+							''           => __( 'All courses', 'ohmylms' ),
+							'overview'   => __( 'Overview', 'ohmylms' ),
+							'bundles'    => array(
+								'label'      => __( 'Course bundles', 'ohmylms' ),
+								'capability' => self::CAPABILITY,
+							),
+							'taxonomies' => __( 'Categories and tags', 'ohmylms' ),
 						),
 					),
 					'gradebook' => array(
@@ -224,16 +229,8 @@ final class AdminNavigation {
 								'label'      => __( 'Provenance review', 'ohmylms' ),
 								'capability' => self::CAPABILITY,
 							),
-							'bundles'       => array(
-								'label'      => __( 'Course bundles', 'ohmylms' ),
-								'capability' => self::CAPABILITY,
-							),
 							'subjects'      => array(
 								'label'      => __( 'Subject profiles', 'ohmylms' ),
-								'capability' => self::CAPABILITY,
-							),
-							'taxonomies'    => array(
-								'label'      => __( 'Categories and tags', 'ohmylms' ),
 								'capability' => self::CAPABILITY,
 							),
 						),
@@ -250,6 +247,7 @@ final class AdminNavigation {
 					'teachers' => array( 'label' => __( 'Teachers', 'ohmylms' ) ),
 					'parents'  => array( 'label' => __( 'Parents', 'ohmylms' ) ),
 					'users'    => array( 'label' => __( 'All accounts', 'ohmylms' ) ),
+					'cohorts'  => array( 'label' => __( 'Cohorts', 'ohmylms' ) ),
 				),
 			),
 			'commerce'   => array(
@@ -259,8 +257,6 @@ final class AdminNavigation {
 					'earnings'      => array( 'label' => __( 'Earnings', 'ohmylms' ) ),
 					'orders'        => array( 'label' => __( 'Orders', 'ohmylms' ) ),
 					'memberships'   => array( 'label' => __( 'Memberships', 'ohmylms' ) ),
-					'cohorts'       => array( 'label' => __( 'Cohorts', 'ohmylms' ) ),
-					'automations'   => array( 'label' => __( 'Automations', 'ohmylms' ) ),
 					'subscriptions' => array( 'label' => __( 'Subscriptions', 'ohmylms' ) ),
 					'coupons'       => array( 'label' => __( 'Coupons', 'ohmylms' ) ),
 				),
@@ -279,17 +275,24 @@ final class AdminNavigation {
 							'xp'                  => __( 'XP and mastery', 'ohmylms' ),
 							'leaderboard'         => __( 'Leaderboard', 'ohmylms' ),
 							'rewards'             => __( 'Rewards', 'ohmylms' ),
-							'certificates'        => __( 'Certificates', 'ohmylms' ),
+						),
+						// Only with the Gamification add-on on; certificates have their own tab.
+						'flag'            => 'ohmylms_show_gamification_menu',
+						'default_section' => 'points',
+					),
+					'certificates' => array(
+						'label'    => __( 'Certificates', 'ohmylms' ),
+						'sections' => array(
+							''                    => __( 'Certificates', 'ohmylms' ),
 							'issued-certificates' => __( 'Issued certificates', 'ohmylms' ),
 						),
-						'default_section' => array( __CLASS__, 'gamification_default_section' ),
 					),
+					'automations'  => array( 'label' => __( 'Automations', 'ohmylms' ) ),
 					'sessions'     => array(
 						'label'      => __( 'Sessions', 'ohmylms' ),
 						'capability' => 'edit_posts',
 						'flag'       => 'ohmylms_show_sessions_menu',
 					),
-					'emails'       => array( 'label' => __( 'Emails', 'ohmylms' ) ),
 				),
 			),
 			'settings'   => array(
@@ -301,6 +304,7 @@ final class AdminNavigation {
 						'sections'        => $settings_sections,
 						'default_section' => 'general',
 					),
+					'emails'       => array( 'label' => __( 'Emails', 'ohmylms' ) ),
 					'integrations' => array( 'label' => __( 'Integrations', 'ohmylms' ) ),
 					'webhooks'     => array(
 						'label' => __( 'Webhooks', 'ohmylms' ),
@@ -355,7 +359,7 @@ final class AdminNavigation {
 	 * @return string
 	 */
 	public static function gamification_default_section() {
-		return apply_filters( 'ohmylms_show_gamification_menu', false ) ? 'points' : 'certificates';
+		return 'points';
 	}
 
 	/**
@@ -474,8 +478,8 @@ final class AdminNavigation {
 			array(
 				'bundles',
 				'/content-hub/bundles',
-				$curr + array(
-					'tab'     => 'tools',
+				$content + array(
+					'tab'     => 'courses',
 					'section' => 'bundles',
 				),
 			),
@@ -610,8 +614,8 @@ final class AdminNavigation {
 			array( 'subscription-detail', '/subscriptions/:id', $commerce + array( 'tab' => 'subscriptions' ) ),
 			array( 'memberships', '/memberships', $commerce + array( 'tab' => 'memberships' ) ),
 			array( 'memberships-editor', '/memberships/:id', $commerce + array( 'tab' => 'memberships' ) ),
-			array( 'cohorts', '/cohorts', $commerce + array( 'tab' => 'cohorts' ) ),
-			array( 'automations', '/automations', $commerce + array( 'tab' => 'automations' ) ),
+			array( 'cohorts', '/cohorts', $accounts + array( 'tab' => 'cohorts' ) ),
+			array( 'automations', '/automations', $engage + array( 'tab' => 'automations' ) ),
 			array( 'students', '/students', $accounts + array( 'tab' => 'students' ) ),
 			array(
 				'student-report',
@@ -643,26 +647,20 @@ final class AdminNavigation {
 			array(
 				'certificates',
 				'/certificates',
-				$engage + array(
-					'tab'     => 'gamification',
-					'section' => 'certificates',
-				),
+				$engage + array( 'tab' => 'certificates' ),
 			),
 			array(
 				'certificates-issued',
 				'/certificates/issued',
 				$engage + array(
-					'tab'     => 'gamification',
+					'tab'     => 'certificates',
 					'section' => 'issued-certificates',
 				),
 			),
 			array(
 				'certificates-editor',
 				'/certificates/:id',
-				$engage + array(
-					'tab'     => 'gamification',
-					'section' => 'certificates',
-				),
+				$engage + array( 'tab' => 'certificates' ),
 			),
 			array( 'sessions', '/sessions', $engage + array( 'tab' => 'sessions' ) ),
 			array( 'session-editor', '/sessions/:id', $engage + array( 'tab' => 'sessions' ) ),
@@ -674,7 +672,7 @@ final class AdminNavigation {
 					'params' => array( 'tab' => 'section' ),
 				),
 			),
-			array( 'emails', '/emails', $engage + array( 'tab' => 'emails' ) ),
+			array( 'emails', '/emails', $settings + array( 'tab' => 'emails' ) ),
 			array( 'integrations', '/integrations', $settings + array( 'tab' => 'integrations' ) ),
 			array(
 				'settings',
@@ -687,8 +685,8 @@ final class AdminNavigation {
 			array(
 				'taxonomies',
 				'/taxonomies',
-				$curr + array(
-					'tab'     => 'tools',
+				$content + array(
+					'tab'     => 'courses',
 					'section' => 'taxonomies',
 				),
 			),
@@ -929,6 +927,60 @@ final class AdminNavigation {
 	const MOVED_TOOL_SECTIONS = array( 'bundles', 'skill-map', 'subjects', 'taxonomies' );
 
 	/**
+	 * Tabs and sections that moved to another page, as `from` (group, tab, section; null section = any) and `to`
+	 * (group, tab, section; null keeps the section, false drops it). Every other query parameter is kept.
+	 */
+	const MOVED_PLACES = array(
+		array( array( 'commerce', 'cohorts', null ), array( 'accounts', 'cohorts', false ) ),
+		array( array( 'commerce', 'automations', null ), array( 'engagement', 'automations', false ) ),
+		array( array( 'engagement', 'emails', null ), array( 'settings', 'emails', false ) ),
+		array( array( 'engagement', 'gamification', 'certificates' ), array( 'engagement', 'certificates', false ) ),
+		array( array( 'engagement', 'gamification', 'issued-certificates' ), array( 'engagement', 'certificates', null ) ),
+		array( array( 'curriculum', 'tools', 'bundles' ), array( 'content', 'courses', null ) ),
+		array( array( 'curriculum', 'tools', 'taxonomies' ), array( 'content', 'courses', null ) ),
+	);
+
+	/**
+	 * Where an old address lives now, following the Content Hub moves first and then {@see self::MOVED_PLACES}.
+	 *
+	 * @param array $query Query parameters of the old address.
+	 * @return array|null The new query parameters, or null when the address did not move.
+	 */
+	public static function moved_query( array $query ) {
+		$first  = self::moved_content_query( $query );
+		$second = self::moved_place_query( null === $first ? $query : $first );
+		return null === $second ? $first : $second;
+	}
+
+	/**
+	 * Apply the first matching {@see self::MOVED_PLACES} rule to an address.
+	 *
+	 * @param array $query Query parameters.
+	 * @return array|null The new query parameters, or null when no rule matches.
+	 */
+	private static function moved_place_query( array $query ) {
+		$read = static function ( $name ) use ( $query ) {
+			return isset( $query[ $name ] ) && is_string( $query[ $name ] ) ? sanitize_key( $query[ $name ] ) : '';
+		};
+		foreach ( self::MOVED_PLACES as list( $from, $to ) ) {
+			if ( self::page_slug( $from[0] ) !== $read( 'page' ) || $from[1] !== $read( 'tab' ) ) {
+				continue;
+			}
+			if ( null !== $from[2] && $from[2] !== $read( 'section' ) ) {
+				continue;
+			}
+			$moved         = $query;
+			$moved['page'] = self::page_slug( $to[0] );
+			$moved['tab']  = $to[1];
+			if ( false === $to[2] ) {
+				unset( $moved['section'] );
+			}
+			return $moved;
+		}
+		return null;
+	}
+
+	/**
 	 * Where an old Content Hub Skills or Curriculum address lives now: the Skills tab became Curriculum › Tools,
 	 * and the Curriculum tab became Curriculum (its syllabus editor and tree) with the other screens under Tools.
 	 * Every other query parameter is kept.
@@ -936,7 +988,7 @@ final class AdminNavigation {
 	 * @param array $query Query parameters of the old address.
 	 * @return array|null The new query parameters, or null when the address did not move.
 	 */
-	public static function moved_query( array $query ) {
+	private static function moved_content_query( array $query ) {
 		$read = static function ( $name ) use ( $query ) {
 			return isset( $query[ $name ] ) && is_string( $query[ $name ] ) ? sanitize_key( $query[ $name ] ) : '';
 		};

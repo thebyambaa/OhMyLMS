@@ -135,14 +135,16 @@ describe( 'admin navigation contract', () => {
 		] );
 		expect( tabsOf( 'engagement', 'gamification' ) ).toEqual( [
 			...GAMIFICATION_TABS,
-			'certificates',
+		] );
+		expect( tabsOf( 'engagement', 'certificates' ) ).toEqual( [
+			'',
 			'issued-certificates',
 		] );
 		expect(
 			groups
 				.find( ( item ) => item.id === 'accounts' )
 				?.tabs.map( ( tab ) => tab.id )
-		).toEqual( [ 'students', ...ACCOUNT_TABS ] );
+		).toEqual( [ 'students', ...ACCOUNT_TABS, 'cohorts' ] );
 	} );
 
 	it( 'every feature route has an address on its page that opens the same feature', () => {

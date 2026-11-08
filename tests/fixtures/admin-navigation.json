@@ -15,7 +15,9 @@
 					"flag": "",
 					"sections": [
 						"",
-						"overview"
+						"overview",
+						"bundles",
+						"taxonomies"
 					],
 					"serverSections": [],
 					"defaultSection": ""
@@ -114,9 +116,7 @@
 						"mappings",
 						"placement",
 						"provenance",
-						"bundles",
-						"subjects",
-						"taxonomies"
+						"subjects"
 					],
 					"serverSections": [
 						"assessments"
@@ -176,6 +176,14 @@
 					"sections": [],
 					"serverSections": [],
 					"defaultSection": ""
+				},
+				{
+					"id": "cohorts",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [],
+					"serverSections": [],
+					"defaultSection": ""
 				}
 			]
 		},
@@ -208,22 +216,6 @@
 					"defaultSection": ""
 				},
 				{
-					"id": "cohorts",
-					"capability": "manage_options",
-					"flag": "",
-					"sections": [],
-					"serverSections": [],
-					"defaultSection": ""
-				},
-				{
-					"id": "automations",
-					"capability": "manage_options",
-					"flag": "",
-					"sections": [],
-					"serverSections": [],
-					"defaultSection": ""
-				},
-				{
 					"id": "subscriptions",
 					"capability": "manage_options",
 					"flag": "",
@@ -248,7 +240,7 @@
 				{
 					"id": "gamification",
 					"capability": "manage_options",
-					"flag": "",
+					"flag": "ohmylms_show_gamification_menu",
 					"sections": [
 						"points",
 						"levels",
@@ -256,10 +248,27 @@
 						"streaks",
 						"xp",
 						"leaderboard",
-						"rewards",
-						"certificates",
+						"rewards"
+					],
+					"serverSections": [],
+					"defaultSection": "points"
+				},
+				{
+					"id": "certificates",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [
+						"",
 						"issued-certificates"
 					],
+					"serverSections": [],
+					"defaultSection": ""
+				},
+				{
+					"id": "automations",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [],
 					"serverSections": [],
 					"defaultSection": ""
 				},
@@ -267,14 +276,6 @@
 					"id": "sessions",
 					"capability": "edit_posts",
 					"flag": "ohmylms_show_sessions_menu",
-					"sections": [],
-					"serverSections": [],
-					"defaultSection": ""
-				},
-				{
-					"id": "emails",
-					"capability": "manage_options",
-					"flag": "",
 					"sections": [],
 					"serverSections": [],
 					"defaultSection": ""
@@ -312,6 +313,14 @@
 					],
 					"serverSections": [],
 					"defaultSection": "general"
+				},
+				{
+					"id": "emails",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [],
+					"serverSections": [],
+					"defaultSection": ""
 				},
 				{
 					"id": "integrations",
@@ -446,8 +455,8 @@
 		{
 			"id": "bundles",
 			"path": "/content-hub/bundles",
-			"group": "curriculum",
-			"tab": "tools",
+			"group": "content",
+			"tab": "courses",
 			"section": "bundles"
 		},
 		{
@@ -667,13 +676,13 @@
 		{
 			"id": "cohorts",
 			"path": "/cohorts",
-			"group": "commerce",
+			"group": "accounts",
 			"tab": "cohorts"
 		},
 		{
 			"id": "automations",
 			"path": "/automations",
-			"group": "commerce",
+			"group": "engagement",
 			"tab": "automations"
 		},
 		{
@@ -727,22 +736,20 @@
 			"id": "certificates",
 			"path": "/certificates",
 			"group": "engagement",
-			"tab": "gamification",
-			"section": "certificates"
+			"tab": "certificates"
 		},
 		{
 			"id": "certificates-issued",
 			"path": "/certificates/issued",
 			"group": "engagement",
-			"tab": "gamification",
+			"tab": "certificates",
 			"section": "issued-certificates"
 		},
 		{
 			"id": "certificates-editor",
 			"path": "/certificates/:id",
 			"group": "engagement",
-			"tab": "gamification",
-			"section": "certificates"
+			"tab": "certificates"
 		},
 		{
 			"id": "sessions",
@@ -768,7 +775,7 @@
 		{
 			"id": "emails",
 			"path": "/emails",
-			"group": "engagement",
+			"group": "settings",
 			"tab": "emails"
 		},
 		{
@@ -789,8 +796,8 @@
 		{
 			"id": "taxonomies",
 			"path": "/taxonomies",
-			"group": "curriculum",
-			"tab": "tools",
+			"group": "content",
+			"tab": "courses",
 			"section": "taxonomies"
 		},
 		{
@@ -882,7 +889,7 @@
 		],
 		[
 			"/content-hub/bundles",
-			"page=ohmylms-curriculum&tab=tools&section=bundles"
+			"page=ohmylms-content&tab=courses&section=bundles"
 		],
 		[
 			"/content-hub/curriculum/syllabus/24?node=s%3A1",
@@ -890,7 +897,7 @@
 		],
 		[
 			"/taxonomies",
-			"page=ohmylms-curriculum&tab=tools&section=taxonomies"
+			"page=ohmylms-content&tab=courses&section=taxonomies"
 		],
 		[
 			"/content-hub/courses",
@@ -1010,11 +1017,11 @@
 		],
 		[
 			"/cohorts?cohort=5",
-			"page=ohmylms-commerce&tab=cohorts&cohort=5"
+			"page=ohmylms-accounts&tab=cohorts&cohort=5"
 		],
 		[
 			"/automations?show=log",
-			"page=ohmylms-commerce&tab=automations&show=log"
+			"page=ohmylms-engagement&tab=automations&show=log"
 		],
 		[
 			"/memberships?panel=cohorts&cohort=5",
@@ -1063,19 +1070,19 @@
 		],
 		[
 			"/certificates",
-			"page=ohmylms-engagement&tab=gamification&section=certificates"
+			"page=ohmylms-engagement&tab=certificates"
 		],
 		[
 			"/certificates/5",
-			"page=ohmylms-engagement&tab=gamification&section=certificates&id=5"
+			"page=ohmylms-engagement&tab=certificates&id=5"
 		],
 		[
 			"/certificates/issued?s=ABCD",
-			"page=ohmylms-engagement&tab=gamification&section=issued-certificates&s=ABCD"
+			"page=ohmylms-engagement&tab=certificates&section=issued-certificates&s=ABCD"
 		],
 		[
 			"/certificates?list=issued",
-			"page=ohmylms-engagement&tab=gamification&section=certificates&list=issued"
+			"page=ohmylms-engagement&tab=certificates&list=issued"
 		],
 		[
 			"/sessions",
@@ -1095,7 +1102,7 @@
 		],
 		[
 			"/emails?email=new-order",
-			"page=ohmylms-engagement&tab=emails&email=new-order"
+			"page=ohmylms-settings&tab=emails&email=new-order"
 		],
 		[
 			"/integrations?auth=success",

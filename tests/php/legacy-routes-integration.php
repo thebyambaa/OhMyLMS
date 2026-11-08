@@ -241,8 +241,9 @@ try {
 	}
 	$settings_tab = AdminNavigation::groups()['settings']['tabs']['settings'];
 	ok( array_keys( $settings_tab['sections'] ) === $tabs['/settings'], 'Settings sections are the settings screen tabs, in order' );
-	ok( array_keys( AdminNavigation::groups()['engagement']['tabs']['gamification']['sections'] ) === array_merge( $tabs['/gamification'], array( 'certificates', 'issued-certificates' ) ), 'Gamification sections are its tabs plus Certificates and Issued certificates' );
-	ok( array_slice( array_keys( AdminNavigation::groups()['accounts']['tabs'] ), 1 ) === $tabs['/account-hub'], 'Account Hub tabs are Students and the Account Hub screen tabs' );
+	ok( array_keys( AdminNavigation::groups()['engagement']['tabs']['gamification']['sections'] ) === $tabs['/gamification'], 'Gamification sections are its screen tabs' );
+	ok( array( '', 'issued-certificates' ) === array_keys( AdminNavigation::groups()['engagement']['tabs']['certificates']['sections'] ), 'Certificates has the templates and the issued list' );
+	ok( array_slice( array_keys( AdminNavigation::groups()['accounts']['tabs'] ), 1, -1 ) === $tabs['/account-hub'] && 'cohorts' === array_key_last( AdminNavigation::groups()['accounts']['tabs'] ), 'Account Hub tabs are Students, the Account Hub screen tabs and Cohorts' );
 
 	// Absolute URLs from the helpers and the screens that use them.
 	$dashboard = admin_url( 'admin.php?page=' . OHMYLMS_SLUG );
@@ -323,7 +324,7 @@ try {
 		'ohmylms/go-account-hub'    => array( 'ohmylms-accounts', '/account-hub', 'page=ohmylms-accounts&tab=schools' ),
 		'ohmylms/go-memberships'    => array( 'ohmylms-commerce', '/memberships', 'page=ohmylms-commerce&tab=memberships' ),
 		'ohmylms/go-settings-pay'   => array( 'ohmylms-settings', '/settings?tab=payment-gateways', 'page=ohmylms-settings&tab=settings&section=payment-gateways' ),
-		'ohmylms/go-settings-email' => array( 'ohmylms-engagement', '/emails', 'page=ohmylms-engagement&tab=emails' ),
+		'ohmylms/go-settings-email' => array( 'ohmylms-settings', '/emails', 'page=ohmylms-settings&tab=emails' ),
 		'ohmylms/new-question'      => array( 'ohmylms-bank', '/content-hub/question-bank?action=new', 'page=ohmylms-bank&tab=question-bank&action=new' ),
 		'ohmylms/new-exam'          => array( 'ohmylms-bank', '/exams?action=new', 'page=ohmylms-bank&tab=exams&action=new' ),
 		'addon/orders'              => array( 'ohmylms-commerce', '/orders', 'page=ohmylms-commerce&tab=orders' ),
@@ -445,10 +446,21 @@ try {
 			'tab'  => 'sessions',
 		)
 	);
+	add_filter( 'ohmylms_show_gamification_menu', '__return_true', 99 );
+	AdminNavigation::reset();
+	$fallback = AdminNavigation::current(
+		array(
+			'page' => 'ohmylms-engagement',
+			'tab'  => 'sessions',
+		)
+	);
 	ok( 'gamification' === $fallback['tab'] && AdminNavigation::gamification_default_section() === $fallback['section'], 'a hidden tab falls back to the default tab and section' );
+	remove_filter( 'ohmylms_show_gamification_menu', '__return_true', 99 );
 	add_filter( 'ohmylms_show_gamification_menu', '__return_false', 99 );
-	ok( 'certificates' === AdminNavigation::current( array( 'page' => 'ohmylms-engagement' ) )['section'], 'without the Gamification add-on the tab opens Certificates' );
+	AdminNavigation::reset();
+	ok( 'certificates' === AdminNavigation::current( array( 'page' => 'ohmylms-engagement' ) )['tab'], 'without the Gamification add-on the page opens Certificates' );
 	remove_filter( 'ohmylms_show_gamification_menu', '__return_false', 99 );
+	AdminNavigation::reset();
 	ok(
 		'courses' === AdminNavigation::current(
 			array(
@@ -523,7 +535,10 @@ try {
 		)['section'],
 		'a skill workspace section opens in the app'
 	);
-	ok( array( 'earnings', 'orders', 'memberships', 'cohorts', 'automations', 'subscriptions', 'coupons' ) === array_keys( AdminNavigation::groups()['commerce']['tabs'] ), 'Cohorts and Automations are Commerce tabs after Memberships' );
+	ok( array( 'earnings', 'orders', 'memberships', 'subscriptions', 'coupons' ) === array_keys( AdminNavigation::groups()['commerce']['tabs'] ), 'Commerce holds sales: earnings, orders, memberships, subscriptions and coupons' );
+	ok( array( 'gamification', 'certificates', 'automations', 'sessions' ) === array_keys( AdminNavigation::groups()['engagement']['tabs'] ), 'Engagement holds gamification, certificates, automations and sessions' );
+	ok( isset( AdminNavigation::groups()['settings']['tabs']['emails'] ) && isset( AdminNavigation::groups()['accounts']['tabs']['cohorts'] ), 'Emails is a Settings tab and Cohorts an Account Hub tab' );
+	ok( array( 'bundles', 'taxonomies' ) === array_values( array_intersect( array( 'bundles', 'taxonomies' ), array_keys( AdminNavigation::groups()['content']['tabs']['courses']['sections'] ) ) ) && ! isset( AdminNavigation::groups()['curriculum']['tabs']['tools']['sections']['bundles'] ), 'Course bundles and Categories and tags are Courses sections, not Curriculum tools' );
 	if ( apply_filters( 'ohmylms_should_enable_webhooks', false ) ) {
 		ok( isset( AdminNavigation::visible_tabs( 'settings' )['webhooks'] ), 'Webhooks shows with ohmylms_should_enable_webhooks' );
 	} else {
@@ -855,8 +870,39 @@ try {
 				'section' => $moved_section,
 			)
 		);
-		ok( 'tools' === $moved_tab['tab'] && $moved_section === $moved_tab['section'], 'the old ' . $moved_section . ' section opens under Tools' );
+		$to_courses = in_array( $moved_section, array( 'bundles', 'taxonomies' ), true );
+		ok( ( $to_courses ? 'courses' : 'tools' ) === $moved_tab['tab'] && $moved_section === $moved_tab['section'], 'the old ' . $moved_section . ' section opens in its new place' );
 	}
+	foreach (
+		array(
+			array( array( 'ohmylms-commerce', 'cohorts', '' ), array( 'ohmylms-accounts', 'cohorts' ) ),
+			array( array( 'ohmylms-commerce', 'automations', '' ), array( 'ohmylms-engagement', 'automations' ) ),
+			array( array( 'ohmylms-engagement', 'emails', '' ), array( 'ohmylms-settings', 'emails' ) ),
+			array( array( 'ohmylms-engagement', 'gamification', 'certificates' ), array( 'ohmylms-engagement', 'certificates' ) ),
+			array( array( 'ohmylms-engagement', 'gamification', 'issued-certificates' ), array( 'ohmylms-engagement', 'certificates' ) ),
+			array( array( 'ohmylms-curriculum', 'tools', 'bundles' ), array( 'ohmylms-content', 'courses' ) ),
+			array( array( 'ohmylms-curriculum', 'tools', 'taxonomies' ), array( 'ohmylms-content', 'courses' ) ),
+		) as list( $old, $new )
+	) {
+		$old_query = array(
+			'page' => $old[0],
+			'tab'  => $old[1],
+			'id'   => '9',
+		);
+		if ( '' !== $old[2] ) {
+			$old_query['section'] = $old[2];
+		}
+		$place = AdminNavigation::moved_query( $old_query );
+		ok( null !== $place && $new[0] === $place['page'] && $new[1] === $place['tab'] && '9' === $place['id'], 'the old ' . $old[0] . ' ' . $old[1] . ' ' . $old[2] . ' address moved to ' . $new[0] . ' ' . $new[1] );
+	}
+	$old_bundles = AdminNavigation::moved_query(
+		array(
+			'page'    => 'ohmylms-content',
+			'tab'     => 'curriculum',
+			'section' => 'bundles',
+		)
+	);
+	ok( 'ohmylms-content' === $old_bundles['page'] && 'courses' === $old_bundles['tab'], 'the oldest bundles address reaches Courses in one step' );
 	$moved_compare = AdminNavigation::moved_query(
 		array(
 			'page' => 'ohmylms-content',

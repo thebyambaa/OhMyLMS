@@ -36,12 +36,12 @@ export const orderDetail: FeatureDefinition = {
 	),
 };
 
-/** Commerce › Cohorts at `#/cohorts` (`cohort=<id>` opens one); formerly `/memberships?panel=cohorts`. */
+/** Account Hub › Cohorts at `#/cohorts` (`cohort=<id>` opens one); formerly Commerce › Cohorts and `/memberships?panel=cohorts`. */
 export const cohorts: FeatureDefinition = {
 	id: 'cohorts',
 	title: __( 'Cohorts', 'ohmylms' ),
 	path: '/cohorts',
-	group: 'commerce',
+	group: 'accounts',
 	tab: 'cohorts',
 	capability: 'manage_options',
 	component: lazy(
@@ -52,12 +52,12 @@ export const cohorts: FeatureDefinition = {
 	),
 };
 
-/** Commerce › Automations at `#/automations` (`rule=`, `show=log`); formerly `/memberships?panel=automations`. */
+/** Engagement › Automations at `#/automations` (`rule=`, `show=log`); formerly Commerce › Automations and `/memberships?panel=automations`. */
 export const automations: FeatureDefinition = {
 	id: 'automations',
 	title: __( 'Automations', 'ohmylms' ),
 	path: '/automations',
-	group: 'commerce',
+	group: 'engagement',
 	tab: 'automations',
 	capability: 'manage_options',
 	component: lazy(

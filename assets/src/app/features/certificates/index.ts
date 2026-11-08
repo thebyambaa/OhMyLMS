@@ -8,8 +8,7 @@ export const certificates: FeatureDefinition = {
 	title: __( 'Certificates', 'ohmylms' ),
 	path: '/certificates',
 	group: 'engagement',
-	tab: 'gamification',
-	section: 'certificates',
+	tab: 'certificates',
 	capability: 'manage_options',
 	component: lazy(
 		() =>
@@ -20,7 +19,7 @@ export const certificates: FeatureDefinition = {
 };
 
 /**
- * Issued certificates at `#/certificates/issued` (Gamification › Issued certificates); the old
+ * Issued certificates at `#/certificates/issued` (Certificates › Issued certificates); the old
  * `/certificates?list=issued` opens it. More literal segments than the editor's path, so it wins.
  */
 export const certificatesIssued: FeatureDefinition = {
@@ -28,7 +27,7 @@ export const certificatesIssued: FeatureDefinition = {
 	title: __( 'Issued certificates', 'ohmylms' ),
 	path: '/certificates/issued',
 	group: 'engagement',
-	tab: 'gamification',
+	tab: 'certificates',
 	section: 'issued-certificates',
 	capability: 'manage_options',
 	hidden: true,
@@ -49,8 +48,7 @@ export const certificateEditor: FeatureDefinition = {
 	title: __( 'Certificate template', 'ohmylms' ),
 	path: '/certificates/:id',
 	group: 'engagement',
-	tab: 'gamification',
-	section: 'certificates',
+	tab: 'certificates',
 	extensionRoute: '/certificate-edit/:id',
 	hidden: true,
 	capability: 'manage_options',

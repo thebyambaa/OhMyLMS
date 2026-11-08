@@ -82,8 +82,7 @@ describe( 'CertificatesPage', () => {
 		).toBeInTheDocument();
 		expect( certificates ).toMatchObject( {
 			group: 'engagement',
-			tab: 'gamification',
-			section: 'certificates',
+			tab: 'certificates',
 		} );
 	} );
 	it( 'shows loading, then a named table with thumbnails, links and counts', async () => {

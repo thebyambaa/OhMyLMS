@@ -20,7 +20,7 @@ The workspace needs `manage_options`, because its endpoints are the curriculum a
 
 The second tab (`tab=tools`, `edit_posts`) holds the specialist screens, each a section:
 
-Skill library, Skill map, Assessments, AI runs (the four everyday sections, listed first), then Combined mappings, Domain placement, Provenance review, Course bundles, Subject profiles, and Categories and tags. Skill map is also open to school staff, read only. Sections that need the curriculum administrator are hidden from other users.
+Skill library, Skill map, Assessments, AI runs (the four everyday sections, listed first), then Combined mappings, Domain placement, Provenance review, and Subject profiles. Course bundles and Categories and tags moved to Content Hub › Courses. Skill map is also open to school staff, read only. Sections that need the curriculum administrator are hidden from other users.
 
 ## Moved from the Content Hub
 
@@ -31,6 +31,7 @@ The Content Hub's Skills and Curriculum tabs moved here. Their old addresses red
 | `page=ohmylms-content&tab=skills[&section=…]` | `page=ohmylms-curriculum&tab=tools[&section=…]` |
 | `page=ohmylms-content&tab=curriculum` | `page=ohmylms-curriculum&tab=workspace` |
 | `…&tab=curriculum&view=syllabus&id=N` | `…ohmylms-curriculum&tab=workspace&view=syllabus&id=N` |
-| `…&tab=curriculum&section=bundles\|skill-map\|subjects\|taxonomies`, `…&view=compare` | `…ohmylms-curriculum&tab=tools&section=…` |
+| `…&tab=curriculum&section=skill-map\|subjects`, `…&view=compare` | `…ohmylms-curriculum&tab=tools&section=…` |
+| `…&tab=curriculum&section=bundles\|taxonomies` | `…ohmylms-content&tab=courses&section=…` |
 
 App routes keep their paths (`/content-hub/skills`, `/content-hub/curriculum/…`); only the page and tab they open changed. The legacy hash routes `#/categories`, `#/tags` and `#/extensions/curriculum` open the workspace.

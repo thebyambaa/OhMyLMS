@@ -46,11 +46,11 @@ order: menu and WordPress look, then the dashboard, then the gradebook. Also dec
 | Content Hub | `ohmylms-content` | courses, lessons, quizzes, exams, assignments, gradebook (phase C), question-bank, skills, curriculum |
 | Account Hub | `ohmylms-accounts` | students, schools, classes, teachers, parents, users (All accounts) |
 | Commerce | `ohmylms-commerce` | earnings, orders, memberships, subscriptions, coupons |
-| Engagement | `ohmylms-engagement` | gamification (sections incl. rewards and certificates), sessions (only with `ohmylms_show_sessions_menu`), emails |
-| Settings | `ohmylms-settings` | settings (sections = today's settings tabs incl. xAPI, AI tutor, migration), integrations, webhooks, setup |
+| Engagement | `ohmylms-engagement` | gamification (only with the Gamification add-on), certificates (templates and issued), automations, sessions (only with `ohmylms_show_sessions_menu`) |
+| Settings | `ohmylms-settings` | settings (sections = today's settings tabs incl. xAPI, AI tutor, migration), emails, integrations, webhooks, setup |
 
 Detail screens add `&id=` and `&view=` (`page=ohmylms-content&tab=courses&id=12&view=settings`); second-level
-sections use `&section=`, rendered as `.subsubsub` under the tab (curriculum: bundles, skill-map, subjects, taxonomies;
+sections use `&section=`, rendered as `.subsubsub` under the tab (courses: overview, bundles, taxonomies; curriculum tools: skill-map, subjects;
 skills: assessments; question bank: import-review). Feature query parameters (filters, `action=new|import`, `add=1`)
 stay as they are.
 
@@ -67,8 +67,8 @@ stay as they are.
   group heading, the tabs and the mount point. Restore the pending-orders badge on the top-level menu and Commerce.
   `CommonHook.php` and `SkillAssessmentPage.php` stop adding their own submenus (they become tabs/sections).
 - **Merges** from PROPOSED-NAV: Home + Dashboard; one course editor (structure and settings as views of
-  `tab=courses&id=`); categories/tags as a curriculum section; Students under Account Hub; Certificates always a
-  Gamification section.
+  `tab=courses&id=`); categories/tags and course bundles as Courses sections; Students and Cohorts under Account Hub;
+  Certificates their own Engagement tab; Emails under Settings; Automations under Engagement.
 - **Redirects.** `page=ohmylms#/…` (recovered admin) and `page=ohmylms-app#/…` (today's app) map to the new
   addresses: the hash only reaches the browser, so the landing script maps it; `page=ohmylms-app` with no hash redirects
   on the server. `LegacyRoutes::url()`/`app_url()` emit new addresses, so emails, the command palette, the admin bar
@@ -84,7 +84,7 @@ and the forever redirects are in place and verified on 800.local ([ARCHITECTURE]
   Reports (quiz reports). Course reports and rosters are views of a course (`&id=…&view=report|students`); the old
   course-structure routes are views `structure`/`structure-settings` that redirect into the course editor.
 - Skills › Assessments and Question bank › Import review are sections PHP renders (the former pages redirect).
-- Engagement › Gamification opens Points with the Gamification add-on on and Certificates otherwise.
+- Engagement › Gamification shows only with the Gamification add-on on; without it the page opens Certificates.
 - Settings sections are the settings screen's tabs; the in-page tab rows of Settings, Gamification and Account Hub
   are hidden on the admin pages, as PHP prints them.
 - Every page requires `manage_options`, as before; tabs carry their own capability (some `edit_posts`) for when
@@ -196,3 +196,19 @@ and tested on the test site.
 Same as the modularisation: parallel subagents per area (navigation and routing; list-table and look; one per
 dashboard widget group; gradebook model then views), each with tests, docs and a live check on 800.local;
 the coordinator owns `LegacyRoutes`, `Menu.php`, the registry and the combined build, and commits to `main`.
+
+## Menu reorganization (2026-11)
+
+Screens that did not belong with their neighbours moved; every old address redirects, keeping its other
+parameters (`AdminNavigation::MOVED_PLACES`):
+
+| Screen | Was | Now |
+| --- | --- | --- |
+| Cohorts | Commerce | Account Hub |
+| Automations | Commerce | Engagement |
+| Emails | Engagement | Settings |
+| Certificates, Issued certificates | Engagement › Gamification sections | Engagement › Certificates tab |
+| Course bundles, Categories and tags | Curriculum › Tools | Content Hub › Courses sections |
+
+Gamification is hidden unless the add-on is on. Not moved: Currency, Tax and Payment gateways stay Settings
+sections (they are sections of one settings screen), and Content Hub and Content Bank stay two pages.

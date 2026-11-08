@@ -90,7 +90,7 @@ Each rule has `from` (path pattern), `to` (new route) and optionally `query` and
 | `/content-hub/skills`, `/extensions/skills` (no `?add=`, or `add=1`) | `/content-hub/skills(?add=1)` |
 | `/content-hub/curriculum`, `/extensions/curriculum`, `/categories`, `/tags` | `/content-hub/curriculum` |
 | `/content-hub/curriculum/skill-map`, `/subjects`, `/syllabus/:id` | the same paths |
-| `/content-hub/bundles`, `/extensions/bundles` | `/content-hub/bundles` |
+| `/content-hub/bundles`, `/extensions/bundles` | `/content-hub/bundles` (Content Hub › Courses › Course bundles) |
 | `/content-hub/curriculum/compare` (`?roadmap=:id` opens the syllabus editor) | the same path |
 | `/content-hub/exams` (no `?action=`, or `new`/`import`) | `/exams(?action=<same>)` |
 | `/communities` (retired) | `/integrations` |
