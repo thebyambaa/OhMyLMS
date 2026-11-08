@@ -12,5 +12,4 @@ export {
 } from './mappings';
 export type { SyllabusComparison } from './mappings';
 
-export { ContentSkillConnections } from './ContentSkillConnections';
 export type { ContentKind } from './workspace';

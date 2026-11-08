@@ -1,7 +1,6 @@
 import * as transport from '../../lib/api';
 import {
 	parseCombined,
-	parseContentLinks,
 	parsePlacement,
 	parseQueue,
 	parseSuggestion,
@@ -10,7 +9,6 @@ import {
 	reviewSuggestions,
 	savePlacement,
 	startRun,
-	updateContentLinks,
 } from './workspace';
 
 vi.mock( '../../lib/api', async ( original ) => ( {
@@ -119,32 +117,6 @@ describe( 'skill workspace model', () => {
 		} );
 	} );
 
-	it( 'reads content links with roles and a revision', () => {
-		const links = parseContentLinks( {
-			content: { id: 5, kind: 'question', title: 'Q', status: 'draft' },
-			skills: [
-				{
-					id: 3,
-					name: 'Solve',
-					code: '',
-					shared: false,
-					role: 'primary',
-					archived: false,
-					syllabuses: [ 'IGCSE' ],
-				},
-			],
-			revision: sha,
-		} );
-		expect( links.skills[ 0 ]?.role ).toBe( 'primary' );
-		expect( () =>
-			parseContentLinks( {
-				content: { id: 5, kind: 'video', title: 'Q', status: 'draft' },
-				skills: [],
-				revision: sha,
-			} )
-		).toThrow();
-	} );
-
 	it( 'reads placements with an empty domain map and checks level order', () => {
 		const page = parsePlacement( {
 			items: [],
@@ -246,25 +218,6 @@ describe( 'skill workspace requests', () => {
 				action: 'accept',
 				overrides: { 4: { relation: 'related' } },
 			},
-			{ signal: undefined }
-		);
-	} );
-
-	it( 'saves content links against the revision it read', async () => {
-		const current = parseContentLinks( {
-			content: { id: 5, kind: 'lesson', title: 'L', status: 'draft' },
-			skills: [],
-			revision: sha,
-		} );
-		vi.mocked( transport.put ).mockResolvedValue( {
-			content: { id: 5, kind: 'lesson', title: 'L', status: 'draft' },
-			skills: [],
-			revision: 'b'.repeat( 64 ),
-		} );
-		await updateContentLinks( current, [ 3 ], [] );
-		expect( transport.put ).toHaveBeenCalledWith(
-			'/ohmylms/v1/skill-workspace/content/lesson/5',
-			{ add: [ 3 ], remove: [], expected_revision: sha },
 			{ signal: undefined }
 		);
 	} );

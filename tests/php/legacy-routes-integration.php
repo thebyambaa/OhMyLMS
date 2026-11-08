@@ -510,7 +510,7 @@ try {
 		'the Tools tab shows the app'
 	);
 	$workspace = AdminNavigation::groups()['curriculum']['tabs']['tools']['sections'];
-	$admin_only = array( 'mappings', 'ai-runs', 'content-links', 'placement', 'provenance' );
+	$admin_only = array( 'mappings', 'ai-runs', 'placement', 'provenance' );
 	ok( array() === array_diff( $admin_only, array_keys( $workspace ) ) && array( AdminNavigation::CAPABILITY ) === array_values( array_unique( array_column( array_intersect_key( $workspace, array_flip( $admin_only ) ), 'capability' ) ) ), 'the skill workspace sections are Tools sections for site administrators only' );
 	ok( array( '', 'skill-map', 'assessments', 'ai-runs' ) === array_slice( array_keys( $workspace ), 0, 4 ), 'Tools opens on the four everyday sections' );
 	ok(
@@ -828,6 +828,16 @@ try {
 		)
 	);
 	ok( 'tools' === $removed_quizzes['tab'] && ! isset( $removed_quizzes['section'] ) && '7' === $removed_quizzes['skill'], 'the removed Skill quizzes section opens the Skill library' );
+	$removed_links = AdminNavigation::moved_query(
+		array(
+			'page'    => 'ohmylms-curriculum',
+			'tab'     => 'tools',
+			'section' => 'content-links',
+			'kind'    => 'lesson',
+			'content' => '5',
+		)
+	);
+	ok( 'tools' === $removed_links['tab'] && ! isset( $removed_links['section'] ) && '5' === $removed_links['content'], 'the removed Content links section opens the Skill library' );
 	$moved_syllabus = AdminNavigation::moved_query(
 		array(
 			'page' => 'ohmylms-content',

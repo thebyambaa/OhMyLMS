@@ -90,17 +90,6 @@ export const skillWorkspaceAiRuns: FeatureDefinition = {
 	hidden: true,
 	component: skillWorkspace,
 };
-export const skillWorkspaceContentLinks: FeatureDefinition = {
-	id: 'skill-workspace-content-links',
-	title: __( 'Content links', 'ohmylms' ),
-	path: '/content-hub/skills/content-links',
-	group: 'curriculum',
-	tab: 'tools',
-	section: 'content-links',
-	capability: 'manage_options',
-	hidden: true,
-	component: skillWorkspace,
-};
 export const skillWorkspacePlacement: FeatureDefinition = {
 	id: 'skill-workspace-placement',
 	title: __( 'Domain placement', 'ohmylms' ),

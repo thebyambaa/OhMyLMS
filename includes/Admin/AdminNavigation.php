@@ -216,10 +216,6 @@ final class AdminNavigation {
 								'label'      => __( 'Combined mappings', 'ohmylms' ),
 								'capability' => self::CAPABILITY,
 							),
-							'content-links' => array(
-								'label'      => __( 'Content links', 'ohmylms' ),
-								'capability' => self::CAPABILITY,
-							),
 							'placement'     => array(
 								'label'      => __( 'Domain placement', 'ohmylms' ),
 								'capability' => self::CAPABILITY,
@@ -431,14 +427,6 @@ final class AdminNavigation {
 				$curr + array(
 					'tab'     => 'tools',
 					'section' => 'ai-runs',
-				),
-			),
-			array(
-				'skill-workspace-content-links',
-				'/content-hub/skills/content-links',
-				$curr + array(
-					'tab'     => 'tools',
-					'section' => 'content-links',
 				),
 			),
 			array(
@@ -952,8 +940,9 @@ final class AdminNavigation {
 		$read = static function ( $name ) use ( $query ) {
 			return isset( $query[ $name ] ) && is_string( $query[ $name ] ) ? sanitize_key( $query[ $name ] ) : '';
 		};
-		// Two Tools screens were removed: the Item tree (the Curriculum tab replaced it) and Skill quizzes.
-		if ( self::page_slug( 'curriculum' ) === $read( 'page' ) && 'tools' === $read( 'tab' ) && in_array( $read( 'section' ), array( 'tree', 'skill-quizzes' ), true ) ) {
+		// Three Tools screens were removed: the Item tree (the Curriculum tab replaced it), Skill quizzes and Content links
+		// (a lesson's skills are chosen in the lesson editor).
+		if ( self::page_slug( 'curriculum' ) === $read( 'page' ) && 'tools' === $read( 'tab' ) && in_array( $read( 'section' ), array( 'tree', 'skill-quizzes', 'content-links' ), true ) ) {
 			$moved = $query;
 			if ( 'tree' === $read( 'section' ) ) {
 				$moved['tab'] = 'workspace';

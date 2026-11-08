@@ -15,7 +15,7 @@ Lessons and quizzes continue to use their existing WordPress block editors.
 4. Use Learning settings for course/unit mastery targets and completion requirements. Course skill
    connections describe coverage; they do not replace these targets.
 5. Use Block editor beside a lesson or quiz to edit its content in a new tab, keeping the outline open. The native lesson, quiz and question
-   editors also expose Skills and curriculum, opening the connection workspace in a separate tab.
+   editor has a Skills panel to choose the skills it teaches; quizzes and questions choose theirs in their own panels.
 6. Save the outline draft, then use the existing Preview and publish flow to release changes.
 
 Content Hub > Curriculum displays a nested, expandable listing. Expand all and Collapse all control

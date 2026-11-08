@@ -112,7 +112,6 @@
 						"assessments",
 						"ai-runs",
 						"mappings",
-						"content-links",
 						"placement",
 						"provenance",
 						"bundles",
@@ -399,13 +398,6 @@
 			"group": "curriculum",
 			"tab": "tools",
 			"section": "ai-runs"
-		},
-		{
-			"id": "skill-workspace-content-links",
-			"path": "/content-hub/skills/content-links",
-			"group": "curriculum",
-			"tab": "tools",
-			"section": "content-links"
 		},
 		{
 			"id": "skill-workspace-placement",
@@ -863,10 +855,6 @@
 		[
 			"/content-hub/skills/ai-runs?run=1",
 			"page=ohmylms-curriculum&tab=tools&section=ai-runs&run=1"
-		],
-		[
-			"/content-hub/skills/content-links?kind=lesson&content=5",
-			"page=ohmylms-curriculum&tab=tools&section=content-links&kind=lesson&content=5"
 		],
 		[
 			"/content-hub/skills/placement",

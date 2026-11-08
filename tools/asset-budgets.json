@@ -370,10 +370,6 @@
 			"raw": 30400,
 			"gzip": 9600
 		},
-		"chunks/admin-app-skill-workspace.css": {
-			"raw": 3500,
-			"gzip": 1100
-		},
 		"chunks/admin-app-skill-workspace.js": {
 			"raw": 66600,
 			"gzip": 16800

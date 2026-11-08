@@ -27,7 +27,6 @@ type Tab = ( typeof TABS )[ number ];
 const WORKSPACE_TABS: Readonly< Record< string, WorkspaceSection > > = {
 	mappings: 'mappings',
 	ai: 'ai-runs',
-	content: 'content-links',
 	placement: 'placement',
 	provenance: 'provenance',
 };
@@ -44,7 +43,7 @@ function tabLabel( tab: Tab ): string {
 /**
  * Syllabus comparison at `#/content-hub/curriculum/compare` (`?tab=groups|roadmaps|shared|audit`).
  * The legacy `?roadmap=<id>` bookmark opens that roadmap in the syllabus editor; the former skill
- * workspace tabs (`?tab=mappings|ai|content|placement|provenance`) open their Skills section
+ * workspace tabs (`?tab=mappings|ai|placement|provenance`) open their Skills section
  * with the rest of the query.
  */
 export default function ComparePage() {

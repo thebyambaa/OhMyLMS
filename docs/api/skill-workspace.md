@@ -1,7 +1,8 @@
 # Skill workspace API
 
 The skill workspace rebuilds the curriculum workflows that only the deleted legacy admin had: combined
-mappings, AI runs, shared content links, domain placement and provenance review.
+mappings, AI runs, domain placement and provenance review. A lesson's skills are chosen in the lesson editor's Skills
+panel (the `skill-workspace/content/lesson/ID` endpoint below); the old Content links screen was removed and its address opens the Skill library.
 The screens are sections of Curriculum › Tools (`features/curriculum/SkillWorkspace`, lazy chunk
 `admin-app-skill-workspace`), shown to site administrators only (the Tools tab itself needs
 `edit_posts`):
@@ -10,7 +11,6 @@ The screens are sections of Curriculum › Tools (`features/curriculum/SkillWork
 | --- | --- | --- |
 | Combined mappings | `/content-hub/skills/mappings?skill=ID` | `page=ohmylms-curriculum&tab=tools&section=mappings&skill=ID` |
 | AI runs | `/content-hub/skills/ai-runs[?syllabus=ID][&run=ID]` | `…&section=ai-runs` |
-| Content links | `/content-hub/skills/content-links?kind=lesson\|quiz\|assignment\|course\|question&content=ID` | `…&section=content-links` |
 | Domain placement | `/content-hub/skills/placement?subject=…[&domain=][&unplaced=0][&s=]` | `…&section=placement` |
 | Provenance review | `/content-hub/skills/provenance[?review=pending\|rejected\|approved\|all][&source=][&s=][&skill=ID]` | `…&section=provenance` |
 
@@ -74,9 +74,6 @@ The AI runs screen uses only these routes: runs call the configured provider thr
   suggestion counts; process the next slice or stop an active run; review suggestions with status views,
   an editable relation for mappings, accept/reject per row or in bulk and "Accept all at 85% or more"
   behind a confirmation. Per-suggestion failures are listed.
-- **Content links**: pick a content type and item, stage added skills (library search covers objectives
-  and shared skills) and removals, and save them together; a stale save offers "Reload links and keep my
-  changes".
 - **Domain placement**: per-row domain and level selects, bulk "Apply to selected", one batch save, a
   disabled save for an invalid band, and "Reload skills and keep my placements" after a stale refusal.
 - **Provenance review**: views with counts, source filter, search, bulk approve/reject with an optional

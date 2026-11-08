@@ -170,7 +170,7 @@ add from sources; folders are kept and new steps join the first) with the same k
 **shared skills** searches, shows the mapped objectives and edits against the revision; **audit**
 shows one learner's shared mastery and per-syllabus coverage by user ID.
 
-Combined mapping groups, AI runs and suggestions, shared content links, domain/level placement,
+Combined mapping groups, AI runs and suggestions, domain/level placement,
 and provenance review are Curriculum › Tools sections (`/content-hub/skills/<section>`);
 this screen's former `?tab=mappings|ai|content|placement|provenance` open them. See
 [skill workspace](skill-workspace.md). The

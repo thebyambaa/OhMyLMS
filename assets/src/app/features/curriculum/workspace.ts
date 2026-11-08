@@ -15,7 +15,6 @@ const AI = `${ BASE }/syllabus-comparison/ai`;
 export const WORKSPACE_SECTIONS = [
 	'mappings',
 	'ai-runs',
-	'content-links',
 	'placement',
 	'provenance',
 ] as const;
@@ -466,97 +465,6 @@ export async function reviewSuggestions(
 				}
 			: { ok: true as const, suggestion: parseSuggestion( raw ) };
 	} );
-}
-
-/* ---------- Content links ---------- */
-
-export interface LinkedSkill {
-	id: number;
-	name: string;
-	code: string;
-	shared: boolean;
-	role: 'linked' | 'primary' | 'supporting';
-	archived: boolean;
-	syllabuses: string[];
-}
-export interface ContentLinks {
-	content: PostRef & { kind: ContentKind };
-	skills: LinkedSkill[];
-	revision: string;
-}
-function contentKind( value: unknown ): ContentKind {
-	return CONTENT_KINDS.find( ( kind ) => kind === value ) ?? invalid();
-}
-export function parseContentLinks( value: unknown ): ContentLinks {
-	const row = record( value );
-	const content = record( row.content );
-	return {
-		content: { ...postRef( content ), kind: contentKind( content.kind ) },
-		skills: list( row.skills ).map( ( raw ) => {
-			const skill = record( raw );
-			const role = text( skill.role );
-			if ( ! [ 'linked', 'primary', 'supporting' ].includes( role ) ) {
-				return invalid();
-			}
-			return {
-				id: positiveId( skill.id ),
-				name: text( skill.name ),
-				code: optionalText( skill.code ),
-				shared: bool( skill.shared ),
-				role: role as LinkedSkill[ 'role' ],
-				archived: bool( skill.archived ),
-				syllabuses: list( skill.syllabuses ).map( text ),
-			};
-		} ),
-		revision: sha( row.revision ),
-	};
-}
-export async function searchContent(
-	kind: ContentKind,
-	search: string,
-	page: number,
-	signal?: AbortSignal
-) {
-	const row = record(
-		await get< unknown >( `${ WORKSPACE }/content`, {
-			query: { kind, search, page },
-			signal,
-		} )
-	);
-	return {
-		items: list( row.items ).map( ( raw ) => ( {
-			...postRef( raw ),
-			editable: bool( record( raw ).editable ),
-		} ) ),
-		total: count( row.total ),
-		pages: count( row.pages ),
-	};
-}
-export async function readContentLinks(
-	kind: ContentKind,
-	id: number,
-	signal?: AbortSignal
-) {
-	return parseContentLinks(
-		await get< unknown >(
-			`${ WORKSPACE }/content/${ kind }/${ positiveId( id ) }`,
-			{ signal }
-		)
-	);
-}
-export async function updateContentLinks(
-	current: ContentLinks,
-	add: number[],
-	remove: number[],
-	signal?: AbortSignal
-) {
-	return parseContentLinks(
-		await put< unknown >(
-			`${ WORKSPACE }/content/${ current.content.kind }/${ current.content.id }`,
-			{ add, remove, expected_revision: current.revision },
-			{ signal }
-		)
-	);
 }
 
 /* ---------- Domain placement ---------- */

@@ -1,7 +1,6 @@
 import { __ } from '@wordpress/i18n';
 import { useLocation } from 'react-router-dom';
 import { AiRunsPanel } from './AiRunsPanel';
-import { ContentLinksPanel } from './ContentLinksPanel';
 import { MappingsPanel } from './MappingsPanel';
 import { PlacementPanel } from './PlacementPanel';
 import { ProvenancePanel } from './ProvenancePanel';
@@ -13,8 +12,6 @@ function Section( { section }: { section: WorkspaceSection } ) {
 			return <MappingsPanel />;
 		case 'ai-runs':
 			return <AiRunsPanel />;
-		case 'content-links':
-			return <ContentLinksPanel />;
 		case 'placement':
 			return <PlacementPanel />;
 		case 'provenance':
@@ -24,7 +21,7 @@ function Section( { section }: { section: WorkspaceSection } ) {
 
 /**
  * The skill workspace sections of Content Hub › Skills (`/content-hub/skills/<section>`, one chunk):
- * combined mappings, AI runs, shared content links, domain placement and provenance review. The section is the last segment of the route.
+ * combined mappings, AI runs, domain placement and provenance review. The section is the last segment of the route.
  */
 export default function SkillWorkspace() {
 	const { pathname } = useLocation();

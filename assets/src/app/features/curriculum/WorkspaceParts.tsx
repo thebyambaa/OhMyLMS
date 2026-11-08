@@ -216,13 +216,3 @@ export function contentRoute( kind: ContentKind | 'course', id: number ) {
 		question: `/content-hub/question-bank/${ id }`,
 	}[ kind ];
 }
-
-export function kindLabel( kind: ContentKind ) {
-	return {
-		lesson: __( 'Lesson', 'ohmylms' ),
-		quiz: __( 'Quiz', 'ohmylms' ),
-		assignment: __( 'Assignment', 'ohmylms' ),
-		course: __( 'Course', 'ohmylms' ),
-		question: __( 'Question', 'ohmylms' ),
-	}[ kind ];
-}

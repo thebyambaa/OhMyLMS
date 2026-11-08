@@ -21,7 +21,7 @@ test( 'native editors restore return links to the legacy page and the new app', 
 		`${ admin }?page=ohmylms-content&tab=courses&id=5&view=outline`,
 		`${ admin }?page=ohmylms-content&tab=curriculum&id=24&view=syllabus&node=s%3A1`,
 		`${ admin }?page=ohmylms-curriculum&tab=workspace&id=24&view=syllabus&node=s%3A1`,
-		`${ admin }?page=ohmylms-curriculum&tab=tools&section=content-links`,
+		`${ admin }?page=ohmylms-curriculum&tab=tools&section=skill-map`,
 		`${ admin }?page=ohmylms-bank&tab=question-bank`,
 	] ) {
 		assert.equal( isReturnUrl( url, origin ), true, url );

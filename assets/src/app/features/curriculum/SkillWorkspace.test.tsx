@@ -2,12 +2,10 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiError } from '../../lib/api';
 import { renderShell } from '../../test/render';
-import * as hub from '../content-hub';
 import ComparePage from './ComparePage';
 import {
 	curriculumCompare,
 	skillWorkspaceAiRuns,
-	skillWorkspaceContentLinks,
 	skillWorkspaceMappings,
 	skillWorkspacePlacement,
 	skillWorkspaceProvenance,
@@ -27,9 +25,6 @@ vi.mock( './workspace', async ( original ) => ( {
 	runAction: vi.fn(),
 	startRun: vi.fn(),
 	acceptConfident: vi.fn(),
-	searchContent: vi.fn(),
-	readContentLinks: vi.fn(),
-	updateContentLinks: vi.fn(),
 	readPlacement: vi.fn(),
 	savePlacement: vi.fn(),
 	readQueue: vi.fn(),
@@ -70,7 +65,6 @@ const features = [
 	...[
 		skillWorkspaceMappings,
 		skillWorkspaceAiRuns,
-		skillWorkspaceContentLinks,
 		skillWorkspacePlacement,
 		skillWorkspaceProvenance,
 	].map( ( feature ) => ( { ...feature, component: SkillWorkspace } ) ),
@@ -118,7 +112,6 @@ beforeEach( () => {
 	vi.mocked( api.readCombined ).mockReset();
 	vi.mocked( api.removeMapping ).mockReset();
 	vi.mocked( api.reviewSkills ).mockReset();
-	vi.mocked( api.updateContentLinks ).mockReset();
 	vi.mocked( api.reviewSuggestions ).mockReset();
 	vi.mocked( api.savePlacement ).mockReset();
 } );
@@ -226,73 +219,6 @@ describe( 'Skill workspace', () => {
 				await screen.findAllByText( 'Skill 3: Someone reviewed it.' )
 			)[ 0 ]
 		).toBeInTheDocument();
-	} );
-
-	it( 'stages skills for a lesson and keeps them through a stale reload', async () => {
-		const user = userEvent.setup();
-		const links: api.ContentLinks = {
-			content: {
-				id: 5,
-				kind: 'lesson',
-				title: 'Fractions',
-				status: 'draft',
-			},
-			skills: [],
-			revision: sha,
-		};
-		vi.mocked( api.searchContent ).mockResolvedValue( {
-			items: [],
-			total: 0,
-			pages: 0,
-		} );
-		vi.mocked( api.readContentLinks ).mockResolvedValue( links );
-		vi.mocked( hub.listSkills ).mockResolvedValue( {
-			items: [
-				{
-					id: 3,
-					name: 'Solve equations',
-					code: 'A.1',
-					description: '',
-					parent: 0,
-					prerequisites: [],
-					archived: false,
-				},
-			],
-			total: 1,
-			totalPages: 1,
-		} as Awaited< ReturnType< typeof hub.listSkills > > );
-		vi.mocked( api.updateContentLinks ).mockRejectedValueOnce( conflict() );
-		open( '/content-hub/skills/content-links?kind=lesson&content=5' );
-		expect(
-			await screen.findByRole( 'link', { name: 'Fractions' } )
-		).toBeInTheDocument();
-		await user.type(
-			screen.getByRole( 'textbox', { name: 'Add a skill or objective' } ),
-			'solve'
-		);
-		await user.click(
-			screen.getByRole( 'button', { name: 'Search skills' } )
-		);
-		await user.click(
-			await screen.findByRole( 'button', { name: 'A.1 Solve equations' } )
-		);
-		await user.click(
-			screen.getByRole( 'button', { name: 'Save links (+1, −0)' } )
-		);
-		expect( api.updateContentLinks ).toHaveBeenCalledWith(
-			links,
-			[ 3 ],
-			[],
-			expect.any( AbortSignal )
-		);
-		await user.click(
-			await screen.findByRole( 'button', {
-				name: 'Reload links and keep my changes',
-			} )
-		);
-		expect(
-			await screen.findByRole( 'button', { name: 'Save links (+1, −0)' } )
-		).toBeEnabled();
 	} );
 
 	it( 'rejects a suggestion of a run', async () => {
