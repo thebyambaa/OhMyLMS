@@ -153,6 +153,12 @@ describe( 'Skill workspace', () => {
 		open( '/content-hub/skills/mappings?skill=7' );
 		expect( await screen.findByText( 'AI run (91%)' ) ).toBeInTheDocument();
 		expect( screen.getByText( 'IGCSE' ) ).toBeInTheDocument();
+		expect(
+			screen.getByRole( 'link', { name: 'Edit this shared skill' } )
+		).toHaveAttribute(
+			'href',
+			expect.stringContaining( 'tab=shared&s=Linear' )
+		);
 		await user.click(
 			screen.getByRole( 'button', {
 				name: 'Remove mapping Solve equations to Linear equations',

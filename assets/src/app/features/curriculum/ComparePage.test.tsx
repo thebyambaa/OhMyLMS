@@ -260,6 +260,15 @@ describe( 'ComparePage', () => {
 		expect( editor.queryByText( 'Graph lines' ) ).not.toBeInTheDocument();
 	} );
 
+	it( 'links each shared skill to its mappings and usage', async () => {
+		open( '/content-hub/curriculum/compare?tab=shared' );
+		expect(
+			await screen.findByRole( 'link', {
+				name: 'Mappings and usage of Solve equations',
+			} )
+		).toHaveAttribute( 'href', '/content-hub/skills/mappings?skill=7' );
+	} );
+
 	it( 'edits a shared skill against its revision', async () => {
 		const user = userEvent.setup();
 		vi.mocked( compare.saveSharedSkill )

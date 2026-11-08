@@ -135,6 +135,17 @@ function CombinedSkill( { skill }: { skill: number } ) {
 					reviewLabel( view.skill.review ),
 				].join( ' · ' ) }
 			</p>
+			{ view.skill.shared && (
+				<p>
+					<Link
+						to={ `/content-hub/curriculum/compare?tab=shared&s=${ encodeURIComponent(
+							view.skill.name
+						) }` }
+					>
+						{ __( 'Edit this shared skill', 'ohmylms' ) }
+					</Link>
+				</p>
+			) }
 			{ message && (
 				<Notice status="success" onRemove={ () => setMessage( '' ) }>
 					{ message }

@@ -7,6 +7,7 @@ import {
 } from '@wordpress/components';
 import { useCallback, useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
+import { Link } from 'react-router-dom';
 import { useListState } from '../../components/listQuery';
 import { useOperation } from '../../hooks/useOperation';
 import {
@@ -176,6 +177,25 @@ export function CompareSharedSkills() {
 								setMessage( null );
 								setEditing( skill );
 							},
+						},
+						{
+							key: 'view',
+							label: __( 'Mappings and usage', 'ohmylms' ),
+							render: (
+								<Link
+									to={ `/content-hub/skills/mappings?skill=${ skill.id }` }
+									aria-label={ sprintf(
+										/* translators: %s: skill name. */
+										__(
+											'Mappings and usage of %s',
+											'ohmylms'
+										),
+										skill.name
+									) }
+								>
+									{ __( 'Mappings and usage', 'ohmylms' ) }
+								</Link>
+							),
 						},
 					] }
 				/>

@@ -70,6 +70,9 @@ The AI runs screen uses only these routes: runs call the configured provider thr
 - **Combined mappings**: library search, then one table of mappings with their source and confidence,
   combined groups (removed only as a whole, with their pair revisions), placements and usage lists.
   Removing asks for confirmation; a stale refusal says so and reloads on close.
+  Combined mappings and Compare › Shared skills are two views of the same shared skills: Shared skills creates and
+  edits a skill (name, scope, topic, subject); Combined mappings shows everything it is mapped to and used by, and
+  removes mappings. Each links to the other (`Edit this shared skill`, `Mappings and usage`).
 - **AI runs**: start a syllabus, placement or links analysis; list runs with progress, failures and
   suggestion counts; process the next slice or stop an active run; review suggestions with status views,
   an editable relation for mappings, accept/reject per row or in bulk and "Accept all at 85% or more"
