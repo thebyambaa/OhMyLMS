@@ -5,6 +5,7 @@ import {
 	SelectControl,
 	TextControl,
 	TextareaControl,
+	ToggleControl,
 } from '@wordpress/components';
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -351,6 +352,27 @@ export function CourseForm( { id }: { id: number } ) {
 							rows={ 6 }
 							onChange={ ( next ) =>
 								update( 'description', next )
+							}
+						/>
+						<ToggleControl
+							label={ __(
+								'Free access for all students',
+								'ohmylms'
+							) }
+							checked={ form.free_access }
+							help={
+								form.free_access
+									? __(
+											'Any signed-in student can open this course without enrolling. Turn this off to limit it to enrolled students.',
+											'ohmylms'
+										)
+									: __(
+											'Only students enrolled in this course can open it.',
+											'ohmylms'
+										)
+							}
+							onChange={ ( next ) =>
+								update( 'free_access', next )
 							}
 						/>
 						<details

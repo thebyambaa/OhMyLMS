@@ -345,6 +345,7 @@ describe( 'toInput', () => {
 			has_capacity: true,
 			capacity: 30,
 			enable_reviews: true,
+			free_access: true,
 			learning_outcomes: 'Solve equations',
 			target_audience: 'Beginners',
 			requirements: 'None',

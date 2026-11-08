@@ -1094,6 +1094,9 @@ class CourseController extends RestController {
 		if ( $request->has_param( 'level' ) || $is_new ) {
 			$meta['_level'] = $request->has_param( 'level' ) ? (string) $request['level'] : 'beginner';
 		}
+		if ( $request->has_param( 'free_access' ) || $is_new ) {
+			$meta['_free_access'] = ( $request->has_param( 'free_access' ) ? (bool) $request['free_access'] : true ) ? '1' : '0';
+		}
 		if ( $request->has_param( 'enable_reviews' ) || $is_new ) {
 			$meta['_enable_reviews'] = ( $request->has_param( 'enable_reviews' ) ? (bool) $request['enable_reviews'] : true ) ? '1' : '0';
 		}
@@ -1439,6 +1442,7 @@ class CourseController extends RestController {
 			'has_capacity'      => $capacity,
 			'capacity'          => $capacity ? (int) $meta( '_capacity', 0 ) : null,
 			'enable_reviews'    => (bool) $meta( '_enable_reviews', false ),
+			'free_access'       => ! in_array( (string) $meta( '_free_access', '1' ), array( '0', '' ), true ),
 			'learning_outcomes' => (string) $meta( '_benefit_description' ),
 			'target_audience'   => (string) $meta( '_benefiter_description' ),
 			'requirements'      => (string) $meta( '_requirement' ),
@@ -1620,6 +1624,11 @@ class CourseController extends RestController {
 				),
 				'enable_reviews'    => array(
 					'description' => __( 'Whether students can review the course.', 'ohmylms' ),
+					'type'        => 'boolean',
+					'context'     => $both,
+				),
+				'free_access'       => array(
+					'description' => __( 'Whether every signed-in student can open the course without enrolling.', 'ohmylms' ),
 					'type'        => 'boolean',
 					'context'     => $both,
 				),

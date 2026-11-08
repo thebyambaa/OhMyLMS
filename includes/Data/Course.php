@@ -70,6 +70,7 @@ class Course extends Data {
 		'capacity'              => 0,
 		'video_id'              => '',
 		'enable_reviews'        => true,
+		'free_access'           => true,
 		'review_count'          => 0,
 		'rating_counts'         => array(),
 		'average_rating'        => 0,
@@ -227,6 +228,29 @@ class Course extends Data {
 	 */
 	public function get_enable_reviews() {
 		return $this->get_prop( 'enable_reviews' ) ?? '';
+	}
+
+	/**
+	 * Whether every signed-in student may open the course without enrolling.
+	 *
+	 * On unless the author switched it off in the course's Basics. A course saved before the setting
+	 * existed has no stored value, which counts as on.
+	 *
+	 * @param string $context The context for getting the value. Default is 'view'.
+	 * @return bool
+	 */
+	public function get_free_access( $context = 'view' ) {
+		$value = $this->get_prop( 'free_access', $context );
+		return null === $value ? true : filter_var( $value, FILTER_VALIDATE_BOOLEAN );
+	}
+
+	/**
+	 * Set whether every signed-in student may open the course without enrolling.
+	 *
+	 * @param mixed $free_access True for free access.
+	 */
+	public function set_free_access( $free_access ) {
+		$this->set_prop( 'free_access', (bool) $free_access );
 	}
 
 

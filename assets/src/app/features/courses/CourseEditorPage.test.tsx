@@ -119,6 +119,7 @@ beforeEach( () => {
 		access_type: input.access_type,
 		password: input.password ?? '',
 		has_capacity: input.has_capacity,
+		free_access: input.free_access,
 		capacity: input.capacity,
 		thumbnail_id: input.thumbnail_id,
 		thumbnail_url: null,
@@ -434,6 +435,29 @@ describe( 'CourseEditorPage details', () => {
 		).toBeInTheDocument();
 		expect( screen.getByLabelText( 'Title' ) ).toHaveValue( 'Edited' );
 		expect( screen.queryByText( 'Course saved.' ) ).not.toBeInTheDocument();
+	} );
+	it( 'switches free access for all students on and off', async () => {
+		const user = userEvent.setup();
+		renderEditor();
+		await loaded();
+		const toggle = screen.getByRole( 'checkbox', {
+			name: 'Free access for all students',
+		} );
+		expect( toggle ).toBeChecked();
+		await user.click( toggle );
+		expect(
+			screen.getByText(
+				'Only students enrolled in this course can open it.'
+			)
+		).toBeInTheDocument();
+		await save( user );
+		await waitFor( () =>
+			expect( api.updateCourse ).toHaveBeenCalledWith(
+				expect.anything(),
+				expect.objectContaining( { free_access: false } ),
+				expect.anything()
+			)
+		);
 	} );
 	it( 'shows a permission error on save', async () => {
 		vi.mocked( api.updateCourse ).mockRejectedValue(

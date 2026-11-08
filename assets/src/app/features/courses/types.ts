@@ -51,6 +51,7 @@ export interface Course {
 	has_capacity: boolean;
 	capacity: number | null;
 	enable_reviews: boolean;
+	free_access: boolean;
 	thumbnail_id: number | null;
 	thumbnail_url: string | null;
 	enrolled_count: number;
@@ -95,6 +96,7 @@ export interface CourseInput {
 	has_capacity: boolean;
 	capacity: number | null;
 	enable_reviews: boolean;
+	free_access: boolean;
 	learning_outcomes: string;
 	target_audience: string;
 	requirements: string;
@@ -169,6 +171,7 @@ export interface FormState {
 	has_capacity: boolean;
 	capacity: string;
 	enable_reviews: boolean;
+	free_access: boolean;
 	learning_outcomes: string;
 	target_audience: string;
 	requirements: string;

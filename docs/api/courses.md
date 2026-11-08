@@ -69,6 +69,7 @@ only accepts taxonomies registered for courses. They are not otherwise audited (
 `sale_start_date`, `sale_end_date`, `price` (read only), `currency`, `access_type`
 (`public|password_protected`), `password` (edit context only), `has_password`, `available_date`,
 `duration` (`{hours, minutes}` or null), `has_capacity`, `capacity`, `enable_reviews`,
+`free_access` (boolean, default true),
 `learning_outcomes`, `target_audience`, `requirements` (edit), `thumbnail_id`, `thumbnail_url`,
 `enrolled_count`, `content_counts` (`units`, `lessons`, `quizzes`, `assignments`; lessons include videos and articles), `author_id`, `author_name`, `permalink`, `created_at`, `updated_at`.
 Other plugins may add fields through `ohmylms_rest_get_course_data`.
@@ -107,7 +108,7 @@ settings are not part of this contract.
 
 No meta key changed. The API maps: `_price_type`, `_regular_price`, `_sale_price`, `_price`,
 `_sale_price_dates_from|to` (timestamps of site-local midnight), `_level`, `_access_type`,
-`_available_date`, `_duration` (`{hour, min}`), `_has_capacity`, `_capacity`, `_enable_reviews`,
+`_available_date`, `_duration` (`{hour, min}`), `_has_capacity`, `_capacity`, `_enable_reviews`, `_free_access` (`1`/`0`; absent means on),
 `_benefit_description`, `_benefiter_description`, `_requirement`, `_thumbnail_id`, and the post fields.
 `_availability` is no longer written (nothing read it; it duplicated "duration set").
 
@@ -197,3 +198,13 @@ classic builder.
 ## Tests
 
 `tests/php/courses-rest-integration.php` (set `OHMYLMS_COURSES_TEST=1`; see the file header).
+
+## Free access
+
+Every course is open to signed-in students unless its author switches **Free access for all students**
+off in the Basics step (`free_access`, stored as `_free_access`; a course without the meta counts as on).
+`Course::has_access()` then enrols the student on first open (`Student\FreeAccess::grant()`, source `self`),
+so progress, the gradebook and course lists work as for any enrolment. Nothing is granted for a course that
+is not published, has a password or a seat limit, or is an exam wrapper; for a student whose enrolment already
+exists in any status (an ended enrolment stays ended) or who is blocked; for visitors; or for users who can
+edit the course. `tests/php/free-access-integration.php` covers this.

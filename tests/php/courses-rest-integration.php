@@ -224,6 +224,7 @@ try {
 	$default = make_course( array( 'title' => $tag . ' Defaults' ) );
 	ok( 'draft' === $default['status'] && 'beginner' === $default['level'] && 'free' === $default['price_type'] && 'public' === $default['access_type'], 'create defaults' );
 	ok( '0.00' === $default['regular_price'] && '0.00' === $default['price'] && null === $default['sale_price'] && true === $default['enable_reviews'], 'free defaults' );
+	ok( true === $default['free_access'], 'a new course is free access' );
 	ok( false === $default['has_capacity'] && null === $default['capacity'] && null === $default['duration'] && false === $default['has_password'], 'capacity, duration and password defaults' );
 	ok( $admin === $default['author_id'] && 0 === $default['enrolled_count'], 'author and enrolment count' );
 	$created = call_api( 'POST', '', array( 'title' => $tag . ' Defaults' ) );
@@ -253,6 +254,7 @@ try {
 			'has_capacity'      => true,
 			'capacity'          => 25,
 			'enable_reviews'    => false,
+			'free_access'       => false,
 			'learning_outcomes' => 'Outcome',
 			'status'            => 'publish',
 		)
@@ -267,6 +269,7 @@ try {
 	ok( $course->is_on_sale() && $course->validate_on_sale(), 'sale window validates for the learner side' );
 	ok( 3 === (int) $course->get_duration()['hour'] && '' !== ohmylms_format_duration( $course->get_duration() ), 'duration reader' );
 	ok( ! $course->get_enable_reviews(), 'reviews flag reader' );
+	ok( false === $paid['free_access'] && false === $course->get_free_access(), 'switching free access off is saved and read' );
 	ok( false !== strpos( $course->get_price_html(), '29' ), 'price html renders' );
 
 	// Validation: nothing is written for a rejected request.

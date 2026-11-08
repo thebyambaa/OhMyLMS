@@ -64,6 +64,7 @@ export const summary: Course = {
 	has_capacity: true,
 	capacity: 30,
 	enable_reviews: true,
+	free_access: true,
 	thumbnail_id: 21,
 	thumbnail_url: 'https://example.test/thumb.png',
 	enrolled_count: 4,

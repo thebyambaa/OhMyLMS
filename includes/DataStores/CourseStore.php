@@ -9,6 +9,7 @@ namespace OhMyLMS\DataStores;
 
 use OhMyLMS\Abstracts\DataStore;
 use OhMyLMS\Data\Course;
+use OhMyLMS\Student\FreeAccess;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -269,6 +270,7 @@ class CourseStore extends DataStore {
 			'_average_rating'        => 'average_rating',
 			'_duration'              => 'duration',
 			'_enable_reviews'        => 'enable_reviews',
+			'_free_access'           => 'free_access',
 			'_benefit_description'   => 'benefit_description',
 			'_benefiter_description' => 'benefiter_description',
 			'_requirement'           => 'requirement',
@@ -378,6 +380,7 @@ class CourseStore extends DataStore {
 			'_average_rating'        => 'average_rating',
 			'_duration'              => 'duration',
 			'_enable_reviews'        => 'enable_reviews',
+			'_free_access'           => 'free_access',
 			'_benefit_description'   => 'benefit_description',
 			'_benefiter_description' => 'benefiter_description',
 			'_requirement'           => 'requirement',
@@ -780,6 +783,9 @@ class CourseStore extends DataStore {
 		// Execute the query and return the result.
 		$result     = $wpdb->get_row( $wpdb->prepare( 'SELECT course_id FROM %i WHERE user_id = %d AND course_id = %d AND status = %s', $table_name, $user_id, $course_id, 'enrolled' ), ARRAY_A );
 		$has_access = ! empty( $result ) ? true : false;
+		if ( ! $has_access && $user_id ) {
+			$has_access = FreeAccess::grant( $user_id, $course );
+		}
 
 		// Cache the result.
 		self::$course_access_cache[ $cache_key ] = $has_access;
