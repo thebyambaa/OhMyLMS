@@ -74,3 +74,11 @@ no longer displays individual price/sale, point-purchase, public/password access
 duration controls. Reviews, capacity and certificates remain editable. The course list omits price
 columns and filters, and ignores obsolete price-filter bookmarks. Stored course fields and existing
 access checks remain intact for compatibility; removing controls is not a data migration.
+
+## Saving
+
+The native lesson, quiz and question editors save by themselves (`features/learning/NativeAutoSave.jsx`):
+1.5 seconds after an edit, when the tab is hidden or closed, and before a link that leaves the editor (the
+back button) is followed. A draft stays a draft; publishing is a separate step in the course's Preview and
+publish. A failed save is not repeated until the edits change, a new item without a title is not saved, and
+saving waits while a settings panel has changes of its own that are unsaved.
