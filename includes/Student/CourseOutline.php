@@ -269,7 +269,9 @@ final class CourseOutline {
 	 */
 	private static function item( array $item, $course, $student, array $display, $enrolled ) {
 		$type      = (string) ( $item['type'] ?? 'lesson' );
-		$available = $enrolled && LearningPath::available( $item + array( 'available' => true ), $student ? $student->get_id() : 0, $course->get_id() );
+		// An author previewing the course is not enrolled; their links open the learner previews instead of the enroll card.
+		$author    = ! $enrolled && current_user_can( 'edit_post', $course->get_id() );
+		$available = $author || ( $enrolled && LearningPath::available( $item + array( 'available' => true ), $student ? $student->get_id() : 0, $course->get_id() ) );
 		$content   = (int) ( $item['content_id'] ?? 0 );
 		if ( ! $content ) {
 			return null;
@@ -309,7 +311,15 @@ final class CourseOutline {
 		} else {
 			$complete = $enrolled && $student && (bool) $student->maybe_completed( $content );
 		}
-		if ( $enrolled ) {
+		if ( $author ) {
+			if ( 'lesson' === $type ) {
+				$url = \OhMyLMS\Learning\LessonPreview::url( $content, true );
+			} elseif ( 'quiz' === $type ) {
+				$url = \OhMyLMS\Assessment\PreviewPlayer::url( $content );
+			} else {
+				$url = get_permalink( $content );
+			}
+		} elseif ( $enrolled ) {
 			$url = ! empty( $item['url'] ) ? $item['url'] : ohmylms_get_pretty_content_permalink( $content );
 		} else {
 			$url = self::enroll_url( $course->get_id() );
