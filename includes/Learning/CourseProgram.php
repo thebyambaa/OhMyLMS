@@ -140,6 +140,13 @@ final class CourseProgram {
 			$wpdb->query( $wpdb->prepare( 'INSERT IGNORE INTO %i (enrollment_id,program_id,bound_at) VALUES (%d,%d,%s)', $bindings, $enrollment['id'], $id, current_time( 'mysql', true ) ) );
 			$bound = $wpdb->get_row( $wpdb->prepare( 'SELECT program_id FROM %i WHERE enrollment_id=%d', $bindings, $enrollment['id'] ), ARRAY_A );
 		}
+		// A learner enrolled before the first publication was bound to "no program" and was shown nothing; the first program is theirs.
+		if ( $bound && 0 === (int) $bound['program_id'] ) {
+			$current = (int) get_post_meta( $enrollment['course_id'], self::CURRENT, true );
+			if ( $current > 0 && false !== $wpdb->update( $bindings, array( 'program_id' => $current ), array( 'enrollment_id' => (int) $enrollment['id'] ) ) ) {
+				$bound['program_id'] = $current;
+			}
+		}
 		return $bound ? self::get( (int) $bound['program_id'] ) : null;
 	}
 

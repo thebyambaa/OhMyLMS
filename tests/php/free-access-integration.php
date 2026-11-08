@@ -188,6 +188,39 @@ try {
 	ok( ! in_array( $exam, array_column( \OhMyLMS\Student\LearnerCatalog::unplaced_courses( array() ), 'id' ), true ), 'an exam wrapper course is not listed' );
 	ok( array() === \OhMyLMS\Student\LearnerCatalog::unplaced_courses( array(), 'zzz-no-such-title' ), 'the search text filters them' );
 
+	// A student enrolled before the first publication is bound to no program; the first program becomes theirs.
+	$bound_course = make_course();
+	$early        = make_student();
+	$wpdb->insert(
+		$table,
+		array(
+			'user_id'    => $early,
+			'course_id'  => $bound_course,
+			'status'     => 'enrolled',
+			'progress'   => 'running',
+			'start_date' => current_time( 'mysql' ),
+		)
+	);
+	$enrollment_id = (int) $wpdb->insert_id;
+	$bindings      = \OhMyLMS\Learning\Schema::table( 'enrollments' );
+	$wpdb->insert(
+		$bindings,
+		array(
+			'enrollment_id' => $enrollment_id,
+			'program_id'    => 0,
+			'bound_at'      => current_time( 'mysql', true ),
+		)
+	);
+	update_post_meta( $bound_course, \OhMyLMS\Learning\CourseProgram::CURRENT, 987654 );
+	\OhMyLMS\Learning\CourseProgram::for_enrollment(
+		array(
+			'id'        => $enrollment_id,
+			'course_id' => $bound_course,
+		)
+	);
+	ok( 987654 === (int) $wpdb->get_var( $wpdb->prepare( 'SELECT program_id FROM %i WHERE enrollment_id = %d', $bindings, $enrollment_id ) ), 'a learner bound to no program gets the first published program' );
+	$wpdb->delete( $bindings, array( 'enrollment_id' => $enrollment_id ) );
+
 	// The author is not enrolled by previewing their own course.
 	$author = make_student();
 	( new WP_User( $author ) )->set_role( 'administrator' );
