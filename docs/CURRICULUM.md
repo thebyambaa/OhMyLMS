@@ -20,7 +20,7 @@ The workspace needs `manage_options`, because its endpoints are the curriculum a
 
 The second tab (`tab=tools`, `edit_posts`) holds the specialist screens, each a section:
 
-Skill library, Skill map, Assessments, AI runs (the four everyday sections, listed first), then Combined mappings, Domain placement, Provenance review, Course bundles, Skill map is also open to school staff, read only. Subject profiles, and Categories and tags. Sections that need the curriculum administrator are hidden from other users.
+Skill library, Skill map, Assessments, AI runs (the four everyday sections, listed first), then Combined mappings, Domain placement, Provenance review, Course bundles, Subject profiles, and Categories and tags. Skill map is also open to school staff, read only. Sections that need the curriculum administrator are hidden from other users.
 
 ## Moved from the Content Hub
 
