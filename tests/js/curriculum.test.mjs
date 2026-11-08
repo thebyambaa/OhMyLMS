@@ -441,13 +441,11 @@ test( 'drafts bundle unsaved changes and produce trimmed payloads', () => {
 	);
 } );
 
-test( 'deletion needs confirmation when children, links or bundles would be affected', () => {
+test( 'deletion needs confirmation when children or links would be affected', () => {
 	const none = {
 		children: 0,
 		links: 0,
 		own_links: 0,
-		bundles: 0,
-		own_bundles: 0,
 	};
 	assert.equal( needsConfirmation( none, '' ), false );
 	assert.equal( needsConfirmation( { ...none, own_links: 2 }, '' ), true );

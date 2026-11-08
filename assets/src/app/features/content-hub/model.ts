@@ -40,11 +40,6 @@ export const AREAS: readonly {
 		path: '/content-hub/curriculum',
 		capability: 'manage_options',
 	},
-	{
-		id: 'bundles',
-		path: '/content-hub/bundles',
-		capability: 'manage_options',
-	},
 ];
 
 /** Figures each area may report, in display order. */
@@ -57,7 +52,6 @@ const AREA_COUNTS: Record< AreaId, readonly CountKey[] > = {
 	assignments: [ 'published', 'drafts' ],
 	skills: [ 'archived' ],
 	curriculum: [ 'syllabuses' ],
-	bundles: [ 'published', 'drafts' ],
 };
 
 const RECENT_AREAS: readonly RecentArea[] = [
@@ -156,7 +150,6 @@ export function areaLabel( id: AreaId ): string {
 		assignments: __( 'Assignments', 'ohmylms' ),
 		skills: __( 'Skills', 'ohmylms' ),
 		curriculum: __( 'Curriculum', 'ohmylms' ),
-		bundles: __( 'Course bundles', 'ohmylms' ),
 	}[ id ];
 }
 

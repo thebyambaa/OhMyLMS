@@ -40,7 +40,6 @@ export function DeleteItemDialog( {
 	const info = preview.data?.dependents;
 	const branch = !! info?.children && strategy === 'delete';
 	const links = ( branch ? info?.links : info?.own_links ) ?? 0;
-	const bundles = ( branch ? info?.bundles : info?.own_bundles ) ?? 0;
 	const groups = ( branch ? info?.groups : info?.own_groups ) ?? 0;
 	function confirm() {
 		if ( ! preview.data || ! info ) {
@@ -183,20 +182,6 @@ export function DeleteItemDialog( {
 										'ohmylms'
 									),
 									groups
-								) }
-							</li>
-						) }
-						{ bundles > 0 && (
-							<li>
-								{ sprintf(
-									/* translators: %d: number of course bundles. */
-									_n(
-										'It will be removed from %d course bundle.',
-										'It will be removed from %d course bundles.',
-										bundles,
-										'ohmylms'
-									),
-									bundles
 								) }
 							</li>
 						) }

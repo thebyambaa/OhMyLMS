@@ -1,10 +1,10 @@
 <?php
 /**
- * Taxonomies (categories and tags) REST API integration test.
+ * Categories REST API integration test.
  *
  * Runs against a WordPress install (the Local site by default) with real database tables. Categories
- * are curriculum items and tags are course bundles, so the test creates tagged items, bundles, a
- * course and temporary users, and removes everything in `finally`.
+ * are curriculum items, so the test creates tagged items, a course and temporary users, and removes
+ * everything in `finally`.
  *
  * Usage (set OHMYLMS_TAXONOMIES_TEST=1; PHP needs mysqli, mbstring, openssl, curl):
  *   php -n -d extension_dir=<php>/ext -d extension=mysqli -d extension=mbstring -d extension=openssl \
@@ -24,7 +24,6 @@ $_SERVER['HTTP_HOST']   = getenv( 'OHMYLMS_TEST_HOST' ) ? getenv( 'OHMYLMS_TEST_
 $_SERVER['REQUEST_URI'] = '/';
 require dirname( __DIR__, 5 ) . '/wp-load.php';
 
-use OhMyLMS\Bundles\Bundles;
 use OhMyLMS\Curriculum\Items;
 use OhMyLMS\Curriculum\Links;
 use OhMyLMS\Curriculum\Schema;
@@ -34,7 +33,6 @@ global $wpdb;
 $checks     = 0;
 $user_ids   = array();
 $item_ids   = array();
-$bundle_ids = array();
 $course_id  = 0;
 $tag        = 'txtest' . strtolower( wp_generate_password( 6, false, false ) );
 
@@ -120,7 +118,7 @@ try {
 		$users[ $suffix ] = $id;
 	}
 
-	// Fixtures: a small tree (root, child, second root), two bundles, one course linked to both kinds.
+	// Fixtures: a small tree (root, child, second root), one course linked to an item.
 	$root = created( Items::create( array( 'name' => $tag . ' Root' ) ), 'root item' );
 	$item_ids[] = (int) $root['id'];
 	$child      = created(
@@ -137,11 +135,6 @@ try {
 	$other      = created( Items::create( array( 'name' => $tag . ' Aardvark' ) ), 'second root' );
 	$item_ids[] = (int) $other['id'];
 
-	$bundle_one   = created( Bundles::create( array( 'title' => $tag . ' Bundle One' ) ), 'bundle one' );
-	$bundle_ids[] = (int) $bundle_one['id'];
-	$bundle_two   = created( Bundles::create( array( 'title' => $tag . ' Bundle Two' ) ), 'bundle two' );
-	$bundle_ids[] = (int) $bundle_two['id'];
-
 	$course_id = wp_insert_post(
 		array(
 			'post_type'   => 'ohmylms-course',
@@ -152,11 +145,10 @@ try {
 	);
 	ok( ! is_wp_error( $course_id ), 'course created' );
 	ok( true === Links::add( (int) $child['id'], 'course', $course_id ), 'course linked to the child item' );
-	ok( true === Bundles::add_course( (int) $bundle_one['id'], $course_id ), 'course added to bundle one' );
 
 	// Routes.
 	$routes = rest_get_server()->get_routes( 'ohmylms/v1' );
-	foreach ( array( 'categories', 'tags' ) as $base ) {
+	foreach ( array( 'categories' ) as $base ) {
 		foreach ( array( "/$base", "/$base/bulk", "/$base/(?P<id>[\\d]+)" ) as $route ) {
 			ok( isset( $routes[ '/ohmylms/v1' . $route ] ), 'route registered: ' . $route );
 			foreach ( $routes[ '/ohmylms/v1' . $route ] as $endpoint ) {
@@ -168,19 +160,13 @@ try {
 	// Anonymous, subscriber (no edit_posts), author (edit_posts but not manage_options).
 	$read_cases  = array(
 		array( 'GET', '/categories' ),
-		array( 'GET', '/tags' ),
 		array( 'GET', '/categories/' . $child['id'] ),
-		array( 'GET', '/tags/' . $bundle_one['id'] ),
 	);
 	$write_cases = array(
 		array( 'POST', '/categories' ),
 		array( 'PUT', '/categories/' . $child['id'] ),
 		array( 'DELETE', '/categories/' . $child['id'] ),
 		array( 'DELETE', '/categories/bulk' ),
-		array( 'POST', '/tags' ),
-		array( 'PATCH', '/tags/' . $bundle_one['id'] ),
-		array( 'DELETE', '/tags/' . $bundle_one['id'] ),
-		array( 'DELETE', '/tags/bulk' ),
 	);
 	wp_set_current_user( 0 );
 	foreach ( array_merge( $read_cases, $write_cases ) as $case ) {
@@ -295,61 +281,22 @@ try {
 	$missing = call_api( 'GET', '/categories/999999999' );
 	ok( 404 === $missing->get_status() && 'ohmylms_category_not_found' === $missing->get_data()['code'], 'unknown category is 404' );
 
-	// Tags (bundles).
-	$response = call_api( 'GET', '/tags', array( 'search' => $tag ) );
-	ok( 200 === $response->get_status() && '2' === $response->get_headers()['X-WP-Total'], 'tags list' );
-	$by_id = array_column( $response->get_data(), null, 'id' );
-	ok( 1 === $by_id[ (int) $bundle_one['id'] ]['count'] && 0 === $by_id[ (int) $bundle_two['id'] ]['count'], 'bundle course counts' );
-	ok( 'b' . $bundle_one['id'] === $by_id[ (int) $bundle_one['id'] ]['slug'] && 0 === $by_id[ (int) $bundle_one['id'] ]['parent'], 'bundle slug and parent' );
-	ok(
-		200 === call_api(
-			'GET',
-			'/tags',
-			array(
-				'parent' => 1,
-				'search' => $tag,
-			)
-		)->get_status(),
-		'tags ignore the category-only parent argument'
-	);
-	$response = call_api( 'GET', '/tags/' . $bundle_one['id'], array( 'context' => 'edit' ) );
-	ok( 200 === $response->get_status() && array( $course_id ) === wp_list_pluck( $response->get_data()['courses'], 'id' ), 'tag edit context' );
-	$missing = call_api( 'GET', '/tags/999999999' );
-	ok( 404 === $missing->get_status() && 'ohmylms_tag_not_found' === $missing->get_data()['code'], 'unknown tag is 404' );
-	$response = call_api(
-		'GET',
-		'/tags',
-		array(
-			'search' => $tag,
-			'page'   => 5,
-		)
-	);
-	ok( 400 === $response->get_status() && 'ohmylms_tag_invalid_page' === $response->get_data()['code'], 'tag page past the end' );
-
 	// Writes are refused for administrators too, and change nothing.
-	$before_items   = count( Items::all() );
-	$before_bundles = count( Bundles::all() );
+	$before_items = count( Items::all() );
 	foreach ( array(
 		array( 'POST', '/categories', 'ohmylms_categories_replaced' ),
 		array( 'PUT', '/categories/' . $child['id'], 'ohmylms_categories_replaced' ),
 		array( 'DELETE', '/categories/' . $child['id'], 'ohmylms_categories_replaced' ),
 		array( 'DELETE', '/categories/bulk', 'ohmylms_categories_replaced' ),
-		array( 'POST', '/tags', 'ohmylms_tags_replaced' ),
-		array( 'PATCH', '/tags/' . $bundle_one['id'], 'ohmylms_tags_replaced' ),
-		array( 'DELETE', '/tags/' . $bundle_one['id'], 'ohmylms_tags_replaced' ),
-		array( 'DELETE', '/tags/bulk', 'ohmylms_tags_replaced' ),
 	) as $case ) {
 		$response = call_api( $case[0], $case[1], array( 'name' => 'x' ) );
 		ok( 410 === $response->get_status() && $case[2] === $response->get_data()['code'], 'administrator write ' . $case[0] . ' ' . $case[1] . ' is 410, got ' . $response->get_status() );
 	}
-	ok( count( Items::all() ) === $before_items && count( Bundles::all() ) === $before_bundles, 'refused writes changed nothing' );
-	ok( Items::get( (int) $child['id'] ) && Bundles::get( (int) $bundle_one['id'] ), 'fixtures survive the refused deletes' );
+	ok( count( Items::all() ) === $before_items, 'refused writes changed nothing' );
+	ok( (bool) Items::get( (int) $child['id'] ), 'the item survives the refused delete' );
 
 	// Schema.
-	foreach ( array(
-		'categories' => 'category',
-		'tags'       => 'tag',
-	) as $base => $title ) {
+	foreach ( array( 'categories' => 'category' ) as $base => $title ) {
 		$schema = rest_do_request( new WP_REST_Request( 'OPTIONS', '/ohmylms/v1/' . $base ) )->get_data()['schema'];
 		ok( $title === $schema['title'] && 'http://json-schema.org/draft-04/schema#' === $schema['$schema'], "$base schema header" );
 		foreach ( array( 'id', 'name', 'slug', 'description', 'parent', 'count', 'courses' ) as $property ) {
@@ -365,17 +312,11 @@ try {
 	// Remove only what this run created.
 	if ( $course_id && ! is_wp_error( $course_id ) ) {
 		$wpdb->delete( Links::table(), array( 'object_id' => $course_id ), array( '%d' ) );
-		$wpdb->delete( Bundles::members_table(), array( 'item_id' => $course_id ), array( '%d' ) );
 		wp_delete_post( $course_id, true );
 	}
 	foreach ( array_reverse( $item_ids ) as $item_id ) {
 		if ( Items::get( $item_id ) ) {
 			Items::delete( $item_id, 'delete', true );
-		}
-	}
-	foreach ( $bundle_ids as $bundle_id ) {
-		if ( Bundles::get( $bundle_id ) ) {
-			Bundles::delete( $bundle_id, true );
 		}
 	}
 	require_once ABSPATH . 'wp-admin/includes/user.php';

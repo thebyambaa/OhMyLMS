@@ -9,7 +9,6 @@ use OhMyLMS\Family\Schema as FamilySchema;
 use OhMyLMS\Family\Service as Family;
 use OhMyLMS\Skills\FamilyComparison;
 use OhMyLMS\Student\FamilyActions;
-use OhMyLMS\Student\LearnerCatalog;
 use OhMyLMS\Student\ParentWorkspace;
 
 defined( 'ABSPATH' ) || exit;
@@ -22,7 +21,6 @@ if ( 'home_learning' === get_query_var( 'hub_scope', '' ) ) {
 $family_children = ParentWorkspace::children();
 $family_home     = FamilySchema::enabled() ? Family::children() : array();
 $family_flash    = FamilyActions::flash();
-$family_catalog  = $family_home ? LearnerCatalog::bundles() : array();
 $family_pending  = FamilySchema::enabled() ? Family::invitations() : array();
 $family_child_id = absint( get_query_var( 'hub_child', 0 ) );
 $family_selected = $family_child_id ? ParentWorkspace::child( $family_child_id, absint( get_query_var( 'hub_school', 0 ) ) ) : null;
@@ -160,7 +158,6 @@ $family_selected = $family_child_id ? ParentWorkspace::child( $family_child_id, 
 									'student-hub/family-managed.php',
 									array(
 										'family_kid'     => $family_kid,
-										'family_catalog' => $family_catalog,
 									)
 								);
 								?>

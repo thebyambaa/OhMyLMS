@@ -540,7 +540,7 @@ try {
 	ok( array( 'earnings', 'orders', 'memberships', 'subscriptions', 'coupons', 'payments' ) === array_keys( AdminNavigation::groups()['commerce']['tabs'] ), 'Commerce holds sales and payment settings: earnings, orders, memberships, subscriptions, coupons and payments' );
 	ok( array( 'gamification', 'certificates', 'automations', 'sessions' ) === array_keys( AdminNavigation::groups()['engagement']['tabs'] ), 'Engagement holds gamification, certificates, automations and sessions' );
 	ok( isset( AdminNavigation::groups()['settings']['tabs']['emails'] ) && isset( AdminNavigation::groups()['accounts']['tabs']['cohorts'] ), 'Emails is a Settings tab and Cohorts an Account Hub tab' );
-	ok( array( 'bundles', 'taxonomies' ) === array_values( array_intersect( array( 'bundles', 'taxonomies' ), array_keys( AdminNavigation::groups()['content']['tabs']['courses']['sections'] ) ) ) && ! isset( AdminNavigation::groups()['curriculum']['tabs']['tools']['sections']['bundles'] ), 'Course bundles and Categories and tags are Courses sections, not Curriculum tools' );
+	ok( ! isset( AdminNavigation::groups()['content']['tabs']['courses']['sections']['bundles'] ) && ! isset( AdminNavigation::groups()['content']['tabs']['courses']['sections']['taxonomies'] ) && ! isset( AdminNavigation::groups()['curriculum']['tabs']['tools']['sections']['bundles'] ), 'Course bundles and Categories and tags are gone from the menus' );
 	if ( apply_filters( 'ohmylms_should_enable_webhooks', false ) ) {
 		ok( isset( AdminNavigation::visible_tabs( 'settings' )['webhooks'] ), 'Webhooks shows with ohmylms_should_enable_webhooks' );
 	} else {
@@ -880,8 +880,13 @@ try {
 				'section' => $moved_section,
 			)
 		);
-		$to_courses = in_array( $moved_section, array( 'bundles', 'taxonomies' ), true );
-		ok( ( $to_courses ? 'courses' : 'tools' ) === $moved_tab['tab'] && $moved_section === $moved_tab['section'], 'the old ' . $moved_section . ' section opens in its new place' );
+		if ( 'bundles' === $moved_section ) {
+			ok( 'courses' === $moved_tab['tab'] && ! isset( $moved_tab['section'] ), 'the old bundles section opens the course list' );
+		} elseif ( 'taxonomies' === $moved_section ) {
+			ok( 'workspace' === $moved_tab['tab'] && ! isset( $moved_tab['section'] ), 'the old categories section opens the curriculum' );
+		} else {
+			ok( 'tools' === $moved_tab['tab'] && $moved_section === $moved_tab['section'], 'the old ' . $moved_section . ' section opens in its new place' );
+		}
 	}
 	foreach (
 		array(
@@ -891,7 +896,9 @@ try {
 			array( array( 'ohmylms-engagement', 'gamification', 'certificates' ), array( 'ohmylms-engagement', 'certificates' ) ),
 			array( array( 'ohmylms-engagement', 'gamification', 'issued-certificates' ), array( 'ohmylms-engagement', 'certificates' ) ),
 			array( array( 'ohmylms-curriculum', 'tools', 'bundles' ), array( 'ohmylms-content', 'courses' ) ),
-			array( array( 'ohmylms-curriculum', 'tools', 'taxonomies' ), array( 'ohmylms-content', 'courses' ) ),
+			array( array( 'ohmylms-content', 'courses', 'bundles' ), array( 'ohmylms-content', 'courses' ) ),
+			array( array( 'ohmylms-curriculum', 'tools', 'taxonomies' ), array( 'ohmylms-curriculum', 'workspace' ) ),
+			array( array( 'ohmylms-content', 'courses', 'taxonomies' ), array( 'ohmylms-curriculum', 'workspace' ) ),
 			array( array( 'ohmylms-settings', 'settings', 'currency' ), array( 'ohmylms-commerce', 'payments' ) ),
 			array( array( 'ohmylms-settings', 'settings', 'tax' ), array( 'ohmylms-commerce', 'payments' ) ),
 			array( array( 'ohmylms-settings', 'settings', 'payment-gateways' ), array( 'ohmylms-commerce', 'payments' ) ),

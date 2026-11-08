@@ -347,11 +347,11 @@ final class LegacyRoutes {
 			),
 			array(
 				'from' => '/content-hub/bundles',
-				'to'   => '/content-hub/bundles',
+				'to'   => '/courses',
 			),
 			array(
 				'from' => '/extensions/bundles',
-				'to'   => '/content-hub/bundles',
+				'to'   => '/courses',
 			),
 			array(
 				'from'  => '/content-hub/exams',

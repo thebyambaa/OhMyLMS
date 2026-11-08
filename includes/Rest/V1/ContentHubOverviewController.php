@@ -8,7 +8,6 @@
 namespace OhMyLMS\Rest\V1;
 
 use OhMyLMS\Abstracts\RestController;
-use OhMyLMS\Bundles\Bundles;
 use OhMyLMS\ContentHub\ContentCounts;
 use OhMyLMS\Curriculum\Access as CurriculumAccess;
 use OhMyLMS\Curriculum\Items as CurriculumItems;
@@ -29,7 +28,7 @@ defined( 'ABSPATH' ) || exit;
  * `GET ohmylms/v1/content-hub/overview` (see docs/api/content-hub.md).
  *
  * Read-only. Each area is included only when the user may open it: post-type areas need the type's
- * `edit_posts`, lessons need `manage_options` (as the lesson screens do), curriculum and bundles need
+ * `edit_posts`, lessons need `manage_options` (as the lesson screens do), curriculum needs
  * {@see CurriculumAccess::can_manage()} and installed curriculum tables. Counts of a post type cover
  * every item when the user has the type's `edit_others_posts`, otherwise only the user's own items.
  * No user data is returned beyond item titles.
@@ -167,7 +166,6 @@ class ContentHubOverviewController extends RestController {
 		}
 		if ( CurriculumAccess::can_manage() && CurriculumSchema::ready() ) {
 			$areas[] = $this->curriculum_area();
-			$areas[] = $this->bundles_area();
 		}
 
 		$types = array_flip( wp_list_pluck( $post_areas, 'type' ) );
@@ -233,24 +231,6 @@ class ContentHubOverviewController extends RestController {
 	}
 
 	/**
-	 * Course bundles by status.
-	 *
-	 * @return array<string,mixed>
-	 */
-	private function bundles_area() {
-		$counts = Bundles::status_counts();
-
-		return array(
-			'id'     => 'bundles',
-			'total'  => $counts['total'],
-			'counts' => array(
-				'published' => $counts['published'],
-				'drafts'    => $counts['drafts'],
-			),
-		);
-	}
-
-	/**
 	 * Convert a GMT MySQL date to ISO 8601 (UTC), or null when unset.
 	 *
 	 * @param string $gmt Date in `Y-m-d H:i:s`.
@@ -285,7 +265,7 @@ class ContentHubOverviewController extends RestController {
 						'properties' => array(
 							'id'     => array(
 								'type' => 'string',
-								'enum' => array( 'courses', 'lessons', 'quizzes', 'exams', 'question-bank', 'assignments', 'skills', 'curriculum', 'bundles' ),
+								'enum' => array( 'courses', 'lessons', 'quizzes', 'exams', 'question-bank', 'assignments', 'skills', 'curriculum' ),
 							),
 							'total'  => array( 'type' => 'integer' ),
 							'counts' => array(

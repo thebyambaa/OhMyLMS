@@ -75,6 +75,22 @@ try {
 			)
 		);
 	}
+	// A quiz needs a question to be publishable.
+	$live_posts['question'] = wp_insert_post(
+		array(
+			'post_type'   => OHMYLMS_QUESTION_CPT,
+			'post_title'  => 'One-save question fixture',
+			'post_status' => 'publish',
+		)
+	);
+	$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fixture row.
+		$wpdb->prefix . 'ohmylms_quiz_questions_relationship',
+		array(
+			'quiz_id'      => $live_posts['quiz'],
+			'question_id'  => $live_posts['question'],
+			'order_number' => 1,
+		)
+	);
 	$live_course              = $live_posts['course'];
 	$live_program             = CourseProgram::defaults( $live_course );
 	$live_program['mode']     = 'traditional';
@@ -150,6 +166,7 @@ try {
 		$wpdb->delete( Schema::table( 'outcomes' ), array( 'program_id' => $live_post_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fixture cleanup.
 	}
 	$wpdb->delete( Schema::table( 'programs' ), array( 'course_id' => $live_course ?? 0 ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fixture cleanup.
+	$wpdb->delete( $wpdb->prefix . 'ohmylms_quiz_questions_relationship', array( 'quiz_id' => $live_posts['quiz'] ?? 0 ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fixture row.
 	foreach ( array_reverse( $live_posts ) as $live_post_id ) {
 		wp_delete_post( $live_post_id, true );
 	}

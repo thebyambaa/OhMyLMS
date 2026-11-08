@@ -7,8 +7,8 @@ function get_option() { return false; }
 require dirname(__DIR__, 2) . '/vendor/autoload.php';
 use OhMyLMS\Curriculum\Tree;
 use OhMyLMS\Skills\Mastery;
-use OhMyLMS\Bundles\Combined;
-use OhMyLMS\Bundles\Progress;
+use OhMyLMS\Performance\Combined;
+use OhMyLMS\Curriculum\LearnerProgress as Progress;
 $checks = 0;
 function check($condition, $message) { global $checks; if (!$condition) { throw new RuntimeException($message); } $checks++; }
 
@@ -65,8 +65,4 @@ check(Progress::classify('mastered', false) === 'strength' && Progress::classify
 check(Progress::classify('familiar', true) === 'gap' && Progress::classify('attempted', false) === 'developing', 'developing with recent errors is a gap');
 check(Progress::classify('not-started', false) === 'not-assessed' && Progress::classify('not-started', true) === 'not-assessed', 'unassessed skills are never gaps');
 check(Progress::class_label('not-assessed') === 'Not assessed' && Progress::class_label('gap') === 'Needs practice', 'labels');
-check(Progress::mode_label('skill-based') === 'Skill-based' && Progress::mode_label('blended') === 'Blended' && Progress::mode_label('traditional') === 'Traditional', 'learning modes keep their names');
-$entries = [['classification' => 'strength'], ['classification' => 'gap'], ['classification' => 'gap'], ['classification' => 'developing'], ['classification' => 'not-assessed'], ['classification' => 'not-assessed']];
-check(Progress::summarize($entries) === ['total' => 6, 'strengths' => 1, 'gaps' => 2, 'developing' => 1, 'not_assessed' => 2], 'summary counts each class once');
-check(Progress::summarize([]) === ['total' => 0, 'strengths' => 0, 'gaps' => 0, 'developing' => 0, 'not_assessed' => 0], 'empty summary');
 echo "$checks curriculum unit checks passed.\n";

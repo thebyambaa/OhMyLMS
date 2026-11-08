@@ -234,8 +234,7 @@ class LearnPress {
 	 * @param int $new_course_id The ID of the newly created course in OhMyLMS.
 	 */
 	private function migrate_terms_and_taxonomies( $new_course_id ) {
-		// LearnPress categories become curriculum items (keeping their parent chain) and its tags
-		// become Course Bundles.
+		// LearnPress categories become curriculum items (keeping their parent chain). Tags are not migrated.
 		$categories = wp_get_post_terms( $this->lp_course_id, 'course_category' );
 		if ( ! is_wp_error( $categories ) && ! empty( $categories ) ) {
 			$paths = array();
@@ -243,11 +242,6 @@ class LearnPress {
 				$paths[] = \OhMyLMS\Curriculum\Placement::term_path( $category );
 			}
 			\OhMyLMS\Curriculum\Placement::import_categories( $new_course_id, $paths );
-		}
-
-		$tags = wp_get_post_terms( $this->lp_course_id, 'course_tag', array( 'fields' => 'names' ) );
-		if ( ! is_wp_error( $tags ) && ! empty( $tags ) ) {
-			\OhMyLMS\Curriculum\Placement::import_tags( $new_course_id, $tags );
 		}
 	}
 

@@ -1,7 +1,7 @@
 <?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
- * How a course is organized: the curriculum items it is linked to and the Course Bundles it belongs
- * to. This replaces course categories and tags in the course editor.
+ * How a course is organized: the curriculum items it is linked to. This replaces course categories
+ * and tags in the course editor.
  *
  * @package OhMyLMS
  */
@@ -13,20 +13,17 @@ use OhMyLMS\Curriculum\Items;
 use OhMyLMS\Curriculum\Placement;
 use OhMyLMS\Curriculum\Schema;
 use OhMyLMS\QuestionBank\AccessPolicy;
-use OhMyLMS\Bundles\Bundles;
 use WP_REST_Request;
 use WP_REST_Server;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * How a course is organized: the curriculum items it is linked to and the Course Bundles it belongs
- * to. This replaces course categories and tags in the course editor.
+ * How a course is organized: the curriculum items it is linked to. This replaces course categories
+ * and tags in the course editor.
  *
- *  - Anyone who may edit the course can read the outlines and change its curriculum links.
- *  - Course Bundles are curated groupings that learners see, so only administrators change which
- *    bundles a course is in; other editors see them read-only.
- *  - Creating or restructuring curriculum items and bundles stays in the Curriculum and Course Bundles pages.
+ *  - Anyone who may edit the course can read the outline and change its curriculum links.
+ *  - Creating or restructuring curriculum items stays on the Curriculum page.
  */
 class CourseOrganizationController extends RestController {
 	/**
@@ -60,17 +57,6 @@ class CourseOrganizationController extends RestController {
 				),
 			)
 		);
-		register_rest_route(
-			$this->namespace,
-			'/bundles/outline',
-			array(
-				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'bundles_outline' ),
-					'permission_callback' => array( $this, 'author_permission' ),
-				),
-			)
-		);
 	}
 
 	/**
@@ -100,10 +86,8 @@ class CourseOrganizationController extends RestController {
 	private function describe( $course_id ) {
 		return rest_ensure_response(
 			array(
-				'curriculum'         => Placement::items( $course_id ),
-				'bundles'            => Placement::bundles( $course_id ),
-				'can_manage_bundles' => Access::can_manage(),
-				'level_summary'      => \OhMyLMS\Skills\CourseLevels::get( $course_id ),
+				'curriculum'    => Placement::items( $course_id ),
+				'level_summary' => \OhMyLMS\Skills\CourseLevels::get( $course_id ),
 			)
 		);
 	}
@@ -117,34 +101,17 @@ class CourseOrganizationController extends RestController {
 		return $this->describe( (int) $request['id'] );
 	}
 
-	/** Replace a course's curriculum links and, for administrators, its bundles. Send only what changes.
+	/** Replace a course's curriculum links. Send only what changes.
 	 *
 	 * @param WP_REST_Request $request REST request.
 	 */
 	public function update( WP_REST_Request $request ) {
 		$course_id  = (int) $request['id'];
 		$curriculum = $request->get_param( 'curriculum_ids' );
-		$bundles    = $request->get_param( 'bundle_ids' );
 		if ( null !== $curriculum && ! is_array( $curriculum ) ) {
 			return Access::error( 'ohmylms_organization_invalid', __( 'Send the curriculum items as a list.', 'ohmylms' ) ); }
-		if ( null !== $bundles && ! is_array( $bundles ) ) {
-			return Access::error( 'ohmylms_organization_invalid', __( 'Send the course bundles as a list.', 'ohmylms' ) ); }
-		if ( is_array( $bundles ) && ! Access::can_manage() ) {
-			$wanted  = array_values( array_unique( array_filter( array_map( 'intval', $bundles ) ) ) );
-			$current = Placement::bundle_ids( $course_id );
-			sort( $wanted );
-			sort( $current );
-			if ( $wanted !== $current ) {
-				return AccessPolicy::denied( __( 'Only administrators can change which course bundles a course is in.', 'ohmylms' ) ); }
-			$bundles = null;
-		}
 		if ( is_array( $curriculum ) ) {
 			$result = Placement::set_items( $course_id, $curriculum );
-			if ( is_wp_error( $result ) ) {
-				return $result; }
-		}
-		if ( is_array( $bundles ) ) {
-			$result = Placement::set_bundles( $course_id, $bundles );
 			if ( is_wp_error( $result ) ) {
 				return $result; }
 		}
@@ -180,23 +147,4 @@ class CourseOrganizationController extends RestController {
 		);
 	}
 
-	/**
-	 * Bundles outline for Course organization controller.
-	 */
-	public function bundles_outline() {
-		return rest_ensure_response(
-			array(
-				'bundles' => array_map(
-					static function ( $row ) {
-						return array(
-							'id'     => (int) $row['id'],
-							'title'  => $row['title'],
-							'status' => $row['status'],
-						);
-					},
-					Bundles::all()
-				),
-			)
-		);
-	}
 }

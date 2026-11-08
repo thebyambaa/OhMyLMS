@@ -486,24 +486,20 @@ class TutorLMS {
 
 		// Prepare taxonomy assignment.
 		$course_categories = array();
-		$course_tags       = array();
 
 		foreach ( $terms as $term ) {
 			if ( 'course-category' === $term->taxonomy ) {
 				$course_categories[] = $term;
-			} elseif ( 'course-tag' === $term->taxonomy ) {
-				$course_tags[] = $term;
 			}
 		}
 
-		// Tutor categories become curriculum items (keeping their parent chain) and its tags become
-		// Course Bundles. Existing items and bundles with the same name are reused.
+		// Tutor categories become curriculum items (keeping their parent chain). Existing items with the
+		// same name are reused. Tags are not migrated.
 		$paths = array();
 		foreach ( $course_categories as $category ) {
 			$paths[] = \OhMyLMS\Curriculum\Placement::term_path( $category );
 		}
 		\OhMyLMS\Curriculum\Placement::import_categories( $new_course_id, $paths );
-		\OhMyLMS\Curriculum\Placement::import_tags( $new_course_id, wp_list_pluck( $course_tags, 'name' ) );
 	}
 
 

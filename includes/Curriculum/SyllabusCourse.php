@@ -1,7 +1,7 @@
 <?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
  * A syllabus is also a course. Every syllabus has one real course (an ordinary `ohmylms-course`), so it is
- * listed in the Content Hub catalog, can be published, priced, enrolled in and put in a Course Bundle like
+ * listed in the Content Hub catalog, can be published, priced and enrolled in like
  * any other course, and its lessons, quizzes and assignments are attached the way the catalog already does.
  *
  * @package OhMyLMS
@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * A syllabus is also a course. Every syllabus has one real course (an ordinary `ohmylms-course`), so it is
- * listed in the Content Hub catalog, can be published, priced, enrolled in and put in a Course Bundle like
+ * listed in the Content Hub catalog, can be published, priced and enrolled in like
  * any other course, and its lessons, quizzes and assignments are attached the way the catalog already does.
  *
  * The syllabus owns the structure and the course mirrors it, one way:
@@ -339,7 +339,7 @@ final class SyllabusCourse {
 		// A new course comes with one empty "Untitled" chapter; the chapters of a syllabus course are its skill groups.
 		foreach ( Catalog::chapters( $created ) as $chapter ) {
 			Catalog::delete_chapter( $created, $chapter['id'] ); }
-		// The course sits under its syllabus, so placement and Course Bundles see it like any linked course.
+		// The course sits under its syllabus, so placement sees it like any linked course.
 		Links::add( $syllabus_id, 'course', $created );
 		$draft = Catalog::save_draft( $created, array( 'mode' => 'skill-based' ) );
 		if ( is_wp_error( $draft ) ) {

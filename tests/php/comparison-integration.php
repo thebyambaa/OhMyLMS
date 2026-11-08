@@ -64,7 +64,7 @@ try {
         ok( 200 === call_api( 'PUT', 'mapping', array( 'specific_id' => $extras[$index], 'shared_id' => $science['id'], 'relation' => $relation, 'note' => 'Different scope', 'expected_revision' => '' ) )->get_status(), $relation . ' saves descriptively' );
         ok( ! SharedContent::owners( $extras[$index] ), $relation . ' does not inherit equivalent content' );
     }
-    $combined_method = new ReflectionMethod( OhMyLMS\Bundles\Progress::class, 'combined' ); $combined_method->setAccessible(true);
+    $combined_method = new ReflectionMethod( OhMyLMS\Curriculum\LearnerProgress::class, 'combined' ); $combined_method->setAccessible(true);
     $combined_view = $combined_method->invoke(null, $admin, $extras, array());
     ok( 0 === $combined_view[0]['pooled_sources'], 'broader and narrower do not pool evidence' );
     $source_rows = Comparison::attach_mappings( Comparison::objectives( $items[0] ) );

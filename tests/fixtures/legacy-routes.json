@@ -106,7 +106,7 @@
 		],
 		[
 			"/extensions/bundles",
-			"page=ohmylms-content&tab=courses&section=bundles"
+			"page=ohmylms-content&tab=courses"
 		],
 		[
 			"/content-hub/exams?action=new",
@@ -528,7 +528,7 @@
 		],
 		[
 			"/content-hub/bundles",
-			"/content-hub/bundles"
+			"/courses"
 		],
 		[
 			"/communities",
@@ -886,11 +886,11 @@
 		},
 		{
 			"from": "/content-hub/bundles",
-			"to": "/content-hub/bundles"
+			"to": "/courses"
 		},
 		{
 			"from": "/extensions/bundles",
-			"to": "/content-hub/bundles"
+			"to": "/courses"
 		},
 		{
 			"from": "/content-hub/exams",

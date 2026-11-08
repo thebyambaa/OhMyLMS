@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Read-only views of `student_skill_state`, shared by the learner dashboard, the teacher and school
- * reports, course outlines, bundles, MCP tools and the AI notes. Nothing here writes; Engine does.
+ * reports, course outlines, MCP tools and the AI notes. Nothing here writes; Engine does.
  */
 final class Snapshot {
 

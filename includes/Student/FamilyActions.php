@@ -85,7 +85,7 @@ final class FamilyActions {
 				Family::revoke_invitation( absint( $data['invitation_id'] ?? 0 ) );
 				return array( 'message' => __( 'Invitation revoked.', 'ohmylms' ) );
 			case 'update_choices':
-				Family::set_choices( absint( $data['child_id'] ?? 0 ), $data['grade'] ?? '', array_map( 'absint', (array) ( $data['bundles'] ?? array() ) ) );
+				Family::set_choices( absint( $data['child_id'] ?? 0 ), $data['grade'] ?? '' );
 				return array( 'message' => __( 'Learning choices saved.', 'ohmylms' ) );
 			case 'revoke_link':
 				if ( 'yes' !== ( $data['confirm'] ?? '' ) ) {
@@ -134,8 +134,7 @@ final class FamilyActions {
 			foreach ( array( 'name', 'grade', 'child_id', 'link_id', 'confirm', 'email', 'invitation_id', 'return' ) as $key ) {
 				$data[ $key ] = isset( $_POST[ $key ] ) && is_string( $_POST[ $key ] ) ? sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) : '';
 			}
-			$data['bundles'] = isset( $_POST['bundles'] ) && is_array( $_POST['bundles'] ) ? array_map( 'absint', wp_unslash( $_POST['bundles'] ) ) : array();
-			$flash           = self::apply( $operation, $data );
+			$flash = self::apply( $operation, $data );
 		} catch ( \Throwable $error ) {
 			$safe  = in_array( $error->getCode(), array( 400, 403, 409 ), true );
 			$flash = array( 'error' => $safe ? $error->getMessage() : __( 'Unable to complete this request.', 'ohmylms' ) );

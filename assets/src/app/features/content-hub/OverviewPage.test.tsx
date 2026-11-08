@@ -22,7 +22,6 @@ const overview: Overview = {
 			counts: { published: 3, drafts: 1, to_grade: 2 },
 		},
 		{ id: 'skills', total: 9, counts: { archived: 1 } },
-		{ id: 'bundles', total: 1, counts: { published: 1, drafts: 0 } },
 	],
 	recent: [
 		{
@@ -66,19 +65,10 @@ it( 'lists every area the server sent with counts and links', async () => {
 	const rows = within( table ).getAllByRole( 'row' ).slice( 1 );
 	expect(
 		rows.map( ( row ) => row.querySelector( '.row-title' )?.textContent )
-	).toEqual( [
-		'Courses',
-		'Lessons',
-		'Quizzes',
-		'Skills',
-		'Course bundles',
-	] );
+	).toEqual( [ 'Courses', 'Lessons', 'Quizzes', 'Skills' ] );
 	expect(
 		within( table ).getByRole( 'link', { name: 'Courses' } )
 	).toHaveAttribute( 'href', '/courses' );
-	expect(
-		within( table ).getByRole( 'link', { name: 'Course bundles' } )
-	).toHaveAttribute( 'href', '/content-hub/bundles' );
 	const quizzes = rows[ 2 ]!;
 	expect(
 		within( quizzes ).getByText(
@@ -114,9 +104,6 @@ it( 'hides administrator areas and their recent items from authors', async () =>
 	} );
 	expect(
 		within( table ).queryByRole( 'link', { name: 'Lessons' } )
-	).not.toBeInTheDocument();
-	expect(
-		within( table ).queryByRole( 'link', { name: 'Course bundles' } )
 	).not.toBeInTheDocument();
 	expect(
 		screen.queryByRole( 'link', { name: 'Intro lesson' } )

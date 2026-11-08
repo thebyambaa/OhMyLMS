@@ -233,8 +233,14 @@ try {
 			'post_status' => 'draft',
 		)
 	);
+	// Someone who may not publish the draft is blocked by it; an author who may publish it is not.
+	$journey_publisher = get_current_user_id();
+	$journey_report    = CourseProgram::readiness_report( $journey_program, $journey_state['course'] );
+	journey_check( $journey_report['ready'] && ! $journey_report['resources'], 'A draft resource the author may publish does not block publication.' );
+	wp_set_current_user( 0 );
 	$journey_report = CourseProgram::readiness_report( $journey_program, $journey_state['course'] );
-	journey_check( ! $journey_report['ready'] && 1 === count( $journey_report['resources'] ) && $journey_program['items'][0]['content_id'] === $journey_report['resources'][0]['content_id'], 'Unpublished resources block publication and expose their exact repair resource.' );
+	wp_set_current_user( $journey_publisher );
+	journey_check( ! $journey_report['ready'] && 1 === count( $journey_report['resources'] ) && $journey_program['items'][0]['content_id'] === $journey_report['resources'][0]['content_id'], 'Unpublished resources block someone who cannot publish them and expose their exact repair resource.' );
 	wp_update_post(
 		array(
 			'ID'          => $journey_program['items'][0]['content_id'],
@@ -263,6 +269,8 @@ try {
 	wp_set_current_user( 0 );
 	journey_check( get_permalink( $journey_state['course'] ) . '#hub-unit-1' === LegacyLessonLinks::target( $journey_state['course'], $journey_legacy_lesson ), 'Visitors on an old lesson URL land on the unit of the public course page.' );
 	wp_set_current_user( $journey_state['learner'] );
+	// Courses are free access by default, and opening one enrols the learner; with the switch off the outline shows who is not enrolled.
+	update_post_meta( $journey_state['course'], '_free_access', '0' );
 	$journey_outline = CourseOutline::get( $journey_state['course'], $journey_state['learner'] );
 	journey_check( empty( $journey_outline['enrolled'] ), 'The outline knows the learner is not enrolled.' );
 	journey_check( 403 === journey_api( 'POST', 'courses/' . $journey_state['course'] . '/learning/activities/' . $journey_program['items'][0]['id'] . '/complete' )->get_status(), 'Unenrolled learners cannot write completion.' );

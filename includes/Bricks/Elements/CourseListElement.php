@@ -166,16 +166,6 @@ class CourseListElement extends \Bricks\Element {
 			'description' => esc_html__( 'Only show courses placed under these curriculum items. Leave empty to show all.', 'ohmylms' ),
 		);
 
-		$this->controls['bundle'] = array(
-			'tab'         => 'content',
-			'label'       => esc_html__( 'Course bundles', 'ohmylms' ),
-			'type'        => 'select',
-			'multiple'    => true,
-			'searchable'  => true,
-			'options'     => \OhMyLMS\Curriculum\Placement::bundle_options(),
-			'description' => esc_html__( 'Only show courses in these Course Bundles. Leave empty to show all.', 'ohmylms' ),
-		);
-
 		// Feature Toggles Group.
 		$this->controls['features_heading'] = array(
 			'tab'      => 'content',
@@ -645,11 +635,9 @@ class CourseListElement extends \Bricks\Element {
 		$attrs['show_sort']          = isset( $settings['show_sort'] ) && $settings['show_sort'] ? 'yes' : 'no';
 		$attrs['is_enable_category'] = isset( $settings['is_enable_category'] ) && $settings['is_enable_category'] ? 'yes' : 'no';
 
-		// Curriculum items and Course Bundles the list is limited to (comma-separated slugs).
-		foreach ( array( 'curriculum', 'bundle' ) as $group ) {
-			if ( ! empty( $settings[ $group ] ) ) {
-				$attrs[ $group ] = implode( ',', array_map( 'sanitize_key', (array) $settings[ $group ] ) );
-			}
+		// Curriculum items the list is limited to (comma-separated slugs).
+		if ( ! empty( $settings['curriculum'] ) ) {
+			$attrs['curriculum'] = implode( ',', array_map( 'sanitize_key', (array) $settings['curriculum'] ) );
 		}
 
 		if ( isset( $settings['layout_style'] ) && '' !== $settings['layout_style'] && in_array( $settings['layout_style'], array( 'grid-style3', 'grid-style4' ), true ) ) {

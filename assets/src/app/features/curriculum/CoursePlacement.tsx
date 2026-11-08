@@ -11,7 +11,7 @@ import { useRequest } from '../../hooks/useRequest';
 import { itemPath, readPlacement, readTree, savePlacement } from './api';
 
 /**
- * Curriculum placement saves independently; no publication, access or bundle changes.
+ * Curriculum placement saves independently; no publication or access changes.
  * @param root0
  * @param root0.course
  */

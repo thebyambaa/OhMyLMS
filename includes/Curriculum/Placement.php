@@ -1,32 +1,27 @@
 <?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
- * Where a course sits: the curriculum items it is linked to and the Course Bundles it belongs to.
+ * Where a course sits: the curriculum items it is linked to.
  *
  * @package OhMyLMS
  */
 namespace OhMyLMS\Curriculum;
 
-use OhMyLMS\Bundles\Bundles;
-
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Where a course sits: the curriculum items it is linked to and the Course Bundles it belongs to.
+ * Where a course sits: the curriculum items it is linked to.
  *
  * This is the replacement for course categories and tags. Everything that used to read or write
  * `course_category` or `course_tag` (the editor, course lists and filters, shortcodes, membership
- * plans, importers) goes through here, so curriculum and bundles are the only way to organize courses.
+ * plans, importers) goes through here, so curriculum items are the only way to organize courses.
  * The old taxonomies stay registered and keep their stored terms, but nothing consults them.
  *
  *  - Curriculum items play the part of hierarchical categories: filtering by an item includes
  *    everything linked under its descendants.
- *  - A Course Bundle plays the part of a tag, but is curated: its members are courses, and the
- *    courses linked under any curriculum item that is a member.
  */
 final class Placement {
 	/** Filter slugs are synthetic so the public filter markup and script work unchanged. */
-	const ITEM_PREFIX   = 'c';
-	const BUNDLE_PREFIX = 'b';
+	const ITEM_PREFIX = 'c';
 
 	/**
 	 * Item slug for Placement.
@@ -35,14 +30,6 @@ final class Placement {
 	 */
 	public static function item_slug( $id ) {
 		return self::ITEM_PREFIX . (int) $id; }
-	/**
-	 * Bundle slug for Placement.
-	 *
-	 * @param mixed $id Id.
-	 */
-	public static function bundle_slug( $id ) {
-		return self::BUNDLE_PREFIX . (int) $id; }
-
 	/** Tell dependents (membership plans) that course placement changed. */
 	public static function changed() {
 		do_action( 'ohmylms_curriculum_changed' );
@@ -55,13 +42,12 @@ final class Placement {
 		return Schema::ready();
 	}
 
-	/** IDs from filter slugs of one kind ('item' or 'bundle'); anything else is ignored.
+	/** Item IDs from filter slugs (`c<id>`); anything else is ignored.
 	 *
 	 * @param mixed $slugs Slugs.
-	 * @param mixed $kind Kind.
 	 */
-	public static function ids_from_slugs( $slugs, $kind ) {
-		$prefix = 'bundle' === $kind ? self::BUNDLE_PREFIX : self::ITEM_PREFIX;
+	public static function ids_from_slugs( $slugs ) {
+		$prefix = self::ITEM_PREFIX;
 		$ids    = array();
 		foreach ( (array) $slugs as $slug ) {
 			if ( is_string( $slug ) && preg_match( '/^' . $prefix . '(\d+)$/D', $slug, $match ) ) {
@@ -76,10 +62,9 @@ final class Placement {
 	 * shows no courses instead of silently showing all of them.
 	 *
 	 * @param mixed $value Value to process.
-	 * @param mixed $kind Kind.
 	 */
-	public static function ids_from_list( $value, $kind ) {
-		$prefix = 'bundle' === $kind ? self::BUNDLE_PREFIX : self::ITEM_PREFIX;
+	public static function ids_from_list( $value ) {
+		$prefix = self::ITEM_PREFIX;
 		$parts  = is_array( $value ) ? $value : preg_split( '/\s*,\s*/', trim( (string) $value ), -1, PREG_SPLIT_NO_EMPTY );
 		$ids    = array();
 		foreach ( $parts as $part ) {
@@ -130,40 +115,7 @@ final class Placement {
 		return $rows;
 	}
 
-	/**
-	 * Bundle ids for Placement.
-	 *
-	 * @return int[] Bundles the course is a direct member of.
-	 * @param mixed $course_id Course identifier.
-	 */
-	public static function bundle_ids( $course_id ) {
-		global $wpdb;
-		if ( ! self::ready() ) {
-			return array(); }
-		return array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT bundle_id FROM %i WHERE item_type=\'course\' AND item_id=%d ORDER BY bundle_id', Bundles::members_table(), (int) $course_id ) ) );
-	}
-
-	/**
-	 * Bundles for Placement.
-	 *
-	 * @param mixed $course_id Course identifier.
-	 */
-	public static function bundles( $course_id ) {
-		$rows = array();
-		foreach ( self::bundle_ids( $course_id ) as $id ) {
-			$bundle = Bundles::get( $id );
-			if ( $bundle ) {
-				$rows[] = array(
-					'id'     => (int) $bundle['id'],
-					'title'  => $bundle['title'],
-					'slug'   => self::bundle_slug( $id ),
-					'status' => $bundle['status'],
-				); }
-		}
-		return $rows;
-	}
-
-	// ---- Which courses are under items or bundles -------------------------------------------
+	// ---- Which courses are under items -------------------------------------------
 
 	/** Courses linked to the given items, and by default to everything beneath them.
 	 *
@@ -183,56 +135,25 @@ final class Placement {
 		return Links::object_ids( $all, 'course' );
 	}
 
-	/** Courses a bundle refers to: direct course members plus courses linked under its curriculum members.
-	 *
-	 * @param array $bundle_ids Bundle ids.
-	 */
-	public static function course_ids_for_bundles( array $bundle_ids ) {
-		global $wpdb;
-		$bundle_ids = array_values( array_unique( array_filter( array_map( 'intval', $bundle_ids ) ) ) );
-		if ( ! $bundle_ids || ! self::ready() ) {
-			return array(); }
-		$courses = array();
-		$items   = array();
-		foreach ( $wpdb->get_results( $wpdb->prepare( 'SELECT item_type, item_id FROM %i WHERE bundle_id IN (' . implode( ',', array_fill( 0, count( $bundle_ids ), '%d' ) ) . ')', array_merge( array( Bundles::members_table() ), $bundle_ids ) ), ARRAY_A ) as $row ) {
-			if ( 'course' === $row['item_type'] ) {
-				$courses[] = (int) $row['item_id'];
-			} else {
-				$items[] = (int) $row['item_id']; }
-		}
-		return array_values( array_unique( array_merge( $courses, self::course_ids_for_items( $items ) ) ) );
-	}
-
-	/** Course IDs matching filter slugs of one kind: the union of everything selected.
+	/** Course IDs matching filter slugs: the union of everything selected.
 	 *
 	 * @param mixed $slugs Slugs.
-	 * @param mixed $kind Kind.
 	 */
-	public static function course_ids_for_slugs( $slugs, $kind ) {
-		$ids = self::ids_from_slugs( $slugs, $kind );
-		return 'bundle' === $kind ? self::course_ids_for_bundles( $ids ) : self::course_ids_for_items( $ids );
+	public static function course_ids_for_slugs( $slugs ) {
+		return self::course_ids_for_items( self::ids_from_slugs( $slugs ) );
 	}
 
 	/**
-	 * Narrow WP_Query arguments to courses matching curriculum and bundle filters. Selections in one
-	 * group are alternatives; the two groups must both match. A selection that matches nothing
-	 * yields no courses rather than silently showing everything.
+	 * Narrow WP_Query arguments to courses matching curriculum filters. Selections are alternatives. A
+	 * selection that matches nothing yields no courses rather than silently showing everything.
 	 *
 	 * @param array $args Operation arguments.
 	 * @param array $item_ids Item ids.
-	 * @param array $bundle_ids Bundle ids.
 	 */
-	public static function narrow_query( array $args, array $item_ids = array(), array $bundle_ids = array() ) {
-		$sets = array();
-		if ( $item_ids ) {
-			$sets[] = self::course_ids_for_items( $item_ids ); }
-		if ( $bundle_ids ) {
-			$sets[] = self::course_ids_for_bundles( $bundle_ids ); }
-		if ( ! $sets ) {
+	public static function narrow_query( array $args, array $item_ids = array() ) {
+		if ( ! $item_ids ) {
 			return $args; }
-		$matches = array_shift( $sets );
-		foreach ( $sets as $set ) {
-			$matches = array_intersect( $matches, $set ); }
+		$matches = self::course_ids_for_items( $item_ids );
 		if ( ! empty( $args['post__in'] ) ) {
 			$matches = array_intersect( $matches, array_map( 'intval', (array) $args['post__in'] ) ); }
 		$args['post__in'] = $matches ? array_values( $matches ) : array( 0 );
@@ -301,25 +222,12 @@ final class Placement {
 	}
 
 	/**
-	 * A course's curriculum items, or with $bundles its published Course Bundles, as {id,name,slug} for
-	 * course cards and learner-facing dashboards.
+	 * A course's curriculum items as {id,name,slug} for course cards and learner-facing dashboards.
 	 *
 	 * @param mixed $course_id Course identifier.
-	 * @param bool  $bundles Bundles.
 	 */
-	public static function card_terms( $course_id, $bundles = false ) {
+	public static function card_terms( $course_id ) {
 		$terms = array();
-		if ( $bundles ) {
-			foreach ( self::bundles( $course_id ) as $bundle ) {
-				if ( 'published' === $bundle['status'] ) {
-					$terms[] = array(
-						'id'   => $bundle['id'],
-						'name' => $bundle['title'],
-						'slug' => $bundle['slug'],
-					); }
-			}
-			return $terms;
-		}
 		foreach ( self::items( $course_id ) as $item ) {
 			$terms[] = array(
 				'id'   => $item['id'],
@@ -347,28 +255,6 @@ final class Placement {
 		return $map;
 	}
 
-	/** Published bundles that have at least one published course, for public filters. */
-	public static function public_bundles() {
-		global $wpdb;
-		if ( ! self::ready() ) {
-			return array(); }
-		$result = array();
-		foreach ( Bundles::all( 'published' ) as $bundle ) {
-			$courses = self::course_ids_for_bundles( array( (int) $bundle['id'] ) );
-			if ( ! $courses ) {
-				continue; }
-			$count = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE post_type=%s AND post_status=\'publish\' AND ID IN (' . implode( ',', array_fill( 0, count( $courses ), '%d' ) ) . ')', array_merge( array( $wpdb->posts, OHMYLMS_COURSE_CPT ), $courses ) ) );
-			if ( $count ) {
-				$result[] = array(
-					'id'    => (int) $bundle['id'],
-					'title' => $bundle['title'],
-					'slug'  => self::bundle_slug( (int) $bundle['id'] ),
-					'count' => $count,
-				); }
-		}
-		return $result;
-	}
-
 	/**
 	 * Every curriculum item for page-builder pickers, keyed by slug (c<id>) so the tree order survives
 	 * object-key sorting in the browser; names are indented by depth.
@@ -389,16 +275,6 @@ final class Placement {
 			}
 		};
 		$walk( 0, 0 );
-		return $options;
-	}
-
-	/** Published Course Bundles for page-builder pickers, keyed by slug (t<id>). @return array<string,string> */
-	public static function bundle_options() {
-		if ( ! self::ready() ) {
-			return array(); }
-		$options = array();
-		foreach ( Bundles::all( 'published' ) as $bundle ) {
-			$options[ self::bundle_slug( $bundle['id'] ) ] = $bundle['title']; }
 		return $options;
 	}
 
@@ -424,37 +300,6 @@ final class Placement {
 				'slug'        => self::item_slug( $id ),
 				'description' => (string) $row['description'],
 				'parent'      => (int) $row['parent_id'],
-				'count'       => count( $courses ),
-				'courses'     => $courses,
-			);
-		}
-		return $result;
-	}
-
-	/** Bundles shaped like course tag terms.
-	 *
-	 * @param string $search Search.
-	 */
-	public static function term_bundles( $search = '' ) {
-		if ( ! self::ready() ) {
-			return array(); }
-		$result = array();
-		foreach ( Bundles::all() as $row ) {
-			if ( '' !== $search && stripos( $row['title'], $search ) === false ) {
-				continue; }
-			$id      = (int) $row['id'];
-			$courses = array();
-			foreach ( self::course_ids_for_bundles( array( $id ) ) as $course_id ) {
-				$courses[] = array(
-					'id'    => $course_id,
-					'title' => get_the_title( $course_id ),
-				); }
-			$result[] = array(
-				'term_id'     => $id,
-				'id'          => $id,
-				'name'        => $row['title'],
-				'slug'        => self::bundle_slug( $id ),
-				'description' => (string) $row['description'],
 				'count'       => count( $courses ),
 				'courses'     => $courses,
 			);
@@ -500,39 +345,7 @@ final class Placement {
 		return true;
 	}
 
-	/**
-	 * Replace the bundles a course belongs to. Bundles are curated, so callers should allow this only for
-	 * administrators. A published bundle cannot be left with no members.
-	 *
-	 * @return true|\WP_Error
-	 * @param mixed $course_id Course identifier.
-	 * @param array $bundle_ids Bundle ids.
-	 */
-	public static function set_bundles( $course_id, array $bundle_ids ) {
-		if ( ! self::ready() ) {
-			return Access::error( 'ohmylms_curriculum_unavailable', __( 'Curriculum storage is not installed yet.', 'ohmylms' ), 503 ); }
-		if ( ! self::valid_course( $course_id ) ) {
-			return Access::error( 'ohmylms_course_missing', __( 'Course not found.', 'ohmylms' ), 404 ); }
-		$wanted = array_values( array_unique( array_filter( array_map( 'intval', $bundle_ids ) ) ) );
-		foreach ( $wanted as $id ) {
-			if ( ! Bundles::get( $id ) ) {
-				return Access::error( 'ohmylms_bundle_invalid', __( 'A selected course bundle no longer exists.', 'ohmylms' ) ); }
-		}
-		$current = self::bundle_ids( $course_id );
-		foreach ( array_diff( $current, $wanted ) as $id ) {
-			$result = Bundles::remove_course( $id, $course_id );
-			if ( is_wp_error( $result ) ) {
-				return $result; }
-		}
-		foreach ( array_diff( $wanted, $current ) as $id ) {
-			$result = Bundles::add_course( $id, $course_id );
-			if ( is_wp_error( $result ) ) {
-				return $result; }
-		}
-		return true;
-	}
-
-	/** Give a duplicate the same curriculum placement as its original. Bundle membership is not copied.
+	/** Give a duplicate the same curriculum placement as its original.
 	 *
 	 * @param mixed $from_course From course.
 	 * @param mixed $to_course To course.
@@ -623,23 +436,5 @@ final class Placement {
 			$parent = (int) $parent_term->parent;
 		}
 		return $path;
-	}
-	/** Add an imported course to the bundles with these titles, creating draft bundles that do not exist yet.
-	 *
-	 * @param mixed $course_id Course identifier.
-	 * @param array $titles Titles.
-	 */
-	public static function import_tags( $course_id, array $titles ) {
-		if ( ! self::ensure_ready() ) {
-			return; }
-		foreach ( array_unique( array_filter( array_map( 'trim', array_map( 'strval', $titles ) ), 'strlen' ) ) as $title ) {
-			$bundle = Bundles::find_by_title( $title );
-			if ( ! $bundle ) {
-				$bundle = Bundles::create( array( 'title' => $title ) );
-				if ( is_wp_error( $bundle ) ) {
-					continue; }
-			}
-			Bundles::add_course( (int) $bundle['id'], $course_id );
-		}
 	}
 }

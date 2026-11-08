@@ -11,7 +11,6 @@
 
 namespace OhMyLMS\Student;
 
-use OhMyLMS\Bundles\Follows;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -79,37 +78,4 @@ final class MyLearning {
 		);
 	}
 
-	/**
-	 * Published collections (bundles) the learner follows, with the courses in each.
-	 *
-	 * Following a collection only lists it here; it grants no access and enrols nobody.
-	 *
-	 * @param int $student_id Learner ID.
-	 * @return array[]
-	 */
-	public static function collections( $student_id ) {
-		$hidden = array_flip( LearnerCatalog::roadmap_course_ids() );
-		$result = array();
-		foreach ( Follows::followed( (int) $student_id ) as $bundle ) {
-			$courses = array();
-			foreach ( Follows::bundle_courses( (int) $bundle['id'] ) as $course_id ) {
-				if ( isset( $hidden[ $course_id ] ) || OHMYLMS_COURSE_CPT !== get_post_type( $course_id ) || 'publish' !== get_post_status( $course_id ) ) {
-					continue;
-				}
-				$courses[] = array(
-					'id'    => (int) $course_id,
-					'title' => get_the_title( $course_id ),
-					'url'   => Hub::course_url( $course_id ),
-				);
-			}
-			if ( $courses ) {
-				$result[] = array(
-					'id'      => (int) $bundle['id'],
-					'title'   => $bundle['title'],
-					'courses' => $courses,
-				);
-			}
-		}
-		return $result;
-	}
 }

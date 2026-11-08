@@ -360,8 +360,6 @@ test( 'deleting an item with skill groups asks for confirmation', () => {
 		children: 0,
 		links: 0,
 		own_links: 0,
-		bundles: 0,
-		own_bundles: 0,
 		groups: 0,
 		own_groups: 0,
 	};

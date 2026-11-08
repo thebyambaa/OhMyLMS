@@ -22,7 +22,6 @@ use OhMyLMS\Learning\Catalog;
 use OhMyLMS\Learning\CourseProgram;
 use OhMyLMS\Learning\Schema as LearningSchema;
 use OhMyLMS\Skills\Taxonomy;
-use OhMyLMS\Bundles\Progress;
 
 $checks = 0; $users = []; $item_ids = []; $stray_terms = []; $course_ids = []; $posts = [];
 $admin = get_user_by('login', $config['username'])->ID;
@@ -213,14 +212,12 @@ try {
     ok($failed->get_status() >= 400 && snapshot_counts() === $before, 'an import that fails part-way leaves nothing behind (' . $failed->get_status() . ')');
     ok(get_terms(['taxonomy' => Taxonomy::NAME, 'name' => 'Created before the failure', 'hide_empty' => false, 'fields' => 'ids']) === [], 'no library skill is left from the failed import');
 
-    // ---- Bundles and membership integration ----
+    // ---- Curriculum integration ----
     $scope = Items::with_descendants($syllabus);
     ok(in_array($t1, Links::object_ids($scope, 'skill'), true) && in_array(skill_in(outline($syllabus), 'C2.1.1')['term_id'], Links::object_ids($scope, 'skill'), true) && !in_array($t1, Links::object_ids([$other], 'skill'), true), 'skills in groups count as the syllabus\'s skills (and only its) for course bundles');
     $paths = array_map(static function ($m) { return $m['name']; }, Links::memberships('skill', $t1));
     ok($paths === ['1 Number'], 'a skill reports the content item its group sits under: ' . wp_json_encode($paths));
     $student = wp_create_user('syl-' . wp_generate_password(8, false, false), wp_generate_password(24), 'syl-' . wp_generate_password(8, false, false) . '@example.invalid'); $users[] = $student;
-    $summary = Progress::curriculum($student, $syllabus);
-    ok($summary !== null && in_array($t1, $summary['skill_ids'], true), 'the learner dashboard lists the syllabus\'s skills');
 
     // ---- Deleting ----
     $dependents = api('GET', "curriculum/items/$topic")->get_data()['dependents'];

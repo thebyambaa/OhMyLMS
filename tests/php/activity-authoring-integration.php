@@ -248,13 +248,13 @@ try {
 	activity_check( array() === wp_get_object_terms( $activity_reading['id'], Taxonomy::NAME, array( 'fields' => 'ids' ) ), 'Course-specific links do not overwrite the shared resource taxonomy.' );
 	$activity_preview = activity_api( 'GET', '/preview' )->get_data();
 	activity_check(
-		(bool) array_filter(
+		! array_filter(
 			$activity_preview['readiness'],
 			static function ( $message ) {
 				return str_contains( $message, 'Publish the learning resource' );
 			}
 		),
-		'Existing publication checks still reject draft resources.'
+		'A draft resource the author may publish does not block publication.'
 	);
 	$activity_save_body['revision']                         = $activity_placed['revision'];
 	$activity_save_body['program']['items'][0]['skill_ids'] = array( $activity_terms[1] );

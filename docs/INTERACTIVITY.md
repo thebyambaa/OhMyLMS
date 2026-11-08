@@ -294,7 +294,7 @@ server decides whose subscription it is. The profile, password and notification 
 
 The course archive (`archive-course.php`) and the course list shortcode, which the block and the Elementor, Bricks and
 WPBakery elements render through, are `ohmylms/catalog` roots. Search, filters, sort, curriculum buttons and load
-more are GET parameters (`course_search`, `course_curriculum[]`, `course_bundle[]`, `course_level[]`,
+more are GET parameters (`course_search`, `course_curriculum[]`, `course_level[]`,
 `course_price[]`, `course_sort`, `paged`; the full contract is in
 [LEARNER-FRONTEND](LEARNER-FRONTEND.md#l3-catalogue-search-filter-sort-and-load-more-done)), and
 `OhMyLMS\Extensions\Catalog` applies them on the server: to the archive's main query (`pre_get_posts`) and to the

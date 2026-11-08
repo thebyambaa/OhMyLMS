@@ -7,7 +7,6 @@
 
 namespace OhMyLMS\Curriculum;
 
-use OhMyLMS\Bundles\Progress;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -71,7 +70,7 @@ final class SubjectProgress {
 				'items'    => $rows,
 			);
 		}
-		$progress = Progress::for_objectives( $student, array_values( array_unique( $all_ids ) ) );
+		$progress = LearnerProgress::for_objectives( $student, array_values( array_unique( $all_ids ) ) );
 		foreach ( $result['syllabuses'] as &$syllabus ) {
 			$syllabus['audit'] = array(
 				'unassessed'   => array(),

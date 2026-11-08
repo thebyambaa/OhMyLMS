@@ -26,7 +26,6 @@ import {
 	courseSettings,
 } from './course-structure';
 import {
-	bundles,
 	curriculumCompare,
 	curriculumWorkspace,
 	skillMap,
@@ -58,7 +57,6 @@ import { payments, settings } from './settings';
 import { setup } from './setup';
 import { studentReport, students } from './students';
 import { syllabusEditor } from './syllabus';
-import { taxonomies } from './taxonomies';
 import { webhooks } from './webhooks';
 import type { FeatureDefinition } from './types';
 
@@ -83,7 +81,6 @@ export const features: readonly FeatureDefinition[] = [
 	skillMap,
 	subjectProfiles,
 	curriculumCompare,
-	bundles,
 	syllabusEditor,
 	courseStructures,
 	courseStructureEditor,
@@ -135,7 +132,6 @@ export const features: readonly FeatureDefinition[] = [
 	integrations,
 	settings,
 	payments,
-	taxonomies,
 	webhooks,
 	extensionPages,
 ];

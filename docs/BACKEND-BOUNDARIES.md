@@ -12,7 +12,7 @@ refactors, and the ordered plan for the rest. Audit date: 31 October 2026.
   does not read or write another feature's options or meta.
 - A domain service (`includes/<Domain>/`) owns business rules, transactions (`Utility\Transaction`),
   stale-write checks and hooks it fires. A repository/read model owns SQL. Small domains may keep both in one
-  final class with static methods, as `Analytics\Repository`, `Bundles\Bundles` and `Curriculum\Items` do.
+  final class with static methods, as `Analytics\Repository`, `Curriculum\Items` do.
 - Cross-domain reads call the owning service. Domain code never depends on a REST controller.
 - Every route is registered by a `WP_REST_Controller` subclass, in `includes/Rest/V1` or in the feature's
   own `Rest/` folder, listed in `includes/Rest/Api.php` or registered by the feature bootstrap. Admin pages,
@@ -124,7 +124,7 @@ controller), **Legacy** (retire rather than refactor), **Other owner** (another 
 | `QuizReportsController`, `ContentHubOverviewController` | `Quiz\GradingPolicy::gradable_quiz_ids()` | One report scope rule (null = every quiz) |
 | `QuizReportsController`, `QuizController`, `AssignmentsController` | `Learning\CourseStructure::first_courses()`, `::content_in_course_sql()` | Content → course lookups on the chapter/content relationship tables |
 | `ContentHubOverviewController` | `ContentHub\ContentCounts` (new) | Post counts by type/status and recent items |
-| `ContentHubOverviewController` | `Quiz\AttemptReports::count_to_grade()`, `Skills\Provenance::archive_counts()`, `Curriculum\Items::counts()`, `Bundles\Bundles::status_counts()` | Cross-domain counts now go through each owner |
+| `ContentHubOverviewController` | `Quiz\AttemptReports::count_to_grade()`, `Skills\Provenance::archive_counts()`, `Curriculum\Items::counts()` | Cross-domain counts now go through each owner |
 | `StudentController` | `Student\Directory` (new) | Directory SQL, blocked flag, block/unblock of enrolment and membership rows plus its hooks |
 | `StudentProController` | `Student\Enrollments` (new) | Enrolment list/count/lookup, progress counts, manual enrol (duplicate and race check, hook) and unenrol (progress clean-up, hook) |
 | `StudentReportController` | `Student\Enrollments`, `Quiz\AttemptReports`, `Assignment\Submissions` (new), `Performance\Snapshot` | Each summary and page through the owning domain; `_total_points` read once per page |
@@ -206,14 +206,13 @@ authoritative.
 | `AccountHubUsersController` | `Schools\*` | 6 user meta (`FOR UPDATE` edit in `Schools\Versions::update_account()`) | reads `_ohmylms_banned_student` itself (owner `Student\Directory::is_blocked()`) | Partial |
 | `SkillReportController` | `Skills`, `Performance`, `Schools`, `Student\Enrollments` | none | class roster via `Schools\Directory`, evidence via `Skills\Evidence::recent()`, enrolment through `Student\Enrollments` | Separated |
 
-### Curriculum, syllabus, skills and bundles
+### Curriculum, syllabus, and skills
 
 | Controller | Service | Persistence left in controller | Cross-domain access | Status |
 | --- | --- | --- | --- | --- |
-| `CurriculumController`, `SyllabusController`, `SubjectController`, `SkillMappingController`, `TagController`, `MyBundlesController`, `PlacementController`, `PracticeController`, `SkillAssessmentToolsController` | `Curriculum\*`, `Bundles`, `Practice` | none | — | Separated |
+| `CurriculumController`, `SyllabusController`, `SubjectController`, `SkillMappingController`, `PlacementController`, `PracticeController`, `SkillAssessmentToolsController` | `Curriculum\*`, `Practice` | none | — | Separated |
 | `SyllabusEditorController`, `SkillAuthoringController` | `Curriculum\Syllabus*`, `Skills\SkillEditor`, `Skills\*` | none (locks in `Syllabus::import_reviewed()` and `SkillEditor::update()`) | — | Separated |
 | `ComparisonController` | `Curriculum\Comparison`, `SkillMappings` | 3 options (mapping locks and deletes in `SkillMappings`) | — | Partial |
-| `BundleController` | `Bundles\Bundles`, `Curriculum\Items` | none (`Items::search()`) | — | Separated |
 | `CategoryController` | `Curriculum\*` | none (`Links::course_counts()`) | — | Separated |
 | `SkillController` | `Skills\*` | 6 term meta | — | Partial |
 
@@ -378,7 +377,6 @@ for the feature controllers listed below the table.
 | `AssessmentController` | 3 | 0 | `Assessment\RevisionPublisher::history()` |
 | `AssignmentController` | 3 | 0 | `Student\Enrollments::legacy_row()` |
 | `AssignmentDeliveryController` | 3 | 0 | `CourseStructure::placement_courses()`, `::content_in_courses()` |
-| `BundleController` | 3 | 0 | `Curriculum\Items::search()` |
 | `CertificateController` | 3 | 0 | `Learning\CourseCertificate::all()` |
 | `CategoryController` | 2 | 0 | `Curriculum\Links::course_counts()` |
 | `EngagementController` | 2 | 0 | `Engagement\GamificationStore::revision()`, `::save_checked()` (`FOR UPDATE` on the option row + revision check + save in one transaction) |
@@ -410,7 +408,7 @@ Second part, before and after, same check counts: curriculum compare 77, skill w
 paper view (attempt autosave and resume) 67, account-hub users 88, schools lifecycle (sample school) 212, quizzes
 241, assignments 185, assignment delivery 102, certificates 207, issued certificates 107, taxonomies 122,
 gamification 328, gamification rewards 27, points purchase 59, design migration 38; skill authoring and
-curriculum workspace (bundle targets) pass with identical output. The mapping removals, the revision list and
+curriculum workspace pass with identical output. The mapping removals, the revision list and
 the AI chapter clean-up have no suite on `800.local` (`comparison-integration` and `assessment-integration` need
 the disposable site), so a throwaway script ran them against rows it created and removed: stale, grouped and
 current single removes, missing-pair, stale-pair and current group removes (nothing removed until the last),

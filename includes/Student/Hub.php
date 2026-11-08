@@ -136,7 +136,6 @@ final class Hub {
 			'personalize'     => ! empty( $input['personalize'] ),
 			'enabled'         => ! empty( $input['enabled'] ),
 			'library_types'   => array(),
-			'library_bundles' => ! array_key_exists( 'library_bundles', $input ) || ! empty( $input['library_bundles'] ),
 			'tabs'            => array(),
 			'cards'           => array(),
 			'labels'          => array(),
@@ -1121,8 +1120,7 @@ final class Hub {
 		$input['tabs']    = isset( $input['tabs'] ) && is_array( $input['tabs'] ) ? $input['tabs'] : array();
 		$input['cards']   = isset( $input['cards'] ) && is_array( $input['cards'] ) ? $input['cards'] : array();
 		// Unchecked boxes are not submitted, so state both explicitly.
-		$input['library_types']   = isset( $input['library_types'] ) && is_array( $input['library_types'] ) ? $input['library_types'] : array();
-		$input['library_bundles'] = ! empty( $input['library_bundles'] );
+		$input['library_types'] = isset( $input['library_types'] ) && is_array( $input['library_types'] ) ? $input['library_types'] : array();
 		if ( empty( $input['enabled'] ) ) {
 			LegacyPages::restore();
 		}

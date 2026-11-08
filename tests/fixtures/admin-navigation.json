@@ -15,9 +15,7 @@
 					"flag": "",
 					"sections": [
 						"",
-						"overview",
-						"bundles",
-						"taxonomies"
+						"overview"
 					],
 					"serverSections": [],
 					"defaultSection": ""
@@ -462,13 +460,6 @@
 			}
 		},
 		{
-			"id": "bundles",
-			"path": "/content-hub/bundles",
-			"group": "content",
-			"tab": "courses",
-			"section": "bundles"
-		},
-		{
 			"id": "syllabus-editor",
 			"path": "/content-hub/curriculum/syllabus/:id",
 			"group": "curriculum",
@@ -812,13 +803,6 @@
 			}
 		},
 		{
-			"id": "taxonomies",
-			"path": "/taxonomies",
-			"group": "content",
-			"tab": "courses",
-			"section": "taxonomies"
-		},
-		{
 			"id": "webhooks",
 			"path": "/webhooks",
 			"group": "settings",
@@ -906,16 +890,8 @@
 			"page=ohmylms-curriculum&tab=tools&view=compare&compare=roadmaps&roadmap=3"
 		],
 		[
-			"/content-hub/bundles",
-			"page=ohmylms-content&tab=courses&section=bundles"
-		],
-		[
 			"/content-hub/curriculum/syllabus/24?node=s%3A1",
 			"page=ohmylms-curriculum&tab=workspace&id=24&view=syllabus&node=s%3A1"
-		],
-		[
-			"/taxonomies",
-			"page=ohmylms-content&tab=courses&section=taxonomies"
 		],
 		[
 			"/content-hub/courses",

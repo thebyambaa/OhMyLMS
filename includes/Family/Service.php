@@ -7,9 +7,7 @@
 
 namespace OhMyLMS\Family;
 
-use OhMyLMS\Bundles\Follows;
 use OhMyLMS\Schools\Service as SchoolService;
-use OhMyLMS\Student\LearnerCatalog;
 use OhMyLMS\Services\EmailVerificationService;
 
 defined( 'ABSPATH' ) || exit;
@@ -482,47 +480,30 @@ final class Service {
 	}
 
 	/**
-	 * Current grade label and followed collection IDs for a managed child.
+	 * Current grade label for a managed child.
 	 *
 	 * @param int $learner_id Child user ID.
 	 * @return array
 	 */
 	public static function choices( $learner_id ) {
 		if ( ! self::is_managed( $learner_id ) ) {
-			return array(
-				'grade'    => '',
-				'followed' => array(),
-			);
+			return array( 'grade' => '' );
 		}
-		return array(
-			'grade'    => (string) get_user_meta( $learner_id, '_ohmylms_family_grade', true ),
-			'followed' => array_map( 'intval', array_column( Follows::followed( (int) $learner_id ), 'id' ) ),
-		);
+		return array( 'grade' => (string) get_user_meta( $learner_id, '_ohmylms_family_grade', true ) );
 	}
 
 	/**
-	 * Save a managed child's grade and followed collections. Following lists items on the
-	 * child's My learning page only; it grants no access and enrols nobody.
+	 * Save a managed child's grade label.
 	 *
 	 * @param int    $learner_id Child user ID.
 	 * @param string $grade Grade label.
-	 * @param array  $bundle_ids Chosen collection IDs, restricted to the public catalog.
 	 */
-	public static function set_choices( $learner_id, $grade, array $bundle_ids ) {
+	public static function set_choices( $learner_id, $grade ) {
 		self::actor_guardian();
 		self::need( self::is_managed( $learner_id ), __( 'You cannot manage this learner.', 'ohmylms' ) );
-		$allowed = array_map( 'intval', array_column( LearnerCatalog::bundles(), 'id' ) );
-		$wanted  = array_values( array_intersect( array_map( 'intval', $bundle_ids ), $allowed ) );
-		$current = array_map( 'intval', array_column( Follows::followed( (int) $learner_id ), 'id' ) );
-		foreach ( array_diff( $wanted, $current ) as $bundle_id ) {
-			$done = Follows::follow( (int) $learner_id, $bundle_id );
-			self::need( true === $done, __( 'Unable to save every choice. Remove some collections and try again.', 'ohmylms' ), 409 );
-		}
-		foreach ( array_diff( $current, $wanted ) as $bundle_id ) {
-			Follows::unfollow( (int) $learner_id, $bundle_id );
-		}
 		update_user_meta( $learner_id, '_ohmylms_family_grade', SchoolService::text( $grade, 50 ) );
 		$child = self::child( $learner_id );
 		self::audit( 'choices_updated', (int) $child['link_id'] );
 	}
+
 }

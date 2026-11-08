@@ -204,18 +204,6 @@ class CourseListWidget extends Widget_Base {
 			)
 		);
 
-		$this->add_control(
-			'bundle',
-			array(
-				'label'       => esc_html__( 'Course bundles', 'ohmylms' ),
-				'description' => esc_html__( 'Only show courses in these Course Bundles. Leave empty to show all.', 'ohmylms' ),
-				'type'        => Controls_Manager::SELECT2,
-				'multiple'    => true,
-				'label_block' => true,
-				'options'     => \OhMyLMS\Curriculum\Placement::bundle_options(),
-			)
-		);
-
 		// Feature Toggles Section.
 		$this->add_control(
 			'features_heading',
@@ -1287,11 +1275,9 @@ class CourseListWidget extends Widget_Base {
 			$attrs['order'] = $settings['order'];
 		}
 
-		// Curriculum items and Course Bundles the list is limited to (comma-separated slugs).
-		foreach ( array( 'curriculum', 'bundle' ) as $group ) {
-			if ( ! empty( $settings[ $group ] ) ) {
-				$attrs[ $group ] = implode( ',', array_map( 'sanitize_key', (array) $settings[ $group ] ) );
-			}
+		// Curriculum items the list is limited to (comma-separated slugs).
+		if ( ! empty( $settings['curriculum'] ) ) {
+			$attrs['curriculum'] = implode( ',', array_map( 'sanitize_key', (array) $settings['curriculum'] ) );
 		}
 
 		if ( isset( $settings['layout'] ) && '' !== $settings['layout'] ) {

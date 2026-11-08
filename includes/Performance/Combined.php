@@ -5,7 +5,7 @@
  *
  * @package OhMyLMS
  */
-namespace OhMyLMS\Bundles;
+namespace OhMyLMS\Performance;
 
 use OhMyLMS\Skills\Mastery;
 

@@ -88,6 +88,24 @@ try {
 		);
 		$outline_posts[]   = $outline_quiz;
 		$outline_quizzes[] = $outline_quiz;
+		// A quiz needs a question to be publishable.
+		global $wpdb;
+		$outline_question = wp_insert_post(
+			array(
+				'post_type'   => OHMYLMS_QUESTION_CPT,
+				'post_title'  => 'Outline question fixture',
+				'post_status' => 'publish',
+			)
+		);
+		$outline_posts[]  = $outline_question;
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fixture row.
+			$wpdb->prefix . 'ohmylms_quiz_questions_relationship',
+			array(
+				'quiz_id'      => $outline_quiz,
+				'question_id'  => $outline_question,
+				'order_number' => 1,
+			)
+		);
 		update_post_meta( $outline_quiz, AssessmentSettings::META, array( 'style' => $outline_style ) );
 	}
 	$outline_program          = CourseProgram::defaults( $outline_course );
@@ -275,6 +293,9 @@ try {
 	foreach ( Catalog::chapters( $outline_course ?? 0 ) as $outline_unit ) {
 		$wpdb->delete( $wpdb->prefix . 'ohmylms_content_relationship', array( 'chapter_id' => $outline_unit['id'] ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fixture rows only.
 		wp_delete_post( $outline_unit['id'], true );
+	}
+	foreach ( $outline_quizzes as $outline_quiz_id ) {
+		$wpdb->delete( $wpdb->prefix . 'ohmylms_quiz_questions_relationship', array( 'quiz_id' => $outline_quiz_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fixture rows only.
 	}
 	$wpdb->delete( $wpdb->prefix . 'ohmylms_chapter_relationship', array( 'course_id' => $outline_course ?? 0 ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fixture unit relationships only.
 	$wpdb->delete( Schema::table( 'programs' ), array( 'course_id' => $outline_course ?? 0 ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fixture programs have no skill outcomes.

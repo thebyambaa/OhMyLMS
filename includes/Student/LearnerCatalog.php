@@ -1,8 +1,8 @@
 <?php // phpcs:ignore WordPress.Files.FileName -- PSR-4 namespace/class filename required by the existing Composer autoloader.
 /**
- * Learner-facing subjects and course bundles built from existing curriculum placement.
+ * Learner-facing subjects built from existing curriculum placement.
  *
- * Read-only adapter: it normalizes what curriculum items, bundles, their course links
+ * Read-only adapter: it normalizes what curriculum items, their course links
  * and course status already say, so presentation can change without touching storage.
  *
  * @package OhMyLMS
@@ -18,7 +18,7 @@ use OhMyLMS\Curriculum\Schema;
 
 defined( 'ABSPATH' ) || exit;
 
-/** Subjects and bundles with their published courses, in curriculum order. */
+/** Subjects with their published courses, in curriculum order. */
 final class LearnerCatalog {
 
 	/**
@@ -171,19 +171,6 @@ final class LearnerCatalog {
 			);
 		}
 		return $courses;
-	}
-
-	/**
-	 * Published course bundles with their published courses.
-	 *
-	 * Viewing a bundle grants nothing; each course keeps its own access rules.
-	 *
-	 * @param string $search Optional course-title filter.
-	 * @return array<int,array> Bundles: id, title, courses, total.
-	 */
-	public static function bundles( $search = '' ) {
-		// Compatibility entry point for the retired catalog section.
-		return array();
 	}
 
 	/** Register the front-end guard that keeps roadmap courses out of every course list. */

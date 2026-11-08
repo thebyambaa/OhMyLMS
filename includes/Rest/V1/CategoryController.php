@@ -23,7 +23,6 @@ use WP_REST_Server;
  * Course categories were replaced by the curriculum, so this is a read-only, paged view of the
  * curriculum items in the shape of the former category terms. Writes are refused with 410: structure
  * is managed with `/curriculum/items`, a course's placement with `/courses/{id}/organization`.
- * TagController extends this class for Course Bundles. See docs/api/taxonomies.md.
  *
  * Reading needs READ_CAPABILITY (course authors fill filters and pickers with it); the refused write
  * routes and the `edit` context (course titles) need WRITE_CAPABILITY, so a non-administrator gets
@@ -395,7 +394,7 @@ class CategoryController extends RestController {
 			'type'       => 'object',
 			'properties' => array(
 				'id'          => array(
-					'description' => __( 'Unique identifier (a curriculum item or bundle ID).', 'ohmylms' ),
+					'description' => __( 'Unique identifier (a curriculum item ID).', 'ohmylms' ),
 					'type'        => 'integer',
 					'context'     => array( 'view', 'edit' ),
 					'readonly'    => true,
@@ -419,7 +418,7 @@ class CategoryController extends RestController {
 					'readonly'    => true,
 				),
 				'parent'      => array(
-					'description' => __( 'Parent item ID, 0 for top level (always 0 for bundles).', 'ohmylms' ),
+					'description' => __( 'Parent item ID, 0 for top level .', 'ohmylms' ),
 					'type'        => 'integer',
 					'context'     => array( 'view', 'edit' ),
 					'readonly'    => true,

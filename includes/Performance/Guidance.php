@@ -8,7 +8,6 @@
 namespace OhMyLMS\Performance;
 
 use OhMyLMS\Assessment\Schema;
-use OhMyLMS\Bundles\Combined;
 use OhMyLMS\Curriculum\AiAnalysis;
 use OhMyLMS\Curriculum\Comparison;
 use OhMyLMS\Curriculum\Schema as CurriculumSchema;
@@ -276,7 +275,7 @@ final class Guidance {
 	 *
 	 * GuidanceModel::pooled() takes the best level any single member reached. When answers are spread
 	 * over several members (two on a Grade 7 objective, two on the IGCSE one), that never adds up; here
-	 * those answers are pooled, counted once each (Bundles\Combined) and judged by the site's level
+	 * those answers are pooled, counted once each (Performance\Combined) and judged by the site's level
 	 * policy, like any skill. Skills with one member keep their stored state, which is the same thing.
 	 *
 	 * @param int              $student_id Learner.

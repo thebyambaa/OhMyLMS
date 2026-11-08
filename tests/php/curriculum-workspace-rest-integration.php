@@ -1,13 +1,12 @@
 <?php
 /**
  * Real REST checks for the typed curriculum workspace: branch deletion, icons, skill map,
- * subject profiles and course bundles. Run on the Local site with OHMYLMS_CURRICULUM_WORKSPACE_TEST=1;
+ * and subject profiles. Run on the Local site with OHMYLMS_CURRICULUM_WORKSPACE_TEST=1;
  * tagged fixtures are removed in finally and no database reset occurs.
  *
  * @package OhMyLMS
  */
 
-use OhMyLMS\Bundles\Bundles;
 use OhMyLMS\Curriculum\Comparison;
 use OhMyLMS\Curriculum\Items;
 use OhMyLMS\Skills\SubjectProfileModel;
@@ -81,7 +80,6 @@ function ohmylms_workspace_item( $name, $parent_id = 0 ) {
 
 $workspace_tag     = 'workspace-' . wp_generate_uuid4();
 $workspace_items   = array();
-$workspace_bundles = array();
 $workspace_terms   = array();
 $workspace_option  = null;
 $workspace_posts   = array();
@@ -290,144 +288,9 @@ try {
 	);
 	ohmylms_workspace_check( 200 === $workspace_removed->get_status() && ! in_array( $workspace_key, array_column( $workspace_removed->get_data()['profiles'], 'key' ), true ), 'Profile removal failed.' );
 
-	// Course bundles.
-	$workspace_course = wp_insert_post(
-		array(
-			'post_title'  => $workspace_tag,
-			'post_type'   => OHMYLMS_COURSE_CPT,
-			'post_status' => 'draft',
-		),
-		true
-	);
-	ohmylms_workspace_check( ! is_wp_error( $workspace_course ), 'Course fixture creation failed.' );
-	$workspace_posts[] = $workspace_course;
-	ohmylms_workspace_check( 400 === ohmylms_workspace_request( 'POST', '/bundles', array( 'description' => 'No title' ) )->get_status(), 'Bundle without a title was created.' );
-	ohmylms_workspace_check( 400 === ohmylms_workspace_request( 'POST', '/bundles', array( 'title' => str_repeat( 'x', 191 ) ) )->get_status(), 'Oversized bundle title accepted.' );
-	$workspace_created = ohmylms_workspace_request( 'POST', '/bundles', array( 'title' => $workspace_tag ) );
-	ohmylms_workspace_check( 201 === $workspace_created->get_status(), 'Bundle creation failed.' );
-	$workspace_bundle    = $workspace_created->get_data()['bundle'];
-	$workspace_bundles[] = (int) $workspace_bundle['id'];
-	$workspace_path      = '/bundles/' . $workspace_bundle['id'];
-	ohmylms_workspace_check( 400 === ohmylms_workspace_request( 'GET', '/bundles/targets', array( 'type' => 'lesson' ) )->get_status(), 'Unknown target type accepted.' );
-	ohmylms_workspace_check(
-		in_array(
-			$workspace_course,
-			array_map(
-				'intval',
-				array_column(
-					ohmylms_workspace_request(
-						'GET',
-						'/bundles/targets',
-						array(
-							'type'   => 'course',
-							'search' => $workspace_tag,
-						)
-					)->get_data(),
-					'id'
-				)
-			),
-			true
-		),
-		'Course target search failed.'
-	);
-	foreach ( array(
-		'missing items'  => array(),
-		'member type'    => array(
-			'items' => array(
-				array(
-					'type' => 'lesson',
-					'id'   => 1,
-				),
-			),
-		),
-		'member id'      => array(
-			'items' => array(
-				array(
-					'type' => 'course',
-					'id'   => 0,
-				),
-			),
-		),
-		'missing member' => array(
-			'items' => array(
-				array(
-					'type' => 'course',
-					'id'   => PHP_INT_MAX,
-				),
-			),
-		),
-	) as $workspace_case => $workspace_body ) {
-		ohmylms_workspace_check( 400 === ohmylms_workspace_request( 'PUT', $workspace_path . '/items', $workspace_body )->get_status(), 'Bundle members accepted ' . $workspace_case . '.' );
-	}
-	$workspace_members = ohmylms_workspace_request(
-		'PUT',
-		$workspace_path . '/items',
-		array(
-			'items'               => array(
-				array(
-					'type' => 'course',
-					'id'   => $workspace_course,
-				),
-			),
-			'expected_updated_at' => $workspace_bundle['updated_at'],
-		)
-	);
-	ohmylms_workspace_check( 200 === $workspace_members->get_status() && 1 === count( $workspace_members->get_data()['members'] ), 'Bundle members were not saved.' );
-	ohmylms_workspace_check(
-		409 === ohmylms_workspace_request(
-			'PUT',
-			$workspace_path,
-			array(
-				'title'               => 'Stale',
-				'expected_updated_at' => '2000-01-01 00:00:00',
-			)
-		)->get_status() && 0 === strcmp( $workspace_tag, Bundles::get( $workspace_bundle['id'] )['title'] ),
-		'Stale bundle update was applied.'
-	);
-	ohmylms_workspace_check(
-		409 === ohmylms_workspace_request(
-			'POST',
-			$workspace_path . '/publish',
-			array(
-				'published'           => true,
-				'expected_updated_at' => '2000-01-01 00:00:00',
-			)
-		)->get_status() && 'draft' === Bundles::get( $workspace_bundle['id'] )['status'],
-		'Stale publish was applied.'
-	);
-	$workspace_current = $workspace_members->get_data()['bundle']['updated_at'];
-	$workspace_publish = ohmylms_workspace_request(
-		'POST',
-		$workspace_path . '/publish',
-		array(
-			'published'           => true,
-			'expected_updated_at' => $workspace_current,
-		)
-	);
-	ohmylms_workspace_check( 200 === $workspace_publish->get_status() && 'published' === $workspace_publish->get_data()['bundle']['status'], 'Publishing failed.' );
-	ohmylms_workspace_check(
-		409 === ohmylms_workspace_request(
-			'PUT',
-			$workspace_path . '/items',
-			array(
-				'items'               => array(),
-				'expected_updated_at' => $workspace_publish->get_data()['bundle']['updated_at'],
-			)
-		)->get_status(),
-		'A published bundle was emptied.'
-	);
-	wp_set_current_user( $workspace_users['editor'] );
-	ohmylms_workspace_check( 403 === ohmylms_workspace_request( 'GET', '/bundles' )->get_status() && 403 === ohmylms_workspace_request( 'DELETE', $workspace_path )->get_status(), 'Editor reached bundle administration.' );
-	wp_set_current_user( $workspace_admin );
-	ohmylms_workspace_check( 409 === ohmylms_workspace_request( 'DELETE', $workspace_path, array( 'expected_updated_at' => '2000-01-01 00:00:00' ) )->get_status() && Bundles::get( $workspace_bundle['id'] ), 'Stale bundle delete was applied.' );
-	ohmylms_workspace_check( 200 === ohmylms_workspace_request( 'DELETE', $workspace_path, array( 'expected_updated_at' => $workspace_publish->get_data()['bundle']['updated_at'] ) )->get_status() && ! Bundles::get( $workspace_bundle['id'] ), 'Bundle delete failed.' );
-
 	echo "Curriculum workspace REST integration checks passed.\n";
 } finally {
 	wp_set_current_user( $workspace_admin );
-	foreach ( $workspace_bundles as $workspace_bundle ) {
-		Bundles::delete( $workspace_bundle, true );
-	}
 	foreach ( array_reverse( $workspace_items ) as $workspace_item ) {
 		if ( Items::get( $workspace_item ) ) {
 			Items::delete( $workspace_item, 'delete', true );

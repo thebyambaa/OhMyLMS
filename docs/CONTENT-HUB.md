@@ -2,7 +2,7 @@
 
 For the authoritative product model and current authoring boundaries, see [Learning Architecture](LEARNING-ARCHITECTURE.md). This guide retains feature and compatibility details; recovered-editor screen descriptions are historical.
 
-One place to build learning content: **OhMyLMS → Content Hub** (`#/content-hub`) replaces the separate Courses, Assessments, Skills, Curriculum and Course Bundles submenus. Skills are a core part of OhMyLMS, not an add-on.
+One place to build learning content: **OhMyLMS → Content Hub** (`#/content-hub`) replaces the separate Courses, Assessments, Skills and Curriculum submenus. Skills are a core part of OhMyLMS, not an add-on.
 
 > The reusable content (lessons, quizzes, exams, assignments and the question bank) now lives in **Content Bank**, and skills and the curriculum live in **Curriculum** (see [CURRICULUM.md](CURRICULUM.md)). The Content Hub keeps Courses and Gradebook. Old Content Hub addresses for Skills and Curriculum redirect.
 
@@ -19,7 +19,6 @@ A **grade, exam or subject** (for example Grade 2 Math, MATH0580 or Digital SAT)
 | **Assignments** | The existing assignment list, unchanged. |
 | **Skills** | The shared skill library: hierarchy, codes, prerequisites, linked lessons and courses. |
 | **Curriculum** | The curriculum structure (exam boards, national curricula, grades, subjects, syllabuses) that courses, skills, question banks and exams are placed in. Any item can be a syllabus with its own chapters (skill groups) and skills, loaded from CSV. A syllabus's name opens its own full-page editor (`#/content-hub/curriculum/syllabus/ID`), and **a syllabus is also a course**: its chapters and skills are the course's, so it appears in the Courses tab too; see [SYLLABUS.md](SYLLABUS.md) and [CURRICULUM-BUNDLES.md](CURRICULUM-BUNDLES.md). |
-| **Course Bundles** | Course Bundles: curated groupings of courses and syllabuses that learners can follow. Unchanged; see [CURRICULUM-BUNDLES.md](CURRICULUM-BUNDLES.md). |
 
 The hub header shows the title followed by the section tabs. Content is added from the individual tabs.
 

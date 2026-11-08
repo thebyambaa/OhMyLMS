@@ -33,7 +33,6 @@ writes nothing.
     { "id": "quizzes", "total": 12, "counts": { "published": 9, "drafts": 3, "to_grade": 2 } },
     { "id": "skills", "total": 40, "counts": { "archived": 1 } },
     { "id": "curriculum", "total": 39, "counts": { "syllabuses": 3 } },
-    { "id": "bundles", "total": 2, "counts": { "published": 1, "drafts": 1 } }
   ],
   "recent": [
     { "area": "quizzes", "id": 11, "title": "Fractions check", "status": "draft", "updated_at": "2026-10-30T09:00:00Z" }
@@ -43,7 +42,7 @@ writes nothing.
 
 - **Areas** appear in this order, each only when the user may open it: `courses`, `lessons`, `quizzes`, `exams`,
   `question-bank`, `assignments` (each needs the post type's `edit_posts`; `lessons` also needs `manage_options`),
-  `skills` (`edit_posts`), and `curriculum` and `bundles` (`Curriculum\Access::can_manage()`, installed curriculum
+  `skills` (`edit_posts`), and `curriculum` (`Curriculum\Access::can_manage()`, installed curriculum
   tables).
 - **Scope**: post-type counts include every item when the user has the type's `edit_others_posts`. Otherwise
   they include only the user's own items. Trash and auto-drafts never count. `published` is `publish`, and
@@ -52,14 +51,14 @@ writes nothing.
   (`Quiz\GradingPolicy`): every quiz for administrators, otherwise the quizzes they wrote and the quizzes in
   courses they wrote.
 - `skills.counts.archived` counts skills with the archived status (`Skills\Provenance::STATUS_META`).
-  `curriculum` counts every curriculum item, and `syllabuses` those flagged as syllabuses. `bundles` counts by
+  `curriculum` counts every curriculum item, and `syllabuses` those flagged as syllabuses.
   status.
 - **Recent** items are the latest changed posts of the post-type areas above, in the same scope. They are
   sorted by the site-local modification time, because new drafts keep a zero `post_modified_gmt`. Each item has
   its area, id, plain-text title, normalised status (`pending` → `draft`) and UTC `updated_at`. No author, user
   or learner data is returned.
 - Performance: one grouped `COUNT` over `wp_posts` for the post types, one bounded `LIMIT` query for recent
-  items, and one aggregate each for attempts, skills, curriculum items and bundles. Nothing is unbounded.
+  items, and one aggregate each for attempts, skills, and curriculum items. Nothing is unbounded.
 
 ## Errors
 
@@ -83,5 +82,5 @@ navigation label is now "Skills".
 `tests/php/content-hub-overview-rest-integration.php` (`OHMYLMS_CONTENT_HUB_TEST=1`) checks 401 and 403
 responses, argument limits, the areas an administrator and an author see, and counts as changes against a
 baseline. It also checks that trash is excluded, pending items count as drafts, grading counts, skills,
-curriculum and bundles, recent items (drafts included, shape, UTC times, `recent=0`) and author-only scope. It
+and curriculum, recent items (drafts included, shape, UTC times, `recent=0`) and author-only scope. It
 removes every tagged fixture. App tests: `content-hub/model.test.ts` and `content-hub/OverviewPage.test.tsx`.

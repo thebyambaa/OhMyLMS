@@ -1,4 +1,8 @@
-# Taxonomies REST API (`ohmylms/v1/categories`, `ohmylms/v1/tags`)
+# Taxonomies REST API (`ohmylms/v1/categories`)
+
+> **Update 2026-11:** Course Bundles and the `/tags` endpoint were removed, and the admin Categories and tags screen
+> with them. Only `/categories` remains, as a read-only view of curriculum items for old API clients. Parts of
+> this page that describe tags and bundles are historical.
 
 Contract version 2. The plugin is pre-release, so this replaces the old API outright. The
 machine-readable form is `assets/src/app/features/taxonomies/contract.json`. Server code:

@@ -11,7 +11,6 @@ and "Learner overlays").
 | Curriculum (fields, icons, moves, deletion) | `/curriculum` (the old `/content-hub/curriculum` redirects) | `features/curriculum/CurriculumWorkspace` |
 | Skill map | `/content-hub/curriculum/skill-map` | `features/curriculum/SkillMapPage` |
 | Subject profiles | `/content-hub/curriculum/subjects` | `features/curriculum/SubjectProfilesPage` |
-| Course bundles | `/content-hub/bundles` | `features/curriculum/BundlesPage` |
 
 ## Curriculum items: icons and branch deletion
 
@@ -23,7 +22,7 @@ the kind's default) with the existing `expected_updated_at` check.
 `updated_at`, its descendant IDs and every count deletion affects. `DELETE /curriculum/items/:id`
 takes `children` (`''`, `promote`, `delete`), boolean `confirm` and optional 64-character
 `expected_revision`; other values return 400. The existing domain rules apply: an item with
-children needs a strategy (409 `ohmylms_curriculum_has_children`), and children, links, bundle
+children needs a strategy (409 `ohmylms_curriculum_has_children`), and children, links
 memberships or skill groups need `confirm` (409 `ohmylms_curriculum_needs_confirmation`). When
 `expected_revision` is sent, it is compared inside the curriculum lock; any change to the branch
 returns 409 `ohmylms_curriculum_stale` and nothing is deleted. The dialog previews the effects,
@@ -123,25 +122,6 @@ A changed revision returns 409 `ohmylms_subject_profile_conflict`; the screen ke
 offers "Reload profiles and keep my edits". Saving creates or renames the profile's curriculum
 subject; removing never deletes that subject or changes skills.
 
-## Course bundles
-
-| Route | Contract |
-| --- | --- |
-| `GET /bundles` | Bundles and limits. |
-| `POST /bundles` | Required `title` 1–190, optional `description` ≤ 2000. 201 with detail. |
-| `GET /bundles/:id` | `{bundle, members}`. |
-| `PUT /bundles/:id` | `title`, `description`, `expected_updated_at`. |
-| `PUT /bundles/:id/items` | Required `items` (≤ 100 objects with `type` `course`/`curriculum` and `id` ≥ 1), `expected_updated_at`. Members must exist and be unique; a published bundle cannot be emptied (409). |
-| `POST /bundles/:id/publish` | Boolean `published` (default true), `expected_updated_at`. |
-| `DELETE /bundles/:id` | Boolean `force` (needed when learners follow it), `expected_updated_at`. |
-| `GET /bundles/targets` | Required `type` `course`/`curriculum`, `search` ≤ 200; at most 20 rows. |
-
-Every bundle write now runs under the curriculum lock and compares `expected_updated_at` there
-(409 `ohmylms_bundle_stale`), including publish and delete, which previously had no check. The
-screen lists bundles, creates them, edits details, orders/adds/removes members (saved explicitly),
-publishes/unpublishes and deletes with a follower warning. Stale saves keep local edits behind
-"Reload bundle and keep my edits". Learner-facing bundle pages are unchanged.
-
 ## Compare syllabuses (`#/content-hub/curriculum/compare`)
 
 `features/curriculum/ComparePage` with `?tab=groups|roadmaps|shared`; the legacy
@@ -182,8 +162,7 @@ this screen's former `?tab=mappings|ai|content|placement|provenance` open them. 
 `OHMYLMS_CURRICULUM_WORKSPACE_TEST=1` runs `tests/php/curriculum-workspace-rest-integration.php`
 on the Local site: icon validation, delete strategy/confirmation/stale/promote/branch, editor
 denial, skill map validation and legacy empty IDs, profile schema rejections without writes,
-stale save/default, removal, bundle schema rejections, member validation, stale update/publish/
-delete, published-bundle emptying and editor denial. Fixtures are tagged and removed in `finally`;
+stale save/default and removal. Fixtures are tagged and removed in `finally`;
 the subject profile option is restored. `features/curriculum/*.test.tsx` cover the screens.
 
 `OHMYLMS_SKILL_OVERLAY_TEST=1` runs `tests/php/skill-map-overlay-integration.php` (119 checks) on

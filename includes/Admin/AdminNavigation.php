@@ -134,13 +134,8 @@ final class AdminNavigation {
 						'label'      => __( 'Courses', 'ohmylms' ),
 						'capability' => 'edit_posts',
 						'sections'   => array(
-							''           => __( 'All courses', 'ohmylms' ),
-							'overview'   => __( 'Overview', 'ohmylms' ),
-							'bundles'    => array(
-								'label'      => __( 'Course bundles', 'ohmylms' ),
-								'capability' => self::CAPABILITY,
-							),
-							'taxonomies' => __( 'Categories and tags', 'ohmylms' ),
+							''         => __( 'All courses', 'ohmylms' ),
+							'overview' => __( 'Overview', 'ohmylms' ),
 						),
 					),
 					'gradebook' => array(
@@ -482,14 +477,6 @@ final class AdminNavigation {
 				),
 			),
 			array(
-				'bundles',
-				'/content-hub/bundles',
-				$content + array(
-					'tab'     => 'courses',
-					'section' => 'bundles',
-				),
-			),
-			array(
 				'syllabus-editor',
 				'/content-hub/curriculum/syllabus/:id',
 				$curr + array(
@@ -694,14 +681,6 @@ final class AdminNavigation {
 				$commerce + array(
 					'tab'    => 'payments',
 					'params' => array( 'tab' => 'section' ),
-				),
-			),
-			array(
-				'taxonomies',
-				'/taxonomies',
-				$content + array(
-					'tab'     => 'courses',
-					'section' => 'taxonomies',
 				),
 			),
 			array( 'webhooks', '/webhooks', $settings + array( 'tab' => 'webhooks' ) ),
@@ -950,8 +929,10 @@ final class AdminNavigation {
 		array( array( 'engagement', 'emails', null ), array( 'settings', 'emails', false ) ),
 		array( array( 'engagement', 'gamification', 'certificates' ), array( 'engagement', 'certificates', false ) ),
 		array( array( 'engagement', 'gamification', 'issued-certificates' ), array( 'engagement', 'certificates', null ) ),
-		array( array( 'curriculum', 'tools', 'bundles' ), array( 'content', 'courses', null ) ),
-		array( array( 'curriculum', 'tools', 'taxonomies' ), array( 'content', 'courses', null ) ),
+		array( array( 'curriculum', 'tools', 'bundles' ), array( 'content', 'courses', false ) ),
+		array( array( 'content', 'courses', 'bundles' ), array( 'content', 'courses', false ) ),
+		array( array( 'curriculum', 'tools', 'taxonomies' ), array( 'curriculum', 'workspace', false ) ),
+		array( array( 'content', 'courses', 'taxonomies' ), array( 'curriculum', 'workspace', false ) ),
 		array( array( 'settings', 'settings', 'currency' ), array( 'commerce', 'payments', null ) ),
 		array( array( 'settings', 'settings', 'tax' ), array( 'commerce', 'payments', null ) ),
 		array( array( 'settings', 'settings', 'payment-gateways' ), array( 'commerce', 'payments', null ) ),

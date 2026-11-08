@@ -433,23 +433,18 @@ final class Items {
 		return is_wp_error( $result ) ? $result : self::get( $id );
 	}
 
-	/** What deleting an item would affect: children, content links and bundle memberships.
+	/** What deleting an item would affect: children, content links and skill groups.
 	 *
 	 * @param mixed $id Id.
 	 */
 	public static function dependents( $id ) {
 		global $wpdb;
-		$ids     = self::with_descendants( $id );
-		$bundles = static function ( array $in ) use ( $wpdb ) {
-			return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(DISTINCT bundle_id) FROM %i WHERE item_type=\'curriculum\' AND item_id IN (' . implode( ',', array_fill( 0, count( $in ), '%d' ) ) . ')', array_merge( array( Schema::table( 'bundle_items' ) ), $in ) ) );
-		};
+		$ids = self::with_descendants( $id );
 		return array(
 			'children'    => count( self::child_ids( $id ) ),
 			'descendants' => count( $ids ) - 1,
 			'links'       => (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE item_id IN (' . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')', array_merge( array( Schema::table( 'curriculum_links' ) ), $ids ) ) ),
 			'own_links'   => (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE item_id=%d', Schema::table( 'curriculum_links' ), (int) $id ) ),
-			'bundles'     => $bundles( $ids ),
-			'own_bundles' => $bundles( array( (int) $id ) ),
 			// Skill groups go with the item they sit under; the skills in them stay in the skill library.
 			'groups'      => Syllabus::group_count( $ids ),
 			'own_groups'  => Syllabus::group_count( array( (int) $id ) ),
@@ -458,7 +453,7 @@ final class Items {
 
 	/**
 	 * Delete an item. Linked content (courses, skills, banks, exams) is never deleted: only the
-	 * association disappears. An item with children, links or bundle memberships needs
+	 * association disappears. An item with children, links or skill groups needs
 	 * `$confirm`; an item with children also needs a strategy for them:
 	 *   'promote' - children move up to the item's parent, keeping their order;
 	 *   'delete'  - the whole branch is removed.
@@ -479,11 +474,10 @@ final class Items {
 		if ( $dependents['children'] && '' === $strategy ) {
 			return Access::error( 'ohmylms_curriculum_has_children', __( 'This item has children. Choose whether to move them up a level or delete the whole branch.', 'ohmylms' ), 409, array( 'dependents' => $dependents ) );
 		}
-		$branch           = 'delete' === $strategy;
-		$affected_links   = $branch ? $dependents['links'] : $dependents['own_links'];
-		$affected_bundles = $branch ? $dependents['bundles'] : $dependents['own_bundles'];
-		$affected_groups  = $branch ? $dependents['groups'] : $dependents['own_groups'];
-		if ( ! $confirm && ( $dependents['children'] || $affected_links || $affected_bundles || $affected_groups ) ) {
+		$branch          = 'delete' === $strategy;
+		$affected_links  = $branch ? $dependents['links'] : $dependents['own_links'];
+		$affected_groups = $branch ? $dependents['groups'] : $dependents['own_groups'];
+		if ( ! $confirm && ( $dependents['children'] || $affected_links || $affected_groups ) ) {
 			return Access::error( 'ohmylms_curriculum_needs_confirmation', __( 'Deleting this item removes its structure links and skill groups. Confirm to continue; linked courses, skills, banks and exams, and the skills inside skill groups, are not deleted.', 'ohmylms' ), 409, array( 'dependents' => $dependents ) );
 		}
 		return self::exclusive(
@@ -541,7 +535,7 @@ final class Items {
 		return $item ? hash( 'sha256', (string) wp_json_encode( array( $item['updated_at'], self::with_descendants( $id ), self::dependents( $id ) ) ) ) : '';
 	}
 
-	/** Remove item rows plus every link and bundle membership that points at them.
+	/** Remove item rows plus every link that points at them.
 	 *
 	 * @param array $ids Ids.
 	 * @throws \RuntimeException When the operation cannot be completed.
@@ -549,15 +543,13 @@ final class Items {
 	private static function delete_rows( array $ids ) {
 		global $wpdb;
 		$links   = $wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE item_id IN (' . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')', array_merge( array( Schema::table( 'curriculum_links' ) ), $ids ) ) );
-		$members = $wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE item_type=\'curriculum\' AND item_id IN (' . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')', array_merge( array( Schema::table( 'bundle_items' ) ), $ids ) ) );
 		$groups  = Syllabus::delete_for_items( $ids );
-		if ( false === $links || false === $members || false === $groups || $wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE id IN (' . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')', array_merge( array( self::table() ), $ids ) ) ) === false ) {
+		if ( false === $links || false === $groups || $wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE id IN (' . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')', array_merge( array( self::table() ), $ids ) ) ) === false ) {
 			throw new \RuntimeException( 'Delete failed' ); }
 		do_action( 'ohmylms_curriculum_items_deleted', $ids );
 		return array(
-			'links_removed'   => (int) $links,
-			'bundles_updated' => (int) $members,
-			'groups_removed'  => (int) $groups,
+			'links_removed'  => (int) $links,
+			'groups_removed' => (int) $groups,
 		);
 	}
 
@@ -591,21 +583,17 @@ final class Items {
 		$links = array();
 		foreach ( $wpdb->get_results( $wpdb->prepare( 'SELECT item_id, object_type, COUNT(*) AS total FROM %i GROUP BY item_id, object_type', Schema::table( 'curriculum_links' ) ), ARRAY_A ) as $row ) {
 			$links[ (int) $row['item_id'] ][ $row['object_type'] ] = (int) $row['total']; }
-		$bundles = array();
-		foreach ( $wpdb->get_results( $wpdb->prepare( 'SELECT item_id, COUNT(DISTINCT bundle_id) AS total FROM %i WHERE item_type=\'curriculum\' GROUP BY item_id', Schema::table( 'bundle_items' ) ), ARRAY_A ) as $row ) {
-			$bundles[ (int) $row['item_id'] ] = (int) $row['total']; }
 		$rows     = self::all();
 		$children = array();
 		foreach ( $rows as $row ) {
 			$children[ (int) $row['parent_id'] ] = ( $children[ (int) $row['parent_id'] ] ?? 0 ) + 1; }
 		$syllabuses = Syllabus::totals( $rows );
 		return array_map(
-			static function ( $row ) use ( $links, $bundles, $children, $syllabuses ) {
+			static function ( $row ) use ( $links, $children, $syllabuses ) {
 				$id     = (int) $row['id'];
 				$counts = array(
-					'child_count'  => $children[ $id ] ?? 0,
-					'links'        => ( $links[ $id ] ?? array() ) + array_fill_keys( Links::TYPES, 0 ),
-					'bundle_count' => $bundles[ $id ] ?? 0,
+					'child_count' => $children[ $id ] ?? 0,
+					'links'       => ( $links[ $id ] ?? array() ) + array_fill_keys( Links::TYPES, 0 ),
 				);
 				// Skill groups and skills inside a syllabus, counting everything under it.
 				if ( isset( $syllabuses[ $id ] ) ) {

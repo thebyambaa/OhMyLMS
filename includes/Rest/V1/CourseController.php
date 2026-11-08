@@ -2584,7 +2584,7 @@ class CourseController extends RestController {
 			return new WP_Error( 'missing_params', 'Missing parameters', array( 'status' => 400 ) );
 		}
 		if ( in_array( $taxonomy, array( 'course_category', 'course_tag' ), true ) ) {
-			return new WP_Error( 'ohmylms_taxonomy_replaced', __( 'Course categories and tags were replaced by curriculum items and course bundles. Use /courses/{id}/organization.', 'ohmylms' ), array( 'status' => 410 ) );
+			return new WP_Error( 'ohmylms_taxonomy_replaced', __( 'Course categories and tags were replaced by curriculum items. Use /courses/{id}/organization.', 'ohmylms' ), array( 'status' => 410 ) );
 		}
 		if ( ! is_object_in_taxonomy( OHMYLMS_COURSE_CPT, (string) $taxonomy ) ) {
 			return new WP_Error( 'ohmylms_course_invalid_taxonomy', __( 'That taxonomy does not apply to courses.', 'ohmylms' ), array( 'status' => 400 ) );

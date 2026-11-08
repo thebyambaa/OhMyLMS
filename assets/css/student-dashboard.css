@@ -795,14 +795,6 @@
   padding: 8px 2px;
 }
 
-.oml-student-dashboard .ohmylms-bundles {
-  background: var(--dash-surface);
-  border-radius: 14px;
-  margin-top: 24px;
-  padding: 24px;
-  border: 1px solid var(--dash-line);
-}
-
 .oml-mastery-medal.is-bronze {
 	/* stylelint-disable-next-line color-no-hex -- Medal metal color (gold, bronze, silver). */
 	background: #fed7aa;

@@ -131,22 +131,5 @@ export const curriculumCompare: FeatureDefinition = {
 			)
 	),
 };
-export const bundles: FeatureDefinition = {
-	id: 'bundles',
-	title: __( 'Course bundles', 'ohmylms' ),
-	path: '/content-hub/bundles',
-	group: 'content',
-	tab: 'courses',
-	section: 'bundles',
-	extensionRoute: '/content-hub/bundles',
-	capability: 'manage_options',
-	hidden: true,
-	component: lazy(
-		() =>
-			import(
-				/* webpackChunkName: "admin-app-bundles" */ './BundlesPage'
-			)
-	),
-};
 export { CoursePlacement } from './CoursePlacement';
 export { readTree } from './api';

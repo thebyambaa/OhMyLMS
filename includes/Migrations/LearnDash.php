@@ -203,22 +203,17 @@ class LearnDash {
 			return;
 		}
 
-		// LearnDash categories become curriculum items (keeping their parent chain) and LearnDash tags
-		// become Course Bundles. Items and bundles with the same name are reused, so migrating many
-		// courses does not duplicate structure.
+		// LearnDash categories become curriculum items (keeping their parent chain). Items with the same
+		// name are reused, so migrating many courses does not duplicate structure. Tags are not migrated.
 		$curriculum_paths = array();
-		$bundle_titles    = array();
 
 		foreach ( $terms as $term ) {
 			if ( 'ld_course_category' === $term->taxonomy ) {
 				$curriculum_paths[] = \OhMyLMS\Curriculum\Placement::term_path( $term );
-			} elseif ( 'ld_course_tag' === $term->taxonomy ) {
-				$bundle_titles[] = $term->name;
 			}
 		}
 
 		\OhMyLMS\Curriculum\Placement::import_categories( $new_course_id, $curriculum_paths );
-		\OhMyLMS\Curriculum\Placement::import_tags( $new_course_id, $bundle_titles );
 	}
 	/**
 	 * Migrates chapters (topics) from learnDash LMS to OhMyLMS for a given course.

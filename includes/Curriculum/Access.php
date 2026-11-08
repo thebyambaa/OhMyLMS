@@ -1,8 +1,7 @@
 <?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
- * Authorization for curriculum, bundle and mapping administration. Structure that every
+ * Authorization for curriculum and mapping administration. Structure that every
  * learner's dashboard depends on is an administrator task, matching the OhMyLMS admin menu.
- * Learners only ever reach bundles through the /me endpoints and their own records.
  *
  * @package OhMyLMS
  */
@@ -13,9 +12,8 @@ use OhMyLMS\QuestionBank\AccessPolicy;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Authorization for curriculum, bundle and mapping administration. Structure that every
+ * Authorization for curriculum and mapping administration. Structure that every
  * learner's dashboard depends on is an administrator task, matching the OhMyLMS admin menu.
- * Learners only ever reach bundles through the /me endpoints and their own records.
  */
 final class Access {
 	/**
@@ -29,14 +27,14 @@ final class Access {
 	public static function admin() {
 		if ( ! Schema::ready() ) {
 			return new \WP_Error( 'ohmylms_curriculum_unavailable', __( 'Curriculum storage is not installed yet.', 'ohmylms' ), array( 'status' => 503 ) ); }
-		return AccessPolicy::check( self::can_manage(), __( 'Only administrators can manage curricula and course bundles.', 'ohmylms' ) );
+		return AccessPolicy::check( self::can_manage(), __( 'Only administrators can manage curricula.', 'ohmylms' ) );
 	}
 
 	/** REST permission callback for learner routes: any signed-in account, for its own data only. */
 	public static function learner() {
 		if ( ! Schema::ready() ) {
-			return new \WP_Error( 'ohmylms_curriculum_unavailable', __( 'Course bundles are not available yet.', 'ohmylms' ), array( 'status' => 503 ) ); }
-		return AccessPolicy::check( is_user_logged_in(), __( 'Sign in to use course bundles.', 'ohmylms' ) );
+			return new \WP_Error( 'ohmylms_curriculum_unavailable', __( 'Curriculum is not available yet.', 'ohmylms' ), array( 'status' => 503 ) ); }
+		return AccessPolicy::check( is_user_logged_in(), __( 'Sign in to continue.', 'ohmylms' ) );
 	}
 
 	/**

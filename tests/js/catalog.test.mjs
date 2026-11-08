@@ -34,12 +34,11 @@ test( 'field and parameter names map to filter keys', () => {
 
 test( 'form fields become filters; junk and duplicates are dropped', () => {
 	const filters = readFilters(
-		'page_id=7&course_search=+algebra+&course_curriculum%5B%5D=c27&course_curriculum%5B%5D=c27&course_level%5B%5D=beginner&course_price%5B%5D=free&course_sort=nonsense&paged=3&course_bundle%5B%5D='
+		'page_id=7&course_search=+algebra+&course_curriculum%5B%5D=c27&course_curriculum%5B%5D=c27&course_level%5B%5D=beginner&course_price%5B%5D=free&course_sort=nonsense&paged=3'
 	);
 	assert.deepEqual( filters, {
 		search: 'algebra',
 		curriculum: [ 'c27' ],
-		bundle: [],
 		level: [ 'beginner' ],
 		price: [ 'free' ],
 		sort: '',
@@ -341,5 +340,5 @@ test( 'the store module wires the factory to the router and the SDK', () => {
 	assert.match( source, /import\( '@wordpress\/interactivity-router' \)/, 'router loaded on demand' );
 	assert.match( source, /store\( 'ohmylms\/catalog'/ );
 	assert.ok( ! /jQuery|\$\(/.test( source ), 'no jQuery' );
-	assert.deepEqual( Object.values( PARAMS ).sort(), [ 'course_bundle', 'course_curriculum', 'course_level', 'course_price', 'course_search', 'course_sort', 'paged' ] );
+	assert.deepEqual( Object.values( PARAMS ).sort(), [ 'course_curriculum', 'course_level', 'course_price', 'course_search', 'course_sort', 'paged' ] );
 } );

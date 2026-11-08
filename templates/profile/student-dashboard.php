@@ -311,7 +311,6 @@ $browse     = $browse ? $browse : home_url( '/' );
 		foreach ( $dashboard['skills'] as $skill ) {
 			?>
 		<li><a href="<?php echo esc_url( add_query_arg( 'ohmylms_practice', $skill['id'], home_url( '/' ) ) ); ?>"><?php echo esc_html( $skill['name'] ); ?></a><span><?php echo esc_html( $skill['level_label'] ); ?></span></li><?php } ?></ul></details><?php } ?>
-	<?php \OhMyLMS\Bundles\Frontend::print_once(); ?>
 	<?php
 	if ( ohmylms_is_pro() ) {
 		$memberships = $student->get_enrolled_memberships(); if ( $memberships ) {

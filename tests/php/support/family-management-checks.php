@@ -1,6 +1,6 @@
 <?php
 /**
- * Managed-child recovery and collection-choice authorization checks.
+ * Managed-child recovery and learning-choice authorization checks.
  *
  * @package OhMyLMS
  */
@@ -8,8 +8,6 @@
 use OhMyLMS\Family\Service as Family;
 use OhMyLMS\Family\Schema as FamilySchema;
 use OhMyLMS\Student\FamilyActions;
-use OhMyLMS\Bundles\Bundles;
-use OhMyLMS\Bundles\Follows;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -26,7 +24,6 @@ defined( 'ABSPATH' ) || exit;
 function ohmylms_family_management_checks( $guardian, $managed, $invited, $course ) {
 	global $wpdb;
 	$count    = 0;
-	$bundle   = 0;
 	$original = get_current_user_id();
 	$roles    = get_userdata( $managed )->roles;
 	$check    = static function ( $value, $message ) use ( &$count ) {
@@ -110,42 +107,23 @@ function ohmylms_family_management_checks( $guardian, $managed, $invited, $cours
 			remove_filter( 'wp_die_handler', $die_handler );
 			$_POST = array();
 		}
-		$created = Bundles::create( array( 'title' => 'Family choices fixture' ) );
-		$check( ! is_wp_error( $created ), 'Cannot create collection fixture.' );
-		$bundle = $created['id'];
-		Bundles::set_members(
-			$bundle,
-			array(
-				array(
-					'type' => 'course',
-					'id'   => $course,
-				),
-			)
-		);
-		Bundles::set_status( $bundle, true );
 		FamilyActions::apply(
 			'update_choices',
 			array(
 				'child_id' => $managed,
 				'grade'    => 'Grade 6',
-				'bundles'  => array( $bundle, 999999999 ),
 			)
 		);
 		$choice = Family::choices( $managed );
-		// Course Bundles are retired (docs/MEMBERSHIP-COURSES.md): no collection is offered, so none can be followed.
-		$check( 'Grade 6' === $choice['grade'] && array() === $choice['followed'], 'Choices were not saved or an unavailable collection was accepted.' );
-		$check( array() === Follows::enrolled_courses( $managed ), 'Following a collection enrolled the learner.' );
-		Family::set_choices( $managed, '', array() );
-		$check( '' === Family::choices( $managed )['grade'] && array() === Family::choices( $managed )['followed'], 'Clearing optional choices failed.' );
+		$check( 'Grade 6' === $choice['grade'], 'The grade was not saved.' );
+		Family::set_choices( $managed, '' );
+		$check( '' === Family::choices( $managed )['grade'], 'Clearing the grade failed.' );
 		$revoked = Family::issue_setup( $managed );
 		$child   = Family::child( $managed );
 		Family::revoke_link( $child['link_id'] );
 		$deny( static fn() => Family::accept_setup( $revoked['token'], wp_generate_password( 24 ) ) );
-		$deny( static fn() => Family::set_choices( $managed, 'Grade 9', array( $bundle ) ) );
+		$deny( static fn() => Family::set_choices( $managed, 'Grade 9' ) );
 	} finally {
-		if ( $bundle ) {
-			Bundles::delete( $bundle, true );
-		}
 		wp_set_current_user( $original );
 		$person = new WP_User( $managed );
 		$person->set_role( $roles[0] );

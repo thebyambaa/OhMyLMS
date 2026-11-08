@@ -7,8 +7,7 @@ export type AreaId =
 	| 'question-bank'
 	| 'assignments'
 	| 'skills'
-	| 'curriculum'
-	| 'bundles';
+	| 'curriculum';
 
 /** Figures an area can report besides its total. */
 export type CountKey =

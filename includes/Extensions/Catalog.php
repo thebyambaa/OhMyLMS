@@ -24,14 +24,13 @@ final class Catalog {
 	const PARAMS = array(
 		'search'     => 'course_search',
 		'curriculum' => 'course_curriculum',
-		'bundle'     => 'course_bundle',
 		'level'      => 'course_level',
 		'price'      => 'course_price',
 		'sort'       => 'course_sort',
 	);
 
 	/** Multi-value filters, in URL order. */
-	const LISTS = array( 'curriculum', 'bundle', 'level', 'price' );
+	const LISTS = array( 'curriculum', 'level', 'price' );
 
 	/** Sort key => array( meta key, order ); an empty meta key orders by date. */
 	const SORTS = array(
@@ -52,7 +51,6 @@ final class Catalog {
 	/** `data-type` of the filter checkboxes (filters/filters.php) => filter key. */
 	const TYPES = array(
 		'category'         => 'curriculum',
-		'tag'              => 'bundle',
 		'difficulty_level' => 'level',
 		'price_type'       => 'price',
 	);
@@ -111,13 +109,12 @@ final class Catalog {
 	/**
 	 * No filters.
 	 *
-	 * @return array{search:string,curriculum:string[],bundle:string[],level:string[],price:string[],sort:string,page:int}
+	 * @return array{search:string,curriculum:string[],level:string[],price:string[],sort:string,page:int}
 	 */
 	public static function empty_filters() {
 		return array(
 			'search'     => '',
 			'curriculum' => array(),
-			'bundle'     => array(),
 			'level'      => array(),
 			'price'      => array(),
 			'sort'       => '',
@@ -180,8 +177,6 @@ final class Catalog {
 		switch ( $key ) {
 			case 'curriculum':
 				return 1 === preg_match( '/^c\d+$/', $value );
-			case 'bundle':
-				return 1 === preg_match( '/^t\d+$/', $value );
 			case 'price':
 				return in_array( $value, self::PRICES, true );
 			default:
@@ -206,7 +201,7 @@ final class Catalog {
 	 * @return bool
 	 */
 	public static function is_filtered( array $filters ) {
-		return '' !== $filters['search'] || $filters['curriculum'] || $filters['bundle'] || $filters['price'] || array_diff( $filters['level'], array( 'all' ) );
+		return '' !== $filters['search'] || $filters['curriculum'] || $filters['price'] || array_diff( $filters['level'], array( 'all' ) );
 	}
 
 	/**
@@ -318,7 +313,7 @@ final class Catalog {
 	// ---- Queries --------------------------------------------------------------------------------
 
 	/**
-	 * Apply search, level, price, curriculum, bundle and sort to WP_Query arguments. The archive,
+	 * Apply search, level, price, curriculum and sort to WP_Query arguments. The archive,
 	 * the course list and the legacy admin-ajax actions all use this, so they list the same courses.
 	 *
 	 * @param array $args    WP_Query arguments.
@@ -378,11 +373,7 @@ final class Catalog {
 			$args['meta_query'] = array_merge( array( 'relation' => 'AND' ), $existing, $meta ); // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Course filters are meta fields.
 		}
 
-		return Placement::narrow_query(
-			$args,
-			Placement::ids_from_slugs( $filters['curriculum'], 'item' ),
-			Placement::ids_from_slugs( $filters['bundle'], 'bundle' )
-		);
+		return Placement::narrow_query( $args, Placement::ids_from_slugs( $filters['curriculum'] ) );
 	}
 
 	/**

@@ -63,7 +63,6 @@ final class Interactivity {
 			'questions'     => 'questions',
 			'tabs'          => 'tabs',
 			'curriculum'    => 'curriculum',
-			'bundles'       => 'bundles',
 			'cart'          => 'cart',
 			'checkout'      => 'checkout',
 			'stripe'        => 'stripe',

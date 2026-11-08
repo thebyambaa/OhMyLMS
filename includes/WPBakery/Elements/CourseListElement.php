@@ -241,13 +241,6 @@ class CourseListElement {
 				'value'       => self::dropdown_values( \OhMyLMS\Curriculum\Placement::item_options() ),
 				'description' => __( 'Only show courses placed under this curriculum item and everything below it.', 'ohmylms' ),
 			),
-			array(
-				'type'        => 'dropdown',
-				'heading'     => __( 'Course bundle', 'ohmylms' ),
-				'param_name'  => 'bundle',
-				'value'       => self::dropdown_values( \OhMyLMS\Curriculum\Placement::bundle_options() ),
-				'description' => __( 'Only show courses in this Course Bundle.', 'ohmylms' ),
-			),
 			// Row Settings (Pro).
 
 						array(

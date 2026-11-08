@@ -2,9 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiError } from '../../lib/api';
 import { renderShell } from '../../test/render';
-import * as bundleApi from './bundles';
-import BundlesPage from './BundlesPage';
-import { bundles, skillMap, subjectProfiles } from './index';
+import { skillMap, subjectProfiles } from './index';
 import * as mapApi from './skill-map';
 import SkillMapPage from './SkillMapPage';
 import * as profileApi from './subject-profiles';
@@ -20,17 +18,6 @@ vi.mock( './subject-profiles', async ( original ) => ( {
 	readProfiles: vi.fn(),
 	saveProfile: vi.fn(),
 	profileCommand: vi.fn(),
-} ) );
-vi.mock( './bundles', async ( original ) => ( {
-	...( await original< typeof import( './bundles' ) >() ),
-	listBundles: vi.fn(),
-	readBundle: vi.fn(),
-	createBundle: vi.fn(),
-	updateBundle: vi.fn(),
-	saveMembers: vi.fn(),
-	publishBundle: vi.fn(),
-	deleteBundle: vi.fn(),
-	searchTargets: vi.fn(),
 } ) );
 function open(
 	feature: typeof skillMap,
@@ -120,7 +107,6 @@ describe( 'Skill map', () => {
 			expect.any( AbortSignal )
 		);
 		expect( subjectProfiles.capability ).toBe( 'manage_options' );
-		expect( bundles.capability ).toBe( 'manage_options' );
 		expect( skillMap.capability ).toBe( 'ohmylms_view_dashboard' );
 	} );
 	it( 'shows a subject grid with syllabus coverage, checks and skill details', async () => {
@@ -293,125 +279,5 @@ describe( 'Subject profiles', () => {
 		expect( () =>
 			profileApi.payloadOf( { ...form, levels: ' ' } )
 		).toThrow();
-	} );
-} );
-
-describe( 'Course bundles', () => {
-	const bundle: bundleApi.Bundle = {
-		id: 4,
-		title: 'Starter',
-		description: '',
-		status: 'draft',
-		member_count: 2,
-		follower_count: 3,
-		updated_at: '2026-10-30 10:00:00',
-	};
-	const detail: bundleApi.BundleDetail = {
-		bundle,
-		members: [
-			{ type: 'course', id: 11, title: 'Course A', available: true },
-			{ type: 'curriculum', id: 5, title: 'Unit B', available: true },
-		],
-	};
-	beforeEach( () => {
-		vi.mocked( bundleApi.listBundles ).mockResolvedValue( {
-			bundles: [ bundle ],
-			maxMembers: 100,
-		} );
-		vi.mocked( bundleApi.readBundle ).mockResolvedValue( detail );
-	} );
-	it( 'reorders members and saves them against the read version', async () => {
-		const user = userEvent.setup();
-		vi.mocked( bundleApi.saveMembers ).mockResolvedValue( detail );
-		open( bundles, BundlesPage );
-		await user.click(
-			await screen.findByRole( 'button', {
-				name: 'Edit bundle: Starter',
-			} )
-		);
-		await user.click(
-			await screen.findByRole( 'button', { name: 'Move Unit B up' } )
-		);
-		expect(
-			screen.getByRole( 'button', { name: 'Publish' } )
-		).toBeDisabled();
-		await user.click(
-			screen.getByRole( 'button', { name: 'Save members' } )
-		);
-		await waitFor( () =>
-			expect( bundleApi.saveMembers ).toHaveBeenCalledWith(
-				bundle,
-				[ detail.members[ 1 ], detail.members[ 0 ] ],
-				expect.any( AbortSignal )
-			)
-		);
-	} );
-	it( 'keeps member edits after a stale save and reloads the version', async () => {
-		const user = userEvent.setup();
-		vi.mocked( bundleApi.saveMembers ).mockRejectedValueOnce(
-			stale( 'ohmylms_bundle_stale' )
-		);
-		open( bundles, BundlesPage );
-		await user.click(
-			await screen.findByRole( 'button', {
-				name: 'Edit bundle: Starter',
-			} )
-		);
-		await user.click(
-			await screen.findByRole( 'button', { name: 'Remove Course A' } )
-		);
-		await user.click(
-			screen.getByRole( 'button', { name: 'Save members' } )
-		);
-		await screen.findAllByText( /Changed elsewhere/ );
-		await user.click(
-			screen.getByRole( 'button', {
-				name: 'Reload bundle and keep my edits',
-			} )
-		);
-		await screen.findAllByText( /Bundle reloaded/ );
-		expect(
-			screen.queryByRole( 'button', { name: 'Remove Course A' } )
-		).not.toBeInTheDocument();
-		expect(
-			screen.getByRole( 'button', { name: 'Save members' } )
-		).toBeEnabled();
-	} );
-	it( 'warns about followers before deleting', async () => {
-		const user = userEvent.setup();
-		vi.mocked( bundleApi.deleteBundle ).mockResolvedValue();
-		open( bundles, BundlesPage );
-		await user.click(
-			await screen.findByRole( 'button', {
-				name: 'Edit bundle: Starter',
-			} )
-		);
-		await user.click(
-			await screen.findByRole( 'button', { name: 'Delete bundle…' } )
-		);
-		const dialog = within( screen.getByRole( 'dialog' ) );
-		expect(
-			dialog.getByText( /3 learners follow this bundle/ )
-		).toBeVisible();
-		await user.click(
-			dialog.getByRole( 'button', { name: 'Delete bundle' } )
-		);
-		await waitFor( () =>
-			expect( bundleApi.deleteBundle ).toHaveBeenCalledWith(
-				bundle,
-				true,
-				expect.any( AbortSignal )
-			)
-		);
-	} );
-	it( 'moves members within bounds', () => {
-		expect( bundleApi.moveMember( detail.members, 0, -1 ) ).toBe(
-			detail.members
-		);
-		expect(
-			bundleApi
-				.moveMember( detail.members, 0, 1 )
-				.map( ( row ) => row.id )
-		).toEqual( [ 5, 11 ] );
 	} );
 } );

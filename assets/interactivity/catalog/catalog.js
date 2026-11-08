@@ -10,26 +10,20 @@
 export const PARAMS = Object.freeze( {
 	search: 'course_search',
 	curriculum: 'course_curriculum',
-	bundle: 'course_bundle',
 	level: 'course_level',
 	price: 'course_price',
 	sort: 'course_sort',
 	page: 'paged',
 } );
 
-/** @typedef {'curriculum'|'bundle'|'level'|'price'} ListKey */
+/** @typedef {'curriculum'|'level'|'price'} ListKey */
 
 /**
  * Multi-value filters, in URL order.
  *
  * @type {ReadonlyArray<ListKey>}
  */
-export const LISTS = Object.freeze( [
-	'curriculum',
-	'bundle',
-	'level',
-	'price',
-] );
+export const LISTS = Object.freeze( [ 'curriculum', 'level', 'price' ] );
 
 /** Sort orders the server knows; `date` is the default and is left out of URLs. */
 export const SORTS = Object.freeze( [
@@ -66,7 +60,6 @@ const isList = ( key ) => LISTS.includes( /** @type {ListKey} */ ( key ) );
  * @typedef {Object} Filters
  * @property {string}   search     Search term.
  * @property {string[]} curriculum Curriculum item slugs (`c<id>`).
- * @property {string[]} bundle     Course Bundle slugs (`t<id>`).
  * @property {string[]} level      Difficulty levels (`all` means any).
  * @property {string[]} price      `paid`, `free`.
  * @property {string}   sort       One of SORTS, or '' for the default order.
@@ -78,7 +71,6 @@ export function emptyFilters() {
 	return {
 		search: '',
 		curriculum: [],
-		bundle: [],
 		level: [],
 		price: [],
 		sort: '',
@@ -247,7 +239,6 @@ export function clearFilters( filters ) {
 	return {
 		...filters,
 		curriculum: [],
-		bundle: [],
 		level: [],
 		price: [],
 		page: 1,

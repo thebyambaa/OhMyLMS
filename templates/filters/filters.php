@@ -42,7 +42,7 @@ $catalog_form = \OhMyLMS\Extensions\Catalog::current() ? \OhMyLMS\Extensions\Cat
 		foreach ( $filter_data as $filter ) {
 			$filter_title = '';
 			// The "category" and "tag" filters keep their stored keys but now list the curriculum and
-			// Course Bundles. Only entries with published courses are shown; slugs are c<id> / t<id>.
+			// Only entries with published courses are shown; slugs are c<id>.
 			if ( 'category' === $filter ) {
 				$filter_title = __( 'Curriculum', 'ohmylms' );
 				foreach ( \OhMyLMS\Curriculum\Placement::public_items() as $entry ) {

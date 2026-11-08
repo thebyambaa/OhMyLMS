@@ -50,7 +50,7 @@ order: menu and WordPress look, then the dashboard, then the gradebook. Also dec
 | Settings | `ohmylms-settings` | settings (sections = today's settings tabs incl. xAPI, AI tutor, migration), emails, integrations, webhooks, setup |
 
 Detail screens add `&id=` and `&view=` (`page=ohmylms-content&tab=courses&id=12&view=settings`); second-level
-sections use `&section=`, rendered as `.subsubsub` under the tab (courses: overview, bundles, taxonomies; curriculum tools: skill-map, subjects;
+sections use `&section=`, rendered as `.subsubsub` under the tab (courses: overview; curriculum tools: skill-map, subjects;
 skills: assessments; question bank: import-review). Feature query parameters (filters, `action=new|import`, `add=1`)
 stay as they are.
 
@@ -67,7 +67,7 @@ stay as they are.
   group heading, the tabs and the mount point. Restore the pending-orders badge on the top-level menu and Commerce.
   `CommonHook.php` and `SkillAssessmentPage.php` stop adding their own submenus (they become tabs/sections).
 - **Merges** from PROPOSED-NAV: Home + Dashboard; one course editor (structure and settings as views of
-  `tab=courses&id=`); categories/tags and course bundles as Courses sections; Students and Cohorts under Account Hub;
+  `tab=courses&id=`); Students and Cohorts under Account Hub;
   Certificates their own Engagement tab; Emails under Settings; Automations under Engagement.
 - **Redirects.** `page=ohmylms#/…` (recovered admin) and `page=ohmylms-app#/…` (today's app) map to the new
   addresses: the hash only reaches the browser, so the landing script maps it; `page=ohmylms-app` with no hash redirects
@@ -208,9 +208,22 @@ parameters (`AdminNavigation::MOVED_PLACES`):
 | Automations | Commerce | Engagement |
 | Emails | Engagement | Settings |
 | Certificates, Issued certificates | Engagement › Gamification sections | Engagement › Certificates tab |
-| Course bundles, Categories and tags | Curriculum › Tools | Content Hub › Courses sections |
+| Course bundles | Curriculum › Tools | Removed (see below) |
+| Categories and tags | Curriculum › Tools | Removed: the screen only listed curriculum items, read-only |
 | Currency, Tax, Payment gateways | Settings sections | Commerce › Payments sections |
 
 Gamification is hidden unless the add-on is on. The three payment tabs are still the settings screen
 (`SettingsPage scope="payments"`, route `/payments?tab=currency|tax|payment-gateways`). Not moved: Content Hub and
 Content Bank stay two pages.
+
+### Course bundles removed (2026-11)
+
+Course Bundles were deleted: the admin screen, the REST controllers (`/bundles`, `/me/bundles`, `/tags`), the
+student library section, "Collections you follow" on My learning, the family "collections" step, the page-builder
+and shortcode `bundle` filters, the catalog `course_bundle` filter, bundle slugs (`b<id>`) in placement, and the
+three tables (`bundles`, `bundle_items`, `bundle_follows`, dropped by `Curriculum\Schema` version 12). Old addresses
+open the course list (`AdminNavigation::MOVED_PLACES`). The Categories and tags screen went with them, because
+its tags were the bundles and its categories only repeated the curriculum; `/categories` stays as a read-only API
+for old clients. What the folder `includes/Bundles/` held for other features moved: `Progress` became
+`Curriculum\LearnerProgress` (only `for_objectives()` and its helpers remain) and `Combined` became
+`Performance\Combined`.

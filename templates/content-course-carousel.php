@@ -50,7 +50,7 @@ global $category;
 				'posts_per_page' => -1,  // Adjust as needed.
 			);
 
-			// The selected curriculum item (with everything below it) or Course Bundle.
+			// The selected curriculum item (with everything below it).
 			$group = ohmylms_course_ids_for_group( $category );
 			if ( null !== $group ) {
 				$args['post__in'] = $group ? $group : array( 0 );

@@ -128,7 +128,7 @@ class ShortCodeDashboard {
 		);
 
 		/**
-		 * Add-ons such as Course Bundles render their own learner sections below the standard content.
+		 * Add-ons render their own learner sections below the standard content.
 		 *
 		 * @since NEXT
 		 */

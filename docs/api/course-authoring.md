@@ -66,7 +66,7 @@ independently of navigation visibility.
 | `POST curriculum/items` | Create a named item under the chosen parent; optional syllabus/code/version/description |
 | `PUT curriculum/items/:id` | Edit fields with the read `expected_updated_at` token; parent moves are a separate operation |
 | `POST curriculum/items/:id/move` | Move a saved item; excludes descendants from UI choices and enforces cycle/depth rules on the server |
-| `GET/PUT courses/:id/organization` | Read or replace curriculum placement, without sending bundle changes |
+| `GET/PUT courses/:id/organization` | Read or replace curriculum placement |
 | `GET courses/:id/structure` | Complete authorized outline snapshot and read revision |
 | `PUT courses/:id/structure` | Complete units/program draft plus original read token, in the existing named lock and transaction |
 | `GET courses/:id/structure/resources?type=lesson\|quiz\|assignment&search=...&page=...` | Bounded picker of editable resources not yet placed in the saved draft |

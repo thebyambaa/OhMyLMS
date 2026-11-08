@@ -39,8 +39,6 @@ export interface Dependents {
 	descendants: number;
 	links: number;
 	own_links: number;
-	bundles: number;
-	own_bundles: number;
 	groups: number;
 	own_groups: number;
 }
@@ -138,8 +136,6 @@ export function parseDependents( value: unknown ): Dependents {
 		'descendants',
 		'links',
 		'own_links',
-		'bundles',
-		'own_bundles',
 		'groups',
 		'own_groups',
 	] ) {

@@ -3,7 +3,7 @@
  * Content Hub overview REST integration test (`GET /content-hub/overview`).
  *
  * Runs against a WordPress install (the Local site by default). Creates tagged users, posts of every
- * content type, a skill, a curriculum item, a bundle and an attempt, checks the counts as changes against
+ * content type, a skill, a curriculum item and an attempt, checks the counts as changes against
  * a baseline (other content on the site is never assumed), scoping, recent items and validation, and
  * removes everything it created in `finally`.
  *
@@ -37,7 +37,6 @@ $user_ids  = array();
 $post_ids  = array();
 $term_ids  = array();
 $item_ids  = array();
-$bundle_id = 0;
 $tag       = 'chtest' . strtolower( wp_generate_password( 6, false, false ) );
 
 /**
@@ -150,7 +149,6 @@ try {
 	$expected = array( 'courses', 'lessons', 'quizzes', 'exams', 'question-bank', 'assignments', 'skills' );
 	if ( CurriculumSchema::ready() ) {
 		$expected[] = 'curriculum';
-		$expected[] = 'bundles';
 	}
 	$area_ids = wp_list_pluck( $before->get_data()['areas'], 'id' );
 	ok( $area_ids === $expected, 'admin sees every area: ' . wp_json_encode( $area_ids ) );
@@ -200,17 +198,6 @@ try {
 			)
 		);
 		$item_ids[] = (int) $wpdb->insert_id;
-		$wpdb->insert(
-			CurriculumSchema::table( 'bundles' ),
-			array(
-				'uuid'       => wp_generate_uuid4(),
-				'title'      => "$tag bundle",
-				'status'     => 'published',
-				'created_at' => $now,
-				'updated_at' => $now,
-			)
-		);
-		$bundle_id = (int) $wpdb->insert_id;
 	}
 
 	// Administrator counts change by exactly the fixtures.
@@ -225,7 +212,6 @@ try {
 	ok( 1 === $delta( 'skills' ) && 1 === $delta( 'skills', 'archived' ), 'skill counts' );
 	if ( CurriculumSchema::ready() ) {
 		ok( 1 === $delta( 'curriculum' ) && 1 === $delta( 'curriculum', 'syllabuses' ), 'curriculum counts' );
-		ok( 1 === $delta( 'bundles' ) && 1 === $delta( 'bundles', 'published' ) && 0 === $delta( 'bundles', 'drafts' ), 'bundle counts' );
 	}
 
 	// Recent items.
@@ -244,7 +230,7 @@ try {
 	$as_author = overview( array( 'recent' => 20 ) );
 	ok( 200 === $as_author->get_status(), 'author overview is 200' );
 	$own = areas_of( $as_author );
-	ok( array( 'courses', 'quizzes', 'exams', 'question-bank', 'assignments', 'skills' ) === array_keys( $own ), 'author areas: no lessons, curriculum or bundles' );
+	ok( array( 'courses', 'quizzes', 'exams', 'question-bank', 'assignments', 'skills' ) === array_keys( $own ), 'author areas: no lessons or curriculum' );
 	ok( 1 === $own['courses']['total'] && 1 === $own['courses']['counts']['drafts'] && 1 === $own['quizzes']['total'] && 0 === $own['exams']['total'], 'author counts only own posts' );
 	ok( 1 === $own['quizzes']['counts']['to_grade'], 'author sees attempts to grade in own quizzes' );
 	$ids = array_map( 'intval', wp_list_pluck( $as_author->get_data()['recent'], 'id' ) );
@@ -270,9 +256,6 @@ try {
 	}
 	foreach ( $item_ids as $item_id ) {
 		$wpdb->delete( CurriculumSchema::table( 'curriculum_items' ), array( 'id' => $item_id ) );
-	}
-	if ( $bundle_id ) {
-		$wpdb->delete( CurriculumSchema::table( 'bundles' ), array( 'id' => $bundle_id ) );
 	}
 	require_once ABSPATH . 'wp-admin/includes/user.php';
 	foreach ( $user_ids as $user_id ) {

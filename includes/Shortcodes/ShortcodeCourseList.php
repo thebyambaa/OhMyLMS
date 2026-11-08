@@ -64,9 +64,8 @@ class ShortcodeCourseList {
 			'posts_per_page'                         => get_option( 'ohmylms_courses_per_page', 10 ),
 			'orderby'                                => 'date',
 			'order'                                  => 'DESC',
-			// Curriculum item and Course Bundle IDs, comma-separated (e.g. curriculum="12,14" bundle="3").
+			// Curriculum item IDs, comma-separated (e.g. curriculum="12,14").
 			'curriculum'                             => '',
-			'bundle'                                 => '',
 
 			// Layout settings.
 			'layout'                                 => get_option( 'ohmylms_archive_page_layout', 'grid' ),
@@ -248,11 +247,10 @@ class ShortcodeCourseList {
 			'order'          => sanitize_text_field( $atts['order'] ),
 		);
 
-		// Limit to curriculum items (and everything below them) and Course Bundles when given.
+		// Limit to curriculum items (and everything below them) when given.
 		$args = \OhMyLMS\Curriculum\Placement::narrow_query(
 			$args,
-			\OhMyLMS\Curriculum\Placement::ids_from_list( $atts['curriculum'], 'item' ),
-			\OhMyLMS\Curriculum\Placement::ids_from_list( $atts['bundle'], 'bundle' )
+			\OhMyLMS\Curriculum\Placement::ids_from_list( $atts['curriculum'] )
 		);
 
 		// Search, filters, sort and load-more pages from the URL (includes/Extensions/Catalog.php).
@@ -705,7 +703,6 @@ class ShortcodeCourseList {
 			'orderby'                             => 'orderby',
 			'order'                               => 'order',
 			'curriculum'                          => 'curriculum',
-			'bundle'                              => 'bundle',
 			'layout'                              => 'layout',
 			'layoutStyle'                         => 'layout_style',
 			'showFilter'                          => 'show_filter',

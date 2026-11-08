@@ -7,8 +7,6 @@
 namespace OhMyLMS\Curriculum;
 
 use OhMyLMS\Skills\Taxonomy;
-use OhMyLMS\Bundles\Follows;
-use OhMyLMS\Bundles\Bundles;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -22,14 +20,12 @@ final class Bootstrap {
 		add_action( 'before_delete_post', array( __CLASS__, 'post_deleted' ) );
 		// Core fires `delete_term` after the term is gone from the database; there is no `deleted_term`.
 		add_action( 'delete_term', array( __CLASS__, 'term_deleted' ), 10, 3 );
-		add_action( 'deleted_user', array( Follows::class, 'remove_user' ) );
-		\OhMyLMS\Bundles\Frontend::init();
 		SubjectProgress::init();
 		add_action( 'init', array( SharedContent::class, 'register' ), 11 );
 		Directory::init();
 	}
 
-	/** A deleted course or quiz/exam leaves no curriculum links, and a deleted course leaves no bundle slot.
+	/** A deleted course or quiz/exam leaves no curriculum links.
 	 *
 	 * @param mixed $post_id Post identifier.
 	 */
@@ -40,7 +36,6 @@ final class Bootstrap {
 		if ( OHMYLMS_COURSE_CPT === $type ) {
 			Links::remove_object( 'course', $post_id );
 			CourseLinks::remove_course( $post_id );
-			Bundles::remove_member( 'course', $post_id );
 		} elseif ( OHMYLMS_QUIZ_CPT === $type ) {
 			Links::remove_object( 'quiz', $post_id );
 		}

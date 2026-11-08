@@ -70,10 +70,6 @@
 			"raw": 25700,
 			"gzip": 7700
 		},
-		"chunks/admin-app-bundles.js": {
-			"raw": 15000,
-			"gzip": 4900
-		},
 		"chunks/admin-app-certificates.js": {
 			"raw": 50900,
 			"gzip": 14100
@@ -381,10 +377,6 @@
 		"chunks/admin-app-syllabus.js": {
 			"raw": 58600,
 			"gzip": 16000
-		},
-		"chunks/admin-app-taxonomies.js": {
-			"raw": 6000,
-			"gzip": 2500
 		},
 		"chunks/admin-app-ui.css": {
 			"raw": 1100,

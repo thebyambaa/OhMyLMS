@@ -188,7 +188,7 @@ try {
 	$_SERVER['REQUEST_URI'] = '/course/page/3/?page_id=4&course_level%5B%5D=expert&paged=3';
 	ok( Catalog::base_url() === 'http://' . $host . '/course/?page_id=4', 'base URL drops catalogue parameters and /page/N/: ' . Catalog::base_url() );
 	ok( array( 'page_id' => '4' ) === Catalog::base_fields(), 'other query arguments become hidden form fields' );
-	ok( 'course_curriculum[]' === Catalog::field( 'category' ) && 'course_level[]' === Catalog::field( 'difficulty_level' ) && 'course_price[]' === Catalog::field( 'price_type' ) && 'course_bundle[]' === Catalog::field( 'tag' ), 'filter types map to field names' );
+	ok( 'course_curriculum[]' === Catalog::field( 'category' ) && 'course_level[]' === Catalog::field( 'difficulty_level' ) && 'course_price[]' === Catalog::field( 'price_type' ), 'filter types map to field names' );
 	ok( ! array_intersect( array( 'course_category', 'course_tag', 's', 'paged' ), Catalog::PARAMS ), 'parameters avoid the course_category/course_tag taxonomy query vars and core search' );
 
 	// ---- Module registration ---------------------------------------------------------------
