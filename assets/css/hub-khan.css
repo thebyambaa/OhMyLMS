@@ -1,0 +1,285 @@
+/*
+ * Khan Academy-style subject listing and subject page: a dark title band, then one white card per subject
+ * (20px bold title, three columns of 15px course links), and on a subject page a 36px title with stacked course cards.
+ * Colours stay on the hub palette; sizes, spacing and borders follow Khan Academy's /math page.
+ */
+
+.ohmylms-student-hub .oml-subject-browser {
+	max-width: 960px;
+	padding: 0;
+	color: var(--hub-text);
+}
+
+.ohmylms-student-hub .oml-subject-browser > nav {
+	margin: 0 0 12px;
+	font-size: 14px;
+	line-height: 20px;
+}
+
+.ohmylms-student-hub .oml-subject-browser > nav a {
+	color: var(--hub-selected-text);
+	text-decoration: none;
+}
+
+.ohmylms-student-hub .oml-subject-browser h1 {
+	margin: 0 0 12px;
+	font-size: 36px;
+	font-weight: 700;
+	line-height: 40px;
+}
+
+.ohmylms-student-hub .oml-subject-browser > p {
+	margin: 0 0 24px;
+	font-size: 16px;
+	line-height: 20px;
+}
+
+.ohmylms-student-hub .oml-subject-courses {
+	grid-template-columns: minmax(0, 1fr);
+	gap: 24px;
+	margin: 24px 0;
+}
+
+.ohmylms-student-hub .oml-subject-course {
+	padding: 32px 24px;
+	border-color: var(--hub-border);
+	background: var(--hub-surface);
+}
+
+.ohmylms-student-hub .oml-subject-course h2 {
+	margin: 0 0 8px;
+	font-size: 20px;
+	font-weight: 700;
+	line-height: 24px;
+}
+
+.ohmylms-student-hub .oml-subject-course h2 a {
+	color: color-mix(in srgb, var(--hub-text) 78%, var(--hub-surface));
+	text-decoration: none;
+}
+
+.ohmylms-student-hub .oml-subject-course p {
+	margin: 0 0 8px;
+	font-size: 16px;
+	line-height: 20px;
+}
+
+.ohmylms-student-hub .oml-subject-action {
+	margin-top: 8px;
+	padding: 8px 16px;
+	border-radius: 4px;
+	background: var(--hub-accent);
+	color: var(--hub-on-accent);
+	font-size: 14px;
+	font-weight: 700;
+}
+
+/* Khan Academy-style course page: a flat unit rail with a highlighted course header and a plain 36px title. */
+.ohmylms-student-hub .oml-course {
+	grid-template-columns: 300px minmax(0, 1fr);
+	gap: 40px;
+}
+
+.ohmylms-student-hub .oml-course-rail {
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+}
+
+.ohmylms-student-hub .oml-course-rail-title {
+	padding: 16px 16px 0;
+	background: var(--hub-selected-bg);
+	color: var(--hub-selected-text);
+	font-size: 16px;
+	line-height: 20px;
+}
+
+.ohmylms-student-hub .oml-course-rail-meta {
+	padding: 0 16px 16px;
+	background: var(--hub-selected-bg);
+	border-bottom: 1px solid var(--hub-border);
+	font-size: 12px;
+	font-weight: 700;
+	line-height: 16px;
+	text-transform: uppercase;
+}
+
+.ohmylms-student-hub .oml-course-rail li a {
+	padding: 16px 16px 16px 20px;
+}
+
+.ohmylms-student-hub .oml-course-rail .oml-course-unit-label {
+	font-size: 12px;
+	letter-spacing: 0;
+	line-height: 16px;
+	text-transform: uppercase;
+}
+
+.ohmylms-student-hub .oml-course-rail a > :not(.oml-course-unit-label) {
+	font-size: 16px;
+	line-height: 20px;
+}
+
+.ohmylms-student-hub .oml-course-rail a[aria-current] {
+	color: var(--hub-selected-text);
+	font-weight: 700;
+}
+
+.ohmylms-student-hub .oml-course-main .oml-hub-hero {
+	margin-bottom: 16px;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+}
+
+.ohmylms-student-hub .oml-course-main .oml-hub-hero h1 {
+	margin: 0 0 8px;
+	font-size: 36px;
+	line-height: 40px;
+}
+
+.ohmylms-student-hub .oml-course-main .oml-hub-hero .oml-hub-meta {
+	margin: 0;
+	font-size: 16px;
+	line-height: 20px;
+}
+
+.ohmylms-student-hub .oml-course-main .oml-hub-legend {
+	font-size: 14px;
+	line-height: 18px;
+}
+
+.ohmylms-student-hub .oml-course-unit h2 {
+	font-size: 24px;
+	line-height: 28px;
+}
+
+.ohmylms-student-hub .oml-khan-library {
+	max-width: 960px;
+	margin: 0 auto;
+}
+
+.ohmylms-student-hub .oml-khan-library .oml-hub-banner {
+	margin: -32px -32px 32px;
+	padding: 32px;
+	border: 0;
+	border-radius: 0;
+	background: var(--hub-accent-shadow);
+	color: var(--hub-on-accent);
+	text-align: start;
+}
+
+.ohmylms-student-hub .oml-khan-library .oml-hub-banner h1 {
+	margin: 0;
+	color: inherit;
+	font-size: 35px;
+	font-weight: 700;
+	line-height: 37px;
+}
+
+.ohmylms-student-hub .oml-khan-library .oml-hub-banner p {
+	margin: 8px 0 0;
+	color: inherit;
+	font-size: 16px;
+	line-height: 20px;
+	opacity: 0.85;
+}
+
+.ohmylms-student-hub .oml-khan-library .oml-hub-library-heading {
+	margin: 0 0 16px;
+	font-size: 24px;
+	font-weight: 700;
+	line-height: 28px;
+}
+
+.ohmylms-student-hub .oml-khan-library .oml-hub-subjects {
+	grid-template-columns: minmax(0, 1fr);
+	gap: 24px;
+}
+
+.ohmylms-student-hub .oml-khan-library .oml-hub-subject {
+	padding: 32px 24px;
+}
+
+.ohmylms-student-hub .oml-khan-library .oml-hub-subject summary {
+	display: flex;
+	align-items: baseline;
+	gap: 12px;
+	padding: 0;
+	cursor: default;
+	pointer-events: none;
+}
+
+.ohmylms-student-hub .oml-khan-library .oml-hub-subject-icon,
+.ohmylms-student-hub .oml-khan-library .oml-hub-disclosure::after {
+	display: none;
+}
+
+.ohmylms-student-hub .oml-khan-library .oml-hub-subject-name {
+	margin: 0 0 8px;
+	color: color-mix(in srgb, var(--hub-text) 78%, var(--hub-surface));
+	font-size: 20px;
+	line-height: 24px;
+}
+
+.ohmylms-student-hub .oml-khan-library .oml-hub-subject-count {
+	font-size: 14px;
+}
+
+.ohmylms-student-hub .oml-khan-library .oml-hub-subject-body {
+	padding: 0;
+}
+
+.ohmylms-student-hub .oml-khan-library .oml-hub-subject-body > p {
+	margin: 0 0 8px;
+}
+
+.ohmylms-student-hub .oml-khan-library .oml-hub-subject-body .oml-hub-button {
+	padding: 0;
+	border: 0;
+	background: none;
+	box-shadow: none;
+	color: var(--hub-selected-text);
+	font-size: 15px;
+	font-weight: 700;
+	line-height: 30px;
+}
+
+.ohmylms-student-hub .oml-khan-library .oml-hub-course-links {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	column-gap: 24px;
+}
+
+.ohmylms-student-hub .oml-khan-library .oml-hub-course-link {
+	padding: 0;
+	color: color-mix(in srgb, var(--hub-text) 78%, var(--hub-surface));
+	font-size: 15px;
+	line-height: 30px;
+}
+
+.ohmylms-student-hub .oml-khan-library .oml-hub-group-title {
+	margin: 16px 0 4px;
+	font-size: 12px;
+	font-weight: 700;
+	line-height: 16px;
+}
+
+@media (max-width: 720px) {
+
+	.ohmylms-student-hub .oml-khan-library .oml-hub-banner {
+		margin: -20px -20px 24px;
+		padding: 24px 20px;
+	}
+
+	.ohmylms-student-hub .oml-khan-library .oml-hub-course-links {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.ohmylms-student-hub .oml-khan-library .oml-hub-subject-empty {
+	color: var(--hub-muted);
+	font-size: 15px;
+	line-height: 30px;
+}

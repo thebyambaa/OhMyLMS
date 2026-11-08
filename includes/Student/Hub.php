@@ -639,6 +639,7 @@ final class Hub {
 		if ( is_singular( OHMYLMS_COURSE_CPT ) ) {
 			wp_enqueue_style( 'ohmylms-student-hub', plugins_url( 'assets/css/student-hub.css', OHMYLMS_FILE ), array( 'ohmylms-frontend' ), (string) filemtime( OHMYLMS_DIR . '/assets/css/student-hub.css' ) );
 			wp_enqueue_style( 'ohmylms-learner-journey', plugins_url( 'assets/css/learner-journey.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/learner-journey.css' ) );
+			wp_enqueue_style( 'ohmylms-hub-khan', plugins_url( 'assets/css/hub-khan.css', OHMYLMS_FILE ), array( 'ohmylms-student-hub' ), (string) filemtime( OHMYLMS_DIR . '/assets/css/hub-khan.css' ) );
 		}
 	}
 
@@ -666,6 +667,7 @@ final class Hub {
 		wp_enqueue_style( 'ohmylms-student-hub', plugins_url( 'assets/css/student-hub.css', OHMYLMS_FILE ), array( 'ohmylms-frontend' ), (string) filemtime( OHMYLMS_DIR . '/assets/css/student-hub.css' ) );
 		wp_enqueue_style( 'ohmylms-profile-home', plugins_url( 'assets/css/profile-home.css', OHMYLMS_FILE ), array( 'ohmylms-student-hub' ), (string) filemtime( OHMYLMS_DIR . '/assets/css/profile-home.css' ) );
 		wp_enqueue_style( 'ohmylms-learner-journey', plugins_url( 'assets/css/learner-journey.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/learner-journey.css' ) );
+		wp_enqueue_style( 'ohmylms-hub-khan', plugins_url( 'assets/css/hub-khan.css', OHMYLMS_FILE ), array( 'ohmylms-student-hub' ), (string) filemtime( OHMYLMS_DIR . '/assets/css/hub-khan.css' ) );
 		wp_enqueue_script( 'ohmylms-student-hub', plugins_url( 'assets/js/student-hub.js', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/js/student-hub.js' ), true );
 	}
 
@@ -1094,6 +1096,7 @@ final class Hub {
 		}
 		wp_enqueue_style( 'ohmylms-student-hub', plugins_url( 'assets/css/student-hub.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/student-hub.css' ) );
 		wp_enqueue_style( 'ohmylms-learner-journey', plugins_url( 'assets/css/learner-journey.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/learner-journey.css' ) );
+		wp_enqueue_style( 'ohmylms-hub-khan', plugins_url( 'assets/css/hub-khan.css', OHMYLMS_FILE ), array( 'ohmylms-student-hub' ), (string) filemtime( OHMYLMS_DIR . '/assets/css/hub-khan.css' ) );
 		wp_enqueue_script( 'ohmylms-student-hub', plugins_url( 'assets/js/student-hub.js', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/js/student-hub.js' ), true );
 	}
 

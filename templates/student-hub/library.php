@@ -53,6 +53,7 @@ $hub_render_group = static function ( array $node, $depth ) use ( &$hub_render_g
 	}
 };
 ?>
+<div class="oml-khan-library">
 <section class="oml-hub-banner">
 	<h1><?php esc_html_e( 'Browse subjects', 'ohmylms' ); ?></h1>
 	<p><?php esc_html_e( 'Select a subject to view courses.', 'ohmylms' ); ?></p>
@@ -78,7 +79,7 @@ $hub_render_group = static function ( array $node, $depth ) use ( &$hub_render_g
 <?php else : ?>
 	<div class="oml-hub-subjects">
 		<?php foreach ( $subjects as $subject ) : ?>
-			<details class="oml-hub-subject" data-tone="<?php echo esc_attr( $subject['id'] % 6 ); ?>" <?php echo '' !== $hub_query ? 'open' : ''; ?>>
+			<details class="oml-hub-subject" data-tone="<?php echo esc_attr( $subject['id'] % 6 ); ?>" open>
 				<summary class="oml-hub-disclosure">
 					<span class="oml-hub-subject-icon" aria-hidden="true"><?php echo esc_html( mb_strtoupper( mb_substr( $subject['name'], 0, 1 ) ) ); ?></span>
 					<span class="oml-hub-subject-name"><?php echo esc_html( $subject['name'] ); ?></span>
@@ -86,7 +87,7 @@ $hub_render_group = static function ( array $node, $depth ) use ( &$hub_render_g
 				</summary>
 				<div class="oml-hub-subject-body">
 					<?php if ( ! $subject['total'] ) : ?>
-						<p><?php esc_html_e( 'Courses will appear here when they are published and assigned to this subject.', 'ohmylms' ); ?></p>
+						<p class="oml-hub-subject-empty"><?php esc_html_e( 'Courses will appear here when they are published and assigned to this subject.', 'ohmylms' ); ?></p>
 					<?php endif; ?>
 					<p><a class="oml-hub-button" href="<?php echo esc_url( \OhMyLMS\Student\Subjects::url( $subject['id'], true ) ); ?>"><?php esc_html_e( 'View subject', 'ohmylms' ); ?></a></p>
 					<?php $hub_render_group( $subject, 0 ); ?>
@@ -103,3 +104,4 @@ $hub_render_group = static function ( array $node, $depth ) use ( &$hub_render_g
 		</ul>
 	<?php endif; ?>
 <?php endif; ?>
+</div>
