@@ -1,0 +1,285 @@
+/*
+ * Exam book: the default quiz player design (loaded after quiz-player-templates.css). A calm page in the style of a printed practice book: ink text on
+ * a pale wash, a numbered label on each question, lettered answer cards in a soft tint, and flat
+ * buttons. Colour marks a role, as in the book: blue for navigation, coral for the question
+ * number, violet for answer letters, amber for a written answer, green for what is right.
+ */
+/* stylelint-disable color-no-hex -- Template palette: this player design defines its own colors. */
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book {
+	--book-ink: #1e2a44;
+	--book-muted: #5a6478;
+	--book-rule: #c3cad9;
+	--book-wash: #f3f5fb;
+	--book-blue: #2f6fed;
+	--book-coral: #ee5f4a;
+	--book-sun: #f4a30b;
+	--book-violet: #7a52d9;
+	--book-green: #1f9d68;
+	--book-paper: #fff;
+	--book-choice: color-mix(in srgb, var(--book-violet) 4%, var(--book-paper));
+	--player-stage: transparent;
+	--player-canvas: var(--book-wash);
+	--player-toolbar: var(--book-paper);
+	--player-toolbar-text: var(--book-ink);
+	--player-grid: none;
+	--player-card-gradient: none;
+	--player-prompt: transparent;
+	--player-text: var(--book-ink);
+	--player-accent: var(--book-blue);
+	--player-answer-1: var(--book-choice);
+	--player-answer-2: var(--book-choice);
+	--player-answer-3: var(--book-choice);
+	--player-answer-4: var(--book-choice);
+	font-weight: 400;
+}
+/* stylelint-enable color-no-hex */
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-quiz-header {
+	border-bottom: 1px solid var(--book-rule);
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .header-title {
+	font-weight: 700;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .quiz-header-left small {
+	color: var(--book-muted);
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .quiz-page-close {
+	width: 36px;
+	height: 36px;
+	border-color: var(--book-rule);
+	border-radius: 6px;
+	color: var(--book-muted);
+	font-size: 20px;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-player-progress {
+	width: min(100% - 48px, 820px);
+	color: var(--book-muted);
+	font-size: 13px;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-player-track {
+	height: 4px;
+	border-radius: 2px;
+	background: var(--book-rule);
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-quiz-timer {
+	border-bottom: 1px solid var(--book-rule);
+	background: var(--book-paper);
+}
+
+/* The page: one column the width of a book page. */
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-quiz-form .ohmylms-quiz-form-wrapper {
+	max-width: 820px;
+	margin: 0 auto;
+	padding: 0;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-quiz-form .ohmylms-quiz-box {
+	margin-bottom: 16px;
+	padding: 20px 24px;
+	border: 1px solid var(--book-rule);
+	border-radius: 8px;
+	background: var(--book-paper);
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-quiz-form .quiz-box-header {
+	align-items: center;
+	padding: 0 0 12px;
+}
+
+/* The question number is the coral label of a practice question. */
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .question-number {
+	padding: 3px 9px;
+	border-radius: 4px;
+	background: var(--book-coral);
+	color: var(--book-paper);
+	font-size: 13px;
+	font-weight: 700;
+	line-height: 1.4;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-player-marks {
+	color: var(--book-muted);
+	font-size: 13px;
+	font-weight: 600;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-quiz-form .question-box {
+	align-items: stretch;
+	min-height: 0;
+	margin-bottom: 14px;
+	padding: 0;
+	border: 0;
+	text-align: left;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book
+	.ohmylms-quiz-form .question-box
+	:is(.the-question, .ohmylms-question-block-content, p, h1, h2, h3) {
+	margin: 0 0 6px;
+	font-size: 17px;
+	font-weight: 400;
+	line-height: 1.6;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-quiz-form .question-box .the-question {
+	font-weight: 600;
+}
+
+/* Answer choices: a column of lettered cards, as printed. */
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-quiz-form .quiz-checkbox-radio-options {
+	grid-template-columns: 1fr;
+	gap: 8px;
+	counter-reset: book-choice;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book
+	.ohmylms-quiz-form .quiz-checkbox-radio-options
+	.option-box {
+	justify-content: flex-start;
+	gap: 12px;
+	min-height: 0;
+	padding: 10px 14px;
+	border: 1px solid color-mix(in srgb, var(--book-violet) 38%, var(--book-paper));
+	border-radius: 5px;
+	background: var(--book-choice);
+	color: var(--book-ink);
+	text-align: left;
+	counter-increment: book-choice;
+	transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book
+	.ohmylms-quiz-form .quiz-checkbox-radio-options
+	.option-box::before {
+	content: counter(book-choice, upper-alpha);
+	display: grid;
+	flex: none;
+	place-items: center;
+	width: 26px;
+	height: 26px;
+	border: 1.5px solid var(--book-violet);
+	border-radius: 50%;
+	color: var(--book-violet);
+	font-size: 13px;
+	font-weight: 700;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-quiz-form .option-title {
+	font-size: 16px;
+	font-weight: 400;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-quiz-form .checked-check {
+	display: none;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-quiz-form .single-option:hover .option-box {
+	border-color: var(--book-violet);
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book
+	.ohmylms-quiz-form .single-option
+	input:checked
+	+ .option-box {
+	border-color: var(--book-violet);
+	background: color-mix(in srgb, var(--book-violet) 12%, var(--book-paper));
+	background-image: none;
+	box-shadow: inset 0 0 0 1px var(--book-violet);
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book
+	.ohmylms-quiz-form .single-option
+	input:checked
+	+ .option-box::before {
+	background: var(--book-violet);
+	color: var(--book-paper);
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book
+	.ohmylms-quiz-form .single-option
+	input:focus-visible
+	+ .option-box {
+	outline: 2px solid var(--book-blue);
+	outline-offset: 2px;
+}
+
+/* Other answer areas sit on the same card, without a second box. */
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book
+	:is(
+		.ohmylms-extended-question,
+		.quiz-reorder-options,
+		.quiz-matching-options,
+		.ohmylms-interactive-question,
+		.quiz-textarea-options
+	) {
+	padding: 0;
+	border-radius: 0;
+	background: transparent;
+	color: var(--book-ink);
+}
+
+/* A written answer is the amber write-in field of the book. */
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book
+	.ohmylms-quiz-form
+	:is(input[type="text"], input[type="number"], textarea, math-field) {
+	border: 1px solid var(--book-rule);
+	border-radius: 5px;
+	background: color-mix(in srgb, var(--book-sun) 8%, var(--book-paper));
+	color: var(--book-ink);
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book
+	.ohmylms-quiz-form
+	:is(input[type="text"], input[type="number"], textarea, math-field):focus {
+	border-color: var(--book-sun);
+	outline: 2px solid color-mix(in srgb, var(--book-sun) 35%, transparent);
+	outline-offset: 0;
+}
+
+/* Bottom bar and buttons: flat, blue for the way forward. */
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-quiz-footer {
+	padding: 12px 0;
+	border-top: 1px solid var(--book-rule);
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-button {
+	min-height: 40px;
+	padding: 9px 22px;
+	border: 1px solid var(--book-blue);
+	border-radius: 6px;
+	background: var(--book-blue);
+	color: var(--book-paper);
+	font-weight: 600;
+	transition: background-color 0.12s ease;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-button:disabled {
+	border-color: var(--book-rule);
+	background: var(--book-wash);
+	color: var(--book-muted);
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-button:hover:not(:disabled) {
+	background: color-mix(in srgb, var(--book-blue) 88%, var(--book-ink));
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-button.outline {
+	background: var(--book-paper);
+	color: var(--book-blue);
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-button.outline:hover:not(:disabled) {
+	background: color-mix(in srgb, var(--book-blue) 8%, var(--book-paper));
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-quiz-result {
+	border: 1px solid var(--book-rule);
+	border-radius: 8px;
+	color: var(--book-ink);
+}

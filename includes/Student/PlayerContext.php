@@ -202,7 +202,7 @@ final class PlayerContext {
 	 * @return string
 	 */
 	public static function quiz_template( $selected ) {
-		return self::$active && in_array( $selected, array( 'playful', 'classic', 'paper', 'focus' ), true ) ? 'paper' : $selected;
+		return self::$active && in_array( $selected, array( 'book', 'playful', 'classic', 'paper', 'focus' ), true ) ? 'paper' : $selected;
 	}
 
 	/**

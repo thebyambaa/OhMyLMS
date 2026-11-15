@@ -45,11 +45,11 @@ function player_template_check( $condition, $message ) {
 	++$checks;
 }
 
-player_template_check( array( 'playful', 'classic', 'paper', 'focus' ) === array_column( PlayerTemplates::choices(), 'value' ), 'Built-in choices' );
-player_template_check( 'playful' === PlayerTemplates::DEFAULT_TEMPLATE && 'playful' === PlayerTemplates::resolve( null ), 'Playful is the default design' );
+player_template_check( array( 'book', 'playful', 'classic', 'paper', 'focus' ) === array_column( PlayerTemplates::choices(), 'value' ), 'Built-in choices' );
+player_template_check( 'book' === PlayerTemplates::DEFAULT_TEMPLATE && 'book' === PlayerTemplates::resolve( null ), 'Exam book is the default design' );
 player_template_check( 'classic' === PlayerTemplates::resolve( 'classic' ), 'A quiz that chose Classic keeps it' );
 foreach ( array( '../../evil', '<script>', array(), null, 7, 'missing' ) as $unsafe ) {
-	player_template_check( 'playful' === PlayerTemplates::resolve( $unsafe ), 'Unsafe or unregistered design must fall back' );
+	player_template_check( 'book' === PlayerTemplates::resolve( $unsafe ), 'Unsafe or unregistered design must fall back' );
 }
 $registration = static function ( $templates ) {
 	$templates['school-blue'] = array(

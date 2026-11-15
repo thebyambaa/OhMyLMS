@@ -13,7 +13,12 @@ defined( 'ABSPATH' ) || exit;
 final class PlayerTemplates {
 
 	/** Design used when a quiz has not chosen one. */
-	const DEFAULT_TEMPLATE = 'playful';
+	const DEFAULT_TEMPLATE = 'book';
+
+	/**
+	 * Stylesheet handle of the Exam book design.
+	 */
+	const BOOK_STYLE = 'ohmylms-player-book';
 
 	/**
 	 * Return safe presentation definitions, including extension registrations.
@@ -22,9 +27,14 @@ final class PlayerTemplates {
 	 */
 	public static function all() {
 		$defaults   = array(
+			'book'    => array(
+				'label'       => __( 'Exam book', 'ohmylms' ),
+				'description' => __( 'A calm page like a printed practice book: numbered questions and lettered answer cards. The default design.', 'ohmylms' ),
+				'stylesheet'  => self::BOOK_STYLE,
+			),
 			'playful' => array(
 				'label'       => __( 'Playful', 'ohmylms' ),
-				'description' => __( 'A bright white stage with green and blue answers and chunky buttons. The default design.', 'ohmylms' ),
+				'description' => __( 'A bright white stage with green and blue answers and chunky buttons.', 'ohmylms' ),
 			),
 			'classic' => array(
 				'label'       => __( 'Classic', 'ohmylms' ),
@@ -93,6 +103,7 @@ final class PlayerTemplates {
 	 */
 	public static function enqueue( $template ) {
 		wp_enqueue_style( 'ohmylms-player-templates', plugins_url( 'assets/css/quiz-player-templates.css', OHMYLMS_FILE ), array( 'ohmylms-frontend' ), (string) filemtime( OHMYLMS_DIR . '/assets/css/quiz-player-templates.css' ) );
+		wp_register_style( self::BOOK_STYLE, plugins_url( 'assets/css/quiz-player-book.css', OHMYLMS_FILE ), array( 'ohmylms-player-templates' ), (string) filemtime( OHMYLMS_DIR . '/assets/css/quiz-player-book.css' ) );
 		$definition = self::all()[ self::resolve( $template ) ];
 		if ( ! empty( $definition['stylesheet'] ) ) {
 			wp_enqueue_style( $definition['stylesheet'] );

@@ -4,7 +4,7 @@ namespace OhMyLMS\Extensions {
 	class Interactivity { public static function enqueue( $id ) {} }
 }
 namespace OhMyLMS\Quiz {
-	class PlayerTemplates { const DEFAULT_TEMPLATE = 'playful'; public static function enqueue( $id ) {} }
+	class PlayerTemplates { const DEFAULT_TEMPLATE = 'book'; public static function enqueue( $id ) {} }
 	class Submission {
 		public static function access( $quiz, $user ) { return new \WP_Error( 'denied', 'Enrollment required.' ); }
 		public static function start( $quiz, $user ) {
