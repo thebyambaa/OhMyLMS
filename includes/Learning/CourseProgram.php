@@ -35,9 +35,23 @@ final class CourseProgram {
 	 * @param mixed $id Id.
 	 */
 	public static function get( $id ) {
-		global $wpdb;
 		if ( ! $id || ! Schema::ready() ) {
 			return null; }
+		return \OhMyLMS\Utility\RenderCache::remember(
+			'program:' . (int) $id,
+			static function () use ( $id ) {
+				return self::read( $id );
+			}
+		);
+	}
+
+	/**
+	 * Read a program version from the database.
+	 *
+	 * @param mixed $id Id.
+	 */
+	private static function read( $id ) {
+		global $wpdb;
 		$row     = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id=%d', Schema::table( 'programs' ), $id ), ARRAY_A );
 		$decoded = $row ? json_decode( $row['program'], true ) : null;
 		$program = $row ? array(
@@ -120,6 +134,21 @@ final class CourseProgram {
 	 * @param mixed $course_id Course identifier.
 	 */
 	public static function enrollment( $student_id, $course_id ) {
+		return \OhMyLMS\Utility\RenderCache::remember(
+			'enrollment:' . (int) $student_id . ':' . (int) $course_id,
+			static function () use ( $student_id, $course_id ) {
+				return self::read_enrollment( $student_id, $course_id );
+			}
+		);
+	}
+
+	/**
+	 * Read the learner's active enrolment in a course from the database.
+	 *
+	 * @param mixed $student_id Student identifier.
+	 * @param mixed $course_id Course identifier.
+	 */
+	private static function read_enrollment( $student_id, $course_id ) {
 		global $wpdb;
 		return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE user_id=%d AND course_id=%d AND status=\'enrolled\' ORDER BY id DESC LIMIT 1', $wpdb->prefix . 'ohmylms_user_enrollment', $student_id, $course_id ), ARRAY_A );
 	}
@@ -130,9 +159,23 @@ final class CourseProgram {
 	 * @param array $enrollment Enrollment.
 	 */
 	public static function for_enrollment( array $enrollment ) {
-		global $wpdb;
 		if ( ! Schema::ready() ) {
 			return null; }
+		return \OhMyLMS\Utility\RenderCache::remember(
+			'bound-program:' . (int) $enrollment['id'] . ':' . (int) $enrollment['course_id'],
+			static function () use ( $enrollment ) {
+				return self::bind( $enrollment );
+			}
+		);
+	}
+
+	/**
+	 * Find the program an enrolment is bound to, binding it to the current one when it has none.
+	 *
+	 * @param array $enrollment Enrollment.
+	 */
+	private static function bind( array $enrollment ) {
+		global $wpdb;
 		$bindings = Schema::table( 'enrollments' );
 		$bound    = $wpdb->get_row( $wpdb->prepare( 'SELECT program_id FROM %i WHERE enrollment_id=%d', $bindings, $enrollment['id'] ), ARRAY_A );
 		if ( ! $bound ) {

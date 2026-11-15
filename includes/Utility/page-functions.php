@@ -16,6 +16,21 @@ use OhMyLMS\Data\Quiz;
  * @since 1.0.0
  */
 function ohmylms_get_page_id( $page ) {
+	return \OhMyLMS\Utility\RenderCache::remember(
+		'page-id:' . $page,
+		static function () use ( $page ) {
+			return ohmylms_read_page_id( $page );
+		}
+	);
+}
+
+/**
+ * Read a plugin page's id from its setting.
+ *
+ * @param string $page Page name.
+ * @return int
+ */
+function ohmylms_read_page_id( $page ) {
 
 	$page_id = apply_filters( 'ohmylms_get_' . $page . '_page_id', get_option( 'ohmylms_' . $page . '_page_id' ) );
 	if ( 'course' === $page ) {

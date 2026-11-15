@@ -71,6 +71,21 @@ final class UnitSnapshots {
 	 * @return array
 	 */
 	public static function native( $course_id ) {
+		return \OhMyLMS\Utility\RenderCache::remember(
+			'native-units:' . (int) $course_id,
+			static function () use ( $course_id ) {
+				return self::read_native( $course_id );
+			}
+		);
+	}
+
+	/**
+	 * Read native unit metadata from the database.
+	 *
+	 * @param int $course_id Course ID.
+	 * @return array
+	 */
+	private static function read_native( $course_id ) {
 		global $wpdb;
 		$ids   = $wpdb->get_col( $wpdb->prepare( 'SELECT chapter_id FROM %i WHERE course_id=%d ORDER BY order_number,id', $wpdb->prefix . 'ohmylms_chapter_relationship', $course_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fresh authoring snapshot under the course lock.
 		$units = array();

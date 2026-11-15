@@ -37,6 +37,7 @@ define( 'OHMYLMS_PRO_PATH', __DIR__ );
 define( 'OHMYLMS_PRO_URL', plugins_url( '', __FILE__ ) );
 require_once __DIR__ . '/vendor/autoload.php';
 \OhMyLMS\Utility\StartupOptions::prime();
+\OhMyLMS\Utility\RenderCache::init();
 require_once __DIR__ . '/includes/compatibility.php';
 require_once __DIR__ . '/includes/extensions.php';
 require_once __DIR__ . '/includes/mcp.php';

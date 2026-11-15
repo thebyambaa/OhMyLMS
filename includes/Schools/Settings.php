@@ -129,7 +129,12 @@ final class Settings {
 		}
 		$m = Schema::table( 'school_memberships' );
 		$s = Schema::table( 'schools' );
-		return (int) $wpdb->get_var( $wpdb->prepare( "SELECT m.school_id FROM %i m JOIN %i s ON s.id=m.school_id WHERE m.user_id=%d AND m.status='active' AND s.status='active' ORDER BY m.id LIMIT 1", $m, $s, $user ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Fresh membership lookup.
+		return (int) \OhMyLMS\Utility\RenderCache::remember(
+			'school-for-user:' . $user,
+			static function () use ( $wpdb, $m, $s, $user ) {
+				return $wpdb->get_var( $wpdb->prepare( "SELECT m.school_id FROM %i m JOIN %i s ON s.id=m.school_id WHERE m.user_id=%d AND m.status='active' AND s.status='active' ORDER BY m.id LIMIT 1", $m, $s, $user ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Fresh membership lookup, remembered only while a page renders.
+			}
+		);
 	}
 
 	/**
