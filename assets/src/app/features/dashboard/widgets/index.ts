@@ -13,7 +13,7 @@ export const builtInWidgets: readonly DashboardWidgetDefinition[] = [
 		id: 'needs-attention',
 		title: __( 'Needs attention', 'ohmylms' ),
 		order: 10,
-		size: 'full',
+		size: 'wide',
 		component: lazy(
 			() =>
 				import(
@@ -24,7 +24,7 @@ export const builtInWidgets: readonly DashboardWidgetDefinition[] = [
 	{
 		id: 'pulse',
 		title: __( 'Pulse', 'ohmylms' ),
-		order: 20,
+		order: 5,
 		size: 'full',
 		component: lazy(
 			() =>
@@ -86,7 +86,7 @@ export const builtInWidgets: readonly DashboardWidgetDefinition[] = [
 		id: 'insights',
 		title: __( 'Insights', 'ohmylms' ),
 		order: 15,
-		size: 'full',
+		size: 'narrow',
 		component: lazy(
 			() =>
 				import(

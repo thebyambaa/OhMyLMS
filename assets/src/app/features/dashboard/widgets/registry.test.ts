@@ -60,7 +60,7 @@ describe( 'dashboard widget registry', () => {
 	} );
 
 	it( 'ships needs attention, pulse and the admin overview', () => {
-		const core = [ 'needs-attention', 'pulse', 'overview' ];
+		const core = [ 'pulse', 'needs-attention', 'overview' ];
 		const only = ( ids: string[] ) =>
 			ids.filter( ( id ) => core.includes( id ) );
 		expect(
@@ -72,14 +72,14 @@ describe( 'dashboard widget registry', () => {
 					.list( context( northScope ) )
 					.map( ( item ) => item.id )
 			)
-		).toEqual( [ 'needs-attention', 'pulse' ] );
+		).toEqual( [ 'pulse', 'needs-attention' ] );
 		expect(
 			only(
 				dashboardWidgets
 					.list( context( allScope ) )
 					.map( ( item ) => item.id )
 			)
-		).toEqual( [ 'needs-attention', 'pulse', 'overview' ] );
+		).toEqual( [ 'pulse', 'needs-attention', 'overview' ] );
 	} );
 
 	it( 'ships at-risk learners for every scope, after pulse', () => {

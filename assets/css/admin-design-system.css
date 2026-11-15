@@ -723,3 +723,301 @@ html body.block-editor-page.is-fullscreen-mode #wpadminbar {
 	max-height: 28px;
 	object-fit: contain;
 }
+
+/*
+ * ---- App shell ----
+ * The plugin's own pages (.ohmylms-admin-page) read as one application: a header row with the
+ * page title on the left and its actions on the right, underlined tabs, section and status
+ * filters as pills, and lists inside a card. The markup stays WordPress's (h1, .nav-tab-wrapper,
+ * .subsubsub, .wp-list-table), so the WordPress preset keeps WordPress's look.
+ */
+body.oml-ds-branded .ohmylms-admin-page {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-3) var(--oml-space-2);
+	max-width: 1440px;
+}
+
+body.oml-ds-branded .ohmylms-admin-page > * {
+	flex: 0 0 100%;
+	min-width: 0;
+}
+
+body.oml-ds-branded .ohmylms-admin-page > h1.wp-heading-inline {
+	flex: 1 1 auto;
+	letter-spacing: -0.01em;
+	margin: 0;
+	padding: 0;
+}
+
+body.oml-ds-branded .ohmylms-admin-page > .page-title-action,
+body.oml-ds-branded .ohmylms-admin-page > .ohmylms-title-actions {
+	flex: 0 0 auto;
+}
+
+body.oml-ds-branded .ohmylms-admin-page > .ohmylms-title-actions {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-2);
+}
+
+body.oml-ds-branded .ohmylms-admin-page > .ohmylms-title-actions:empty,
+body.oml-ds-branded .ohmylms-admin-page > hr.wp-header-end,
+body.oml-ds-branded .ohmylms-admin-page > br.clear {
+	display: none;
+}
+
+body.oml-ds-branded .ohmylms-admin-page .page-title-action {
+	border-radius: var(--oml-radius-button);
+	font-weight: 600;
+	min-height: var(--oml-button-height-md, 36px);
+	padding: 0 var(--oml-space-4);
+	position: static;
+}
+
+/* The first action of a screen is its main one. */
+body.oml-ds-branded .ohmylms-admin-page .ohmylms-title-actions > .page-title-action:first-child {
+	background: var(--oml-primary);
+	border-color: var(--oml-primary);
+	color: var(--oml-on-primary);
+}
+
+body.oml-ds-branded .ohmylms-admin-page .ohmylms-title-actions > .page-title-action:first-child:hover {
+	background: var(--oml-primary-hover);
+	border-color: var(--oml-primary-hover);
+	color: var(--oml-on-primary);
+}
+
+/* Tabs: a quiet row with the current tab underlined. */
+body.oml-ds-branded .ohmylms-admin-page > .nav-tab-wrapper {
+	border-bottom: 1px solid var(--oml-border);
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0 var(--oml-space-5);
+	margin: 0;
+	padding: 0;
+}
+
+body.oml-ds-branded .ohmylms-admin-page > .nav-tab-wrapper .nav-tab {
+	background: none;
+	border: 0;
+	border-bottom: 2px solid transparent;
+	color: var(--oml-muted);
+	float: none;
+	font-size: var(--oml-font-size-md);
+	font-weight: 500;
+	line-height: var(--oml-line-normal);
+	margin: 0 0 -1px;
+	padding: var(--oml-space-2) 0;
+	transition:
+		border-color var(--oml-motion-fast),
+		color var(--oml-motion-fast);
+}
+
+body.oml-ds-branded .ohmylms-admin-page > .nav-tab-wrapper .nav-tab:hover {
+	background: none;
+	border-bottom-color: var(--oml-border);
+	color: var(--oml-heading);
+}
+
+body.oml-ds-branded .ohmylms-admin-page > .nav-tab-wrapper .nav-tab-active,
+body.oml-ds-branded .ohmylms-admin-page > .nav-tab-wrapper .nav-tab-active:hover {
+	background: none;
+	border-bottom-color: var(--oml-primary);
+	color: var(--oml-primary);
+	font-weight: 600;
+}
+
+/* Sections and status filters: pills. The font size hides WordPress's "|" separators. */
+body.oml-ds-branded .ohmylms-admin-page .subsubsub {
+	color: transparent;
+	display: flex;
+	flex-wrap: wrap;
+	float: none;
+	font-size: 0;
+	gap: var(--oml-space-2);
+	margin: 0;
+	padding: 0;
+}
+
+body.oml-ds-branded .ohmylms-admin-page .subsubsub li {
+	display: inline-flex;
+	margin: 0;
+}
+
+body.oml-ds-branded .ohmylms-admin-page .subsubsub a {
+	background: var(--oml-surface);
+	border: 1px solid var(--oml-border);
+	border-radius: 999px;
+	color: var(--oml-text);
+	font-size: var(--oml-font-size-sm);
+	font-weight: 500;
+	line-height: var(--oml-line-normal);
+	padding: var(--oml-space-1) var(--oml-space-3);
+	text-decoration: none;
+	transition:
+		background-color var(--oml-motion-fast),
+		border-color var(--oml-motion-fast),
+		color var(--oml-motion-fast);
+}
+
+body.oml-ds-branded .ohmylms-admin-page .subsubsub a:hover {
+	border-color: var(--oml-secondary);
+	color: var(--oml-primary);
+}
+
+body.oml-ds-branded .ohmylms-admin-page .subsubsub a.current {
+	background: var(--oml-primary-soft);
+	border-color: transparent;
+	color: var(--oml-primary);
+	font-weight: 600;
+}
+
+body.oml-ds-branded .ohmylms-admin-page .subsubsub .count {
+	color: inherit;
+	font-weight: 400;
+	opacity: 0.75;
+}
+
+/* Lists: one card holding the filters, the toolbar and the table. */
+body.oml-ds-branded .ohmylms-app .ohmylms-list-table-wrap {
+	background: var(--oml-surface);
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-card);
+	box-shadow: var(--oml-shadow-sm);
+	padding: var(--oml-space-4);
+}
+
+body.oml-ds-branded .ohmylms-app .ohmylms-list-table-wrap > .subsubsub {
+	margin-bottom: var(--oml-space-3);
+}
+
+body.oml-ds-branded .ohmylms-app .ohmylms-list-table .search-box {
+	margin: 0 0 var(--oml-space-3);
+}
+
+body.oml-ds-branded .ohmylms-app .ohmylms-list-table .tablenav {
+	height: auto;
+	margin: 0 0 var(--oml-space-3);
+	padding: 0;
+}
+
+body.oml-ds-branded .ohmylms-app .ohmylms-list-table .tablenav.bottom {
+	margin: var(--oml-space-3) 0 0;
+}
+
+body.oml-ds-branded .ohmylms-app .ohmylms-list-table .wp-list-table {
+	border: 0;
+	border-radius: 0;
+	border-top: 1px solid var(--oml-border);
+}
+
+body.oml-ds-branded .ohmylms-app .ohmylms-list-table .wp-list-table thead :is(th, td) {
+	background: var(--oml-subtle);
+	color: var(--oml-muted);
+	font-size: var(--oml-font-size-xs);
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	padding-bottom: var(--oml-space-2);
+	padding-top: var(--oml-space-2);
+	text-transform: uppercase;
+}
+
+body.oml-ds-branded .ohmylms-app .ohmylms-list-table .wp-list-table thead a {
+	color: inherit;
+}
+
+/* The footer repeats the header; one header is enough inside a card. */
+body.oml-ds-branded .ohmylms-app .ohmylms-list-table .wp-list-table tfoot {
+	display: none;
+}
+
+body.oml-ds-branded .ohmylms-app .ohmylms-list-table .wp-list-table.striped > tbody > tr {
+	background-color: var(--oml-surface);
+	transition: background-color var(--oml-motion-fast);
+}
+
+body.oml-ds-branded .ohmylms-app .ohmylms-list-table .wp-list-table.striped > tbody > tr:hover {
+	background-color: var(--oml-subtle);
+}
+
+body.oml-ds-branded .ohmylms-app .ohmylms-list-table .wp-list-table tbody :is(th, td) {
+	vertical-align: middle;
+}
+
+body.oml-ds-branded .ohmylms-app .ohmylms-list-table .wp-list-table tbody .row-title,
+body.oml-ds-branded .ohmylms-app .ohmylms-list-table .wp-list-table tbody .column-primary > a,
+body.oml-ds-branded .ohmylms-app .ohmylms-list-table .wp-list-table tbody .column-primary strong > a {
+	color: var(--oml-heading);
+	font-size: var(--oml-font-size-md);
+	font-weight: 600;
+	text-decoration: none;
+}
+
+body.oml-ds-branded .ohmylms-app .ohmylms-list-table .wp-list-table tbody .column-primary a:hover {
+	color: var(--oml-primary);
+}
+
+/* Search sits beside the status filters when there is room for both. */
+@media (min-width: 1100px) {
+
+	body.oml-ds-branded .ohmylms-app .ohmylms-list-table-wrap:has(> .subsubsub) {
+		position: relative;
+	}
+
+	body.oml-ds-branded .ohmylms-app .ohmylms-list-table-wrap > .subsubsub {
+		align-items: center;
+		min-height: var(--oml-button-height-md, 36px);
+		padding-right: 380px;
+	}
+
+	body.oml-ds-branded .ohmylms-app .ohmylms-list-table-wrap:has(> .subsubsub) .search-box {
+		display: flex;
+		gap: var(--oml-space-2);
+		margin: 0;
+		position: absolute;
+		right: var(--oml-space-4);
+		top: var(--oml-space-4);
+	}
+}
+
+body.oml-ds-branded .ohmylms-app .ohmylms-list-table .search-box input[type="search"] {
+	width: 220px;
+}
+
+body.oml-ds-branded .ohmylms-app .ohmylms-list-table .tablenav .displaying-num {
+	color: var(--oml-muted);
+}
+
+/* Row buttons are secondary to the row's title. */
+body.oml-ds-branded .ohmylms-app .ohmylms-list-table .wp-list-table tbody td .button {
+	border-color: var(--oml-border);
+	color: var(--oml-text);
+	font-size: var(--oml-font-size-sm);
+	min-height: var(--oml-button-height-sm, 30px);
+	padding: 0 var(--oml-space-3);
+}
+
+body.oml-ds-branded .ohmylms-app .ohmylms-list-table .wp-list-table tbody td .button:hover {
+	background: var(--oml-surface);
+	border-color: var(--oml-secondary);
+	color: var(--oml-primary);
+}
+
+/* Dashboard cards: a quiet header, then the content. */
+body.oml-ds-branded .ohmylms-app .ohmylms-dashboard-widget.postbox {
+	border-radius: var(--oml-radius-card);
+	box-shadow: var(--oml-shadow-sm);
+	height: 100%;
+}
+
+body.oml-ds-branded .ohmylms-app .ohmylms-dashboard-widget .postbox-header {
+	border-bottom: 1px solid var(--oml-border);
+}
+
+body.oml-ds-branded .ohmylms-app .ohmylms-dashboard-widget .postbox-header .hndle {
+	color: var(--oml-heading);
+	font-size: var(--oml-font-size-md);
+	font-weight: 600;
+}
