@@ -199,12 +199,40 @@
 	color: inherit;
 }
 
+/*
+ * The result card, in every design: one column like a page of the Exam book (the lesson styles
+ * lay results out in a centred row, which put the heading beside the review).
+ */
+/* stylelint-disable color-no-hex -- Exam book palette, shared with answer-review.css. */
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz[data-player-template] .ohmylms-quiz-result {
+	display: block;
+	max-width: 820px;
 	margin: 40px auto;
-	padding: 40px;
-	border-radius: 14px;
-	background: var(--oml-surface);
-	color: var(--oml-text);
+	padding: 28px 32px;
+	border: 1px solid #c3cad9;
+	border-radius: 8px;
+	background: #fff;
+	color: #1e2a44;
+	font-weight: 400;
+}
+/* stylelint-enable color-no-hex */
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz[data-player-template] .ohmylms-quiz-result > h2 {
+	margin: 0 0 4px;
+	font-size: 22px;
+	font-weight: 700;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz[data-player-template] .ohmylms-quiz-result .ohmylms-answer-review {
+	margin-bottom: 16px;
+}
+
+@media (max-width: 600px) {
+
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz[data-player-template] .ohmylms-quiz-result {
+		margin: 16px auto;
+		padding: 20px 16px;
+	}
 }
 
 /* Top bar: close button, title and a thick progress pill. */
@@ -290,12 +318,6 @@
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-playful .ohmylms-quiz-timer {
 	border-bottom: 2px solid var(--playful-line);
 	background: var(--oml-surface);
-}
-
-:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-playful .ohmylms-quiz-result {
-	border: 2px solid var(--playful-line);
-	border-radius: 20px;
-	color: var(--playful-ink);
 }
 
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-playful .required-question,
@@ -1463,3 +1485,27 @@
 		flex-basis: auto !important;
 	}
 }
+
+/*
+ * Result actions are flat blue buttons in every design, never the playful chunky ones. Exam book
+ * palette, shared with answer-review.css; still inside the print-palette color exception above.
+ */
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz[data-player-template] .ohmylms-quiz-result .ohmylms-button:not(:disabled) {
+	min-height: 40px;
+	padding: 9px 22px;
+	border: 1px solid #2f6fed;
+	border-radius: 6px;
+	background: #2f6fed;
+	box-shadow: none;
+	color: #fff;
+	font-weight: 600;
+	letter-spacing: normal;
+	text-transform: none;
+	transform: none;
+	filter: none;
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz[data-player-template] .ohmylms-quiz-result .ohmylms-button:hover:not(:disabled) {
+	background: color-mix(in srgb, #2f6fed 88%, #1e2a44);
+}
+/* stylelint-enable color-no-hex */

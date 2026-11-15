@@ -89,87 +89,87 @@
 }
 
 /*
- * Playful colors for the review, matching the default quiz design: green for right, red for
- * wrong, orange for partly right or waiting, blue for the attempt being viewed. The verdict is
- * still written out in text; the colors only reinforce it.
+ * Exam book colors for the review, as in a printed practice book: green for right, coral for
+ * wrong, amber for partly right or waiting, blue for the attempt being viewed. Flat cards with a
+ * thin verdict edge. The verdict is still written out in text; the colors only reinforce it.
  */
 .ohmylms-answer-review {
 	margin-top: 32px;
-	/* stylelint-disable color-no-hex -- Answer review palette, shared with the playful quiz design. */
-	--review-green: #58cc02;
-	--review-green-edge: #58a700;
-	--review-red: #ff4b4b;
-	--review-red-edge: #ea2b2b;
-	--review-orange: #ff9600;
-	--review-orange-edge: #cc7400;
-	--review-blue: #1cb0f6;
-	--review-blue-edge: #1899d6;
-	--review-blue-soft: #ddf4ff;
-	--review-blue-line: #84d8ff;
-	--review-line: #e5e5e5;
-	--review-ink: #4b4b4b;
-	--review-muted: #afafaf;
+	/* stylelint-disable color-no-hex -- Answer review palette, shared with the Exam book quiz design. */
+	--review-green: #1f9d68;
+	--review-green-edge: #167a50;
+	--review-red: #ee5f4a;
+	--review-red-edge: #c2402d;
+	--review-orange: #f4a30b;
+	--review-orange-edge: #a86d00;
+	--review-blue: #2f6fed;
+	--review-blue-edge: #2f6fed;
+	--review-blue-soft: #eef3fe;
+	--review-blue-line: #b7cdfa;
+	--review-line: #c3cad9;
+	--review-ink: #1e2a44;
+	--review-muted: #5a6478;
+	--review-wash: #f3f5fb;
+	--review-paper: #fff;
 	/* stylelint-enable color-no-hex */
 	color: var(--review-ink);
-	font-weight: 600;
+	font-weight: 400;
 }
 
 .ohmylms-answer-review-item {
-	padding: 16px 20px;
-	background: var(--oml-surface);
-	border: 2px solid var(--review-line);
-	border-bottom-width: 4px;
-	border-inline-start: 8px solid var(--review-line);
-	border-radius: 16px;
+	padding: 14px 18px;
+	background: var(--review-paper);
+	border: 1px solid var(--review-line);
+	border-inline-start: 4px solid var(--review-line);
+	border-radius: 8px;
 }
 
 .ohmylms-review-summary {
 	margin: 0 0 24px;
-	padding: 16px 20px;
-	background: var(--oml-surface);
-	border: 2px solid var(--review-line);
-	border-bottom-width: 4px;
-	border-inline-start: 8px solid var(--review-line);
-	border-radius: 16px;
+	padding: 14px 18px;
+	background: var(--review-paper);
+	border: 1px solid var(--review-line);
+	border-inline-start: 4px solid var(--review-line);
+	border-radius: 8px;
 }
 
 .ohmylms-review-headline {
 	margin: 0 0 4px;
-	font-weight: 800;
+	font-size: 1.375rem;
+	font-weight: 700;
 }
 
 .ohmylms-answer-review-part {
 	padding: 8px 12px;
-	border-inline-start: 3px solid var(--oml-muted);
-	border-radius: 12px;
-	background: var(--oml-subtle);
+	border-inline-start: 3px solid var(--review-line);
+	border-radius: 6px;
+	background: var(--review-wash);
 }
 
 .ohmylms-answer-review-explanation {
 	margin-top: 12px;
 	padding: 10px 14px;
-	border-radius: 12px;
+	border-radius: 6px;
 	background: var(--review-blue-soft);
 }
 
-/* The score bar is a green pill. */
+/* The score bar is a thin blue rule, like the progress line. */
 .ohmylms-review-meter {
 	display: block;
 	width: 100%;
 	max-width: 420px;
-	height: 12px;
-	height: 16px;
+	height: 6px;
 	border: 0;
-	border-radius: 999px;
+	border-radius: 3px;
 	background: var(--review-line);
 }
 
 .ohmylms-answer-review-note {
 	padding: 10px 14px;
-	border-radius: 12px;
-	background: var(--oml-warning-soft);
+	border-radius: 6px;
+	background: color-mix(in srgb, var(--review-orange) 12%, var(--review-paper));
 	color: var(--review-orange-edge);
-	font-weight: 800;
+	font-weight: 600;
 }
 
 /* What the attempt did to each skill's level. */
@@ -204,17 +204,16 @@
 }
 
 .ohmylms-answer-review-verdict strong {
-	font-weight: 800;
+	font-weight: 700;
 }
 
 .ohmylms-answer-review h3 {
 	margin: 12px 0 4px;
-	font-size: 0.875rem;
-	letter-spacing: 0.02em;
+	font-size: 0.8125rem;
+	letter-spacing: 0.04em;
 	text-transform: uppercase;
-	color: var(--oml-muted);
 	color: var(--review-muted);
-	font-weight: 800;
+	font-weight: 700;
 }
 
 .ohmylms-answer-review-explanation h3 {
@@ -223,43 +222,42 @@
 }
 
 .ohmylms-review-meter::-webkit-meter-bar {
-	height: 16px;
+	height: 6px;
 	border: 0;
-	border-radius: 999px;
+	border-radius: 3px;
 	background: var(--review-line);
 }
 
 .ohmylms-review-meter::-webkit-meter-optimum-value {
-	border-radius: 999px;
-	background: var(--review-green);
+	border-radius: 3px;
+	background: var(--review-blue);
 }
 
 .ohmylms-review-meter::-webkit-meter-suboptimum-value {
-	border-radius: 999px;
-	background: var(--review-green);
+	border-radius: 3px;
+	background: var(--review-blue);
 }
 
 .ohmylms-review-meter::-webkit-meter-even-less-good-value {
-	border-radius: 999px;
-	background: var(--review-green);
+	border-radius: 3px;
+	background: var(--review-blue);
 }
 
 .ohmylms-review-meter::-moz-meter-bar {
-	border-radius: 999px;
-	background: var(--review-green);
+	border-radius: 3px;
+	background: var(--review-blue);
 }
 
 /* Attempt chips: the one being viewed is blue. */
 .ohmylms-review-attempts a {
 	display: inline-block;
-	padding: 6px 12px;
-	background: var(--oml-surface);
+	padding: 4px 12px;
+	background: var(--review-paper);
 	text-decoration: none;
-	border: 2px solid var(--review-line);
-	border-bottom-width: 4px;
-	border-radius: 14px;
+	border: 1px solid var(--review-line);
+	border-radius: 5px;
 	color: var(--review-ink);
-	font-weight: 800;
+	font-weight: 600;
 }
 
 .ohmylms-review-levels h3 {
@@ -341,17 +339,15 @@
 	border-inline-start-color: var(--review-red);
 }
 
-/* Actions in the review are chunky green buttons. */
+/* Actions in the review are flat blue buttons. */
 .ohmylms-answer-review .ohmylms-button {
-	padding: 12px 28px;
-	border: 0;
-	border-radius: 16px;
-	background: var(--review-green);
-	box-shadow: 0 4px 0 var(--review-green-edge);
-	color: var(--oml-surface);
-	font-weight: 800;
-	letter-spacing: 0.06em;
-	text-transform: uppercase;
+	padding: 9px 22px;
+	border: 1px solid var(--review-blue);
+	border-radius: 6px;
+	background: var(--review-blue);
+	box-shadow: none;
+	color: var(--review-paper);
+	font-weight: 600;
 }
 
 .is-correct > .ohmylms-answer-review-verdict strong {
@@ -391,7 +387,6 @@
 }
 
 .ohmylms-review-attempts .is-current a {
-	font-weight: 600;
 	border-color: var(--review-blue-line);
 	background: var(--review-blue-soft);
 	color: var(--review-blue-edge);
@@ -418,10 +413,5 @@
 }
 
 .ohmylms-answer-review .ohmylms-button:hover {
-	filter: brightness(1.06);
-}
-
-.ohmylms-answer-review .ohmylms-button:active {
-	box-shadow: none;
-	transform: translateY(4px);
+	background: color-mix(in srgb, var(--review-blue) 88%, var(--review-ink));
 }
