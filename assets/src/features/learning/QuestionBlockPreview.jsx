@@ -5,7 +5,43 @@ import { __ } from '@wordpress/i18n';
 import { previewQuestion } from './api.mjs';
 
 /**
- * Exact student rendering of an unselected, unsaved question in an isolated frame.
+ * A preview is a whole student page in a frame. A long quiz would start dozens at once and
+ * overwhelm the server, so only a few load at a time; the rest wait their turn.
+ */
+const MAX_LOADING = 2;
+let loading = 0;
+/** @type {Array<() => void>} */
+const waiting = [];
+
+/**
+ * Wait for a loading slot.
+ *
+ * @return {Promise<() => void>} Resolves with the function that gives the slot back (safe to call twice).
+ */
+export function previewSlot() {
+	return new Promise( ( resolve ) => {
+		const grant = () => {
+			loading++;
+			let held = true;
+			resolve( () => {
+				if ( held ) {
+					held = false;
+					loading--;
+					waiting.shift()?.();
+				}
+			} );
+		};
+		if ( loading < MAX_LOADING ) {
+			grant();
+		} else {
+			waiting.push( grant );
+		}
+	} );
+}
+
+/**
+ * Exact student rendering of an unselected, unsaved question in an isolated frame. The frame is
+ * requested when the block comes near the screen; until then the block shows the question's text.
  *
  * @param {Object}                                     props          Properties.
  * @param {import('./choiceAutosave.mjs').ChoiceDraft} props.question Current question, including unsaved edits.
@@ -51,38 +87,86 @@ export function QuestionBlockPreview( { question, clientId } ) {
 	const [ error, setError ] = useState( '' );
 	const [ height, setHeight ] = useState( 160 );
 	const observer = useRef( /** @type {ResizeObserver|null} */ ( null ) );
+	const holder = useRef( /** @type {HTMLDivElement|null} */ ( null ) );
+	const slot = useRef( /** @type {(() => void)|null} */ ( null ) );
+	const [ near, setNear ] = useState( false );
 	useEffect( () => {
+		const node = holder.current;
+		const view = node?.ownerDocument.defaultView;
+		if ( near || ! node ) {
+			return undefined;
+		}
+		if ( ! view?.IntersectionObserver ) {
+			setNear( true );
+			return undefined;
+		}
+		const watcher = new view.IntersectionObserver(
+			( entries ) => {
+				if ( entries.some( ( entry ) => entry.isIntersecting ) ) {
+					setNear( true );
+				}
+			},
+			{ rootMargin: '400px 0px' }
+		);
+		watcher.observe( node );
+		return () => watcher.disconnect();
+	}, [ near ] );
+	useEffect( () => {
+		if ( ! near ) {
+			return undefined;
+		}
 		let active = true;
 		const controller = new AbortController();
+		/** @type {(() => void)|null} */
+		let release = null;
 		setPreview( null );
 		setError( '' );
 		const timer = setTimeout( () => {
-			previewQuestion(
-				{ ...JSON.parse( source ), seed: seed.current },
-				controller.signal
-			)
-				.then( ( result ) => active && setPreview( result.url ) )
-				.catch(
-					( cause ) =>
-						active &&
-						setError(
-							cause.message ||
-								__(
-									'Could not load the student preview. Open the question to try again.',
-									'ohmylms'
-								)
-						)
-				);
+			previewSlot().then( ( free ) => {
+				if ( ! active ) {
+					free();
+					return;
+				}
+				release = free;
+				slot.current = free;
+				// A frame that never reports its load must not hold the slot for good.
+				setTimeout( free, 10000 );
+				previewQuestion(
+					{ ...JSON.parse( source ), seed: seed.current },
+					controller.signal
+				)
+					.then( ( result ) => {
+						if ( active ) {
+							setPreview( result.url );
+						} else {
+							free();
+						}
+					} )
+					.catch( ( cause ) => {
+						free();
+						if ( active ) {
+							setError(
+								cause.message ||
+									__(
+										'Could not load the student preview. Open the question to try again.',
+										'ohmylms'
+									)
+							);
+						}
+					} );
+			} );
 		}, 150 );
 		return () => {
 			active = false;
 			clearTimeout( timer );
 			controller.abort();
+			release?.();
 		};
-	}, [ source ] );
+	}, [ source, near ] );
 	useEffect( () => () => observer.current?.disconnect(), [] );
 	/** @param {import('react').SyntheticEvent<HTMLIFrameElement>} event Frame load. */
 	const resize = ( event ) => {
+		slot.current?.();
 		observer.current?.disconnect();
 		const frame = event.currentTarget;
 		const content = frame.contentDocument?.querySelector(
@@ -109,10 +193,23 @@ export function QuestionBlockPreview( { question, clientId } ) {
 		measure();
 	};
 	const edit = () => selectBlock( clientId, 0 );
+	const summary = String( question?.name || question?.description || '' )
+		.replace( /<[^>]*>/g, ' ' )
+		.replace( /\s+/g, ' ' )
+		.trim()
+		.slice( 0, 200 );
 	return (
-		<div className="ohmylms-question-block-preview">
+		<div
+			className={ `ohmylms-question-block-preview${ near ? '' : ' is-waiting' }` }
+			ref={ holder }
+		>
 			{ error && <p role="status">{ error }</p> }
-			{ ! error && ! preview && <Spinner /> }
+			{ ! near && (
+				<p className="ohmylms-question-block-summary">
+					{ summary || __( 'Question', 'ohmylms' ) }
+				</p>
+			) }
+			{ near && ! error && ! preview && <Spinner /> }
 			{ preview && (
 				<div inert="" aria-hidden="true">
 					<iframe

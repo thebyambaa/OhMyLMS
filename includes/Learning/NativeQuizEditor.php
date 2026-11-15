@@ -30,6 +30,33 @@ final class NativeQuizEditor {
 	}
 
 	/**
+	 * Most questions whose data is embedded in the editor page.
+	 */
+	const EMBED_LIMIT = 100;
+
+	/**
+	 * The quiz's questions as the question REST route returns them to the current user, for the
+	 * editor page to embed. Every question block reads its question when it mounts; without this a
+	 * 30-question quiz starts 30 requests at once. A question the user may not read is left out and
+	 * the block asks for it as before.
+	 *
+	 * @param \WP_Post $post Quiz post.
+	 * @return array<int,array> Question data by question ID.
+	 */
+	public static function editor_questions( $post ) {
+		$ids    = array_slice( array_unique( array_filter( self::reference_ids( parse_blocks( self::editor_content( $post ) ) ) ) ), 0, self::EMBED_LIMIT );
+		$server = rest_get_server();
+		$found  = array();
+		foreach ( $ids as $id ) {
+			$response = rest_do_request( new \WP_REST_Request( 'GET', '/' . OHMYLMS_API_URL . '/questions/' . (int) $id ) );
+			if ( 200 === $response->get_status() ) {
+				$found[ (int) $id ] = $server->response_to_data( $response, false );
+			}
+		}
+		return $found;
+	}
+
+	/**
 	 * Text and media a quiz page may hold around its questions: the same short list a lesson uses, with the
 	 * equation blocks.
 	 */

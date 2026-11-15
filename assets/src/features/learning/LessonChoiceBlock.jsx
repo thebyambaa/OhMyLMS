@@ -36,6 +36,7 @@ import {
 import { choiceReadyToSave, reconcileChoiceSave } from './choiceAutosave.mjs';
 import {
 	loadBankQuestion,
+	openBankQuestion,
 	createBankQuestion,
 	saveQuestionAttributes,
 	approveQuestion,
@@ -195,7 +196,7 @@ function LessonChoiceEdit( {
 		}
 		setQuestion( null );
 		setShared( false );
-		loadBankQuestion( attributes.questionId )
+		openBankQuestion( attributes.questionId )
 			.then( ( data ) => {
 				if ( active ) {
 					loadedId.current = attributes.questionId;
@@ -656,7 +657,8 @@ function LessonChoiceEdit( {
 					{ answerFields }
 				</QuestionFieldsSlot>
 			) }
-			{ attributes.questionId > 0 && (
+			{ /* Sidebar panels: loaded for the selected question only, not for every question in a quiz. */ }
+			{ attributes.questionId > 0 && ( isSelected || standalone ) && (
 				<NativeQuestionDetails
 					id={ attributes.questionId }
 					revision={ attributes.authoringRevision }

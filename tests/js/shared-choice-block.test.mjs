@@ -353,6 +353,12 @@ function lessonHarness( {
 		},
 		saveQuestionAttributes: async ( id, payload ) =>
 			calls.push( [ 'update', id, payload ] ),
+		openBankQuestion: async () => {
+			if ( refreshFailure ) {
+				throw new Error( 'Refresh refused' );
+			}
+			return fresh;
+		},
 		loadBankQuestion: async () => {
 			if ( refreshFailure ) {
 				throw new Error( 'Refresh refused' );

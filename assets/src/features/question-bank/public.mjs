@@ -10,6 +10,7 @@ export {
 	listBanks,
 	listSkills,
 	loadBankQuestion,
+	openBankQuestion,
 	loadVersion,
 	loadVersions,
 	pinQuestion,

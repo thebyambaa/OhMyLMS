@@ -397,6 +397,10 @@ final class NativeLessonEditor {
 		$dependencies = array_merge( $asset['dependencies'], array( 'ohmylms-interactive-visual', 'ohmylms-extended-questions', 'ohmylms-puzzle-loader' ) );
 		wp_enqueue_script( 'ohmylms-native-lesson-settings', plugins_url( 'assets/dist/admin/native-lesson-editor.js', OHMYLMS_FILE ), $dependencies, $asset['version'], true );
 		wp_localize_script( 'ohmylms-native-lesson-settings', 'ohmylmsPlayerTemplates', \OhMyLMS\Quiz\PlayerTemplates::choices() );
+		$quiz = 'ohmylms-quiz' === $screen->post_type ? get_post() : null;
+		if ( $quiz ) {
+			wp_add_inline_script( 'ohmylms-native-lesson-settings', 'window.ohmylmsEditorQuestions = ' . wp_json_encode( (object) NativeQuizEditor::editor_questions( $quiz ), JSON_HEX_TAG | JSON_HEX_AMP ) . ';', 'before' );
+		}
 		do_action( 'ohmylms_enqueue_extension_scripts', 'ohmylms-native-lesson-settings' );
 		// Reuse the lazy MathLive configuration on the native lesson screen as well as the LMS app.
 		wp_enqueue_script( 'ohmylms-mathlive-loader' );

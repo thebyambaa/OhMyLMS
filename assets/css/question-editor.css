@@ -912,6 +912,17 @@
 	position: relative;
 }
 
+/* Until a question comes near the screen it shows its text, in the room its preview will take. */
+.ohmylms-question-block-preview.is-waiting {
+	min-height: 160px;
+}
+
+.ohmylms-question-block-summary {
+	margin: 0;
+	padding: var(--oml-space-4);
+	color: var(--oml-text);
+}
+
 .ohmylms-question-student-frame {
     display: block;
     width: 100%;

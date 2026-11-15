@@ -150,6 +150,40 @@ export const loadBankQuestion = ( id, fetch = request ) =>
 	Promise.resolve( fetch( { path: `${ QUESTIONS }/${ id }` } ) ).then(
 		bankView
 	);
+/** @type {Map<string, { at: number, result: Promise<RestData> }>} */
+const opening = new Map();
+/**
+ * Load a question for a block that is mounting. The editor mounts its blocks more than once while
+ * it opens (the canvas moves into a frame), so reads of the same question within a few seconds
+ * share one request. A quiz editor page embeds its questions (`window.ohmylmsEditorQuestions`);
+ * an embedded question is used once, in place of its first request.
+ *
+ * @param {number|string}                        id    Question ID.
+ * @param {(options: Object) => Promise<Object>} fetch Transport.
+ * @param {number}                               now   Current time in milliseconds.
+ * @return {Promise<RestData>} Question data.
+ */
+export const openBankQuestion = ( id, fetch = request, now = Date.now() ) => {
+	const key = String( id );
+	const held = opening.get( key );
+	if ( held && now - held.at < 5000 ) {
+		return held.result;
+	}
+	const embedded =
+		/** @type {{ ohmylmsEditorQuestions?: Record<string, RestData> }} */ (
+			globalThis
+		).ohmylmsEditorQuestions;
+	const seeded = embedded?.[ key ];
+	if ( seeded ) {
+		delete embedded[ key ];
+	}
+	const result = seeded
+		? Promise.resolve( bankView( seeded ) )
+		: loadBankQuestion( id, fetch );
+	opening.set( key, { at: now, result } );
+	result.catch( () => opening.delete( key ) );
+	return result;
+};
 /**
  * @param {number|string}                        id    Question ID.
  * @param {(options: Object) => Promise<Object>} fetch Transport.
