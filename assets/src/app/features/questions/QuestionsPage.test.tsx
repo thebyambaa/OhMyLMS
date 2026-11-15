@@ -424,22 +424,17 @@ describe( 'QuestionsPage', () => {
 			).not.toHaveTextContent( 'skill=' );
 		} );
 
-		it( 'requires a name before continuing', async () => {
+		it( 'continues without a name, which the editor asks for', async () => {
 			const { user, dialog } = await openDialog();
 			await user.click(
 				within( dialog ).getByRole( 'button', {
 					name: 'Continue',
 				} )
 			);
-			expect(
-				await within( dialog ).findByRole( 'alert' )
-			).toHaveTextContent( 'Enter a question of 1 to 500 characters.' );
-			expect(
-				within( dialog ).getByRole( 'textbox', { name: 'Question' } )
-			).toHaveAttribute( 'aria-invalid', 'true' );
-			expect(
-				screen.queryByText( /Editor for/ )
-			).not.toBeInTheDocument();
+			expect( await screen.findByTestId( 'search' ) ).toHaveTextContent(
+				'type=single-choice'
+			);
+			expect( screen.queryByRole( 'alert' ) ).not.toBeInTheDocument();
 		} );
 	} );
 } );

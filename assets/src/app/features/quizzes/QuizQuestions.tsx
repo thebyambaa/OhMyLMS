@@ -513,11 +513,14 @@ export function QuizQuestions( {
 
 	function startDraft() {
 		const value = name.trim();
-		if ( ! value || Array.from( value ).length > MAX_NAME ) {
+		if ( Array.from( value ).length > MAX_NAME ) {
 			setNameError(
 				sprintf(
 					/* translators: %d: maximum name length. */
-					__( 'Enter a question of 1 to %d characters.', 'ohmylms' ),
+					__(
+						'Keep the question to %d characters or fewer.',
+						'ohmylms'
+					),
 					MAX_NAME
 				)
 			);
@@ -617,14 +620,7 @@ export function QuizQuestions( {
 					{ ! readOnly && (
 						<p>
 							<Button
-								variant="secondary"
-								disabled={ locked }
-								onClick={ openPicker }
-							>
-								{ __( 'Add from question bank', 'ohmylms' ) }
-							</Button>{ ' ' }
-							<Button
-								variant="secondary"
+								variant="primary"
 								disabled={ locked }
 								onClick={ openNaming }
 							>
@@ -632,6 +628,13 @@ export function QuizQuestions( {
 							</Button>{ ' ' }
 							<Button
 								variant="secondary"
+								disabled={ locked }
+								onClick={ openPicker }
+							>
+								{ __( 'Add from question bank', 'ohmylms' ) }
+							</Button>{ ' ' }
+							<Button
+								variant="tertiary"
 								disabled={ locked || ! slots.length }
 								onClick={ () => {
 									setFailure( null );
@@ -641,7 +644,7 @@ export function QuizQuestions( {
 								{ __( 'Edit sections', 'ohmylms' ) }
 							</Button>{ ' ' }
 							<Button
-								variant="secondary"
+								variant="tertiary"
 								disabled={ locked }
 								onClick={ () => {
 									setFailure( null );
@@ -871,9 +874,12 @@ export function QuizQuestions( {
 						</p>
 						<TextControl
 							label={ __( 'Name', 'ohmylms' ) }
+							help={ __(
+								'Optional. You can also write the question in the editor.',
+								'ohmylms'
+							) }
 							value={ name }
 							maxLength={ MAX_NAME }
-							required
 							aria-invalid={ nameError ? true : undefined }
 							aria-describedby={
 								nameError

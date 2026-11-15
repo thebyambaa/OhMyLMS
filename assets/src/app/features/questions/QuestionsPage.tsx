@@ -182,11 +182,14 @@ export default function QuestionsPage() {
 	}
 	function create() {
 		const value = name.trim();
-		if ( ! value || Array.from( value ).length > MAX_NAME ) {
+		if ( Array.from( value ).length > MAX_NAME ) {
 			setNameError(
 				sprintf(
 					/* translators: %d: maximum name length. */
-					__( 'Enter a question of 1 to %d characters.', 'ohmylms' ),
+					__(
+						'Keep the question to %d characters or fewer.',
+						'ohmylms'
+					),
 					MAX_NAME
 				)
 			);
@@ -680,7 +683,6 @@ export default function QuestionsPage() {
 							rows={ 3 }
 							value={ name }
 							maxLength={ MAX_NAME }
-							required
 							disabled={ operation.busy }
 							aria-invalid={ nameError ? true : undefined }
 							aria-describedby={
@@ -690,7 +692,7 @@ export default function QuestionsPage() {
 							}
 							onChange={ setName }
 							help={ __(
-								'The question learners see. Its first words become the title in question lists. You can change it in the editor.',
+								'Optional. The question learners see; its first words become the title in question lists. You can also write it in the editor.',
 								'ohmylms'
 							) }
 						/>

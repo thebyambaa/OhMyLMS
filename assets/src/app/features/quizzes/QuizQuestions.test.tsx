@@ -526,12 +526,6 @@ describe( 'QuizQuestions', () => {
 		const naming = await screen.findByRole( 'dialog', {
 			name: 'Create question',
 		} );
-		await user.click(
-			within( naming ).getByRole( 'button', { name: 'Continue' } )
-		);
-		expect( within( naming ).getByRole( 'alert' ) ).toHaveTextContent(
-			/Enter a question/
-		);
 		await user.type(
 			within( naming ).getByRole( 'textbox', { name: /Name/ } ),
 			'Halves and quarters'
