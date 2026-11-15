@@ -121,6 +121,8 @@ export function OutlineWorkspace( {
 				}
 			: null
 	);
+	// The skill panel stays out of the way until the author asks for it, or the outline opens on an item.
+	const [ showSkills, setShowSkills ] = useState( () => Boolean( targeted ) );
 	// Changes whenever the saved outline changes, so the skill panel reads the course again.
 	const [ planVersion, setPlanVersion ] = useState( 0 );
 	const [ skillCounts, setSkillCounts ] = useState<
@@ -139,7 +141,8 @@ export function OutlineWorkspace( {
 				? null
 				: { kind: 'unit', id: unit.id, name: unit.title }
 		);
-	const selectContent = ( item: Activity ) =>
+	const selectContent = ( item: Activity ) => {
+		setShowSkills( true );
 		setSelection( ( current ) =>
 			current &&
 			'unit' !== current.kind &&
@@ -153,6 +156,7 @@ export function OutlineWorkspace( {
 						name: item.name || String( item.content_id ),
 					}
 		);
+	};
 	/**
 	 * Select a lesson or quiz by ID (from a skill row) and bring its row into view.
 	 *
@@ -322,7 +326,7 @@ export function OutlineWorkspace( {
 		void write(
 			( signal ) => saveOutline( next, savePayload( next ), signal ),
 			__(
-				'Outline order saved to the draft. Learner publication is unchanged.',
+				'Order saved to the draft. Students see it after you publish.',
 				'ohmylms'
 			),
 			( problem ) => {
@@ -356,10 +360,7 @@ export function OutlineWorkspace( {
 		}
 		void write(
 			( signal ) => saveOutline( draft, payload, signal ),
-			__(
-				'Outline draft saved. Learner publication is unchanged.',
-				'ohmylms'
-			)
+			__( 'Draft saved. Students see it after you publish.', 'ohmylms' )
 		);
 	}
 	function confirmDelete( unit: Unit ) {
@@ -540,11 +541,23 @@ export function OutlineWorkspace( {
 							) }
 				</Notice>
 			) }
-			<div className="oml-plan-grid">
+			<div className={ `oml-plan-grid${ showSkills ? '' : ' is-solo' }` }>
 				<div className="oml-editor-main">
+					<div className="oml-outline-skills-toggle">
+						<Button
+							size="small"
+							variant="tertiary"
+							aria-expanded={ showSkills }
+							onClick={ () => setShowSkills( ! showSkills ) }
+						>
+							{ showSkills
+								? __( 'Hide skills', 'ohmylms' )
+								: __( 'Connect skills', 'ohmylms' ) }
+						</Button>
+					</div>
 					<p className="oml-editor-hint">
 						{ __(
-							'Edit the draft units and activity placements. Saving here does not publish to learners.',
+							'Add units, then the lessons and quizzes inside them. Changes are saved as a draft; students see them after you publish.',
 							'ohmylms'
 						) }
 					</p>
@@ -604,6 +617,7 @@ export function OutlineWorkspace( {
 								}
 								drag={ drag }
 								handle={ handle }
+								course={ draft.course_id }
 								onReorder={ reorder }
 								onAdd={ ( type ) =>
 									setPicker( { unit: unit.id, type } )
@@ -628,7 +642,11 @@ export function OutlineWorkspace( {
 											)?.id ?? null )
 										: null
 								}
-								onSelectUnit={ () => selectUnit( unit ) }
+								onSelectUnit={
+									showSkills
+										? () => selectUnit( unit )
+										: undefined
+								}
 								onSelectItem={ selectContent }
 								skillCounts={ skillCounts }
 								topicCount={

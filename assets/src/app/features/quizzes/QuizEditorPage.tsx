@@ -11,6 +11,7 @@ import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { Link, useParams } from 'react-router-dom';
 import { normalizeApiError } from '../../lib/api';
+import { courseReturn } from '../../lib/courseReturn';
 import { updateQuiz } from './api';
 import {
 	formatMarks,
@@ -48,6 +49,8 @@ function FieldError( { id, message }: { id: string; message?: string } ) {
 export default function QuizEditorPage() {
 	const params = useParams();
 	const id = routeId( params.id );
+	// Opened from a course outline in this tab: lead back there, not to the list.
+	const fromCourse = null === id ? null : courseReturn( 'quiz', id );
 	const editor = useQuizEditor( id );
 	const [ form, setForm ] = useState< QuizForm | null >( null );
 	const [ saved, setSaved ] = useState< QuizForm | null >( null );
@@ -195,9 +198,15 @@ export default function QuizEditorPage() {
 	return (
 		<>
 			<p className="oml-editor-breadcrumb">
-				<Link to="/quizzes">
-					{ __( 'Back to quizzes', 'ohmylms' ) }
-				</Link>
+				{ fromCourse ? (
+					<Link to={ `/courses/${ fromCourse }/outline` }>
+						{ __( 'Back to course', 'ohmylms' ) }
+					</Link>
+				) : (
+					<Link to="/quizzes">
+						{ __( 'Back to quizzes', 'ohmylms' ) }
+					</Link>
+				) }
 			</p>
 			<div className="oml-editor-header">
 				<div className="oml-editor-header-title">

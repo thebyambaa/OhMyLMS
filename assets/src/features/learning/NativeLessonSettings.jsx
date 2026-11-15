@@ -336,7 +336,7 @@ function LessonSettings() {
 	const [ returnUrl, setReturnUrl ] = useState( nativeLesson().returnUrl );
 	const backLabel = isCourseReturn( returnUrl )
 		? __( 'Back to course', 'ohmylms' )
-		: __( 'Back to Content Hub', 'ohmylms' );
+		: __( 'Back to lessons', 'ohmylms' );
 	useEffect( () => {
 		if ( ! postId ) {
 			return;

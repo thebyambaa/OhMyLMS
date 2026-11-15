@@ -8,6 +8,7 @@ import { useId, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
 import { Badge } from '../../../ui/Badge';
+import { rememberCourse } from '../../lib/courseReturn';
 import type { ResourceType } from './api';
 import { QuickAdd } from './QuickAdd';
 import type { Activity, Unit } from './model';
@@ -47,7 +48,6 @@ const TYPE_ICONS: Record< string, string > = {
 };
 
 const EDIT_ROUTES: Record< string, string > = {
-	lesson: '/content-hub/lessons/',
 	quiz: '/quizzes/',
 	assignment: '/assignments/',
 };
@@ -74,6 +74,7 @@ const EDIT_ROUTES: Record< string, string > = {
  * @param root0.onReorder    Moves a unit or activity (source) before/after a target; see `dropOn`.
  * @param root0.drag         Current pointer drag, for row feedback.
  * @param root0.handle       Pointer handlers for a row's grip.
+ * @param root0.course       Course id, so the editors opened from a row can lead back to this outline.
  */
 export function UnitEditor( {
 	unit,
@@ -95,6 +96,7 @@ export function UnitEditor( {
 	onToggle,
 	drag,
 	handle,
+	course,
 }: {
 	unit: Unit;
 	units: Unit[];
@@ -123,10 +125,21 @@ export function UnitEditor( {
 	onToggle?: () => void;
 	drag: DragState | null;
 	handle: ReturnType< typeof useDragMove >[ 'handle' ];
+	course?: number;
 } ) {
 	const bodyId = useId();
 	const unitName = unit.title || __( 'New unit', 'ohmylms' );
-	const [ open, setOpen ] = useState( true );
+	// A unit that is not saved yet opens on its fields so it can be named; saved units show their activities.
+	const [ open, setOpen ] = useState( 'number' !== typeof unit.id );
+	// The WordPress block editor, which comes back to this outline.
+	const blockEditor = ( content: number ) =>
+		`post.php?post=${ content }&action=edit${
+			course
+				? `&ohmylms_return=${ encodeURIComponent(
+						`/course-edit/${ course }/outline`
+					) }`
+				: ''
+		}`;
 	const key = unitKey( unit.id );
 	const at = units.indexOf( unit );
 	const neighbour = ( offset: number ) =>
@@ -275,7 +288,7 @@ export function UnitEditor( {
 					{ items.length === 0 && (
 						<li className="oml-unit-empty">
 							{ __(
-								'No activities yet. Add one below.',
+								'Nothing in this unit yet. Type a title below to add its first lesson.',
 								'ohmylms'
 							) }
 						</li>
@@ -322,9 +335,11 @@ export function UnitEditor( {
 									aria-hidden="true"
 								/>
 								<span className="oml-outline-item-name">
-									{ edit ? (
-										<Link
-											to={ `${ edit }${ item.content_id }` }
+									{ 'lesson' === item.type && (
+										<a
+											href={ blockEditor(
+												item.content_id
+											) }
 											aria-label={ sprintf(
 												/* translators: %s: activity name. */
 												__( 'Edit %s', 'ohmylms' ),
@@ -332,10 +347,29 @@ export function UnitEditor( {
 											) }
 										>
 											{ name }
-										</Link>
-									) : (
-										name
+										</a>
 									) }
+									{ edit && (
+										<Link
+											to={ `${ edit }${ item.content_id }` }
+											aria-label={ sprintf(
+												/* translators: %s: activity name. */
+												__( 'Edit %s', 'ohmylms' ),
+												name
+											) }
+											onClick={ () =>
+												course &&
+												rememberCourse(
+													course,
+													item.type,
+													item.content_id
+												)
+											}
+										>
+											{ name }
+										</Link>
+									) }
+									{ 'lesson' !== item.type && ! edit && name }
 								</span>{ ' ' }
 								<Badge
 									className={ `oml-outline-item-type oml-outline-item-type-${ item.type }` }
@@ -384,18 +418,14 @@ export function UnitEditor( {
 														) }
 											</Button>
 										) }
-									{ [ 'lesson', 'quiz' ].includes(
-										item.type
-									) && (
+									{ 'quiz' === item.type && (
 										<a
 											className="components-button is-tertiary"
 											target="_blank"
 											rel="noopener noreferrer"
-											href={
-												'post.php?post=' +
-												item.content_id +
-												'&action=edit'
-											}
+											href={ blockEditor(
+												item.content_id
+											) }
 											aria-label={ sprintf(
 												/* translators: %s: activity title. */ __(
 													'Open %s in block editor (opens in a new tab)',
@@ -492,6 +522,9 @@ export function UnitEditor( {
 					<QuickAdd unitName={ unitName } onCreated={ onCreated } />
 				) }
 				<div className="oml-unit-add">
+					<span className="oml-unit-add-label">
+						{ __( 'Or add existing:', 'ohmylms' ) }
+					</span>
 					<Button
 						size="small"
 						variant="tertiary"

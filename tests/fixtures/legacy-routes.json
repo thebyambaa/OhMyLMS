@@ -825,6 +825,10 @@
 			"to": "/quizzes/:id"
 		},
 		{
+			"from": "/course-edit/:id/outline",
+			"to": "/courses/:id/outline"
+		},
+		{
 			"from": "/course-edit/:id/*",
 			"to": "/courses/:id"
 		},

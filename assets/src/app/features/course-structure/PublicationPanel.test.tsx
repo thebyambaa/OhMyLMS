@@ -17,13 +17,23 @@ const preview: api.Publication = {
 	published_program_id: 0,
 	unpublished_changes: true,
 	readiness: [],
-	units: [],
+	units: [
+		{
+			id: 3,
+			title: 'Unit 1',
+			items: [
+				{ id: 'a', type: 'lesson', title: 'Intro' },
+				{ id: 'b', type: 'quiz', title: 'Check' },
+			],
+		},
+	],
 };
 beforeEach( () => vi.resetAllMocks() );
 
-it( 'requires preview and explicit confirmation before publishing the reviewed revision', async () => {
+it( 'reads the saved course by itself and publishes the shown revision with one button', async () => {
 	const user = userEvent.setup();
 	const onPublished = vi.fn();
+	const onClose = vi.fn();
 	vi.mocked( api.previewPublication ).mockResolvedValue( preview );
 	vi.mocked( api.publishCourse ).mockResolvedValue( {
 		...preview,
@@ -35,31 +45,32 @@ it( 'requires preview and explicit confirmation before publishing the reviewed r
 			course={ 12 }
 			disabled={ false }
 			onPublished={ onPublished }
+			onClose={ onClose }
+			viewLink={ <a href="https://example.test/algebra">View course</a> }
 		/>
 	);
 	expect(
-		screen.queryByRole( 'button', { name: 'Confirm publication' } )
-	).not.toBeInTheDocument();
-	await user.click(
-		screen.getByRole( 'button', { name: 'Preview saved course' } )
-	);
-	await user.click(
-		await screen.findByRole( 'button', { name: 'Review publication' } )
-	);
+		await screen.findByText( '1 unit, 1 lesson, 1 quiz' )
+	).toBeInTheDocument();
 	expect( api.publishCourse ).not.toHaveBeenCalled();
 	await user.click(
-		screen.getByRole( 'button', { name: 'Confirm publication' } )
+		screen.getByRole( 'button', { name: 'Publish course' } )
 	);
-	await screen.findAllByText( 'Course and learning program published.' );
+	await screen.findAllByText( 'Course published. Students can open it now.' );
 	expect( api.publishCourse ).toHaveBeenCalledWith(
 		preview,
 		expect.any( AbortSignal )
 	);
 	expect( onPublished ).toHaveBeenCalledOnce();
+	expect(
+		screen.queryByRole( 'button', { name: 'Publish course' } )
+	).not.toBeInTheDocument();
+	expect( screen.getByRole( 'link', { name: 'View course' } ) ).toBeVisible();
+	await user.click( screen.getByRole( 'button', { name: 'Done' } ) );
+	expect( onClose ).toHaveBeenCalledOnce();
 } );
 
-it( 'blocks publication while readiness issues remain and blocks preview for unsaved edits', async () => {
-	const user = userEvent.setup();
+it( 'waits for unsaved edits and blocks publication while readiness issues remain', async () => {
 	vi.mocked( api.previewPublication ).mockResolvedValue( {
 		...preview,
 		readiness: [ 'Publish lesson first.' ],
@@ -71,9 +82,10 @@ it( 'blocks publication while readiness issues remain and blocks preview for uns
 			onPublished={ vi.fn() }
 		/>
 	);
+	expect( api.previewPublication ).not.toHaveBeenCalled();
 	expect(
-		screen.getByRole( 'button', { name: 'Preview saved course' } )
-	).toBeDisabled();
+		screen.queryByRole( 'button', { name: 'Publish course' } )
+	).not.toBeInTheDocument();
 	view.rerender(
 		<PublicationPanel
 			course={ 12 }
@@ -81,18 +93,14 @@ it( 'blocks publication while readiness issues remain and blocks preview for uns
 			onPublished={ vi.fn() }
 		/>
 	);
-	await user.click(
-		screen.getByRole( 'button', { name: 'Preview saved course' } )
-	);
 	await screen.findAllByText( 'Publish lesson first.' );
 	expect(
-		screen.getByRole( 'button', { name: 'Review publication' } )
+		screen.getByRole( 'button', { name: 'Publish course' } )
 	).toBeDisabled();
 	expect( api.publishCourse ).not.toHaveBeenCalled();
 } );
 
 it( 'says what students see: nothing yet, or the last published version', async () => {
-	const user = userEvent.setup();
 	vi.mocked( api.previewPublication ).mockResolvedValueOnce( preview );
 	const { unmount } = render(
 		<PublicationPanel
@@ -101,11 +109,8 @@ it( 'says what students see: nothing yet, or the last published version', async 
 			onPublished={ vi.fn() }
 		/>
 	);
-	await user.click(
-		screen.getByRole( 'button', { name: 'Preview saved course' } )
-	);
 	expect(
-		await screen.findByText( /no version is published/ )
+		await screen.findByText( /cannot see this course yet/ )
 	).toBeInTheDocument();
 	unmount();
 	vi.mocked( api.previewPublication ).mockResolvedValueOnce( {
@@ -119,10 +124,27 @@ it( 'says what students see: nothing yet, or the last published version', async 
 			onPublished={ vi.fn() }
 		/>
 	);
-	await user.click(
-		screen.getByRole( 'button', { name: 'Preview saved course' } )
-	);
 	expect(
 		await screen.findByText( /still see the last published version/ )
 	).toBeInTheDocument();
+} );
+
+it( 'offers another try when the saved course cannot be read', async () => {
+	const user = userEvent.setup();
+	vi.mocked( api.previewPublication )
+		.mockRejectedValueOnce( new Error( 'Offline.' ) )
+		.mockResolvedValueOnce( preview );
+	render(
+		<PublicationPanel
+			course={ 12 }
+			disabled={ false }
+			onPublished={ vi.fn() }
+		/>
+	);
+	await user.click(
+		await screen.findByRole( 'button', { name: 'Try again' } )
+	);
+	expect(
+		await screen.findByRole( 'button', { name: 'Publish course' } )
+	).toBeEnabled();
 } );

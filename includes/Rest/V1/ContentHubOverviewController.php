@@ -90,7 +90,7 @@ class ContentHubOverviewController extends RestController {
 			return true;
 		}
 
-		return new WP_Error( 'ohmylms_content_hub_cannot_view', __( 'Sorry, you are not allowed to view the Content Hub.', 'ohmylms' ), array( 'status' => rest_authorization_required_code() ) );
+		return new WP_Error( 'ohmylms_content_hub_cannot_view', __( 'Sorry, you are not allowed to view the content overview.', 'ohmylms' ), array( 'status' => rest_authorization_required_code() ) );
 	}
 
 	/**

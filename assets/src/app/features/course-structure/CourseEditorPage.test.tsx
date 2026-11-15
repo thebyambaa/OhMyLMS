@@ -128,7 +128,7 @@ it( 'keeps all draft fields and new unit UUIDs when saving', async () => {
 		screen.getByRole( 'button', { name: 'Save outline draft' } )
 	);
 	await screen.findAllByText(
-		'Outline draft saved. Learner publication is unchanged.'
+		'Draft saved. Students see it after you publish.'
 	);
 	const [ , payload ] = vi.mocked( api.saveOutline ).mock.calls[ 0 ]!;
 	expect( payload ).toMatchObject( {
@@ -145,6 +145,10 @@ it( 'retains edits after a stale save and confirms before reloading', async () =
 	const { reload } = open();
 	vi.mocked( api.saveOutline ).mockRejectedValue(
 		new ApiError( { status: 409, code: 'stale', message: 'stale' } )
+	);
+	// A saved unit keeps its fields folded until Unit details is opened.
+	await user.click(
+		screen.getAllByRole( 'button', { name: 'Unit details' } )[ 0 ]!
 	);
 	const title = screen.getAllByLabelText( 'Unit title' )[ 0 ]!;
 	await user.clear( title );
@@ -292,7 +296,7 @@ it( 'saves each move of a saved outline at once: reorder within a unit, then mov
 	} );
 	await user.click( screen.getByRole( 'button', { name: 'Move Check up' } ) );
 	await screen.findAllByText(
-		'Outline order saved to the draft. Learner publication is unchanged.'
+		'Order saved to the draft. Students see it after you publish.'
 	);
 	await user.selectOptions(
 		screen.getByLabelText( 'Unit for First lesson' ),

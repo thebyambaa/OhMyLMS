@@ -400,6 +400,10 @@ describe( 'the skill panel beside the outline', () => {
 		const user = userEvent.setup();
 		open();
 		await within( panel() ).findByText( 'Algebra topic' );
+		// Units are picked for topics once the skill panel is open.
+		await user.click(
+			screen.getByRole( 'button', { name: 'Connect skills' } )
+		);
 		await user.click( screen.getByRole( 'button', { name: 'Algebra' } ) );
 		expect(
 			within( panel() ).getByRole( 'heading', {
@@ -450,6 +454,9 @@ describe( 'the skill panel beside the outline', () => {
 		const user = userEvent.setup();
 		open();
 		await within( panel() ).findByText( 'Algebra topic' );
+		await user.click(
+			screen.getByRole( 'button', { name: 'Connect skills' } )
+		);
 		await user.click( screen.getByRole( 'button', { name: 'Add unit' } ) );
 		await user.click( screen.getByRole( 'button', { name: 'New unit' } ) );
 		expect(

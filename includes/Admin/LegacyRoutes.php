@@ -283,6 +283,11 @@ final class LegacyRoutes {
 				'from' => '/quiz-edit/:id',
 				'to'   => '/quizzes/:id',
 			),
+			// The lesson and quiz editors return to the step of the course builder they were opened from.
+			array(
+				'from' => '/course-edit/:id/outline',
+				'to'   => '/courses/:id/outline',
+			),
 			array(
 				'from' => '/course-edit/:id/*',
 				'to'   => '/courses/:id',

@@ -204,7 +204,7 @@ export function AtRiskForm( {
 								'ohmylms'
 							) }
 							help={ __(
-								'Active guardians linked in Account Hub, one email each.',
+								'Active guardians linked in People, one email each.',
 								'ohmylms'
 							) }
 							checked={ draft.nudge_guardians }

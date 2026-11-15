@@ -1,6 +1,7 @@
-import { Button, Modal, Notice } from '@wordpress/components';
-import { useState } from '@wordpress/element';
-import { __, sprintf } from '@wordpress/i18n';
+import { Button, Notice } from '@wordpress/components';
+import { useCallback, useEffect, useState } from '@wordpress/element';
+import { __, _n, sprintf } from '@wordpress/i18n';
+import type { ReactNode } from 'react';
 import { useOperation } from '../../hooks/useOperation';
 import {
 	previewPublication,
@@ -8,80 +9,150 @@ import {
 	type Publication,
 } from './publication-api';
 
+/**
+ * Counts of what the saved course holds, as one sentence ("2 units, 5 lessons, 1 quiz").
+ *
+ * @param preview The saved course.
+ */
+function contents( preview: Publication ) {
+	const items = preview.units.flatMap( ( unit ) => unit.items );
+	const count = ( type: string ) =>
+		items.filter( ( item ) => type === item.type ).length;
+	const lessons = count( 'lesson' );
+	const quizzes = count( 'quiz' );
+	const assignments = count( 'assignment' );
+	const parts: string[] = [
+		sprintf(
+			/* translators: %d: number of units. */
+			_n( '%d unit', '%d units', preview.units.length, 'ohmylms' ),
+			preview.units.length
+		),
+		sprintf(
+			/* translators: %d: number of lessons. */
+			_n( '%d lesson', '%d lessons', lessons, 'ohmylms' ),
+			lessons
+		),
+		sprintf(
+			/* translators: %d: number of quizzes. */
+			_n( '%d quiz', '%d quizzes', quizzes, 'ohmylms' ),
+			quizzes
+		),
+	];
+	if ( assignments > 0 ) {
+		parts.push(
+			sprintf(
+				/* translators: %d: number of assignments. */
+				_n( '%d assignment', '%d assignments', assignments, 'ohmylms' ),
+				assignments
+			)
+		);
+	}
+	return parts.join( ', ' );
+}
+
+/**
+ * Publishes a course in one step: the saved course is read as soon as the panel opens, its contents and
+ * anything that blocks publishing are listed, and one button publishes the revision that is shown.
+ *
+ * @param props             Component props.
+ * @param props.course      Course id.
+ * @param props.disabled    True while the course has unsaved changes or is being saved; the panel waits.
+ * @param props.onPublished Called after the course is published.
+ * @param props.onClose     Closes the surrounding dialog; when given, the panel ends on a "done" screen.
+ * @param props.viewLink    Link to the published course, shown on the "done" screen.
+ */
 export function PublicationPanel( {
 	course,
 	disabled,
 	onPublished,
+	onClose,
+	viewLink,
 }: {
 	course: number;
 	disabled: boolean;
 	onPublished: () => void;
+	onClose?: () => void;
+	viewLink?: ReactNode;
 } ) {
-	const operation = useOperation();
+	const { busy, error, run } = useOperation();
 	const [ preview, setPreview ] = useState< Publication | null >( null );
-	const [ confirm, setConfirm ] = useState( false );
-	const [ message, setMessage ] = useState( '' );
+	const [ done, setDone ] = useState( false );
+	const load = useCallback(
+		() =>
+			void run(
+				( signal ) => previewPublication( course, signal ),
+				setPreview
+			),
+		[ course, run ]
+	);
+	useEffect( () => {
+		if ( ! disabled ) {
+			load();
+		}
+	}, [ disabled, load ] );
+
+	const published = (
+		<Notice status="success" isDismissible={ false }>
+			{ __( 'Course published. Students can open it now.', 'ohmylms' ) }
+		</Notice>
+	);
+	if ( done && onClose ) {
+		return (
+			<section aria-label={ __( 'Course publication', 'ohmylms' ) }>
+				{ published }
+				<div className="oml-publication-actions">
+					{ viewLink }
+					<Button variant="primary" onClick={ onClose }>
+						{ __( 'Done', 'ohmylms' ) }
+					</Button>
+				</div>
+			</section>
+		);
+	}
+	const blocked = Boolean( preview && preview.readiness.length > 0 );
 	return (
 		<section aria-label={ __( 'Course publication', 'ohmylms' ) }>
-			<h2>{ __( 'Preview and publish', 'ohmylms' ) }</h2>
-			<p>
-				{ __(
-					'Save the outline before previewing. Publishing makes this course and the saved learning program available to new enrollments. Existing learners keep their current program version. Draft lessons and quizzes in the course are published with it.',
-					'ohmylms'
-				) }
-			</p>
-			{ operation.error && (
+			{ done && published }
+			{ error && (
 				<Notice status="error" isDismissible={ false }>
-					{ operation.error }
+					{ error }
 				</Notice>
 			) }
-			{ message && (
-				<Notice status="success" isDismissible={ false }>
-					{ message }
-				</Notice>
+			{ ! preview && ! error && ! disabled && (
+				<p role="status">{ __( 'Checking the course…', 'ohmylms' ) }</p>
 			) }
-			<Button
-				disabled={ disabled || operation.busy }
-				isBusy={ operation.busy }
-				onClick={ () =>
-					void operation.run(
-						( signal ) => previewPublication( course, signal ),
-						( result ) => {
-							setPreview( result );
-							setMessage( '' );
-						}
-					)
-				}
-			>
-				{ __( 'Preview saved course', 'ohmylms' ) }
-			</Button>
+			{ ! preview && error && (
+				<Button variant="secondary" disabled={ busy } onClick={ load }>
+					{ __( 'Try again', 'ohmylms' ) }
+				</Button>
+			) }
 			{ preview && ! disabled && (
 				<>
-					<h3>{ preview.title }</h3>
-					<p>
-						{
-							/* translators: %d: number of skill targets. */ sprintf(
-								__( 'Skill targets: %d.', 'ohmylms' ),
-								preview.outcomes
-							)
-						}
-					</p>
-					{ preview.units.map( ( unit ) => (
-						<div key={ unit.id }>
-							<h4>{ unit.title }</h4>
-							<ul>
-								{ unit.items.map( ( item ) => (
-									<li key={ item.id }>
-										{ item.title } ({ item.type })
-									</li>
-								) ) }
-							</ul>
-						</div>
-					) ) }
+					<h3 className="oml-publication-title">{ preview.title }</h3>
+					<p>{ contents( preview ) }</p>
+					{ preview.units.length > 0 && (
+						<details className="oml-publication-contents">
+							<summary>
+								{ __( 'See what is included', 'ohmylms' ) }
+							</summary>
+							{ preview.units.map( ( unit ) => (
+								<div key={ unit.id }>
+									<h4>{ unit.title }</h4>
+									<ul>
+										{ unit.items.map( ( item ) => (
+											<li key={ item.id }>
+												{ item.title } ({ item.type })
+											</li>
+										) ) }
+									</ul>
+								</div>
+							) ) }
+						</details>
+					) }
 					{ 0 === preview.published_program_id && (
 						<p role="status">
 							{ __(
-								'Students cannot see this course’s lessons yet: no version is published.',
+								'Students cannot see this course yet. Publishing shows it to them, together with the draft lessons and quizzes in it.',
 								'ohmylms'
 							) }
 						</p>
@@ -95,7 +166,7 @@ export function PublicationPanel( {
 								) }
 							</p>
 						) }
-					{ preview.readiness.length > 0 ? (
+					{ blocked && (
 						<Notice status="warning" isDismissible={ false }>
 							<p>
 								{ __(
@@ -109,76 +180,37 @@ export function PublicationPanel( {
 								) ) }
 							</ul>
 						</Notice>
-					) : (
-						<p role="status">
-							{ __(
-								'The saved learning program is ready to publish.',
-								'ohmylms'
-							) }
-						</p>
 					) }
-					<Button
-						variant="primary"
-						disabled={
-							operation.busy || preview.readiness.length > 0
-						}
-						onClick={ () => setConfirm( true ) }
-					>
-						{ __( 'Review publication', 'ohmylms' ) }
-					</Button>
-				</>
-			) }
-			{ confirm && preview && ! disabled && (
-				<Modal
-					title={ __( 'Publish this course?', 'ohmylms' ) }
-					onRequestClose={ () => {
-						if ( ! operation.busy ) {
-							setConfirm( false );
-						}
-					} }
-				>
-					<p>{ preview.title }</p>
-					<p>
-						{ __(
-							'This publishes the course, the saved learning program and any draft lessons and quizzes in it. Access settings still apply. Existing learner versions are retained.',
-							'ohmylms'
+					<div className="oml-publication-actions">
+						{ onClose && (
+							<Button
+								variant="tertiary"
+								disabled={ busy }
+								onClick={ onClose }
+							>
+								{ __( 'Keep as draft', 'ohmylms' ) }
+							</Button>
 						) }
-					</p>
-					{ operation.error && (
-						<Notice status="error" isDismissible={ false }>
-							{ operation.error }
-						</Notice>
-					) }
-					<Button
-						disabled={ operation.busy }
-						onClick={ () => setConfirm( false ) }
-					>
-						{ __( 'Keep draft', 'ohmylms' ) }
-					</Button>
-					<Button
-						variant="primary"
-						disabled={ operation.busy }
-						isBusy={ operation.busy }
-						onClick={ () =>
-							void operation.run(
-								( signal ) => publishCourse( preview, signal ),
-								( result ) => {
-									setPreview( result );
-									setConfirm( false );
-									setMessage(
-										__(
-											'Course and learning program published.',
-											'ohmylms'
-										)
-									);
-									onPublished();
-								}
-							)
-						}
-					>
-						{ __( 'Confirm publication', 'ohmylms' ) }
-					</Button>
-				</Modal>
+						<Button
+							variant="primary"
+							disabled={ busy || blocked }
+							isBusy={ busy }
+							onClick={ () =>
+								void run(
+									( signal ) =>
+										publishCourse( preview, signal ),
+									( result ) => {
+										setPreview( result );
+										setDone( true );
+										onPublished();
+									}
+								)
+							}
+						>
+							{ __( 'Publish course', 'ohmylms' ) }
+						</Button>
+					</div>
+				</>
 			) }
 		</section>
 	);

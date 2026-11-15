@@ -450,71 +450,7 @@ export function CourseForm( { id }: { id: number } ) {
 					</fieldset>
 					<div className="oml-editor-aside">
 						<fieldset disabled={ busy || trashed }>
-							<legend>{ __( 'Publishing', 'ohmylms' ) }</legend>
-							<TextControl
-								label={ __( 'Slug', 'ohmylms' ) }
-								value={ form.slug }
-								help={ __(
-									'The address of the course page. It is made unique automatically.',
-									'ohmylms'
-								) }
-								aria-invalid={ invalid( 'slug' ) }
-								aria-describedby={ described( 'slug' ) }
-								onChange={ ( next ) => update( 'slug', next ) }
-							/>
-							<FieldError
-								id="oml-course-slug-error"
-								message={ errors.slug }
-							/>
-							<SelectControl
-								label={ __( 'Status', 'ohmylms' ) }
-								value={ form.status }
-								options={ statusOptions }
-								help={
-									options.abilities.publish
-										? undefined
-										: __(
-												'You can save drafts and submit courses for review. A reviewer publishes them.',
-												'ohmylms'
-											)
-								}
-								onChange={ ( next ) =>
-									update(
-										'status',
-										pick< WritableStatus >(
-											next,
-											WRITABLE,
-											'draft'
-										)
-									)
-								}
-							/>
-							{ 'future' === form.status && (
-								<>
-									<TextControl
-										label={ __( 'Publish on', 'ohmylms' ) }
-										type="datetime-local"
-										value={ form.scheduled_at }
-										help={ __(
-											'Site time. The course is published automatically.',
-											'ohmylms'
-										) }
-										aria-invalid={ invalid(
-											'scheduled_at'
-										) }
-										aria-describedby={ described(
-											'scheduled_at'
-										) }
-										onChange={ ( next ) =>
-											update( 'scheduled_at', next )
-										}
-									/>
-									<FieldError
-										id="oml-course-scheduled_at-error"
-										message={ errors.scheduled_at }
-									/>
-								</>
-							) }
+							<legend>{ __( 'Details', 'ohmylms' ) }</legend>
 							<SelectControl
 								label={ __( 'Level', 'ohmylms' ) }
 								value={ form.level }
@@ -530,6 +466,86 @@ export function CourseForm( { id }: { id: number } ) {
 									)
 								}
 							/>
+							<details
+								className="oml-editor-more"
+								open={
+									'future' === form.status ||
+									!! ( errors.slug || errors.scheduled_at )
+								}
+							>
+								<summary>
+									{ __( 'Address and status', 'ohmylms' ) }
+								</summary>
+								<TextControl
+									label={ __( 'Slug', 'ohmylms' ) }
+									value={ form.slug }
+									help={ __(
+										'The address of the course page. It is made unique automatically.',
+										'ohmylms'
+									) }
+									aria-invalid={ invalid( 'slug' ) }
+									aria-describedby={ described( 'slug' ) }
+									onChange={ ( next ) =>
+										update( 'slug', next )
+									}
+								/>
+								<FieldError
+									id="oml-course-slug-error"
+									message={ errors.slug }
+								/>
+								<SelectControl
+									label={ __( 'Status', 'ohmylms' ) }
+									value={ form.status }
+									options={ statusOptions }
+									help={
+										options.abilities.publish
+											? undefined
+											: __(
+													'You can save drafts and submit courses for review. A reviewer publishes them.',
+													'ohmylms'
+												)
+									}
+									onChange={ ( next ) =>
+										update(
+											'status',
+											pick< WritableStatus >(
+												next,
+												WRITABLE,
+												'draft'
+											)
+										)
+									}
+								/>
+								{ 'future' === form.status && (
+									<>
+										<TextControl
+											label={ __(
+												'Publish on',
+												'ohmylms'
+											) }
+											type="datetime-local"
+											value={ form.scheduled_at }
+											help={ __(
+												'Site time. The course is published automatically.',
+												'ohmylms'
+											) }
+											aria-invalid={ invalid(
+												'scheduled_at'
+											) }
+											aria-describedby={ described(
+												'scheduled_at'
+											) }
+											onChange={ ( next ) =>
+												update( 'scheduled_at', next )
+											}
+										/>
+										<FieldError
+											id="oml-course-scheduled_at-error"
+											message={ errors.scheduled_at }
+										/>
+									</>
+								) }
+							</details>
 						</fieldset>
 
 						<fieldset disabled={ busy || trashed }>

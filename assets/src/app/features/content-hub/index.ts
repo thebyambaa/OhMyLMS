@@ -10,7 +10,7 @@ export { listSkills } from './api';
  */
 export const contentHubOverview: FeatureDefinition = {
 	id: 'content-hub-overview',
-	title: __( 'Content Hub', 'ohmylms' ),
+	title: __( 'Content overview', 'ohmylms' ),
 	path: '/content-hub',
 	group: 'content',
 	tab: 'courses',

@@ -14,6 +14,7 @@ import { useOperation } from '../../hooks/useOperation';
 import { useRequest } from '../../hooks/useRequest';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
 import { normalizeApiError } from '../../lib/api';
+import { courseReturn } from '../../lib/courseReturn';
 import { getAssignment, updateAssignment } from './api';
 import DeliverySettings from './DeliverySettings';
 import {
@@ -62,6 +63,8 @@ function unitOptions(): Array< { value: TimeUnit; label: string } > {
 export default function AssignmentEditorPage() {
 	const params = useParams();
 	const id = routeId( params.id );
+	// Opened from a course outline in this tab: lead back there, not to the list.
+	const fromCourse = null === id ? null : courseReturn( 'assignment', id );
 	const load = useCallback(
 		( signal: AbortSignal ) =>
 			null === id
@@ -230,9 +233,15 @@ export default function AssignmentEditorPage() {
 	return (
 		<>
 			<p>
-				<Link to="/assignments">
-					{ __( 'Back to assignments', 'ohmylms' ) }
-				</Link>{ ' ' }
+				{ fromCourse ? (
+					<Link to={ `/courses/${ fromCourse }/outline` }>
+						{ __( 'Back to course', 'ohmylms' ) }
+					</Link>
+				) : (
+					<Link to="/assignments">
+						{ __( 'Back to assignments', 'ohmylms' ) }
+					</Link>
+				) }{ ' ' }
 				<Link to={ `/assignments/${ current.id }/submissions` }>
 					{ sprintf(
 						/* translators: %d: number of submissions. */

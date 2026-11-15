@@ -67,6 +67,10 @@ the curriculum listing changes from 12,600 / 4,300 to 14,700 / 4,900 for accessi
 branches and contextual child creation. Other budgets remain unchanged. These limits cover the new
 UI modules only; architecture rules and lint rules have not been disabled.
 
+On 15 November 2026 the course-structure JS budget changes from 44,000 / 12,900 to 45,000 / 13,300 bytes
+for the one-step publish panel (contents summary and done screen), the folded skill panel and the
+back-to-course links. The built chunk is 44,794 / 13,187 bytes.
+
 ## Membership-based course settings
 
 Course settings direct authors to Memberships for plan pricing and included courses. The course editor

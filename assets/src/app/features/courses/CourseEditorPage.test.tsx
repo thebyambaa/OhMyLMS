@@ -169,7 +169,7 @@ describe( 'CourseEditorPage tabs', () => {
 			] )
 		).toEqual( [
 			[ 'Basics', '/courses/7' ],
-			[ 'Curriculum', '/courses/7/outline' ],
+			[ 'Lessons', '/courses/7/outline' ],
 		] );
 		expect(
 			within( nav ).getByRole( 'link', { name: 'Basics' } )
@@ -265,7 +265,7 @@ describe( 'CourseEditorPage tabs', () => {
 		renderEditor();
 		await loaded();
 		await setField( user, 'Title', 'Changed' );
-		await user.click( screen.getByRole( 'link', { name: 'Curriculum' } ) );
+		await user.click( screen.getByRole( 'link', { name: 'Lessons' } ) );
 		expect( screen.queryByRole( 'dialog' ) ).not.toBeInTheDocument();
 		expect(
 			await screen.findByText( 'Outline of course 7' )
@@ -284,7 +284,7 @@ describe( 'CourseEditorPage tabs', () => {
 		const user = userEvent.setup();
 		renderEditor();
 		await loaded();
-		await user.click( screen.getByRole( 'link', { name: 'Curriculum' } ) );
+		await user.click( screen.getByRole( 'link', { name: 'Lessons' } ) );
 		expect(
 			await screen.findByText( 'Outline of course 7' )
 		).toBeVisible();
@@ -302,7 +302,7 @@ describe( 'CourseEditorPage tabs', () => {
 		renderEditor();
 		await loaded();
 		await setField( user, 'Title', 'Changed' );
-		await user.click( screen.getByRole( 'link', { name: 'Curriculum' } ) );
+		await user.click( screen.getByRole( 'link', { name: 'Lessons' } ) );
 		await user.click(
 			within( screen.getByRole( 'banner' ) ).getByRole( 'button', {
 				name: 'Save',
@@ -321,7 +321,7 @@ describe( 'CourseEditorPage tabs', () => {
 		renderEditor();
 		await loaded();
 		await setField( user, 'Title', 'Changed' );
-		await user.click( screen.getByRole( 'link', { name: 'Curriculum' } ) );
+		await user.click( screen.getByRole( 'link', { name: 'Lessons' } ) );
 		await user.click(
 			screen.getByRole( 'link', { name: 'Back to courses' } )
 		);
@@ -806,7 +806,7 @@ describe( 'the former steps', () => {
 				screen.getByRole( 'navigation', {
 					name: 'Course editor sections',
 				} )
-			).getByRole( 'link', { name: 'Curriculum' } )
+			).getByRole( 'link', { name: 'Lessons' } )
 		).toHaveAttribute( 'aria-current', 'page' );
 		expect(
 			screen.queryByRole( 'link', { name: 'Skill coverage' } )
@@ -815,9 +815,14 @@ describe( 'the former steps', () => {
 } );
 
 describe( 'showing the course in the student library', () => {
-	it( 'puts the curriculum placement on Basics, under the form', async () => {
+	it( 'puts the curriculum placement on Basics, folded under the form', async () => {
+		const user = userEvent.setup();
 		renderEditor();
 		await loaded();
+		expect( screen.getByText( 'Placement of course 7' ) ).not.toBeVisible();
+		await user.click(
+			screen.getByText( 'Show in the student library (optional)' )
+		);
 		expect( screen.getByText( 'Placement of course 7' ) ).toBeVisible();
 	} );
 

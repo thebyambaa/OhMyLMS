@@ -63,7 +63,7 @@ export default function AccountHubPage() {
 				</p>
 			) }
 			<Tabs
-				label={ __( 'Account Hub sections', 'ohmylms' ) }
+				label={ __( 'People sections', 'ohmylms' ) }
 				tabs={ TAB_IDS.map( ( id ) => ( {
 					id,
 					label: LABELS[ id ],

@@ -125,7 +125,7 @@ final class AdminNavigation {
 			),
 			'content'    => array(
 				'page'  => 'ohmylms-content',
-				'label' => __( 'Content Hub', 'ohmylms' ),
+				'label' => __( 'Courses', 'ohmylms' ),
 				'tabs'  => array(
 					'courses'   => array(
 						'label'      => __( 'Courses', 'ohmylms' ),
@@ -150,7 +150,7 @@ final class AdminNavigation {
 			),
 			'bank'       => array(
 				'page'  => 'ohmylms-bank',
-				'label' => __( 'Content Bank', 'ohmylms' ),
+				'label' => __( 'Lessons & Quizzes', 'ohmylms' ),
 				'tabs'  => array(
 					'lessons'       => array( 'label' => __( 'Lessons', 'ohmylms' ) ),
 					'quizzes'       => array(
@@ -228,7 +228,7 @@ final class AdminNavigation {
 			),
 			'accounts'   => array(
 				'page'  => 'ohmylms-accounts',
-				'label' => __( 'Account Hub', 'ohmylms' ),
+				'label' => __( 'People', 'ohmylms' ),
 				'tabs'  => array(
 					'students' => array( 'label' => __( 'Students', 'ohmylms' ) ),
 					'schools'  => array( 'label' => __( 'Schools', 'ohmylms' ) ),

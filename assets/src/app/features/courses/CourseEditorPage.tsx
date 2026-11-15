@@ -27,7 +27,7 @@ type Tab = 'details' | 'outline';
 
 const TABS: { id: Tab; label: () => string }[] = [
 	{ id: 'details', label: () => __( 'Basics', 'ohmylms' ) },
-	{ id: 'outline', label: () => __( 'Curriculum', 'ohmylms' ) },
+	{ id: 'outline', label: () => __( 'Lessons', 'ohmylms' ) },
 ];
 
 /**
@@ -68,9 +68,9 @@ function CourseViewAction( { id, refresh }: { id: number; refresh: number } ) {
 }
 
 /**
- * Course editor at `#/courses/:id/:tab?`, shown as a builder with two steps: Basics (metadata and thumbnail) and Curriculum (units and activity placements beside the
+ * Course editor at `#/courses/:id/:tab?`, shown as a builder with two steps: Basics (metadata and thumbnail) and Lessons (units and activity placements beside the
  * curriculum's skills). The bar has one Save, which runs the open step's own save, and Publish for
- * administrators, which opens the reviewed publication of the saved program. Publication needs
+ * administrators, which opens the one-step publication of the saved course. Publication needs
  * `manage_options`, as on the server. The old `/settings` step opens Basics.
  */
 export default function CourseEditorPage() {
@@ -166,13 +166,14 @@ export default function CourseEditorPage() {
 								<CourseViewLink
 									course={ step.course as CourseDetail }
 								/>
-							) : null }
-							{ ( 'outline' === tab.id || published > 0 ) && (
-								<CourseViewAction
-									key={ id }
-									id={ id }
-									refresh={ published }
-								/>
+							) : (
+								( 'outline' === tab.id || published > 0 ) && (
+									<CourseViewAction
+										key={ id }
+										id={ id }
+										refresh={ published }
+									/>
+								)
 							) }
 							<Button
 								variant="secondary"
@@ -185,7 +186,13 @@ export default function CourseEditorPage() {
 							{ admin && (
 								<Button
 									variant="primary"
-									onClick={ () => setPublishing( true ) }
+									onClick={ () => {
+										// Publishing uses the saved course, so save what is open first.
+										if ( step?.dirty && ! step.busy ) {
+											step.save();
+										}
+										setPublishing( true );
+									} }
 								>
 									{ __( 'Publish', 'ohmylms' ) }
 								</Button>
@@ -195,9 +202,15 @@ export default function CourseEditorPage() {
 					{ ( formStep || openedForm ) && (
 						<div hidden={ ! formStep }>
 							<CourseForm id={ id } />
-							<div className="oml-course-placement">
+							<details className="oml-course-placement">
+								<summary>
+									{ __(
+										'Show in the student library (optional)',
+										'ohmylms'
+									) }
+								</summary>
 								<CoursePlacement course={ id } />
-							</div>
+							</details>
 						</div>
 					) }
 					<Suspense
@@ -243,17 +256,22 @@ export default function CourseEditorPage() {
 					) : null }
 					{ publishing && admin && (
 						<Modal
-							title={ __( 'Preview and publish', 'ohmylms' ) }
+							title={ __( 'Publish course', 'ohmylms' ) }
 							onRequestClose={ () => setPublishing( false ) }
 							shouldCloseOnClickOutside={ false }
 						>
-							{ step?.dirty && (
+							{ step?.busy && (
+								<p role="status">
+									{ __( 'Saving your changes…', 'ohmylms' ) }
+								</p>
+							) }
+							{ step?.dirty && ! step.busy && (
 								<Notice
 									status="warning"
 									isDismissible={ false }
 								>
 									{ __(
-										'You have unsaved changes. Save them first; publishing uses the saved course.',
+										'Some changes could not be saved. Close this, fix the highlighted fields and save; publishing uses the saved course.',
 										'ohmylms'
 									) }
 								</Notice>
@@ -267,9 +285,18 @@ export default function CourseEditorPage() {
 							>
 								<PublicationPanel
 									course={ id }
-									disabled={ false }
+									disabled={ Boolean(
+										step?.dirty || step?.busy
+									) }
 									onPublished={ () =>
 										setPublished( ( count ) => count + 1 )
+									}
+									onClose={ () => setPublishing( false ) }
+									viewLink={
+										<CourseViewAction
+											id={ id }
+											refresh={ published }
+										/>
 									}
 								/>
 							</Suspense>

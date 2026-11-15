@@ -234,7 +234,26 @@ try {
 	ok( in_array( 'payment-gateways', $tabs['/payments'], true ) && in_array( 'xp', $tabs['/gamification'], true ), 'tab ids were read from the app' );
 	foreach ( LegacyRoutes::routes() as $rule ) {
 		$target = explode( '?', $rule['to'], 2 );
-		ok( in_array( preg_replace( '/:[A-Za-z]+/', ':', $target[0] ), $paths, true ), 'new app has route ' . $target[0] );
+		// A target may name a value where the app route has a parameter (`/courses/:id/outline` is `/courses/:id/:tab?`).
+		$wanted = explode( '/', preg_replace( '/:[A-Za-z]+/', ':', $target[0] ) );
+		$served = false;
+		foreach ( $paths as $path ) {
+			$parts = explode( '/', $path );
+			if ( count( $parts ) !== count( $wanted ) ) {
+				continue;
+			}
+			$served = true;
+			foreach ( $parts as $at => $part ) {
+				if ( ! in_array( $part, array( ':', ':?' ), true ) && $part !== $wanted[ $at ] ) {
+					$served = false;
+					break;
+				}
+			}
+			if ( $served ) {
+				break;
+			}
+		}
+		ok( $served, 'new app has route ' . $target[0] );
 		ok( null !== AdminNavigation::address( preg_replace( '/:[A-Za-z]+/', '7', $rule['to'] ) ), 'legacy target ' . $rule['to'] . ' has an address' );
 		if ( isset( $target[1] ) && preg_match( '/(?:^|&)tab=([a-z-]+)/', $target[1], $tab ) ) {
 			ok( in_array( $tab[1], $tabs[ $target[0] ] ?? array(), true ), 'new app has tab ' . $rule['to'] );
@@ -369,10 +388,10 @@ try {
 	ok(
 		array(
 			array( 'Dashboard', OHMYLMS_SLUG ),
-			array( 'Content Hub', 'ohmylms-content' ),
-			array( 'Content Bank', 'ohmylms-bank' ),
+			array( 'Courses', 'ohmylms-content' ),
+			array( 'Lessons & Quizzes', 'ohmylms-bank' ),
 			array( 'Curriculum', 'ohmylms-curriculum' ),
-			array( 'Account Hub', 'ohmylms-accounts' ),
+			array( 'People', 'ohmylms-accounts' ),
 			array( 'Commerce', 'ohmylms-commerce' ),
 			array( 'Engagement', 'ohmylms-engagement' ),
 			array( 'Add-ons', 'ohmylms-addons' ),
@@ -588,7 +607,7 @@ try {
 			'id'   => '12',
 		)
 	);
-	ok( false !== strpos( $content_html, '<h1 class="wp-heading-inline">Content Hub</h1>' ) && false !== strpos( $content_html, '<hr class="wp-header-end">' ), 'page: heading' );
+	ok( false !== strpos( $content_html, '<h1 class="wp-heading-inline">Courses</h1>' ) && false !== strpos( $content_html, '<hr class="wp-header-end">' ), 'page: heading' );
 	ok( false !== strpos( $content_html, 'class="nav-tab-wrapper wp-clearfix" id="' . AdminNavigation::TABS_ID . '"' ), 'page: tab row' );
 	ok( 2 === preg_match_all( '/class="nav-tab(?: nav-tab-active)?"/', $content_html ), 'page: one link per Content Hub tab' );
 	ok( false !== strpos( $content_html, 'href="' . esc_url( address_url( 'page=ohmylms-content&tab=courses' ) ) . '" class="nav-tab nav-tab-active" aria-current="page">Courses</a>' ), 'page: the current tab is a real, marked link' );
@@ -599,7 +618,7 @@ try {
 			'tab'  => 'lessons',
 		)
 	);
-	ok( false !== strpos( $bank_html, '<h1 class="wp-heading-inline">Content Bank</h1>' ), 'bank page: heading' );
+	ok( false !== strpos( $bank_html, '<h1 class="wp-heading-inline">Lessons &amp; Quizzes</h1>' ), 'bank page: heading' );
 	ok( 5 === preg_match_all( '/class="nav-tab(?: nav-tab-active)?"/', $bank_html ), 'bank page: one link per Content Bank tab' );
 	ok( false !== strpos( $bank_html, 'href="' . esc_url( address_url( 'page=ohmylms-bank&tab=lessons' ) ) . '" class="nav-tab nav-tab-active" aria-current="page">Lessons</a>' ), 'bank page: the current tab is a real, marked link' );
 	ok( false !== strpos( $bank_html, 'id="' . AdminNavigation::MOUNT_ID . '" class="ohmylms-app" data-page="ohmylms-bank" data-tab="lessons" data-section=""' ), 'bank page: the mount point carries the place' );

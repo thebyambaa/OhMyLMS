@@ -8,7 +8,7 @@ import type { FeatureDefinition } from '../types';
  */
 export const accountHub: FeatureDefinition = {
 	id: 'account-hub',
-	title: __( 'Account Hub', 'ohmylms' ),
+	title: __( 'People', 'ohmylms' ),
 	path: '/account-hub',
 	group: 'accounts',
 	tab: 'schools',

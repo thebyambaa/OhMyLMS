@@ -110,12 +110,12 @@ final class Views {
 	public static function menu() {
 		add_submenu_page(
 			'',
-			__( 'Account Hub', 'ohmylms' ),
-			__( 'Account Hub', 'ohmylms' ),
+			__( 'People', 'ohmylms' ),
+			__( 'People', 'ohmylms' ),
 			'manage_options',
 			'ohmylms-schools',
 			static function () {
-				echo '<div class="wrap"><p><a href="' . esc_url( self::management_target( array() ) ) . '">' . esc_html__( 'Open the Account Hub', 'ohmylms' ) . '</a></p></div>';
+				echo '<div class="wrap"><p><a href="' . esc_url( self::management_target( array() ) ) . '">' . esc_html__( 'Open People', 'ohmylms' ) . '</a></p></div>';
 			}
 		);
 	}

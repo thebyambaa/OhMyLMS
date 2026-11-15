@@ -154,6 +154,20 @@ body.oml-builder-fullscreen .oml-outline-actions {
 	margin-bottom: var(--oml-space-3);
 }
 
+/* Skills are optional: the panel takes its column only once the author opens it. */
+.ohmylms-app .oml-plan-grid.is-solo {
+	grid-template-columns: minmax(0, 1fr);
+}
+
+.ohmylms-app .oml-plan-grid.is-solo .oml-skillplan {
+	display: none;
+}
+
+.ohmylms-app .oml-outline-skills-toggle {
+	display: flex;
+	justify-content: flex-end;
+}
+
 .ohmylms-app .oml-curriculum-branches {
 	margin: 0;
 	padding-inline-start: var(--oml-space-3);
@@ -201,4 +215,4 @@ body.oml-builder-fullscreen .oml-outline-actions {
 }
 
 
-/*# sourceMappingURL=admin-app-course-structure.aa741f5a0e49.css.map*/
+/*# sourceMappingURL=admin-app-course-structure.3d0ad4befe54.css.map*/

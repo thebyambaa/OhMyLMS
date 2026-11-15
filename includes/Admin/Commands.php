@@ -120,7 +120,7 @@ final class Commands {
 	private static function definitions() {
 		$go     = array(
 			'dashboard'      => array( __( 'Dashboard', 'ohmylms' ), '/dashboard' ),
-			'content-hub'    => array( __( 'Content Hub', 'ohmylms' ), '/content-hub' ),
+			'content-hub'    => array( __( 'Content overview', 'ohmylms' ), '/content-hub' ),
 			'courses'        => array( __( 'Courses', 'ohmylms' ), '/content-hub/courses' ),
 			'lessons'        => array( __( 'Lessons', 'ohmylms' ), '/content-hub/lessons' ),
 			'quizzes'        => array( __( 'Quizzes', 'ohmylms' ), '/content-hub/quizzes' ),
@@ -130,7 +130,7 @@ final class Commands {
 			'skills'         => array( __( 'Skills', 'ohmylms' ), '/content-hub/skills' ),
 			'curriculum'     => array( __( 'Curriculum', 'ohmylms' ), '/curriculum' ),
 			'memberships'    => array( __( 'Membership', 'ohmylms' ), '/memberships' ),
-			'account-hub'    => array( __( 'Account Hub', 'ohmylms' ), '/accounthub' ),
+			'account-hub'    => array( __( 'People', 'ohmylms' ), '/accounthub' ),
 			'settings'       => array( __( 'Settings', 'ohmylms' ), '/settings/general-settings' ),
 			'settings-pay'   => array( __( 'Payments settings', 'ohmylms' ), '/settings/payments-settings/payments' ),
 			'settings-email' => array( __( 'Email settings', 'ohmylms' ), '/settings/emails-settings' ),

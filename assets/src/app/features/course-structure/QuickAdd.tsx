@@ -5,6 +5,12 @@ import { normalizeApiError } from '../../lib/api';
 import { newId } from '../../lib/uuid';
 import { createResource, type ResourceType } from './api';
 
+const PLACEHOLDERS: Record< ResourceType, () => string > = {
+	lesson: () => __( 'New lesson title, then Enter', 'ohmylms' ),
+	quiz: () => __( 'New quiz title, then Enter', 'ohmylms' ),
+	assignment: () => __( 'New assignment title, then Enter', 'ohmylms' ),
+};
+
 interface Job {
 	type: ResourceType;
 	name: string;
@@ -138,10 +144,7 @@ export function QuickAdd( {
 				type="text"
 				value={ title }
 				maxLength={ 200 }
-				placeholder={ __(
-					'New activity title, then Enter',
-					'ohmylms'
-				) }
+				placeholder={ PLACEHOLDERS[ type ]() }
 				onChange={ ( event ) => setTitle( event.target.value ) }
 			/>
 			<Button
@@ -150,7 +153,7 @@ export function QuickAdd( {
 				variant="secondary"
 				disabled={ ! title.trim() }
 			>
-				{ __( 'Create and add', 'ohmylms' ) }
+				{ __( 'Add', 'ohmylms' ) }
 			</Button>
 			{ waiting > 0 && (
 				<span role="status" className="oml-unit-quick-add-status">

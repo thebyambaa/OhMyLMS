@@ -54,7 +54,7 @@ export default function OverviewPage() {
 			) }
 			{ request.loading && (
 				<p role="status">
-					{ __( 'Loading the Content Hub…', 'ohmylms' ) }
+					{ __( 'Loading the content overview…', 'ohmylms' ) }
 				</p>
 			) }
 			{ request.data && (
