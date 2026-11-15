@@ -33,6 +33,20 @@ final class AdminAppAssets {
 	const EXTENSIONS_HANDLE = 'ohmylms-app-extensions';
 
 	/**
+	 * What each admin page needs besides the app. Pages that author courses, lessons, quizzes and
+	 * questions get the authoring runtime; pages with image pickers get the media library; the
+	 * dashboard, People and Add-ons need neither. Extension tabs always get the authoring runtime.
+	 */
+	const RUNTIME_BY_GROUP = array(
+		'content'    => 'authoring',
+		'bank'       => 'authoring',
+		'curriculum' => 'authoring',
+		'engagement' => 'media',
+		'commerce'   => 'media',
+		'settings'   => 'media',
+	);
+
+	/**
 	 * Register hooks. Runs after the design system stylesheet (priority 30) so it can depend on it.
 	 */
 	public static function init() {
@@ -79,9 +93,12 @@ final class AdminAppAssets {
 		}
 
 		$style_deps = array( 'wp-components' );
-		wp_enqueue_script( 'wp-format-library' );
-		foreach ( array( 'wp-block-editor', 'wp-block-library', 'wp-edit-blocks', 'wp-format-library' ) as $block_style ) {
-			wp_enqueue_style( $block_style );
+		if ( 'authoring' === self::runtime() ) {
+			// The lesson editor's blocks.
+			wp_enqueue_script( 'wp-format-library' );
+			foreach ( array( 'wp-block-editor', 'wp-block-library', 'wp-edit-blocks', 'wp-format-library' ) as $block_style ) {
+				wp_enqueue_style( $block_style );
+			}
 		}
 		foreach ( array( Ui::STYLE_HANDLE, 'ohmylms-admin-design-system' ) as $handle ) {
 			if ( wp_style_is( $handle, 'registered' ) ) {
@@ -120,7 +137,9 @@ final class AdminAppAssets {
 		}
 		$asset = require $asset_file;
 		// Extension editors may open the media library.
-		wp_enqueue_media();
+		if ( '' !== self::runtime() ) {
+			wp_enqueue_media();
+		}
 		wp_enqueue_script( self::EXTENSIONS_HANDLE, $build['url'] . '/admin-app-extensions.js', $asset['dependencies'], $asset['version'], true );
 		wp_localize_script( self::EXTENSIONS_HANDLE, 'ohmylmsExtensionManifest', array_merge( Registry::manifest(), array( 'settings' => Settings::manifest() ) ) );
 		$scripts = wp_scripts();
@@ -140,10 +159,36 @@ final class AdminAppAssets {
 	 *                       built (so extension scripts can read it too), otherwise the app.
 	 */
 	private static function enqueue_question_editor_runtime( $handle ) {
-		wp_enqueue_media();
-		Interactive::enqueue();
-		MathLive::enqueue_style();
+		$needs = self::runtime();
+		if ( '' !== $needs ) {
+			wp_enqueue_media();
+		}
+		if ( 'authoring' === $needs ) {
+			Interactive::enqueue();
+			MathLive::enqueue_style();
+		}
 		wp_localize_script( $handle, 'ohmylmsMath', MathLive::config() );
+	}
+
+	/**
+	 * What the current admin page loads besides the app.
+	 *
+	 * @return string 'authoring' for the lesson and question editors' runtime (block editor,
+	 *                interactive widgets, graph library, math styles, media library), 'media' for
+	 *                the media library alone, or '' for neither.
+	 */
+	public static function runtime() {
+		$place = AdminNavigation::current();
+		$needs = preg_match( AdminNavigation::EXTENSION_TAB, $place['tab'] ) ? 'authoring' : ( self::RUNTIME_BY_GROUP[ $place['group'] ] ?? '' );
+
+		/**
+		 * Filters what an admin page loads besides the app: 'authoring', 'media' or ''.
+		 *
+		 * @param string $needs Runtime the page loads.
+		 * @param array  $place Current group, page, tab and section.
+		 */
+		$needs = (string) apply_filters( 'ohmylms_admin_app_runtime', $needs, $place );
+		return in_array( $needs, array( 'authoring', 'media' ), true ) ? $needs : '';
 	}
 
 	/**

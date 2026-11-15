@@ -33,10 +33,10 @@ final class Library {
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'styles' ) );
 	}
 
-	/** Load the figure runtime of imported exam questions only in the admin app. */
+	/** Load the figure runtime of imported exam questions only on the admin app's authoring pages. */
 	public static function styles() {
 		$screen = get_current_screen();
-		if ( $screen && \OhMyLMS\Admin\AppPage::is_app_screen( $screen->id ) ) {
+		if ( $screen && \OhMyLMS\Admin\AppPage::is_app_screen( $screen->id ) && 'authoring' === \OhMyLMS\Assets\AdminAppAssets::runtime() ) {
 			\OhMyLMS\ExamImport\FigureContent::enqueue();
 		}
 	}
