@@ -59,6 +59,7 @@ final class Hub {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'assets' ), 25 );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'course_page_assets' ), 25 );
 		add_action( 'template_redirect', array( __CLASS__, 'redirect_course_page' ), 6 );
+		add_filter( 'ohmylms_loop_product_link', array( __CLASS__, 'loop_course_link' ) );
 		add_action( 'template_redirect', array( __CLASS__, 'redirect_legacy' ), 5 );
 		add_action( 'template_redirect', array( __CLASS__, 'private_response' ), 1 );
 		add_filter( 'template_include', array( __CLASS__, 'page_template' ) );
@@ -442,20 +443,52 @@ final class Hub {
 		if ( 'GET' !== sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ?? '' ) ) ) {
 			return;
 		}
-		if ( ! is_singular( OHMYLMS_COURSE_CPT ) || ! is_user_logged_in() || isset( $_GET['preview'] ) || ! in_array( 'library', self::settings()['tabs'], true ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only display switch.
+		if ( ! is_singular( OHMYLMS_COURSE_CPT ) || isset( $_GET['preview'] ) || ! self::opens_in_hub( get_queried_object_id() ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only display switch.
 			return;
 		}
-		$course_id = get_queried_object_id();
-		if ( ! $course_id || in_array( $course_id, LearnerCatalog::roadmap_course_ids(), true ) ) {
-			return;
+		wp_safe_redirect( self::course_url( get_queried_object_id() ) );
+		exit;
+	}
+
+	/**
+	 * Whether the current visitor's course page is the overview inside the hub.
+	 *
+	 * @param int $course_id Course post ID.
+	 * @return bool
+	 */
+	public static function opens_in_hub( $course_id ) {
+		$course_id = absint( $course_id );
+		if ( ! $course_id || ! is_user_logged_in() || ! in_array( 'library', self::settings()['tabs'], true ) ) {
+			return false;
+		}
+		if ( in_array( $course_id, LearnerCatalog::roadmap_course_ids(), true ) ) {
+			return false;
 		}
 		// A learner who still has to enter the password stays on the public page, which shows the form and the enrol card.
 		// Editors keep the hub, as the outline does for them.
-		if ( post_password_required( $course_id ) && ! current_user_can( 'edit_post', $course_id ) ) {
-			return;
-		}
-		wp_safe_redirect( self::course_url( $course_id ) );
-		exit;
+		return ! post_password_required( $course_id ) || current_user_can( 'edit_post', $course_id );
+	}
+
+	/**
+	 * Address a learner-facing course link should use: the hub overview when the course page would
+	 * redirect there anyway, otherwise the course permalink. Saves the redirect's extra request.
+	 *
+	 * @param int $course_id Course post ID.
+	 * @return string
+	 */
+	public static function learner_course_url( $course_id ) {
+		return self::opens_in_hub( $course_id ) && self::base_url() ? self::course_url( $course_id ) : (string) get_permalink( $course_id );
+	}
+
+	/**
+	 * Send course cards in catalogue loops straight to the hub overview for signed-in learners.
+	 *
+	 * @param string $link Card link, the current post's permalink by default.
+	 * @return string
+	 */
+	public static function loop_course_link( $link ) {
+		$course_id = get_the_ID();
+		return $course_id && OHMYLMS_COURSE_CPT === get_post_type( $course_id ) && self::opens_in_hub( $course_id ) && self::base_url() ? self::course_url( $course_id ) : $link;
 	}
 
 	/**

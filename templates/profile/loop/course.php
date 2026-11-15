@@ -22,7 +22,7 @@ $certificate_url = get_current_user_id() === (int) $student->get_id() ? $student
 		</figure>
 
 		<div class="course-info">
-			<a href="<?php echo esc_url( $course->get_permalink() ); ?>" class="ohmylms-course-title"><?php echo esc_html( $course->get_name() ); ?></a>
+			<a href="<?php echo esc_url( \OhMyLMS\Student\Hub::learner_course_url( $course->get_id() ) ); ?>" class="ohmylms-course-title"><?php echo esc_html( $course->get_name() ); ?></a>
 
 			<?php if ( ! $student->is_course_completed( $course->get_id() ) ) { ?>
 				<div class="ohmylms-progressbar">

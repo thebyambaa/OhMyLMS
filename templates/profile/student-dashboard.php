@@ -88,7 +88,7 @@ $browse     = $browse ? $browse : home_url( '/' );
 					foreach ( array_slice( $in_progress_courses, 0, 6 ) as $learning_course ) {
 						$percent = max( 0, min( 100, (float) $student->get_course_progress_percentage( $learning_course->get_id() ) ) );
 						?>
-						<article class="oml-dashboard-course"><img src="<?php echo esc_url( has_post_thumbnail( $learning_course->get_id() ) ? $learning_course->get_thumbnail_url() : plugins_url( 'assets/images/dashboard-course.svg', OHMYLMS_FILE ) ); ?>" alt="" loading="lazy"><div><h3><a href="<?php echo esc_url( $learning_course->get_permalink() ); ?>"><?php echo esc_html( $learning_course->get_name() ); ?></a></h3><p>
+						<article class="oml-dashboard-course"><img src="<?php echo esc_url( has_post_thumbnail( $learning_course->get_id() ) ? $learning_course->get_thumbnail_url() : plugins_url( 'assets/images/dashboard-course.svg', OHMYLMS_FILE ) ); ?>" alt="" loading="lazy"><div><h3><a href="<?php echo esc_url( \OhMyLMS\Student\Hub::learner_course_url( $learning_course->get_id() ) ); ?>"><?php echo esc_html( $learning_course->get_name() ); ?></a></h3><p>
 						<?php
 						echo esc_html(
 							sprintf( /* translators: %s: text value. */
