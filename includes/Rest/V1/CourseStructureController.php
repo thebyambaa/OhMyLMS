@@ -16,6 +16,15 @@ defined( 'ABSPATH' ) || exit;
 /** Adapt existing endpoint payloads; retain their route names and successful response shapes. */
 class CourseStructureController extends RestController {
 
+	/**
+	 * Route prefixes whose requests this controller's dispatch filters adapt, besides its own.
+	 *
+	 * @return string[]
+	 */
+	public static function lazy_route_prefixes() {
+		return array( '/ohmylms/v1/chapters', '/ohmylms/v1/content-hub', '/ohmylms/v1/mcp-structure' );
+	}
+
 	/** Register the common read and wrap existing handlers after their permission checks. */
 	public function register_routes() {
 		register_rest_route(
