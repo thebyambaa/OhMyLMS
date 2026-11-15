@@ -259,6 +259,17 @@
 	transition: background-color 0.12s ease;
 }
 
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-answer-review .ohmylms-button {
+	padding: 9px 22px;
+	border: 1px solid var(--review-blue);
+	border-radius: 6px;
+	background: var(--review-blue);
+	box-shadow: none;
+	font-weight: 600;
+	letter-spacing: normal;
+	text-transform: none;
+}
+
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-button:disabled {
 	border-color: var(--book-rule);
 	background: var(--book-wash);
@@ -279,7 +290,122 @@
 }
 
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-quiz-result {
+	max-width: 820px;
+	padding: 28px 32px;
 	border: 1px solid var(--book-rule);
 	border-radius: 8px;
 	color: var(--book-ink);
+}
+
+/*
+ * Results and answer review in the book's colours: green for right, coral for wrong, amber for
+ * partly right or waiting, blue for the attempt being viewed. The verdict is still written out in
+ * text; the colour only reinforces it. The review's own variables are set here, so every rule in
+ * answer-review.css that reads them follows.
+ */
+/* stylelint-disable color-no-hex -- Template palette: this player design defines its own colors. */
+.ohmylms-quiz.ohmylms-player-template-book .ohmylms-answer-review {
+	--review-green: #1f9d68;
+	--review-green-edge: #167a50;
+	--review-red: #ee5f4a;
+	--review-red-edge: #c2402d;
+	--review-orange: #f4a30b;
+	--review-orange-edge: #a86d00;
+	--review-blue: #2f6fed;
+	--review-blue-edge: #2f6fed;
+	--review-blue-soft: #eef3fe;
+	--review-blue-line: #b7cdfa;
+	--review-line: #c3cad9;
+	--review-ink: #1e2a44;
+	--review-muted: #5a6478;
+	font-weight: 400;
+}
+/* stylelint-enable color-no-hex */
+
+.ohmylms-quiz.ohmylms-player-template-book .ohmylms-quiz-result h2 {
+	margin-top: 0;
+	font-size: 22px;
+	font-weight: 700;
+}
+
+.ohmylms-quiz.ohmylms-player-template-book :is(.ohmylms-answer-review-item, .ohmylms-review-summary) {
+	padding: 14px 18px;
+	border: 1px solid var(--review-line);
+	border-inline-start-width: 4px;
+	border-radius: 8px;
+}
+
+.ohmylms-quiz.ohmylms-player-template-book .ohmylms-answer-review-question {
+	font-weight: 600;
+}
+
+.ohmylms-quiz.ohmylms-player-template-book .ohmylms-review-headline,
+.ohmylms-quiz.ohmylms-player-template-book .ohmylms-answer-review-verdict strong {
+	font-weight: 700;
+}
+
+.ohmylms-quiz.ohmylms-player-template-book .ohmylms-answer-review-part,
+.ohmylms-quiz.ohmylms-player-template-book .ohmylms-answer-review-explanation,
+.ohmylms-quiz.ohmylms-player-template-book .ohmylms-answer-review-note {
+	border-radius: 6px;
+	font-weight: 400;
+}
+
+.ohmylms-quiz.ohmylms-player-template-book .ohmylms-answer-review h3 {
+	font-weight: 700;
+}
+
+/* The score bar is a thin blue rule, like the progress line. */
+.ohmylms-quiz.ohmylms-player-template-book .ohmylms-review-meter,
+.ohmylms-quiz.ohmylms-player-template-book .ohmylms-review-meter::-webkit-meter-bar {
+	height: 6px;
+	border-radius: 3px;
+}
+
+.ohmylms-quiz.ohmylms-player-template-book .ohmylms-review-meter::-webkit-meter-optimum-value,
+.ohmylms-quiz.ohmylms-player-template-book .ohmylms-review-meter::-webkit-meter-suboptimum-value,
+.ohmylms-quiz.ohmylms-player-template-book .ohmylms-review-meter::-webkit-meter-even-less-good-value {
+	border-radius: 3px;
+	background: var(--review-blue);
+}
+
+.ohmylms-quiz.ohmylms-player-template-book .ohmylms-review-meter::-moz-meter-bar {
+	border-radius: 3px;
+	background: var(--review-blue);
+}
+
+.ohmylms-quiz.ohmylms-player-template-book .ohmylms-review-attempts a {
+	padding: 4px 12px;
+	border: 1px solid var(--review-line);
+	border-radius: 5px;
+	font-weight: 600;
+}
+
+/* Review actions are the player's flat blue buttons. */
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-answer-review .ohmylms-button:hover {
+	filter: none;
+	background: color-mix(in srgb, var(--review-blue) 88%, var(--review-ink));
+}
+
+:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-answer-review .ohmylms-button:active {
+	transform: none;
+}
+
+/* The verdict edge keeps its colour over the flat border above. */
+.ohmylms-quiz.ohmylms-player-template-book :is(.ohmylms-answer-review-item.is-correct, .ohmylms-review-summary.is-pass) {
+	border-inline-start-color: var(--review-green);
+}
+
+.ohmylms-quiz.ohmylms-player-template-book :is(.ohmylms-answer-review-item.is-incorrect, .ohmylms-review-summary.is-fail) {
+	border-inline-start-color: var(--review-red);
+}
+
+.ohmylms-quiz.ohmylms-player-template-book
+	:is(.ohmylms-answer-review-item.is-partial, .ohmylms-answer-review-item.is-pending, .ohmylms-review-summary.is-review) {
+	border-inline-start-color: var(--review-orange);
+}
+
+/* Room between the review and the button under it. */
+.ohmylms-quiz.ohmylms-player-template-book .ohmylms-quiz-result .ohmylms-answer-review {
+	margin-bottom: 16px;
 }
