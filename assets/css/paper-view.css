@@ -1,0 +1,200 @@
+/*
+ * Paper view on screen: the student's continuous paper in the Exam book design. Ink text on a pale
+ * wash, a coral question number, violet lettered answer cards, an amber write-in line and flat
+ * blue buttons. Screen only: the printed sheet and the editor's paper keep their black-on-white
+ * print contract in paper.css.
+ */
+@media screen {
+
+	/* stylelint-disable color-no-hex -- Template palette: the Exam book design defines its own colors. */
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] {
+		--book-ink: #1e2a44;
+		--book-muted: #5a6478;
+		--book-rule: #c3cad9;
+		--book-wash: #f3f5fb;
+		--book-blue: #2f6fed;
+		--book-coral: #ee5f4a;
+		--book-sun: #f4a30b;
+		--book-violet: #7a52d9;
+		--book-paper: #fff;
+		--player-accent: var(--book-blue);
+		--player-toolbar-text: var(--book-ink);
+	}
+	/* stylelint-enable color-no-hex */
+
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-quiz-form {
+		background: var(--book-wash);
+	}
+
+	/* The bar above the paper and the buttons on it. */
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-paper-progress {
+		border-bottom-color: var(--book-rule);
+		background: var(--book-paper);
+		color: var(--book-ink);
+	}
+
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-button {
+		min-height: 40px;
+		padding: 9px 22px;
+		border: 1px solid var(--book-blue);
+		border-radius: 6px;
+		background: var(--book-blue);
+		color: var(--book-paper);
+		font-weight: 600;
+		transition: background-color 0.12s ease;
+	}
+
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-button:hover:not(:disabled) {
+		background: color-mix(in srgb, var(--book-blue) 88%, var(--book-ink));
+	}
+
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-button.outline {
+		background: var(--book-paper);
+		color: var(--book-blue);
+	}
+
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-button.outline:hover:not(:disabled) {
+		background: color-mix(in srgb, var(--book-blue) 8%, var(--book-paper));
+	}
+
+	/* The sheet: a bordered page in the book's ink. */
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-print-sheet {
+		border: 1px solid var(--book-rule);
+		border-radius: 8px;
+		color: var(--book-ink);
+	}
+
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-paper-section {
+		border-bottom-color: var(--book-rule);
+	}
+
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-paper-section-title {
+		color: var(--book-blue);
+	}
+
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-paper-section-total {
+		color: var(--book-muted);
+	}
+
+	/* The question number is the coral label of a practice question. */
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-print-head .ohmylms-print-number {
+		justify-self: start;
+		min-width: 1.5em;
+		padding: 0 0.3em;
+		border-radius: 4px;
+		background: var(--book-coral);
+		color: var(--book-paper);
+		font-size: 0.9em;
+		text-align: center;
+	}
+
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-print-marks {
+		color: var(--book-muted);
+		font-weight: 600;
+	}
+
+	/* Answer choices: lettered cards in a soft violet tint. */
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-paper-choice-label {
+		align-items: center;
+		padding: 0.35em 0.7em;
+		border: 1px solid color-mix(in srgb, var(--book-violet) 38%, var(--book-paper));
+		border-radius: 5px;
+		background: color-mix(in srgb, var(--book-violet) 4%, var(--book-paper));
+		transition: background-color 0.12s ease, border-color 0.12s ease;
+	}
+
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-paper-choice:hover .ohmylms-paper-choice-label {
+		border-color: var(--book-violet);
+	}
+
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template]
+		.ohmylms-paper-choice:has(.ohmylms-paper-choice-input:checked)
+		.ohmylms-paper-choice-label {
+		border-color: var(--book-violet);
+		background: color-mix(in srgb, var(--book-violet) 12%, var(--book-paper));
+		box-shadow: inset 0 0 0 1px var(--book-violet);
+	}
+
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template]
+		.ohmylms-paper-choice:has(.ohmylms-paper-choice-input:focus-visible)
+		.ohmylms-paper-choice-label {
+		outline: 2px solid var(--book-blue);
+		outline-offset: 2px;
+	}
+
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-paper-choice .ohmylms-print-letter {
+		border-color: var(--book-violet);
+		background: transparent;
+		color: var(--book-violet);
+		font-size: 0.85em;
+		outline: 0;
+	}
+
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template]
+		.ohmylms-paper-choice:has(.ohmylms-paper-choice-input:checked)
+		.ohmylms-print-letter {
+		background: var(--book-violet);
+		color: var(--book-paper);
+	}
+
+	/* A written answer is the amber write-in line of the book. */
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template]
+		.ohmylms-paper-student
+		.is-paper-question
+		:is(input[type="text"], textarea) {
+		border-bottom-color: var(--book-sun);
+		background-color: color-mix(in srgb, var(--book-sun) 8%, var(--book-paper));
+	}
+
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template]
+		.ohmylms-paper-student
+		.is-paper-question
+		:is(input[type="text"], textarea):focus {
+		outline: 2px solid color-mix(in srgb, var(--book-sun) 45%, transparent);
+		outline-offset: 1px;
+	}
+
+	/* Flags and the question navigator: amber marks a flag, blue an answered question. */
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-paper-flag {
+		border-color: var(--book-rule);
+		color: var(--book-muted);
+	}
+
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-paper-flag.is-flagged {
+		border-color: var(--book-sun);
+		background: color-mix(in srgb, var(--book-sun) 14%, var(--book-paper));
+		color: var(--book-ink);
+	}
+
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-paper-flag:focus-visible {
+		outline-color: var(--book-blue);
+	}
+
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-paper-nav-panel {
+		border-color: var(--book-rule);
+		border-radius: 8px;
+		color: var(--book-ink);
+	}
+
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-paper-nav-item {
+		border-color: var(--book-rule);
+		border-radius: 5px;
+		color: var(--book-ink);
+	}
+
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-paper-nav-item.is-answered,
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-paper-nav-legend .is-answered::before {
+		border-color: var(--book-blue);
+		background: var(--book-blue);
+		color: var(--book-paper);
+	}
+
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-paper-nav-item.is-flagged,
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-paper-nav-legend .is-flagged::before {
+		box-shadow: inset 0 -3px 0 var(--book-sun);
+	}
+
+	:is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.has-paper-sheet[data-player-template] .ohmylms-paper-nav-legend .is-flagged::before {
+		border-color: var(--book-sun);
+	}
+}

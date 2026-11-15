@@ -46,6 +46,7 @@ final class PaperPresentation {
 	 */
 	public static function student( $quiz_id, array $settings, $items = null ) {
 		wp_enqueue_style( PrintPaper::STYLE, plugins_url( 'assets/css/paper.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/paper.css' ) );
+		wp_enqueue_style( 'ohmylms-paper-view', plugins_url( 'assets/css/paper-view.css', OHMYLMS_FILE ), array( PrintPaper::STYLE, 'ohmylms-player-templates' ), (string) filemtime( OHMYLMS_DIR . '/assets/css/paper-view.css' ) );
 		\OhMyLMS\Extensions\Interactivity::enqueue( 'ohmylms/paper' );
 		if ( null === $items ) {
 			$attempt  = ohmylms_get_quiz( $quiz_id )->get_quiz_attempt( get_current_user_id() );
