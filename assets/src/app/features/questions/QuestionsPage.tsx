@@ -1,11 +1,5 @@
 import { ListTable, ListTableSelect } from '../../../ui/ListTable';
-import {
-	Button,
-	Modal,
-	Notice,
-	SelectControl,
-	TextareaControl,
-} from '@wordpress/components';
+import { Button, Modal, Notice, TextareaControl } from '@wordpress/components';
 import { useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
@@ -36,6 +30,7 @@ import { exportQuestions, saveFile, type ExportFormat } from './exchange';
 import { AddToQuizDialog } from './AddToQuizDialog';
 import { DeleteQuestionsDialog } from './DeleteQuestionsDialog';
 import { ImportQuestionsDialog } from './ImportQuestionsDialog';
+import { QuestionTypePicker } from './QuestionTypePicker';
 import { BankOrganizer, useBankControls } from '../content-bank';
 import { useQuestions } from './useQuestions';
 import type { QuestionSummary, QuestionType, StatusFilter } from './types';
@@ -655,6 +650,7 @@ export default function QuestionsPage() {
 			{ creating && (
 				<Modal
 					title={ __( 'New question', 'ohmylms' ) }
+					size="large"
 					onRequestClose={ closeCreate }
 					shouldCloseOnClickOutside={ false }
 				>
@@ -704,14 +700,10 @@ export default function QuestionsPage() {
 							</p>
 						) }
 						{ registered.length ? (
-							<SelectControl
-								label={ __( 'Type', 'ohmylms' ) }
+							<QuestionTypePicker
+								types={ registered }
 								value={ chosenType }
 								disabled={ operation.busy }
-								options={ registered.map( ( item ) => ( {
-									value: item.id,
-									label: item.label,
-								} ) ) }
 								help={ __(
 									'The type cannot be changed after the question is created.',
 									'ohmylms'

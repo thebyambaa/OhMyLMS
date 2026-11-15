@@ -20,6 +20,7 @@ export {
 	statementText,
 	typeLabel,
 } from './model';
+export { QuestionTypePicker } from './QuestionTypePicker';
 export { SkillPicker } from './SkillPicker';
 export type {
 	BankRef,

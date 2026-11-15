@@ -339,8 +339,8 @@
 			"gzip": 29000
 		},
 		"chunks/admin-app-questions.css": {
-			"raw": 600,
-			"gzip": 300
+			"raw": 2200,
+			"gzip": 750
 		},
 		"chunks/admin-app-questions.js": {
 			"raw": 79200,
@@ -349,6 +349,10 @@
 		"chunks/admin-app-quiz-reports.js": {
 			"raw": 9200,
 			"gzip": 3300
+		},
+		"chunks/admin-app-quizzes.css": {
+			"raw": 1900,
+			"gzip": 700
 		},
 		"chunks/admin-app-quizzes.js": {
 			"raw": 77300,

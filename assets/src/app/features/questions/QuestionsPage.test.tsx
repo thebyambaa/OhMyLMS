@@ -348,11 +348,12 @@ describe( 'QuestionsPage', () => {
 			async ( type ) => {
 				const { user, dialog } = await openDialog();
 				expect(
-					within( dialog ).getByRole( 'combobox', { name: 'Type' } )
-				).toHaveValue( 'single-choice' );
-				await user.selectOptions(
-					within( dialog ).getByRole( 'combobox', { name: 'Type' } ),
-					type
+					within( dialog ).getByRole( 'radio', { checked: true } )
+				).toHaveAttribute( 'value', 'single-choice' );
+				await user.click(
+					dialog.querySelector< HTMLInputElement >(
+						`input[type="radio"][value="${ type }"]`
+					) as HTMLInputElement
 				);
 				await user.type(
 					within( dialog ).getByRole( 'textbox', {

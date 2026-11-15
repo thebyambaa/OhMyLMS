@@ -1,0 +1,95 @@
+/* Question type picker: grouped tiles in the "new question" dialogs (rendered in a modal, outside .ohmylms-app). */
+.oml-type-picker {
+	border: 0;
+	margin: 0 0 var(--oml-space-4);
+	min-width: 0;
+	padding: 0;
+}
+
+.oml-type-picker-legend {
+	color: var(--oml-heading);
+	font-weight: 600;
+	margin: 0 0 var(--oml-space-2);
+	padding: 0;
+}
+
+.oml-type-picker-heading {
+	color: var(--oml-muted);
+	font-size: var(--oml-font-size-xs);
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	margin: var(--oml-space-4) 0 var(--oml-space-2);
+	text-transform: uppercase;
+}
+
+.oml-type-picker-grid {
+	display: grid;
+	gap: var(--oml-space-2);
+	grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+
+.oml-type-picker-tile {
+	background: var(--oml-surface);
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-card);
+	cursor: pointer;
+	display: flex;
+	flex-direction: column;
+	gap: var(--oml-space-1);
+	padding: var(--oml-space-2) var(--oml-space-3);
+	transition:
+		background-color var(--oml-motion-fast),
+		border-color var(--oml-motion-fast);
+}
+
+.oml-type-picker-tile:hover {
+	border-color: var(--oml-primary);
+}
+
+.oml-type-picker-tile:has(input:checked) {
+	background: var(--oml-primary-soft);
+	border-color: var(--oml-primary);
+}
+
+.oml-type-picker-tile:has(input:focus-visible) {
+	outline: 2px solid var(--oml-focus);
+	outline-offset: 2px;
+}
+
+.oml-type-picker-tile:has(input:disabled) {
+	cursor: default;
+	opacity: 0.6;
+}
+
+.oml-type-picker-name {
+	color: var(--oml-heading);
+	font-weight: 600;
+}
+
+.oml-type-picker-hint {
+	color: var(--oml-muted);
+	font-size: var(--oml-font-size-xs);
+}
+
+.ohmylms-app .ohmylms-question-options {
+	display: grid;
+	gap: var(--oml-space-3);
+	list-style: none;
+	margin: 0 0 var(--oml-space-4);
+	padding: 0;
+}
+
+.ohmylms-app .ohmylms-question-option {
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-card);
+	padding: var(--oml-space-3);
+}
+
+.ohmylms-app .ohmylms-question-option-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-2);
+}
+
+
+/*# sourceMappingURL=admin-app-questions.1f20b64c44b8.css.map*/

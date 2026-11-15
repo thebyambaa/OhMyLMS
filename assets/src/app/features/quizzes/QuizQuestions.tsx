@@ -1,10 +1,4 @@
-import {
-	Button,
-	Modal,
-	Notice,
-	SelectControl,
-	TextControl,
-} from '@wordpress/components';
+import { Button, Modal, Notice, TextControl } from '@wordpress/components';
 import {
 	lazy,
 	Suspense,
@@ -22,6 +16,7 @@ import {
 	listQuestionTypes,
 	MAX_NAME,
 	questionEditorPath,
+	QuestionTypePicker,
 	type QuestionCreateInput,
 	type QuestionType,
 } from '../questions/public';
@@ -857,6 +852,7 @@ export function QuizQuestions( {
 			{ naming && (
 				<Modal
 					title={ __( 'Create question', 'ohmylms' ) }
+					size="large"
 					onRequestClose={ () => setNaming( false ) }
 					shouldCloseOnClickOutside={ false }
 				>
@@ -892,13 +888,9 @@ export function QuizQuestions( {
 							</p>
 						) }
 						{ types && types.length ? (
-							<SelectControl
-								label={ __( 'Type', 'ohmylms' ) }
+							<QuestionTypePicker
+								types={ types }
 								value={ chosenType }
-								options={ types.map( ( item ) => ( {
-									value: item.id,
-									label: item.label,
-								} ) ) }
 								help={ __(
 									'The type cannot be changed after the question is created.',
 									'ohmylms'

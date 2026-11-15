@@ -536,7 +536,7 @@ describe( 'QuizQuestions', () => {
 			within( naming ).getByRole( 'textbox', { name: /Name/ } ),
 			'Halves and quarters'
 		);
-		await within( naming ).findByRole( 'combobox', { name: /Type/ } );
+		await within( naming ).findByRole( 'group', { name: 'Type' } );
 		await user.click(
 			within( naming ).getByRole( 'button', { name: 'Continue' } )
 		);
@@ -574,7 +574,7 @@ describe( 'QuizQuestions', () => {
 			within( naming ).getByRole( 'textbox', { name: /Name/ } ),
 			'Draft'
 		);
-		await within( naming ).findByRole( 'combobox', { name: /Type/ } );
+		await within( naming ).findByRole( 'group', { name: 'Type' } );
 		await user.click(
 			within( naming ).getByRole( 'button', { name: 'Continue' } )
 		);
