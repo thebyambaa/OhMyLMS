@@ -24,6 +24,17 @@ final class PreviewPlayer {
 			}
 		);
 		add_action( 'template_redirect', array( __CLASS__, 'render' ), 1 );
+		// The quiz form's layout rules (one question per page, grouped questions) are in the lesson styles.
+		add_filter(
+			'ohmylms_frontend_style_groups',
+			static function ( $groups ) {
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Presence flag choosing stylesheets; render() verifies the preview nonce.
+				if ( isset( $_GET['ohmylms_quiz_preview'] ) && is_array( $groups ) && ! in_array( 'lesson', $groups, true ) ) {
+					$groups[] = 'lesson';
+				}
+				return $groups;
+			}
+		);
 		add_action(
 			'wp_enqueue_scripts',
 			static function () {
