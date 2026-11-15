@@ -113,6 +113,7 @@ final class AdminAppAssets {
 		$dependencies = array_merge( $build['asset']['dependencies'], $host );
 		wp_enqueue_script( self::HANDLE, $build['url'] . '/admin-app.js', array_values( array_unique( $dependencies ) ), $build['asset']['version'], true );
 		self::enqueue_question_editor_runtime( $host ? self::EXTENSIONS_HANDLE : self::HANDLE );
+		self::preload();
 		wp_set_script_translations( self::HANDLE, 'ohmylms', OHMYLMS_DIR . '/languages' );
 		wp_add_inline_script(
 			self::HANDLE,
@@ -168,6 +169,65 @@ final class AdminAppAssets {
 			MathLive::enqueue_style();
 		}
 		wp_localize_script( $handle, 'ohmylmsMath', MathLive::config() );
+	}
+
+	/**
+	 * Answer the page's first REST requests while the page is built.
+	 *
+	 * The responses are handed to `wp.apiFetch` as preloaded data, the way the block editor does it,
+	 * so the app's first GET of each path is served from the page instead of a request of its own.
+	 * A path the app does not ask for is ignored, and one that is refused is not preloaded.
+	 */
+	private static function preload() {
+		$place = AdminNavigation::current();
+
+		/**
+		 * Filters the REST paths whose responses are embedded in an admin app page.
+		 *
+		 * @param string[] $paths REST paths with their query strings.
+		 * @param array    $place Current group, page, tab and section.
+		 */
+		$paths = array_values( array_unique( array_filter( (array) apply_filters( 'ohmylms_admin_app_preload_paths', 'dashboard' === $place['group'] ? self::dashboard_paths() : array(), $place ), 'is_string' ) ) );
+		if ( ! $paths ) {
+			return;
+		}
+		$preloaded = array_reduce( $paths, 'rest_preload_api_request', array() );
+		if ( $preloaded ) {
+			wp_add_inline_script( 'wp-api-fetch', sprintf( 'wp.apiFetch.use( wp.apiFetch.createPreloadingMiddleware( %s ) );', wp_json_encode( $preloaded, JSON_HEX_TAG | JSON_HEX_AMP ) ), 'after' );
+		}
+	}
+
+	/**
+	 * First requests of the dashboard: the viewer's scopes, then every widget for the scope and
+	 * period the address names, or the defaults the app would choose.
+	 *
+	 * @return string[]
+	 */
+	private static function dashboard_paths() {
+		$base   = '/' . OHMYLMS_API_URL . '/dashboard';
+		$scopes = rest_do_request( new \WP_REST_Request( 'GET', $base . '/scopes' ) );
+		$data   = $scopes->is_error() ? array() : (array) $scopes->get_data();
+		$ids    = array_map( 'strval', array_column( (array) ( $data['scopes'] ?? array() ), 'id' ) );
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only view parameters, checked against the allowed values.
+		$scope  = isset( $_GET['scope'] ) && is_string( $_GET['scope'] ) ? sanitize_text_field( wp_unslash( $_GET['scope'] ) ) : '';
+		$period = isset( $_GET['period'] ) && is_string( $_GET['period'] ) ? absint( $_GET['period'] ) : 0;
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+		if ( ! in_array( $scope, $ids, true ) ) {
+			$scope = isset( $data['default'] ) ? (string) $data['default'] : '';
+		}
+		$period = in_array( $period, array( 7, 30, 90 ), true ) ? $period : 30;
+		$paths  = array( $base . '/scopes', $base . '?range=last_30_days' );
+		if ( '' !== $scope ) {
+			foreach ( array_keys( \OhMyLMS\Dashboard\Widgets::all() ) as $widget ) {
+				$paths[] = $base . '/widgets/' . rawurlencode( $widget ) . '?' . http_build_query(
+					array(
+						'scope'  => $scope,
+						'period' => $period,
+					)
+				);
+			}
+		}
+		return $paths;
 	}
 
 	/**
