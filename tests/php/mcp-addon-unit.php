@@ -9,6 +9,8 @@ $GLOBALS['mcp_abilities'] = [];
 function get_option($key, $default = []) { return $key === 'ohmylms_integrations' ? $GLOBALS['mcp_integrations'] : $default; }
 function add_action($hook, $callback, $priority = 10, $args = 1) { $GLOBALS['mcp_hooks'][$hook][] = $callback; }
 function add_filter($hook, $callback, $priority = 10, $args = 1) { add_action($hook, $callback, $priority, $args); }
+// No REST server runs here, so the adapter is never started on demand.
+function did_action($hook) { return 0; }
 function __($value, $domain) { return $value; }
 function plugins_url($path, $file) { return $path; }
 function current_user_can($capability) { return true; }

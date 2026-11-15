@@ -436,6 +436,11 @@ class Api {
 	private function register_all() {
 		$this->register_classes( $this->class_map );
 		$this->all_registered = true;
+
+		/**
+		 * Fires once every controller is registered, for code that also registers its routes on demand.
+		 */
+		do_action( 'ohmylms_rest_register_all' );
 	}
 
 	/**
@@ -507,6 +512,8 @@ class Api {
 			$before                      = $after;
 		}
 		$this->all_registered = true;
+		/** This action is documented in includes/Rest/Api.php */
+		do_action( 'ohmylms_rest_register_all' );
 
 		// Union controllers that share a prefix into groups.
 		$group_of = array();

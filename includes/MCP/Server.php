@@ -23,6 +23,13 @@ class Server {
 	private static $server_error = '';
 
 	/**
+	 * Whether the adapter has been started for this request.
+	 *
+	 * @var bool
+	 */
+	private static $adapter_loaded = false;
+
+	/**
 	 * Init for Server.
 	 */
 	public static function init() {
@@ -71,9 +78,79 @@ class Server {
 		if ( ! self::enabled() ) {
 			return;
 		}
-		if ( function_exists( 'wp_register_ability' ) && class_exists( '\WP\MCP\Core\McpAdapter' ) ) {
-			\WP\MCP\Core\McpAdapter::instance();
+		if ( ! function_exists( 'wp_register_ability' ) || ! class_exists( '\WP\MCP\Core\McpAdapter' ) ) {
+			return;
 		}
+		if ( defined( 'WP_CLI' ) && WP_CLI ) {
+			\WP\MCP\Core\McpAdapter::instance();
+			return;
+		}
+		// The adapter builds every MCP tool when it starts. Only MCP requests and route listings need that.
+		add_filter( 'rest_pre_dispatch', array( __CLASS__, 'load_for_request' ), -1100, 3 );
+		add_action( 'ohmylms_rest_register_all', array( __CLASS__, 'load_adapter' ) );
+	}
+
+	/**
+	 * Start the adapter before an MCP route, the index or a batch request is matched.
+	 *
+	 * @param mixed            $result  Response to replace the requested one, usually null.
+	 * @param \WP_REST_Server  $server  Server instance.
+	 * @param \WP_REST_Request $request Request being dispatched.
+	 * @return mixed The unchanged result.
+	 */
+	public static function load_for_request( $result, $server, $request ) {
+		$path = strtolower( untrailingslashit( (string) $request->get_route() ) );
+		foreach ( array( '/mcp', '/ohmylms/v1/mcp' ) as $prefix ) {
+			if ( $path === $prefix || 0 === strpos( $path, $prefix . '/' ) ) {
+				self::load_adapter();
+			}
+		}
+		if ( in_array( $path, array( '', '/batch/v1', '/ohmylms/v1' ), true ) ) {
+			self::load_adapter();
+		}
+		return $result;
+	}
+
+	/**
+	 * Start the adapter once and register its servers and routes.
+	 *
+	 * The adapter and its transports attach themselves to `rest_api_init`. When that action has
+	 * already finished, the callbacks they attach are run here instead.
+	 */
+	public static function load_adapter() {
+		if ( self::$adapter_loaded || ! self::enabled() || ! class_exists( '\WP\MCP\Core\McpAdapter' ) ) {
+			return;
+		}
+		self::$adapter_loaded = true;
+		$known                = self::rest_init_callbacks();
+		$adapter              = \WP\MCP\Core\McpAdapter::instance();
+		$adapter->init();
+		if ( doing_action( 'rest_api_init' ) || ! did_action( 'rest_api_init' ) ) {
+			return;
+		}
+		foreach ( array_diff_key( self::rest_init_callbacks(), $known ) as $callback ) {
+			if ( array( $adapter, 'init' ) !== $callback ) {
+				call_user_func( $callback, rest_get_server() );
+			}
+		}
+	}
+
+	/**
+	 * Callbacks attached to `rest_api_init`, keyed by priority and identifier.
+	 *
+	 * @return array<string,callable>
+	 */
+	private static function rest_init_callbacks() {
+		global $wp_filter;
+		$found = array();
+		if ( isset( $wp_filter['rest_api_init'] ) ) {
+			foreach ( $wp_filter['rest_api_init']->callbacks as $priority => $callbacks ) {
+				foreach ( $callbacks as $id => $callback ) {
+					$found[ $priority . ':' . $id ] = $callback['function'];
+				}
+			}
+		}
+		return $found;
 	}
 
 	/**
@@ -109,6 +186,9 @@ class Server {
 	 * Readiness for Server.
 	 */
 	public static function readiness() {
+		if ( did_action( 'rest_api_init' ) ) {
+			self::load_adapter();
+		}
 		$abilities = function_exists( 'wp_register_ability' );
 		$adapter   = class_exists( '\WP\MCP\Core\McpAdapter' );
 		return array(
