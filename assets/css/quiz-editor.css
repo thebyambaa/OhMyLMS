@@ -1,0 +1,103 @@
+/* Native quiz navigation; exams keep the existing document and paper canvas. */
+.ohmylms-quiz-workspace-layout {
+	position: relative;
+	padding-inline-start: 244px;
+}
+
+.ohmylms-quiz-workspace {
+	position: absolute;
+	inset-block: 0;
+	inset-inline-start: 0;
+	width: 244px;
+	box-sizing: border-box;
+	padding: 20px 16px;
+	overflow-y: auto;
+	background: #fff;
+	border-inline-end: 1px solid #ddd;
+	color: #1e1e1e;
+	font-size: 13px;
+}
+
+.ohmylms-quiz-workspace h2 {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin: 8px 0 20px;
+	font-size: 20px;
+}
+
+.ohmylms-quiz-workspace h2 span {
+	padding: 4px 8px;
+	border-radius: 4px;
+	background: #f0f0f0;
+	font-size: 13px;
+}
+
+.ohmylms-quiz-workspace-eyebrow {
+	margin: 0;
+	color: #595959;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 1px;
+}
+
+.ohmylms-quiz-workspace-list {
+	margin: 20px 0;
+	padding: 0;
+	list-style: none;
+}
+
+.ohmylms-quiz-workspace-list button {
+	width: 100%;
+	height: auto;
+	min-height: 52px;
+	align-items: flex-start;
+	flex-direction: column;
+	justify-content: center;
+	gap: 4px;
+}
+
+.ohmylms-quiz-workspace-type {
+	font-size: 11px;
+	font-weight: 400;
+}
+
+.ohmylms-quiz-workspace-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-block: 12px;
+}
+
+.ohmylms-quiz-workspace p:last-child {
+	color: #595959;
+	line-height: 1.6;
+}
+
+@media (max-width: 960px) {
+
+	.ohmylms-quiz-workspace-layout {
+		padding-inline-start: 190px;
+	}
+
+	.ohmylms-quiz-workspace {
+		width: 190px;
+		padding: 12px;
+	}
+}
+
+@media (max-width: 600px) {
+
+	.ohmylms-quiz-workspace-layout {
+		padding-inline-start: 0;
+	}
+
+	.ohmylms-quiz-workspace {
+		position: relative;
+		width: 100%;
+		max-height: 240px;
+		flex-shrink: 0;
+		border-block-end: 1px solid #ddd;
+	}
+}

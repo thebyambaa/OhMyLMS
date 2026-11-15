@@ -28,6 +28,7 @@ export interface EditorSelectors {
 }
 
 export interface BlockEditorSelectors {
+	getSelectedBlockClientId(): string | null;
 	getBlock( clientId: string ): BlockInstance | null;
 	getBlocks( rootClientId?: string ): BlockInstance[];
 	getBlockAttributes( clientId: string ): Record< string, any > | null;
@@ -66,6 +67,7 @@ export interface EditorActions {
 }
 
 export interface BlockEditorActions {
+	clearSelectedBlock(): void;
 	insertBlock(
 		block: BlockInstance,
 		index?: number,

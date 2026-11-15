@@ -40,6 +40,7 @@ import { __ } from '@wordpress/i18n';
 import { saveQuizForPreview } from './quizPreview.mjs';
 import { useBlankPlaceholderTitle } from './useBlankPlaceholderTitle';
 import { useQuizEditorTidy } from './useQuizEditorTidy';
+import { NativeQuizWorkspace } from './NativeQuizWorkspace';
 
 /**
  * Keep the player preview visible when the document sidebar is closed.
@@ -123,6 +124,9 @@ function NativeQuizSettings() {
 		);
 	return (
 		<AssessmentPreviewProvider>
+			{ ! exam && (
+				<NativeQuizWorkspace onBank={ () => setPickerOpen( true ) } />
+			) }
 			<QuizPreviewAction />
 			<PaperCanvas />
 			<ProfilePanel />

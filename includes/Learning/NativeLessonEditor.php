@@ -94,6 +94,7 @@ final class NativeLessonEditor {
 		// The canvas is an iframe: enqueue the learner widget styles as block assets too.
 		\OhMyLMS\Assessment\Interactive::enqueue();
 		if ( 'ohmylms-quiz' === $screen->post_type ) {
+			wp_enqueue_style( 'ohmylms-quiz-editor', plugins_url( 'assets/css/quiz-editor.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/quiz-editor.css' ) );
 			// The printable paper canvas; inert until Paper view is switched on.
 			wp_enqueue_style( 'ohmylms-paper', plugins_url( 'assets/css/paper.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/paper.css' ) );
 		}
