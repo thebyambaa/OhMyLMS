@@ -55,6 +55,75 @@ final class Reports {
 			'types'   => $types,
 			'daily'   => $daily,
 			'courses' => $courses,
+			'skills'  => self::skills( $child, (int) $learner, $since ),
 		);
+	}
+
+	/**
+	 * Skill levels from quizzes the child took as home learning during the current link, replayed with
+	 * the per-assessment level rule from Not started, as the teacher's class report does. School work,
+	 * practice and the child's overall levels are never read.
+	 *
+	 * @param array  $child   The authorized child, with its link ID.
+	 * @param int    $learner Learner ID.
+	 * @param string $since   Earliest completion (UTC).
+	 * @return array{enabled: bool, overflow: bool, skills: array[]} Skills by name: name, level, label, assessments.
+	 */
+	private static function skills( array $child, $learner, $since ) {
+		$result = array(
+			'enabled'  => \OhMyLMS\Assessment\Schema::ready(),
+			'overflow' => false,
+			'skills'   => array(),
+		);
+		if ( ! $result['enabled'] ) {
+			return $result;
+		}
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Exact current guardian/link scope, never cached; at most 1001 rows.
+		$events = (array) $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT k.term_id,k.detail FROM %i k JOIN %i e ON e.source_kind='quiz' AND e.source_id=k.source_id AND e.learner_user_id=k.student_id JOIN %i l ON l.learner_user_id=e.learner_user_id AND l.guardian_user_id=%d AND l.id=%d AND l.scope=%s AND l.status='active' WHERE k.source_type='quiz' AND k.student_id=%d AND e.origin=%s AND e.created_at>=l.updated_at AND e.completed_at>=%s ORDER BY k.id LIMIT 1001",
+				\OhMyLMS\Assessment\Schema::table( 'skill_level_events' ),
+				Schema::table( 'activity' ),
+				Schema::table( 'links' ),
+				get_current_user_id(),
+				(int) $child['link_id'],
+				Schema::SCOPE,
+				(int) $learner,
+				Schema::SCOPE,
+				$since
+			),
+			ARRAY_A
+		);
+		if ( count( $events ) > 1000 ) {
+			$result['overflow'] = true;
+			return $result;
+		}
+		foreach ( $events as $event ) {
+			$detail = json_decode( (string) $event['detail'], true );
+			if ( ! is_array( $detail ) || ! isset( $detail['right'], $detail['wrong'] ) || (int) $detail['right'] + (int) $detail['wrong'] < 1 ) {
+				continue;
+			}
+			$term_id = (int) $event['term_id'];
+			$term    = get_term( $term_id, \OhMyLMS\Skills\Taxonomy::NAME );
+			if ( ! $term || is_wp_error( $term ) ) {
+				continue;
+			}
+			$prior                        = $result['skills'][ $term_id ]['level'] ?? 'not-started';
+			$level                        = \OhMyLMS\Performance\Levels::assessment( $prior, 0 === (int) $detail['wrong'] );
+			$result['skills'][ $term_id ] = array(
+				'name'        => $term->name,
+				'level'       => $level,
+				'label'       => \OhMyLMS\Performance\Levels::label( $level ),
+				'assessments' => ( $result['skills'][ $term_id ]['assessments'] ?? 0 ) + 1,
+			);
+		}
+		uasort(
+			$result['skills'],
+			static function ( $left, $right ) {
+				return strnatcasecmp( $left['name'], $right['name'] );
+			}
+		);
+		return $result;
 	}
 }

@@ -61,6 +61,14 @@ study time or accuracy from submission counts. Daily/course breakdowns use nativ
 It exposes no grades, responses, credentials, school work or global mastery. Site-time formatting
 is used for displayed timestamps; the active-date aggregate explicitly says UTC.
 
+**Skill levels from home quizzes.** The report also lists each skill touched by a quiz the child
+took as home learning during the current link and the chosen window, with its level and how many
+quizzes it is based on. Levels are replayed from Not started with the per-assessment rule
+(`Performance\Levels::assessment`: all right moves up one step, any miss down one), from the
+source-scoped `skill_level_events` of those attempts only, under the same exact-link SQL as the
+activity list. The teacher's class Skills tab uses the same rule for class-assigned quizzes. Practice,
+school work and the child's overall levels are not read.
+
 ## Verification and remaining design work
 
 - Protected disposable database: 56 family checks (33 provenance/report and 23 management); source ownership, signed transport,
@@ -84,8 +92,9 @@ unsaved changes. Both sections remain usable without JavaScript. Cards preview p
 following never grants enrollment/access. These refinements passed built-in browser persistence,
 cancellation, recovery confirmation/link creation and dark 390px layout checks using disposable users.
 The existing hub style is used; unobserved reference layouts are not claimed as replicated designs.
-Rich home-only skill/accuracy reports would need source-scoped evidence
-queries; they must not substitute global mastery or unknown historical results.
+Home-only skill levels from quizzes are now shown (above); home-only accuracy or practice-based
+reports would need further source-scoped evidence queries and must not substitute global mastery
+or unknown historical results.
 
 The later release pass added the activity breakdowns above and verified report revocation through
 the real parent form in the browser. See `RELEASE-READINESS.md` for current tests and limits.

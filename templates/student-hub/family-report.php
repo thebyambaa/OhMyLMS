@@ -35,7 +35,7 @@ $home_labels = array(
 	<a class="oml-hub-pill" href="<?php echo esc_url( ParentWorkspace::url() ); ?>">&larr; <?php esc_html_e( 'My children', 'ohmylms' ); ?></a>
 	<h1><?php echo esc_html( $home_report['child']['display_name'] ); ?></h1>
 	<h2><?php esc_html_e( 'Home-learning activity', 'ohmylms' ); ?></h2>
-	<p><?php esc_html_e( 'Shows work explicitly started as home learning during your current approved link. Older activity without a recorded context is unavailable here. School work and overall mastery are not included.', 'ohmylms' ); ?></p>
+	<p><?php esc_html_e( 'Shows work explicitly started as home learning during your current approved link, including skill levels from home quizzes. Older activity without a recorded context is unavailable here. School work and overall mastery are not included.', 'ohmylms' ); ?></p>
 	<nav class="oml-hub-subnav" aria-label="<?php esc_attr_e( 'Report period', 'ohmylms' ); ?>">
 		<?php foreach ( array( 7, 30, 90 ) as $home_days ) : ?>
 			<a class="oml-hub-pill" href="<?php echo esc_url( add_query_arg( 'hub_period', $home_days, $home_base ) ); ?>" <?php echo $home_days === $home_report['days'] ? 'aria-current="page"' : ''; ?>><?php echo esc_html( sprintf( /* translators: %d: lookback days. */ __( 'Last %d days', 'ohmylms' ), $home_days ) ); ?></a>
@@ -50,6 +50,47 @@ $home_labels = array(
 		echo esc_html( $home_activity_count . ' · ' . $home_day_count );
 	?>
 	</p>
+	<h2><?php esc_html_e( 'Skill levels from home quizzes', 'ohmylms' ); ?></h2>
+	<?php if ( $home_report['skills']['overflow'] ) : ?>
+		<p><?php esc_html_e( 'This period has too many quiz results to summarize. Choose a shorter period.', 'ohmylms' ); ?></p>
+	<?php elseif ( ! $home_report['skills']['skills'] ) : ?>
+		<p><?php esc_html_e( 'No skill levels yet. They appear when your child takes, as home learning, a quiz whose questions or quiz have skills.', 'ohmylms' ); ?></p>
+	<?php else : ?>
+		<?php wp_enqueue_style( 'ohmylms-skill-matrix', plugins_url( 'assets/css/skill-matrix.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/skill-matrix.css' ) ); ?>
+		<p><?php esc_html_e( 'Each skill starts at Not started for the selected period and moves one step up when every question on it is right, and one step down after a miss. School work and overall levels are not included.', 'ohmylms' ); ?></p>
+		<div class="ohmylms-mx-wrap">
+			<?php ohmylms_get_template( 'student-hub/skill-legend.php' ); ?>
+			<div class="ohmylms-mx-scroll">
+				<table class="ohmylms-mx">
+					<caption class="ohmylms-mx-sr"><?php esc_html_e( 'Skill levels from home quizzes', 'ohmylms' ); ?></caption>
+					<thead>
+						<tr>
+							<th scope="col"><?php esc_html_e( 'Skill', 'ohmylms' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Level', 'ohmylms' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Quizzes', 'ohmylms' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $home_report['skills']['skills'] as $home_skill ) : ?>
+							<tr>
+								<th scope="row"><?php echo esc_html( $home_skill['name'] ); ?></th>
+								<?php
+								ohmylms_get_template(
+									'student-hub/skill-cell.php',
+									array(
+										'cell_key'   => $home_skill['level'],
+										'cell_title' => $home_skill['label'],
+									)
+								);
+								?>
+								<td><?php echo esc_html( number_format_i18n( (int) $home_skill['assessments'] ) ); ?></td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	<?php endif; ?>
 	<?php if ( $home_report['types'] ) : ?>
 		<h2><?php esc_html_e( 'Learning by activity', 'ohmylms' ); ?></h2>
 		<ul class="oml-hub-commerce-list">
