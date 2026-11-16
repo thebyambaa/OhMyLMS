@@ -28,6 +28,7 @@ $teacher_titles  = array(
 	'work'           => __( 'Assignments', 'ohmylms' ),
 	'roster'         => __( 'Roster', 'ohmylms' ),
 	'progress'       => __( 'Gradebook', 'ohmylms' ),
+	'skills'         => __( 'Skills', 'ohmylms' ),
 	'class-settings' => __( 'Class settings', 'ohmylms' ),
 );
 ?>
@@ -79,7 +80,7 @@ $teacher_titles  = array(
 		<a class="oml-hub-pill oml-hub-back" href="<?php echo esc_url( TeacherWorkspace::url( $section, 'archived' === $teacher_current['status'] ? 'archived' : '' ) ); ?>">&larr; <?php esc_html_e( 'All classes', 'ohmylms' ); ?></a>
 		<h2><?php echo esc_html( $teacher_current['name'] ); ?></h2>
 		<nav class="oml-hub-subnav" aria-label="<?php esc_attr_e( 'Class views', 'ohmylms' ); ?>">
-			<?php foreach ( array( 'work', 'roster', 'progress', 'class-settings' ) as $teacher_tab ) : ?>
+			<?php foreach ( array( 'work', 'roster', 'progress', 'skills', 'class-settings' ) as $teacher_tab ) : ?>
 				<a class="oml-hub-pill" href="<?php echo esc_url( add_query_arg( 'hub_class', $teacher_class, TeacherWorkspace::url( $teacher_tab ) ) ); ?>" <?php echo ( $teacher_tab === $section || ( 'classes' === $section && 'roster' === $teacher_tab ) ) ? 'aria-current="page"' : ''; ?>><?php echo esc_html( $teacher_titles[ $teacher_tab ] ); ?></a>
 			<?php endforeach; ?>
 		</nav>
@@ -90,6 +91,8 @@ $teacher_titles  = array(
 		<?php else : ?>
 			<?php if ( 'progress' === $section ) : ?>
 				<?php ohmylms_get_template( 'student-hub/teacher-report.php', compact( 'teacher_class', 'teacher_page' ) ); ?>
+			<?php elseif ( 'skills' === $section ) : ?>
+				<?php ohmylms_get_template( 'student-hub/teacher-skills.php', compact( 'teacher_class', 'teacher_page' ) ); ?>
 			<?php else : ?>
 				<?php $teacher_work = Service::assignments( $teacher_class, 0, 0, $teacher_page ); ?>
 		<p><?php esc_html_e( 'Distributed class work only. Independent learning is not included.', 'ohmylms' ); ?></p>

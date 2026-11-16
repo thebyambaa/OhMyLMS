@@ -50,6 +50,7 @@ $hub_icons   = array(
 	'school-invites'   => 'M4 4h16v16H4zM4 8l8 6 8-6',
 	'family'           => 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M17 4a4 4 0 0 1 0 7M22 21v-2a4 4 0 0 0-3-4',
 	'progress'         => 'M4 20V10M10 20V4M16 20v-8M22 20H2',
+	'skills'           => 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z',
 	'account'          => 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 12l2-1-2-4-2 1-2-1-1-2h-4l-1 2-2 1-2-1-2 4 2 1v2l-2 1 2 4 2-1 2 1 1 2h4l1-2 2-1 2 1 2-4-2-1z',
 	'member'           => 'M4 7h16v12H4zM4 7l3-4h10l3 4M9 13h6',
 	'membership'       => 'M4 7h16v12H4zM4 7l3-4h10l3 4M9 13h6',
@@ -152,7 +153,7 @@ if ( $hub_profile && in_array( 'home', $config['tabs'], true ) ) {
 					</nav>
 				<?php endif; ?>
 				<?php
-				if ( $teacher_mode && in_array( $section, array( 'classes', 'work', 'roster', 'progress', 'class-settings' ), true ) ) {
+				if ( $teacher_mode && in_array( $section, array( 'classes', 'work', 'roster', 'progress', 'skills', 'class-settings' ), true ) ) {
 					ohmylms_get_template( 'student-hub/teacher.php', array( 'section' => $section ) );
 				} elseif ( $studio_mode && 0 === strpos( $section, 'studio-' ) ) {
 					ohmylms_get_template( 'student-hub/studio.php', array( 'section' => $section ) );

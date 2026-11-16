@@ -884,15 +884,16 @@ final class Hub {
 					'message' => __( 'The teacher workspace is not available for this account.', 'ohmylms' ),
 				);
 			}
-			$config['tabs']                     = array( 'classes', 'work', 'roster', 'progress', 'class-settings', 'library', 'account' );
+			$config['tabs']                     = array( 'classes', 'work', 'roster', 'progress', 'skills', 'class-settings', 'library', 'account' );
 			$config['title']                    = __( 'Teacher workspace', 'ohmylms' );
 			$config['labels']['classes']        = __( 'My classes', 'ohmylms' );
 			$config['labels']['work']           = __( 'Assignments', 'ohmylms' );
 			$config['labels']['roster']         = __( 'Roster', 'ohmylms' );
 			$config['labels']['progress']       = __( 'Gradebook', 'ohmylms' );
+			$config['labels']['skills']         = __( 'Skills', 'ohmylms' );
 			$config['labels']['class-settings'] = __( 'Class settings', 'ohmylms' );
 			$section                            = in_array( get_query_var( 'hub_section' ), $config['tabs'], true ) ? get_query_var( 'hub_section' ) : 'classes';
-			$views                              = in_array( $section, array( 'classes', 'work', 'roster', 'progress', 'class-settings' ), true ) ? array() : self::views( $section );
+			$views                              = in_array( $section, array( 'classes', 'work', 'roster', 'progress', 'skills', 'class-settings' ), true ) ? array() : self::views( $section );
 			$view                               = isset( $views[ $view ] ) ? $view : ( array_key_first( $views ) ?? '' );
 		}
 		return compact( 'config', 'section', 'views', 'view', 'teacher_mode', 'parent_mode', 'school_mode', 'studio_mode' ) + array( 'kind' => 'workspace' );
