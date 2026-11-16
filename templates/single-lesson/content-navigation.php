@@ -199,6 +199,18 @@ if ( 'ohmylms-session' === get_post_type() ) {
 				</a>
 			<?php } ?>
 
+			<?php
+			// A quiz that is in no course cannot be attempted; an editor previews it instead.
+			if ( ! $course_id ) {
+				if ( $is_quiz_preview ) {
+					?>
+					<a class="start-submit-quiz ohmylms-button" href="<?php echo esc_url( \OhMyLMS\Assessment\PreviewPlayer::url( $lesson_id ) ); ?>">
+						<?php echo esc_html__( 'Preview quiz', 'ohmylms' ); ?>
+					</a>
+					<?php
+				}
+			} else {
+				?>
 			<form action="" method="post">
 				<input type="hidden" name="action" value="quiz-action">
 				<input type="hidden" name="ohmylms_quiz_id" value="<?php echo esc_attr( get_the_ID() ); ?>">
@@ -216,6 +228,7 @@ if ( 'ohmylms-session' === get_post_type() ) {
 					</button>
 				<?php } ?>
 			</form>
+			<?php } ?>
 
 			<div class="default-navigation" style="display: <?php echo esc_attr( ( 'quiz' === $get_type && $is_checked ) || ( 'quiz' !== $get_type ) ? 'flex' : 'none' ); ?>" >
 				<input type="hidden" id="ohmylms-lesson-id" value="<?php echo esc_attr( get_the_ID() ); ?>">

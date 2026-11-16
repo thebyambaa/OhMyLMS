@@ -45,7 +45,7 @@ final class Views {
 				register_block_type(
 					'ohmylms/' . $kind,
 					array(
-						'api_version'     => 2,
+						'api_version'     => 3,
 						'editor_script'   => 'ohmylms-school-blocks',
 						'render_callback' => function () use ( $kind ) {
 							return self::render( $kind );

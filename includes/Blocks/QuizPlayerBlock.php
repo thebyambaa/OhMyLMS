@@ -115,7 +115,7 @@ final class QuizPlayerBlock {
 		\OhMyLMS\Extensions\Interactivity::enqueue( 'ohmylms/quiz' );
 		\OhMyLMS\Quiz\PlayerTemplates::enqueue( \OhMyLMS\Quiz\PlayerTemplates::DEFAULT_TEMPLATE );
 		// Loaded up front: the review appears after a submit refreshes only this region, which cannot add stylesheets.
-		wp_enqueue_style( 'ohmylms-answer-review', plugins_url( 'assets/css/answer-review.css', OHMYLMS_FILE ), array(), OHMYLMS_VERSION );
+		wp_enqueue_style( 'ohmylms-answer-review', plugins_url( 'assets/css/answer-review.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/answer-review.css' ) );
 		\OhMyLMS\Assessment\Delivery::require_script();
 		wp_enqueue_style( 'ohmylms-quiz-inline', plugins_url( 'assets/css/quiz-player-inline.css', OHMYLMS_FILE ), array( 'ohmylms-player-templates' ), (string) filemtime( OHMYLMS_DIR . '/assets/css/quiz-player-inline.css' ) );
 		$context = array_merge(

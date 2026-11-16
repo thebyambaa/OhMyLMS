@@ -10,7 +10,7 @@
   };
   Object.entries(names).forEach(([name, title]) => {
     wp.blocks.registerBlockType('ohmylms/' + name, {
-      apiVersion: 2,
+      apiVersion: 3,
       title: wp.i18n.__(title, 'ohmylms'),
       category: 'ohmylms',
       icon: 'welcome-learn-more',

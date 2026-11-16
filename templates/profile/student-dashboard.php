@@ -38,8 +38,7 @@ if ( ! \OhMyLMS\Engagement\Badge::maybe_enable() ) {
 }
 $level      = \OhMyLMS\Engagement\Level::get_current_level_of_a_user( $user_id );
 $next_level = \OhMyLMS\Engagement\Level::get_next_level_of_a_user( $user_id );
-$browse     = get_permalink( ohmylms_get_page_id( 'course' ) );
-$browse     = $browse ? $browse : home_url( '/' );
+$browse     = \OhMyLMS\Student\Hub::catalog_url();
 ?>
 <?php ohmylms_get_template( 'global/ohmylms-celebration.php' ); ?>
 <section class="oml-student-dashboard" data-dashboard-theme="<?php echo esc_attr( $dashboard['theme'] ); ?>" data-theme-endpoint="<?php echo esc_url( rest_url( 'ohmylms/v1/student/dashboard-theme' ) ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>" data-save-error="<?php esc_attr_e( 'Could not save your theme. Please try again.', 'ohmylms' ); ?>" data-save-success="<?php esc_attr_e( 'Dashboard theme saved.', 'ohmylms' ); ?>">

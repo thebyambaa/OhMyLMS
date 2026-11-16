@@ -35,7 +35,7 @@ $retrying = ! empty( $retrying );
 $intro    = isset( $intro ) && is_string( $intro ) ? $intro : '';
 $anchor   = isset( $anchor ) && is_string( $anchor ) && '' !== $anchor ? sanitize_html_class( $anchor ) : 'ohmylms-answer-review';
 
-wp_enqueue_style( 'ohmylms-answer-review', plugins_url( 'assets/css/answer-review.css', OHMYLMS_FILE ), array(), OHMYLMS_VERSION );
+wp_enqueue_style( 'ohmylms-answer-review', plugins_url( 'assets/css/answer-review.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/answer-review.css' ) );
 
 $verdict_labels  = array(
 	'correct'    => __( 'Correct', 'ohmylms' ),

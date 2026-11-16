@@ -251,6 +251,11 @@ body.ohmylms-page .oml-player .ohmylms-lesson-details .ohmylms-lesson-navigation
 	grid-template-columns: minmax(0, 1fr);
 }
 
+/* An activity outside a course has no outline beside it: it takes the whole width. */
+.oml-player-layout > .oml-player-main:only-child {
+	grid-column: 1 / -1;
+}
+
 .oml-player-unit-return {
 	color: var(--player-accent);
 	overflow-wrap: anywhere;

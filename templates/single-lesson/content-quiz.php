@@ -57,7 +57,13 @@ $is_preview = \OhMyLMS\Quiz\Submission::is_preview( get_the_ID(), get_current_us
 		<?php if ( $is_preview ) : ?>
 			<?php $preview_result = \OhMyLMS\Quiz\Submission::take_preview_result( get_the_ID(), get_current_user_id() ); ?>
 			<p class="ohmylms-quiz-notice" style="margin:16px 0;padding:12px 16px;border-radius:8px;background:#F4F5F7;color:#4B5563;font-size:14px;line-height:1.5;">
-				<?php esc_html_e( 'Preview mode: you can edit this quiz, so your attempts and results are not saved. You can retake it as often as you like.', 'ohmylms' ); ?>
+				<?php
+				if ( $course_id ) {
+					esc_html_e( 'Preview mode: you can edit this quiz, so your attempts and results are not saved. You can retake it as often as you like.', 'ohmylms' );
+				} else {
+					esc_html_e( 'This quiz is not in a course yet, so learners cannot take it. Add it to a course to open it to learners. You can preview it as often as you like; nothing is saved.', 'ohmylms' );
+				}
+				?>
 			</p>
 			<?php if ( $preview_result ) : ?>
 				<div class="ohmylms-quiz-preview-result" style="margin:0 0 24px;padding:16px;border:1px solid #E2E4EA;border-radius:8px;font-size:14px;line-height:1.6;">
@@ -84,6 +90,8 @@ $is_preview = \OhMyLMS\Quiz\Submission::is_preview( get_the_ID(), get_current_us
 					</p>
 				</div>
 			<?php endif; ?>
+		<?php elseif ( ! $course_id ) : ?>
+			<p class="ohmylms-quiz-notice"><?php esc_html_e( 'This quiz is not available yet.', 'ohmylms' ); ?></p>
 		<?php else : ?>
 		<div class="ohmylms-table ohmylms-quiz-table">
 			<div class="ohmylms-tr ohmylms-head">

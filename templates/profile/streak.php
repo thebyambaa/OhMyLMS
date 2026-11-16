@@ -24,7 +24,7 @@ $labels       = array(
 	'future'    => __( 'Upcoming', 'ohmylms' ),
 );
 $first_course = ! empty( $in_progress_courses ) ? reset( $in_progress_courses ) : null;
-$continue     = $first_course ? ( new \OhMyLMS\Data\Student( get_current_user_id() ) )->get_course_resume_url( $first_course->get_id() ) : get_permalink( ohmylms_get_page_id( 'course' ) );
+$continue     = $first_course ? ( new \OhMyLMS\Data\Student( get_current_user_id() ) )->get_course_resume_url( $first_course->get_id() ) : \OhMyLMS\Student\Hub::catalog_url();
 if ( ! $continue ) {
 	$continue = home_url( '/' ); }
 ?>
