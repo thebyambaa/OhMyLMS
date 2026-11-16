@@ -49,7 +49,7 @@ function family_skills_insert( $table, array $row ) {
 }
 
 /**
- * A finished quiz attempt with the level event it produced.
+ * A finished quiz attempt with the skill evidence it produced.
  *
  * @param int    $learner  Learner.
  * @param int    $attempt  Attempt ID.
@@ -71,22 +71,23 @@ function family_skills_attempt( $learner, $attempt, $origin, $term, $right, $at 
 		)
 	);
 	family_skills_insert(
-		AssessmentSchema::table( 'skill_level_events' ),
+		AssessmentSchema::table( 'skill_evidence' ),
 		array(
-			'student_id'   => $learner,
-			'term_id'      => $term,
-			'source_type'  => 'quiz',
-			'source_id'    => $attempt,
-			'level_before' => 'not-started',
-			'level_after'  => 'attempted',
-			'detail'       => wp_json_encode(
-				array(
-					'right' => $right ? 1 : 0,
-					'wrong' => $right ? 0 : 1,
-					'total' => 1,
-				)
-			),
-			'created_at'   => $at,
+			'grade_event_id' => $attempt,
+			'student_id'     => $learner,
+			'term_id'        => $term,
+			'part_id'        => 'p1',
+			'role'           => 'primary',
+			'awarded'        => $right ? 1 : 0,
+			'available'      => 1,
+			'independent'    => 1,
+			'first_try'      => 1,
+			'family_id'      => 'family-' . $attempt,
+			'source_type'    => 'quiz',
+			'source_id'      => $attempt,
+			'question_id'    => $attempt,
+			'version_id'     => $attempt,
+			'evidence_at'    => $at,
 		)
 	);
 }
@@ -127,7 +128,7 @@ try {
 			$early     = wp_insert_term( 'Before link ' . wp_generate_password( 4, false ), Taxonomy::NAME );
 			family_skills_check( ! is_wp_error( $fractions ) && ! is_wp_error( $school ) && ! is_wp_error( $early ), 'Skill fixtures failed.' );
 			$recent = gmdate( 'Y-m-d H:i:s', time() - 2 * DAY_IN_SECONDS );
-			// Two right home quizzes on one skill: Not started → Familiar → Proficient.
+			// Two right home quizzes on one skill.
 			family_skills_attempt( $learner, 910000001, Schema::SCOPE, (int) $fractions['term_id'], true, $recent );
 			family_skills_attempt( $learner, 910000002, Schema::SCOPE, (int) $fractions['term_id'], true, $recent );
 			// A school quiz and a home quiz from before the link must stay out.
@@ -139,7 +140,9 @@ try {
 			$skills = $report['skills']['skills'];
 			family_skills_check( 1 === count( $skills ), 'The report should show exactly the one home-quiz skill.' );
 			$skill = $skills[ (int) $fractions['term_id'] ] ?? null;
-			family_skills_check( null !== $skill && 'proficient' === $skill['level'] && 2 === $skill['assessments'], 'Two right home quizzes did not give Proficient from two quizzes.' );
+			// The same rule as the child's own level, applied to the two home attempts' evidence.
+			$own = \OhMyLMS\Performance\Engine::scoped( $learner, array( 910000001, 910000002 ) )[ (int) $fractions['term_id'] ]['level'] ?? '';
+			family_skills_check( null !== $skill && '' !== $own && 'not-started' !== $own && $own === $skill['level'] && 2 === $skill['assessments'], 'Two right home quizzes did not give the child’s own level rule from two quizzes.' );
 			family_skills_check( ! isset( $skills[ (int) $school['term_id'] ] ), 'School work reached the parent report.' );
 			family_skills_check( ! isset( $skills[ (int) $early['term_id'] ] ), 'Work from before the link reached the parent report.' );
 
@@ -151,7 +154,7 @@ try {
 			ob_start();
 			ohmylms_get_template( 'student-hub/family-report.php' );
 			$html = (string) ob_get_clean();
-			family_skills_check( false !== strpos( $html, 'ohmylms-mx-cell ohmylms-mx-proficient' ), 'The report does not show the level cell.' );
+			family_skills_check( false !== strpos( $html, 'ohmylms-mx-cell ohmylms-mx-' . $skill['level'] ), 'The report does not show the level cell.' );
 			family_skills_check( false === strpos( $html, esc_html( get_term( $school['term_id'] )->name ) ), 'The rendered report names a school-only skill.' );
 
 			// Another parent, and a revoked link, see nothing.

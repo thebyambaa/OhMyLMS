@@ -57,7 +57,7 @@ $home_labels = array(
 		<p><?php esc_html_e( 'No skill levels yet. They appear when your child takes, as home learning, a quiz whose questions or quiz have skills.', 'ohmylms' ); ?></p>
 	<?php else : ?>
 		<?php wp_enqueue_style( 'ohmylms-skill-matrix', plugins_url( 'assets/css/skill-matrix.css', OHMYLMS_FILE ), array(), (string) filemtime( OHMYLMS_DIR . '/assets/css/skill-matrix.css' ) ); ?>
-		<p><?php esc_html_e( 'Each skill starts at Not started for the selected period and moves one step up when every question on it is right, and one step down after a miss. School work and overall levels are not included.', 'ohmylms' ); ?></p>
+		<p><?php esc_html_e( 'Levels follow the same rules as your child’s own skill levels, counting only quizzes taken as home learning in the chosen period. School work is not included.', 'ohmylms' ); ?></p>
 		<div class="ohmylms-mx-wrap">
 			<?php ohmylms_get_template( 'student-hub/skill-legend.php' ); ?>
 			<div class="ohmylms-mx-scroll">

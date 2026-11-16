@@ -63,11 +63,11 @@ is used for displayed timestamps; the active-date aggregate explicitly says UTC.
 
 **Skill levels from home quizzes.** The report also lists each skill touched by a quiz the child
 took as home learning during the current link and the chosen window, with its level and how many
-quizzes it is based on. Levels are replayed from Not started with the per-assessment rule
-(`Performance\Levels::assessment`: all right moves up one step, any miss down one), from the
-source-scoped `skill_level_events` of those attempts only, under the same exact-link SQL as the
-activity list. The teacher's class Skills tab uses the same rule for class-assigned quizzes. Practice,
-school work and the child's overall levels are not read.
+quizzes it is based on. Levels are the site's own level policy applied to the child's skill evidence
+from those home attempts only (`Performance\Engine::scoped()`), so they mean the same as the child's
+own levels; the attempts are found under the same exact-link SQL as the activity list. The teacher's
+class Skills tab does the same for class-assigned quizzes. Practice, school work and evidence from other
+work are not counted.
 
 ## Verification and remaining design work
 

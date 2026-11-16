@@ -31,7 +31,7 @@ foreach ( $class_report['students'] as $class_report_student ) {
 asort( $class_skills, SORT_NATURAL | SORT_FLAG_CASE );
 ?>
 <h3><?php esc_html_e( 'Class skill levels', 'ohmylms' ); ?></h3>
-<p><?php esc_html_e( 'Levels start at Not started for the selected period and follow the Khan rules using recorded class assessments only. Independent learning, home learning and overall skill levels are not included.', 'ohmylms' ); ?></p>
+<p><?php esc_html_e( 'Levels follow the same rules as each student’s own skill levels, counting only quizzes assigned to this class in the chosen period. Independent learning and home learning are not included.', 'ohmylms' ); ?></p>
 <nav class="oml-hub-subnav" aria-label="<?php esc_attr_e( 'Class report period', 'ohmylms' ); ?>">
 	<?php foreach ( array( 7, 30, 90 ) as $class_report_days ) : ?>
 		<a class="oml-hub-pill" href="<?php echo esc_url( add_query_arg( 'hub_period', $class_report_days, $class_report_url ) ); ?>" <?php echo $class_report_days === $class_report['days'] ? 'aria-current="page"' : ''; ?>>

@@ -179,22 +179,23 @@ try {
 					)
 				);
 				teacher_skills_insert(
-					AssessmentSchema::table( 'skill_level_events' ),
+					AssessmentSchema::table( 'skill_evidence' ),
 					array(
-						'student_id'   => $learner,
-						'term_id'      => $attempt[3],
-						'source_type'  => 'quiz',
-						'source_id'    => $attempt[0],
-						'level_before' => 'not-started',
-						'level_after'  => 'attempted',
-						'detail'       => wp_json_encode(
-							array(
-								'right' => 1,
-								'wrong' => 0,
-								'total' => 1,
-							)
-						),
-						'created_at'   => $now,
+						'grade_event_id' => $attempt[0],
+						'student_id'     => $learner,
+						'term_id'        => $attempt[3],
+						'part_id'        => 'p1',
+						'role'           => 'primary',
+						'awarded'        => 1,
+						'available'      => 1,
+						'independent'    => 1,
+						'first_try'      => 1,
+						'family_id'      => 'family-' . $attempt[0],
+						'source_type'    => 'quiz',
+						'source_id'      => $attempt[0],
+						'question_id'    => $attempt[0],
+						'version_id'     => $attempt[0],
+						'evidence_at'    => $now,
 					)
 				);
 			}
@@ -206,6 +207,9 @@ try {
 			teacher_skills_check( false !== strpos( $html, esc_html( get_term( $fractions['term_id'] )->name ) ), 'The grid has no column for the class-assessed skill.' );
 			teacher_skills_check( false === strpos( $html, get_term( $decimals['term_id'] )->name ), 'Home learning reached the teacher’s class grid.' );
 			teacher_skills_check( 1 === preg_match( '/ohmylms-mx-cell ohmylms-mx-(?!not-started)[a-z-]+/', $html ), 'The student’s level is not shown in the cell.' );
+			// The class level is the student's own level rule applied to the class attempt's evidence.
+			$own = \OhMyLMS\Performance\Engine::scoped( $learner, array( 900000001 ) )[ (int) $fractions['term_id'] ]['level'] ?? '';
+			teacher_skills_check( '' !== $own && 'not-started' !== $own && false !== strpos( $html, 'ohmylms-mx-cell ohmylms-mx-' . $own ), 'The class level does not follow the student’s own level rule.' );
 
 			// Someone who does not teach the class sees no report.
 			wp_set_current_user( $stranger );

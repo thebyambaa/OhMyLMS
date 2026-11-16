@@ -60,9 +60,9 @@ final class Reports {
 	}
 
 	/**
-	 * Skill levels from quizzes the child took as home learning during the current link, replayed with
-	 * the per-assessment level rule from Not started, as the teacher's class report does. School work,
-	 * practice and the child's overall levels are never read.
+	 * Skill levels from quizzes the child took as home learning during the current link, judged by the
+	 * same rules as the child's own levels but from that work's evidence only, as the teacher's class
+	 * report does. School work, practice and the child's overall levels are never read.
 	 *
 	 * @param array  $child   The authorized child, with its link ID.
 	 * @param int    $learner Learner ID.
@@ -79,11 +79,11 @@ final class Reports {
 			return $result;
 		}
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Exact current guardian/link scope, never cached; at most 1001 rows.
-		$events = (array) $wpdb->get_results(
+		// The home attempts: quizzes started as home learning during this link.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Exact current guardian/link scope, never cached; at most 1001 attempts.
+		$attempts = $wpdb->get_col(
 			$wpdb->prepare(
-				"SELECT k.term_id,k.detail FROM %i k JOIN %i e ON e.source_kind='quiz' AND e.source_id=k.source_id AND e.learner_user_id=k.student_id JOIN %i l ON l.learner_user_id=e.learner_user_id AND l.guardian_user_id=%d AND l.id=%d AND l.scope=%s AND l.status='active' WHERE k.source_type='quiz' AND k.student_id=%d AND e.origin=%s AND e.created_at>=l.updated_at AND e.completed_at>=%s ORDER BY k.id LIMIT 1001",
-				\OhMyLMS\Assessment\Schema::table( 'skill_level_events' ),
+				"SELECT DISTINCT e.source_id FROM %i e JOIN %i l ON l.learner_user_id=e.learner_user_id AND l.guardian_user_id=%d AND l.id=%d AND l.scope=%s AND l.status='active' WHERE e.source_kind='quiz' AND e.learner_user_id=%d AND e.origin=%s AND e.created_at>=l.updated_at AND e.completed_at>=%s ORDER BY e.source_id LIMIT 1001",
 				Schema::table( 'activity' ),
 				Schema::table( 'links' ),
 				get_current_user_id(),
@@ -92,30 +92,23 @@ final class Reports {
 				(int) $learner,
 				Schema::SCOPE,
 				$since
-			),
-			ARRAY_A
+			)
 		);
-		if ( count( $events ) > 1000 ) {
+		if ( count( $attempts ) > 1000 ) {
 			$result['overflow'] = true;
 			return $result;
 		}
-		foreach ( $events as $event ) {
-			$detail = json_decode( (string) $event['detail'], true );
-			if ( ! is_array( $detail ) || ! isset( $detail['right'], $detail['wrong'] ) || (int) $detail['right'] + (int) $detail['wrong'] < 1 ) {
-				continue;
-			}
-			$term_id = (int) $event['term_id'];
-			$term    = get_term( $term_id, \OhMyLMS\Skills\Taxonomy::NAME );
+		// Judged by the same rules as the child's own levels, from those attempts' evidence only.
+		foreach ( \OhMyLMS\Performance\Engine::scoped( (int) $learner, $attempts ) as $term_id => $state ) {
+			$term = get_term( $term_id, \OhMyLMS\Skills\Taxonomy::NAME );
 			if ( ! $term || is_wp_error( $term ) ) {
 				continue;
 			}
-			$prior                        = $result['skills'][ $term_id ]['level'] ?? 'not-started';
-			$level                        = \OhMyLMS\Performance\Levels::assessment( $prior, 0 === (int) $detail['wrong'] );
 			$result['skills'][ $term_id ] = array(
 				'name'        => $term->name,
-				'level'       => $level,
-				'label'       => \OhMyLMS\Performance\Levels::label( $level ),
-				'assessments' => ( $result['skills'][ $term_id ]['assessments'] ?? 0 ) + 1,
+				'level'       => $state['level'],
+				'label'       => \OhMyLMS\Performance\Levels::label( $state['level'] ),
+				'assessments' => (int) $state['activities'],
 			);
 		}
 		uasort(

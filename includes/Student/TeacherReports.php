@@ -43,11 +43,11 @@ final class TeacherReports {
 			if ( ! $enabled || ! (int) $class['school_id'] ) {
 				continue;
 			}
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Fresh class/recipient authorization; at most 1001 events for each of 20 roster rows.
-			$events = $wpdb->get_results(
+			// The class's own attempts: quizzes assigned to this class, started as that assignment.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Fresh class/recipient authorization; at most 1001 attempts for each of 20 roster rows.
+			$attempts = $wpdb->get_col(
 				$wpdb->prepare(
-					"SELECT k.term_id,k.detail FROM %i k JOIN %i p ON p.source_kind='quiz' AND p.source_id=k.source_id AND p.learner_user_id=k.student_id JOIN %i a ON a.id=p.assignment_id AND a.class_id=p.class_id AND a.school_id=p.school_id AND a.status='active' JOIN %i r ON r.assignment_id=a.id AND r.student_user_id=k.student_id WHERE k.source_type='quiz' AND k.student_id=%d AND p.origin='school' AND p.class_id=%d AND p.school_id=%d AND p.completed_at>=%s ORDER BY k.id LIMIT 1001",
-					\OhMyLMS\Assessment\Schema::table( 'skill_level_events' ),
+					"SELECT DISTINCT p.source_id FROM %i p JOIN %i a ON a.id=p.assignment_id AND a.class_id=p.class_id AND a.school_id=p.school_id AND a.status='active' JOIN %i r ON r.assignment_id=a.id AND r.student_user_id=p.learner_user_id WHERE p.source_kind='quiz' AND p.learner_user_id=%d AND p.origin='school' AND p.class_id=%d AND p.school_id=%d AND p.completed_at>=%s ORDER BY p.source_id LIMIT 1001",
 					FamilySchema::table( 'activity' ),
 					Schema::table( 'learning_assignments' ),
 					Schema::table( 'assignment_recipients' ),
@@ -55,30 +55,23 @@ final class TeacherReports {
 					(int) $class_id,
 					(int) $class['school_id'],
 					$since
-				),
-				ARRAY_A
+				)
 			);
-			if ( count( $events ) > 1000 ) {
+			if ( count( $attempts ) > 1000 ) {
 				$student['overflow'] = true;
 				continue;
 			}
-			foreach ( $events as $event ) {
-				$detail = json_decode( $event['detail'], true );
-				if ( ! is_array( $detail ) || ! isset( $detail['right'], $detail['wrong'] ) || (int) $detail['right'] + (int) $detail['wrong'] < 1 ) {
-					continue;
-				}
-				$term_id = (int) $event['term_id'];
-				$term    = get_term( $term_id, \OhMyLMS\Skills\Taxonomy::NAME );
+			// Judged by the same rules as the learner's own levels, from those attempts' evidence only.
+			foreach ( \OhMyLMS\Performance\Engine::scoped( (int) $student['user_id'], $attempts ) as $term_id => $state ) {
+				$term = get_term( $term_id, \OhMyLMS\Skills\Taxonomy::NAME );
 				if ( ! $term || is_wp_error( $term ) ) {
 					continue;
 				}
-				$prior                         = $student['skills'][ $term_id ]['level'] ?? 'not-started';
-				$level                         = Levels::assessment( $prior, 0 === (int) $detail['wrong'] );
 				$student['skills'][ $term_id ] = array(
 					'name'        => $term->name,
-					'level'       => $level,
-					'label'       => Levels::label( $level ),
-					'assessments' => ( $student['skills'][ $term_id ]['assessments'] ?? 0 ) + 1,
+					'level'       => $state['level'],
+					'label'       => Levels::label( $state['level'] ),
+					'assessments' => (int) $state['activities'],
 				);
 			}
 		}

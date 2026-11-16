@@ -48,6 +48,47 @@ final class Engine {
 	}
 
 	/**
+	 * Levels a learner's evidence from some activities earns, by the same policy as their own levels.
+	 * Teacher and parent reports use it to count only the class's or the home's work: the evidence
+	 * is the learner's real evidence from those activities, judged exactly as the learner's level is.
+	 *
+	 * @param int    $student_id  Learner.
+	 * @param int[]  $source_ids  Activities (for example quiz attempt IDs).
+	 * @param string $source_type Their evidence source type.
+	 * @param int    $now         Timestamp; now by default.
+	 * @return array<int,array> Skill => evaluate() state plus `activities`, the number of activities behind it.
+	 */
+	public static function scoped( $student_id, array $source_ids, $source_type = 'quiz', $now = 0 ) {
+		global $wpdb;
+		$ids = array_values( array_unique( array_filter( array_map( 'intval', $source_ids ) ) ) );
+		if ( ! $ids ) {
+			return array();
+		}
+		$holders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Fresh evidence; one generated placeholder per ID, all values passed to prepare().
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT term_id, id, grade_event_id, awarded, available, independent, first_try, difficulty, family_id, question_id, source_type, source_id, evidence_at FROM %i WHERE student_id=%d AND role='primary' AND superseded=0 AND source_type=%s AND source_id IN ($holders) ORDER BY evidence_at ASC, id ASC",
+				array_merge( array( Schema::table( 'skill_evidence' ), (int) $student_id, (string) $source_type ), $ids )
+			),
+			ARRAY_A
+		);
+		// phpcs:enable
+		$by_skill = array();
+		foreach ( $rows as $row ) {
+			$by_skill[ (int) $row['term_id'] ][] = $row;
+		}
+		$now    = $now ? (int) $now : time();
+		$result = array();
+		foreach ( $by_skill as $term_id => $skill_rows ) {
+			$result[ $term_id ] = self::evaluate( $skill_rows, $now ) + array(
+				'activities' => count( array_unique( array_column( $skill_rows, 'source_id' ) ) ),
+			);
+		}
+		return $result;
+	}
+
+	/**
 	 * The state evidence rows earn. Pure apart from reading settings.
 	 *
 	 * @param array[]     $rows   Evidence rows, oldest first.
