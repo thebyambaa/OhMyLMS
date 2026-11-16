@@ -24,6 +24,13 @@ into each published quiz revision (`settings.skills`), so editing a quiz never c
 attempt counted towards; attempts on revisions published before this rule use the quiz's current skills.
 Lesson skills and course outlines say what is taught; they never produce evidence.
 
+**Deleting things.** `Skills\Cleanup` removes skill rows that would point at nothing: a deleted question's
+or quiz's skill connections, a deleted skill's connections, learner evidence, levels and level history
+(and the skill is dropped from every question's saved skill map), and a deleted user's evidence, levels
+and level history. Frozen question versions stay as history (see `QuestionBank\Usage`). A one-time sweep
+(`Cleanup::sweep()`, run on an administrator's request, option `ohmylms_skill_cleanup_version`) removes
+rows left behind before these hooks existed.
+
 **Which activities count.** *Settings → Gamification → XP and mastery → Answers that count toward skills*
 switches each activity (quiz, practice, exam, inline check, question player, or any registered assessment
 kind) on or off. A kind's default comes from its profile (`skills` => true; see

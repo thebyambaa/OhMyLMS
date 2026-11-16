@@ -30,6 +30,8 @@ final class Bootstrap {
 		add_action( 'ohmylms_finalize_attempts', array( Deadlines::class, 'finalize_due' ) );
 		add_filter( 'ohmylms_attempt_extra_seconds', array( AssessmentSettings::class, 'extra_seconds' ), 10, 3 );
 		add_action( 'wp_enqueue_scripts', array( Delivery::class, 'enqueue' ) );
+		// Skill rows go with a deleted question, quiz, skill or user.
+		\OhMyLMS\Skills\Cleanup::init();
 		// Skill evidence: processed at the end of grading requests, with WP-Cron as the durable fallback.
 		add_filter( 'cron_schedules', array( \OhMyLMS\Skills\Evidence::class, 'schedules' ) );
 		add_action( 'init', array( \OhMyLMS\Skills\Evidence::class, 'schedule' ), 31 );
