@@ -301,8 +301,20 @@ $assignment_list = static function ( array $items, $empty_message ) {
 						<p><?php echo esc_html( $profile['skills']['note'] ); ?></p>
 					<?php else : ?>
 						<p class="oml-profile-stat"><?php echo esc_html( (int) $profile['skills']['proficient'] . ' / ' . (int) $profile['skills']['mastered'] ); ?></p>
-						<?php if ( ! $profile['skills']['total'] ) : ?>
+						<?php if ( ! $profile['skills']['total'] && ! $profile['skills']['started'] ) : ?>
 							<p class="oml-profile-note"><?php esc_html_e( 'No skills are proficient or mastered yet.', 'ohmylms' ); ?></p>
+						<?php elseif ( ! $profile['skills']['total'] ) : ?>
+							<p class="oml-profile-note">
+								<?php
+								echo esc_html(
+									sprintf(
+										/* translators: %d: number of skills the learner has worked on. */
+										_n( '%d skill started', '%d skills started', (int) $profile['skills']['started'], 'ohmylms' ),
+										(int) $profile['skills']['started']
+									)
+								);
+								?>
+							</p>
 						<?php else : ?>
 							<p class="oml-profile-note">
 								<?php
@@ -315,6 +327,9 @@ $assignment_list = static function ( array $items, $empty_message ) {
 								);
 								?>
 							</p>
+						<?php endif; ?>
+						<?php if ( $profile['skills']['started'] ) : ?>
+							<p><a href="<?php echo esc_url( \OhMyLMS\Student\Hub::url( 'skills' ) ); ?>"><?php esc_html_e( 'See my skills', 'ohmylms' ); ?></a></p>
 						<?php endif; ?>
 					<?php endif; ?>
 				</section>

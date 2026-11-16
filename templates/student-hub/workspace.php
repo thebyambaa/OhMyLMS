@@ -189,7 +189,7 @@ if ( $hub_profile && in_array( 'home', $config['tabs'], true ) ) {
 					ohmylms_get_template( 'student-hub/my-learning.php' );
 				} elseif ( 'progress' === $section && 'achievements' === $view ) {
 					ohmylms_get_template( 'student-hub/achievements.php', array( 'student' => $student ) );
-				} elseif ( 'progress' === $section && 'skills' === $view ) {
+				} elseif ( 'skills' === $section || ( 'progress' === $section && 'skills' === $view ) ) {
 					// The existing renderer escapes its own complete HTML fragment.
 					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted shortcode renderer with context-specific escaping.
 					echo '<div class="oml-hub-legacy">' . Frontend::skills() . '</div>';

@@ -243,8 +243,8 @@ final class Frontend {
 							<?php
 							echo esc_html(
 								sprintf(
-								/* translators: 1: independent correct answers, 2: question families */
-									__( '%1$d correct on your own · %2$d kinds of question', 'ohmylms' ),
+									/* translators: 1: independent correct answers, 2: question families */
+									_n( '%1$d correct on your own · %2$d kind of question', '%1$d correct on your own · %2$d kinds of question', (int) $skill['families'], 'ohmylms' ),
 									$skill['independent_correct'],
 									$skill['families']
 								)

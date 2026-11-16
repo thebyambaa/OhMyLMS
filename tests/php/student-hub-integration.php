@@ -74,7 +74,20 @@ try {
 		false
 	);
 	Hub::upgrade();
-	ohmylms_hub_check( array( 'home', 'learn', 'library', 'achievements', 'history', 'account' ) === Hub::settings()['tabs'], 'Version 3 navigation was not upgraded.' );
+	ohmylms_hub_check( array( 'home', 'learn', 'skills', 'library', 'achievements', 'history', 'account' ) === Hub::settings()['tabs'], 'Version 3 navigation was not upgraded.' );
+	// Saved version 4 navigation gains My skills after My learning, keeping the rest of its order.
+	update_option(
+		Hub::OPTION,
+		array(
+			'version' => 4,
+			'page_id' => $hub_config['page_id'],
+			'enabled' => true,
+			'tabs'    => array( 'home', 'classes', 'learn', 'library', 'account' ),
+		),
+		false
+	);
+	Hub::upgrade();
+	ohmylms_hub_check( array( 'home', 'classes', 'learn', 'skills', 'library', 'account' ) === Hub::settings()['tabs'], 'Version 4 navigation did not gain My skills.' );
 	ohmylms_hub_check( ! in_array( 'work', Hub::sanitize( array() )['tabs'], true ) && isset( Hub::sections()['work'] ), 'Legacy sections must be valid but off by default.' );
 	update_option( Hub::OPTION, $hub_config, false );
 	Hub::install_page();

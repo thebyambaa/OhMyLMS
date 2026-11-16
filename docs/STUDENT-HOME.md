@@ -14,7 +14,12 @@ that are eligible: the learner workspace described here (the default), the Teach
 classes, roster, reports), the Parent workspace (school-linked and home-learning children) and the School
 workspace (classes, people, reports, gradebook). They have their own documents:
 [SCHOOL-FAMILY-SETUP.md](SCHOOL-FAMILY-SETUP.md) and [learner-experience/](learner-experience/). The learner
-sections are My learning, Browse subjects, Classes, Achievements, History, Membership and Settings.
+sections are My learning, My skills, Browse subjects, Classes, Achievements, History, Membership and Settings.
+
+**My skills** (`hub_section=skills`) lists every skill the learner has worked on with its level and the
+evidence behind it, suggested next steps, readiness for each syllabus, placement tests and a Practice
+button per skill (`Practice\Frontend::skills()`). Saved navigation from before version 5 gains it after My
+learning. The Progress card on Home counts the skills started and links to it.
 
 **Signing in.** Signed-out visitors see a chooser (Learner, Parent, Teacher) with an inline sign-in form that
 posts to `wp-login.php` and returns to the hub (`Student\LoginExperience`), a sign-up form for each role, and

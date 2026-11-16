@@ -91,6 +91,7 @@ final class Hub {
 			'home'         => __( 'Home', 'ohmylms' ),
 			'classes'      => __( 'My classes', 'ohmylms' ),
 			'learn'        => __( 'My learning', 'ohmylms' ),
+			'skills'       => __( 'My skills', 'ohmylms' ),
 			'library'      => __( 'Browse subjects', 'ohmylms' ),
 			'achievements' => __( 'Achievements', 'ohmylms' ),
 			'history'      => __( 'History', 'ohmylms' ),
@@ -126,9 +127,9 @@ final class Hub {
 		$own_accent   = is_string( $input['accent'] ?? null ) ? sanitize_hex_color( $input['accent'] ) : '';
 		$follow_brand = ! empty( $input['accent_brand'] ) || ! $own_accent;
 		$result       = array(
-			'version'         => 4,
-			'page_id'         => absint( $input['page_id'] ?? 0 ),
-			'title'           => sanitize_text_field( is_string( $input['title'] ?? null ) ? $input['title'] : __( 'Student Home', 'ohmylms' ) ),
+			'version'       => 5,
+			'page_id'       => absint( $input['page_id'] ?? 0 ),
+			'title'         => sanitize_text_field( is_string( $input['title'] ?? null ) ? $input['title'] : __( 'Student Home', 'ohmylms' ) ),
 			// The resolved color: the brand color while following it, so callers always get a hex value.
 			'accent'          => $follow_brand ? \OhMyLMS\Design\Tokens::color( 'ohmylms_primary_color_scheme' ) : $own_accent,
 			'accent_brand'    => $follow_brand,
@@ -231,7 +232,7 @@ final class Hub {
 	/** Add sections introduced after the initial workspace once, keeping saved choices. Safe for any visitor: it only rewrites our own option. */
 	public static function upgrade() {
 		$stored = get_option( self::OPTION );
-		if ( ! is_array( $stored ) || 4 <= ( $stored['version'] ?? 0 ) ) {
+		if ( ! is_array( $stored ) || 5 <= ( $stored['version'] ?? 0 ) ) {
 			return;
 		}
 		$config = self::sanitize( $stored );
@@ -248,6 +249,11 @@ final class Hub {
 			$add   = array_diff( array( 'achievements', 'history' ), $config['tabs'] );
 			array_splice( $config['tabs'], false === $after ? count( $config['tabs'] ) : $after + 1, 0, $add );
 			$config['tabs'] = array_values( array_diff( $config['tabs'], self::LEGACY_SECTIONS ) );
+		}
+		if ( 5 > ( $stored['version'] ?? 0 ) && ! in_array( 'skills', $config['tabs'], true ) ) {
+			// My skills: every skill the learner has worked on, after My learning.
+			$after = array_search( 'learn', $config['tabs'], true );
+			array_splice( $config['tabs'], false === $after ? count( $config['tabs'] ) : $after + 1, 0, array( 'skills' ) );
 		}
 		update_option( self::OPTION, self::sanitize( $config ), false );
 	}

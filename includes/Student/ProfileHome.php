@@ -104,7 +104,8 @@ final class ProfileHome {
 	}
 
 	/**
-	 * Proficient and mastered counts, plus how many of those were last practised this week.
+	 * Proficient and mastered counts, how many of those were last practised this week, and how many
+	 * skills the learner has started at all.
 	 *
 	 * @param int $user_id Learner.
 	 * @param int $monday  Week start timestamp.
@@ -117,6 +118,7 @@ final class ProfileHome {
 			'mastered'   => 0,
 			'week'       => 0,
 			'total'      => 0,
+			'started'    => 0,
 		);
 		try {
 			$rows = Snapshot::skills( $user_id );
@@ -127,6 +129,9 @@ final class ProfileHome {
 		}
 		foreach ( $rows as $row ) {
 			$level = (string) ( $row['level'] ?? '' );
+			if ( '' !== $level && 'not-started' !== $level ) {
+				++$counts['started'];
+			}
 			if ( ! in_array( $level, array( 'proficient', 'mastered' ), true ) ) {
 				continue;
 			}
