@@ -54,6 +54,7 @@ export interface PaperSelectors {
 	showsAnswers(): boolean;
 	getQuestionType( clientId: string ): string;
 	getQuestionMarks( clientId: string ): number;
+	getQuestionTitle( clientId: string ): string;
 }
 
 export interface EditorActions {
@@ -97,7 +98,12 @@ export interface BlockEditorActions {
 export interface PaperActions {
 	setView( view: boolean ): void;
 	setAnswers( answers: boolean ): void;
-	setQuestion( clientId: string, questionType: string, marks: number ): void;
+	setQuestion(
+		clientId: string,
+		questionType: string,
+		marks: number,
+		title?: string
+	): void;
 }
 
 export interface EditPostActions {

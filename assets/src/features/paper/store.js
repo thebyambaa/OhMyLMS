@@ -8,15 +8,22 @@ export const PAPER_STORE = 'ohmylms/paper';
  * @property {boolean}                answers Whether the answer key is visible.
  * @property {Record<string, string>} types   Question type by block.
  * @property {Record<string, number>} marks   Marks by block.
+ * @property {Record<string, string>} titles  Short plain-text statement by block.
  */
 
 /** @type {PaperState} */
-const DEFAULT_STATE = { view: false, answers: false, types: {}, marks: {} };
+const DEFAULT_STATE = {
+	view: false,
+	answers: false,
+	types: {},
+	marks: {},
+	titles: {},
+};
 
 /**
  * Editor-only paper view state: whether the canvas shows sheets, whether the answer key is
- * visible, and each question block's type and marks, so numbering can skip unnumbered statements
- * and headers and sections can total the marks.
+ * visible, and each question block's type, marks and short title, so numbering can skip unnumbered
+ * statements, headers and sections can total the marks, and the quiz navigator can name questions.
  * Nothing here is saved with the exam.
  */
 const store = createReduxStore( PAPER_STORE, {
@@ -29,7 +36,8 @@ const store = createReduxStore( PAPER_STORE, {
 			case 'SET_QUESTION':
 				if (
 					state.types[ action.clientId ] === action.questionType &&
-					state.marks[ action.clientId ] === action.marks
+					state.marks[ action.clientId ] === action.marks &&
+					( state.titles[ action.clientId ] || '' ) === action.title
 				) {
 					return state;
 				}
@@ -42,6 +50,10 @@ const store = createReduxStore( PAPER_STORE, {
 					marks: {
 						...state.marks,
 						[ action.clientId ]: action.marks,
+					},
+					titles: {
+						...state.titles,
+						[ action.clientId ]: action.title,
 					},
 				};
 			default:
@@ -60,12 +72,14 @@ const store = createReduxStore( PAPER_STORE, {
 		 * @param {string} clientId
 		 * @param {string} questionType
 		 * @param {number} marks
+		 * @param {string} [title]
 		 */
-		setQuestion: ( clientId, questionType, marks ) => ( {
+		setQuestion: ( clientId, questionType, marks, title = '' ) => ( {
 			type: 'SET_QUESTION',
 			clientId,
 			questionType,
 			marks,
+			title,
 		} ),
 	},
 	selectors: {
@@ -83,6 +97,11 @@ const store = createReduxStore( PAPER_STORE, {
 		 * @param {string}     clientId
 		 */
 		getQuestionMarks: ( state, clientId ) => state.marks[ clientId ] || 0,
+		/**
+		 * @param {PaperState} state
+		 * @param {string}     clientId
+		 */
+		getQuestionTitle: ( state, clientId ) => state.titles[ clientId ] || '',
 	},
 } );
 

@@ -90,7 +90,7 @@ final class NativeLessonEditor {
 		if ( ! $screen || ! in_array( $screen->post_type, array( 'ohmylms-lesson', 'ohmylms-quiz', 'ohmylms-question' ), true ) || ! $screen->is_block_editor() ) {
 			return;
 		}
-		wp_enqueue_style( 'ohmylms-question-editor', plugins_url( 'assets/css/question-editor.css', OHMYLMS_FILE ), array( 'wp-components', 'dashicons' ), OHMYLMS_VERSION );
+		wp_enqueue_style( 'ohmylms-question-editor', plugins_url( 'assets/css/question-editor.css', OHMYLMS_FILE ), array( 'wp-components', 'dashicons' ), (string) filemtime( OHMYLMS_DIR . '/assets/css/question-editor.css' ) );
 		// The canvas is an iframe: enqueue the learner widget styles as block assets too.
 		\OhMyLMS\Assessment\Interactive::enqueue();
 		if ( 'ohmylms-quiz' === $screen->post_type ) {
@@ -405,7 +405,7 @@ final class NativeLessonEditor {
 		do_action( 'ohmylms_enqueue_extension_scripts', 'ohmylms-native-lesson-settings' );
 		// Reuse the lazy MathLive configuration on the native lesson screen as well as the LMS app.
 		wp_enqueue_script( 'ohmylms-mathlive-loader' );
-		wp_enqueue_style( 'ohmylms-question-editor', plugins_url( 'assets/css/question-editor.css', OHMYLMS_FILE ), array( 'wp-components', 'dashicons' ), OHMYLMS_VERSION );
+		wp_enqueue_style( 'ohmylms-question-editor', plugins_url( 'assets/css/question-editor.css', OHMYLMS_FILE ), array( 'wp-components', 'dashicons' ), (string) filemtime( OHMYLMS_DIR . '/assets/css/question-editor.css' ) );
 		wp_localize_script(
 			'ohmylms-native-lesson-settings',
 			'ohmylmsNativeLesson',

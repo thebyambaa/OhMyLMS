@@ -58,9 +58,42 @@
 	gap: 4px;
 }
 
+.ohmylms-quiz-workspace-list li + li {
+	margin-top: 2px;
+}
+
+/* A question is named by its number and the start of its statement, over its type and marks. */
+.ohmylms-quiz-workspace-title {
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+	width: 100%;
+	min-width: 0;
+	text-align: start;
+}
+
+.ohmylms-quiz-workspace-number {
+	flex: none;
+	min-width: 1.4em;
+	font-variant-numeric: tabular-nums;
+	font-weight: 600;
+}
+
+.ohmylms-quiz-workspace-text {
+	display: -webkit-box;
+	overflow: hidden;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-height: 1.35;
+	white-space: normal;
+	overflow-wrap: anywhere;
+}
+
 .ohmylms-quiz-workspace-type {
+	padding-inline-start: calc(1.4em + 8px);
 	font-size: 11px;
 	font-weight: 400;
+	opacity: 0.8;
 }
 
 .ohmylms-quiz-workspace-actions {

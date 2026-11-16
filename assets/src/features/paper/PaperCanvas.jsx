@@ -10,6 +10,7 @@ import {
 import { __, sprintf } from '@wordpress/i18n';
 import { PAPER_STORE } from './store';
 import { saveQuizForPreview } from '../learning/public.mjs';
+import { promptText, questionPrompt } from '../question-editor/public.mjs';
 import {
 	PAPER_VERSIONS,
 	limitMinutes,
@@ -116,8 +117,28 @@ export function usePaperIndex( clientId ) {
 }
 
 /**
- * Everything a question block needs to show its printed form, and registration of its type
- * and marks so numbering skips statements and headers and sections can total the marks.
+ * The start of a question's statement as plain text, to name it in a list.
+ *
+ * @param {import('./paperModel.mjs').PaperSourceQuestion} question Editor question.
+ * @return {string} At most 80 characters; '' for a question with no statement yet.
+ */
+export function questionTitle( question ) {
+	const text = promptText(
+		questionPrompt(
+			/** @type {import('../question-editor/editorTypes').Data} */ (
+				question
+			)
+		)
+	)
+		.replace( /\s+/g, ' ' )
+		.trim();
+	return text.length > 80 ? text.slice( 0, 79 ).trimEnd() + '…' : text;
+}
+
+/**
+ * Everything a question block needs to show its printed form, and registration of its type,
+ * marks and title so numbering skips statements, headers and sections can total the marks, and
+ * the quiz navigator can name each question.
  *
  * @param {string}                                              clientId Question block.
  * @param {import('./paperModel.mjs').PaperSourceQuestion|null} question Editor question, or null while loading.
@@ -126,6 +147,7 @@ export function usePaperIndex( clientId ) {
 export function usePaperQuestion( clientId, question ) {
 	const type = question?.settings?.type || '';
 	const marks = question ? questionMarks( question ) : 0;
+	const title = question ? questionTitle( question ) : '';
 	const view = usePaperView();
 	const settings = usePaperSettings();
 	const index = usePaperIndex( clientId );
@@ -135,8 +157,8 @@ export function usePaperQuestion( clientId, question ) {
 	);
 	const { setQuestion } = useDispatch( PAPER_STORE );
 	useEffect( () => {
-		setQuestion( clientId, type, marks );
-	}, [ clientId, type, marks, setQuestion ] );
+		setQuestion( clientId, type, marks, title );
+	}, [ clientId, type, marks, title, setQuestion ] );
 	return {
 		view,
 		settings,

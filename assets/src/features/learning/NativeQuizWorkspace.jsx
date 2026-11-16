@@ -7,27 +7,60 @@ import {
 import { select, useDispatch, useSelect } from '@wordpress/data';
 import { createBlock } from '@wordpress/blocks';
 import { Button } from '@wordpress/components';
-import { __, sprintf } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import { usePaperView } from '../paper/public.mjs';
 import { focusQuizCanvas, quizQuestions } from './quizWorkspace.mjs';
 
 /**
- * Reuse the metadata already registered by the mounted question editor.
+ * Name a question in the navigator by the start of its statement, with its type and marks under
+ * it. Reuses the metadata already registered by the mounted question editor.
  *
  * @param {Object} props          Properties.
  * @param {string} props.clientId Question block ID.
- * @return {React.ReactElement|null} Question type label.
+ * @param {number} props.number   Position in the quiz, from 1.
+ * @return {React.ReactElement} Label.
  */
-function QuestionTypeLabel( { clientId } ) {
-	const type = useSelect(
-		( getStore ) => getStore( 'ohmylms/paper' ).getQuestionType( clientId ),
+function QuestionLabel( { clientId, number } ) {
+	const { type, marks, title } = useSelect(
+		( getStore ) => {
+			const paper = getStore( 'ohmylms/paper' );
+			return {
+				type: paper.getQuestionType( clientId ),
+				marks: paper.getQuestionMarks( clientId ),
+				title: paper.getQuestionTitle( clientId ),
+			};
+		},
 		[ clientId ]
 	);
 	const label =
 		window.ohmylmsNativeLesson?.questionTypes?.[ type ]?.label || type;
-	return label ? (
-		<small className="ohmylms-quiz-workspace-type">{ label }</small>
-	) : null;
+	const details = [
+		label,
+		marks > 0
+			? sprintf(
+					/* translators: %s: Number of marks. */
+					_n( '%s mark', '%s marks', marks, 'ohmylms' ),
+					String( marks )
+				)
+			: '',
+	].filter( Boolean );
+	return (
+		<>
+			<span className="ohmylms-quiz-workspace-title">
+				<span className="ohmylms-quiz-workspace-number">
+					{ number }
+				</span>
+				<span className="ohmylms-quiz-workspace-text">
+					{ title || __( 'Untitled question', 'ohmylms' ) }
+				</span>
+			</span>
+			{ details.length > 0 && (
+				<small className="ohmylms-quiz-workspace-type">
+					{ details.join( ' · ' ) }
+				</small>
+			) }
+		</>
+	);
 }
 
 /**
@@ -193,13 +226,9 @@ export function NativeQuizWorkspace( { onBank } ) {
 										choose( question.clientId )
 									}
 								>
-									{ sprintf(
-										/* translators: %d: Question position in the quiz. */
-										__( 'Question %d', 'ohmylms' ),
-										index + 1
-									) }
-									<QuestionTypeLabel
+									<QuestionLabel
 										clientId={ question.clientId }
+										number={ index + 1 }
 									/>
 								</Button>
 							</li>

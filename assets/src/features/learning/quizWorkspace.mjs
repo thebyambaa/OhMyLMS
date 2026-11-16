@@ -18,6 +18,19 @@ export function quizQuestions( blocks ) {
 }
 
 /**
+ * Canvas rules while one question is being edited: no document title or appender, room above the
+ * question for its block toolbar, and the question at full width even when its saved place is in
+ * a column, so its statement and answers are never squeezed. Editor only; nothing is saved.
+ */
+const FOCUS_RULES = [
+	'.editor-post-title, .editor-post-title__block, .block-list-appender { display: none !important; }',
+	'.is-root-container { padding-top: 72px !important; }',
+	'.ohmylms-paper-columns-body { display: block !important; column-count: 1 !important; }',
+	'.wp-block-columns { display: block !important; }',
+	'.wp-block-column { flex-basis: auto !important; width: auto !important; }',
+].join( '\n' );
+
+/**
  * Hide other canvas blocks without unmounting their draft editors or save guards.
  * Ancestors and descendants of a focused question remain visible. The stylesheet
  * belongs to the editor document only; no saved block attributes are changed.
@@ -61,11 +74,8 @@ export function focusQuizCanvas( doc, mode, activeId ) {
 					`[data-block="${ view.CSS.escape( block.getAttribute( 'data-block' ) || '' ) }"] { display: none !important; }`
 			)
 			.join( '\n' );
-		const title =
-			'question' === mode && active
-				? '.editor-post-title, .editor-post-title__block, .block-list-appender { display: none !important; }'
-				: '';
-		const next = rules + title;
+		const next =
+			rules + ( 'question' === mode && active ? FOCUS_RULES : '' );
 		if ( style.textContent !== next ) {
 			style.textContent = next;
 		}
@@ -73,7 +83,18 @@ export function focusQuizCanvas( doc, mode, activeId ) {
 	const observer = new view.MutationObserver( update );
 	observer.observe( doc.body, { childList: true, subtree: true } );
 	update();
+	// Hiding the other blocks leaves the canvas scrolled to where the question sat in the whole
+	// document, which cuts off its statement. Start each focused view at the top; the second pass
+	// follows the editor's own scroll to the newly selected block.
+	const toTop = () => {
+		if ( 'document' !== mode && doc.scrollingElement ) {
+			doc.scrollingElement.scrollTop = 0;
+		}
+	};
+	toTop();
+	const settle = view.setTimeout( toTop, 200 );
 	return () => {
+		view.clearTimeout( settle );
 		observer.disconnect();
 		style.remove();
 	};
