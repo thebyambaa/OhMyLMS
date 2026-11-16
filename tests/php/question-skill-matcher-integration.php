@@ -220,7 +220,10 @@ try {
 					),
 				)
 			);
+			// Shortlist mode: each question gets only the skills that share words with it.
+			add_filter( 'ohmylms_question_skill_shared_limit', '__return_zero' );
 			$result = QuestionSkillMatcher::suggest( array( $add, $pct, $mapped, $offtopic ), $syllabus );
+			remove_filter( 'ohmylms_question_skill_shared_limit', '__return_zero' );
 			matcher_check( ! is_wp_error( $result ), 'Suggestion failed: ' . ( is_wp_error( $result ) ? $result->get_error_message() : '' ) );
 			$rows = array_column( $result['rows'], null, 'question' );
 			matcher_check( 4 === count( $rows ), 'Every question needs a row.' );
@@ -236,6 +239,31 @@ try {
 			matcher_check( false !== strpos( $prompt, 'question id="' . $add . '"' ) && false !== strpos( $prompt, 'question id="' . $pct . '"' ), 'The prompt is missing a question.' );
 			matcher_check( false === strpos( $prompt, 'question id="' . $mapped . '"' ) && false === strpos( $prompt, 'question id="' . $offtopic . '"' ), 'The prompt includes a question that did not need AI.' );
 			matcher_check( false === strpos( $prompt, (string) $outside ), 'A skill outside the curriculum was offered.' );
+
+			// Maths notation is read as words for the shortlist.
+			$words = QuestionSkillMatcher::words( 'What is 1/2 + 1/4? And 20% of 3.5?' );
+			matcher_check( false !== strpos( $words, 'fraction' ) && false !== strpos( $words, 'add' ) && false !== strpos( $words, 'percent' ) && false !== strpos( $words, 'decimal' ), 'Maths notation was not turned into words.' );
+
+			// A small curriculum is sent whole, so a question with no shared words still reaches the AI.
+			$bare                         = matcher_question( 'What is 1/2 + 1/4?', array( '3/4', '2/6' ) );
+			Matcher_Test_Provider::$sent  = array();
+			Matcher_Test_Provider::$reply = wp_json_encode(
+				array(
+					'matches' => array(
+						array(
+							'question'   => $bare,
+							'skill'      => $fractions,
+							'confidence' => 0.95,
+							'reason'     => 'Adds fractions.',
+						),
+					),
+				)
+			);
+			$whole = QuestionSkillMatcher::suggest( array( $bare ), $syllabus );
+			matcher_check( true === $whole['meta']['shared'] && 'suggested' === $whole['rows'][0]['status'] && $fractions === $whole['rows'][0]['skill']['id'], 'A small curriculum was not sent whole.' );
+			$prompt = Matcher_Test_Provider::$sent[0]['user'];
+			matcher_check( false !== strpos( $prompt, '<skills>' ) && false !== strpos( $prompt, ' ' . $percent . ':' ) && false === strpos( $prompt, '<candidates>' ), 'The whole skill list was not in the prompt once.' );
+			matcher_check( false === strpos( $prompt, (string) $outside ), 'A skill outside the curriculum was listed.' );
 
 			// Nothing was saved: the questions keep their skills.
 			matcher_check( array() === SkillMap::current( $add ) && $percent === SkillMap::current( $mapped )['p1']['primary'], 'Suggesting changed a question.' );

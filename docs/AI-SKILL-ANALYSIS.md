@@ -115,10 +115,13 @@ Storage: curriculum schema 8 adds `ai_analysis_runs`, `ai_suggestions`, and `sou
 
 In the quiz editor's **Skills** panel (Quiz settings), **Connect skills with AI** suggests the one skill each
 question of the quiz assesses. Choose a curriculum item (a subject, syllabus or one of its first-level
-parts, each listed with its skill count) or the whole library. For every question without a primary skill,
-`Skills\QuestionSkillMatcher` ranks that curriculum's skills against the question's statement and answer
-options with the same keyword ranking as the analysis above, and the AI may choose one of that question's
-own candidates or none ("a wrong skill is worse than none"). A pick outside the candidates is dropped.
+parts, each listed with its skill count) or the whole library. A curriculum of up to 150 skills
+(`ohmylms_question_skill_shared_limit`) is sent to the AI whole, once per batch, because short maths
+questions ("1/2 + 1/4") share few words with skill names. For a larger one, `Skills\QuestionSkillMatcher`
+ranks its skills against each question's statement and answer options with the same keyword ranking as the
+analysis above, after writing maths notation as words (`%` as percentage, `1/2` as fraction, `+` as
+addition…), and offers each question its own shortlist. Either way the AI may choose one offered skill or
+none ("a wrong skill is worse than none"); a pick outside them is dropped.
 Questions that already have a skill are left alone unless **Also suggest for questions that already have a
 skill** is ticked.
 

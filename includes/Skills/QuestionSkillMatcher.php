@@ -37,11 +37,18 @@ final class QuestionSkillMatcher {
 	/** Characters of question text sent for one question. */
 	const MAX_TEXT = 1200;
 
+	/**
+	 * A curriculum with at most this many skills is sent whole, once per batch, instead of a
+	 * keyword shortlist per question: short maths questions ("1/2 + 1/4") share few words with
+	 * skill names, so a shortlist can miss the right skill.
+	 */
+	const SHARED_LIMIT = 150;
+
 	/** Skills read when no curriculum is chosen. */
 	const MAX_LIBRARY = 5000;
 
 	/** Recorded with each run, so replies can be traced to the prompt that produced them. */
-	const PROMPT_VERSION = 1;
+	const PROMPT_VERSION = 2;
 
 	/**
 	 * Curriculum items an author can match against: subjects, syllabuses and their first level, each
@@ -161,29 +168,83 @@ final class QuestionSkillMatcher {
 		foreach ( $library as $id => $skill ) {
 			$docs[ $id ] = trim( $skill['name'] . ' ' . $skill['name'] . ' ' . $skill['topic'] . ' ' . $skill['description'] );
 		}
-		return array_map( 'intval', array_keys( AiAnalysisModel::rank( $text, $docs, self::MAX_CANDIDATES ) ) );
+		return array_map( 'intval', array_keys( AiAnalysisModel::rank( self::words( $text ), $docs, self::MAX_CANDIDATES ) ) );
 	}
 
 	/**
-	 * The prompt for one batch of questions, each with its own candidates.
+	 * Question text with maths notation also written as the words skill names use, so a keyword
+	 * search can find "1/2 + 1/4" under fractions and addition.
+	 *
+	 * @param string $text Question text.
+	 * @return string Text with the words added.
+	 */
+	public static function words( $text ) {
+		$rules = array(
+			'/\d\s*%/'                 => 'percent percentage percentages',
+			'/\d\s*\/\s*\d/'           => 'fraction fractions',
+			'/\d\.\d/'                 => 'decimal decimals',
+			'/\d\s*\+\s*\d/'           => 'add addition sum',
+			'/\d\s*[-\x{2212}]\s*\d/u' => 'subtract subtraction difference',
+			'/\d\s*[*\x{D7}]\s*\d/u'   => 'multiply multiplication product',
+			'/\d\s*\x{F7}\s*\d/u'      => 'divide division',
+			'/\^|\x{B2}|\x{B3}/u'      => 'power powers indices exponent',
+			'/\x{221A}|sqrt/u'         => 'root roots square',
+			'/[a-z]\s*=|=\s*[a-z]/i'   => 'equation equations solve algebra',
+			'/\d\s*:\s*\d/'            => 'ratio ratios',
+		);
+		$extra = array();
+		foreach ( $rules as $pattern => $words ) {
+			if ( preg_match( $pattern, $text ) ) {
+				$extra[] = $words;
+			}
+		}
+		return trim( $text . ' ' . implode( ' ', $extra ) );
+	}
+
+	/**
+	 * One skill as a prompt line.
+	 *
+	 * @param int   $id    Term ID.
+	 * @param array $skill Library entry.
+	 * @return string Line.
+	 */
+	private static function skill_line( $id, array $skill ) {
+		return '- ' . (int) $id . ': ' . AiAnalysisModel::clip( $skill['name'], 160 )
+			. ( '' !== $skill['topic'] ? ' | ' . AiAnalysisModel::clip( $skill['topic'], 80 ) : '' )
+			. ( '' !== $skill['description'] ? ' | ' . AiAnalysisModel::clip( $skill['description'], 200 ) : '' ) . "\n";
+	}
+
+	/**
+	 * The prompt for one batch of questions. With `$shared`, the whole library is listed once and
+	 * every question may use any of it; otherwise each question lists its own candidates.
 	 *
 	 * @param array[] $questions Each: id, text, candidates (term IDs).
 	 * @param array   $library   Skills (library()).
 	 * @param array   $profile   Subject profile.
+	 * @param bool    $shared    List the whole library once.
 	 * @return array{system: string, user: string}
 	 */
-	public static function prompt( array $questions, array $library, array $profile ) {
-		$system = AiAnalysisModel::persona( $profile ) . ' You read assessment questions and decide which one skill each question assesses: the skill a learner shows by answering it correctly, as on Khan Academy, where every exercise practises one skill. For each question choose at most one skill, and only from that question\'s own candidate list. Choose none when no candidate is what the question assesses; a wrong skill is worse than none. Reply with JSON only: {"matches":[{"question":<question id>,"skill":<skill id or null>,"confidence":<0 to 1>,"reason":"<one short sentence>"}]}, one entry per question.';
+	public static function prompt( array $questions, array $library, array $profile, $shared = false ) {
+		$scope  = $shared ? 'only from the skills list' : 'only from that question\'s own candidate list';
+		$system = AiAnalysisModel::persona( $profile ) . ' You read assessment questions and decide which one skill each question assesses: the skill a learner shows by answering it correctly, as on Khan Academy, where every exercise practises one skill. For each question choose at most one skill, ' . $scope . '. Choose none when no skill is what the question assesses; a wrong skill is worse than none. Reply with JSON only: {"matches":[{"question":<question id>,"skill":<skill id or null>,"confidence":<0 to 1>,"reason":"<one short sentence>"}]}, one entry per question.';
 		$user   = '';
-		foreach ( $questions as $question ) {
-			$user .= '<question id="' . (int) $question['id'] . "\">\n" . AiAnalysisModel::clip( $question['text'], self::MAX_TEXT ) . "\n<candidates>\n";
-			foreach ( $question['candidates'] as $id ) {
-				$skill = $library[ $id ];
-				$user .= '- ' . (int) $id . ': ' . AiAnalysisModel::clip( $skill['name'], 160 )
-					. ( '' !== $skill['topic'] ? ' | ' . AiAnalysisModel::clip( $skill['topic'], 80 ) : '' )
-					. ( '' !== $skill['description'] ? ' | ' . AiAnalysisModel::clip( $skill['description'], 200 ) : '' ) . "\n";
+		if ( $shared ) {
+			$user .= "<skills>\n";
+			foreach ( $library as $id => $skill ) {
+				$user .= self::skill_line( $id, $skill );
 			}
-			$user .= "</candidates>\n</question>\n";
+			$user .= "</skills>\n";
+		}
+		foreach ( $questions as $question ) {
+			$user .= '<question id="' . (int) $question['id'] . "\">\n" . AiAnalysisModel::clip( $question['text'], self::MAX_TEXT ) . "\n";
+			if ( ! $shared ) {
+				$user .= "<candidates>\n";
+				foreach ( $question['candidates'] as $id ) {
+					$user .= self::skill_line( $id, $library[ $id ] );
+				}
+				$user .= "</candidates>\n";
+			}
+			$user .= "</question>\n";
 		}
 		return array(
 			'system' => $system,
@@ -233,6 +294,12 @@ final class QuestionSkillMatcher {
 		if ( ! $library ) {
 			return new \WP_Error( 'ohmylms_no_skills', __( 'This curriculum has no skills yet. Add or generate its skills first.', 'ohmylms' ), array( 'status' => 409 ) );
 		}
+		/**
+		 * Largest curriculum sent whole instead of as a keyword shortlist per question.
+		 *
+		 * @param int $limit Number of skills; 0 always uses shortlists.
+		 */
+		$shared  = count( $library ) <= (int) apply_filters( 'ohmylms_question_skill_shared_limit', self::SHARED_LIMIT );
 		$rows    = array();
 		$batch   = array();
 		$allowed = array();
@@ -266,7 +333,7 @@ final class QuestionSkillMatcher {
 				$rows[ $id ]   = $row;
 				continue;
 			}
-			$candidates = self::candidates( $text, $library );
+			$candidates = $shared ? ( '' === $text ? array() : array_map( 'intval', array_keys( $library ) ) ) : self::candidates( $text, $library );
 			if ( ! $candidates ) {
 				$row['reason'] = '' === $text ? __( 'The question has no text to read.', 'ohmylms' ) : __( 'No skill in this curriculum shares words with the question.', 'ohmylms' );
 				$rows[ $id ]   = $row;
@@ -283,6 +350,7 @@ final class QuestionSkillMatcher {
 		$meta = array(
 			'prompt'  => self::PROMPT_VERSION,
 			'library' => count( $library ),
+			'shared'  => $shared,
 		);
 		if ( $batch ) {
 			// The subject is the top of the item's path, or the item itself when it is at the top.
@@ -290,7 +358,7 @@ final class QuestionSkillMatcher {
 			$top     = $path ? $path[0] : ( $item_id ? Items::get( (int) $item_id ) : null );
 			$profile = SubjectProfiles::get( $top ? (string) $top['name'] : '' );
 			$reply   = Client::complete(
-				self::prompt( $batch, $library, $profile ) + array(
+				self::prompt( $batch, $library, $profile, $shared ) + array(
 					'max_tokens' => 1500,
 					'long'       => true,
 				)
