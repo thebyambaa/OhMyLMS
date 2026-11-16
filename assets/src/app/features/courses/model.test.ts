@@ -29,6 +29,17 @@ function form( changes: Partial< FormState > ): FormState {
 }
 
 describe( 'parsers', () => {
+	it( 'defaults old courses to Book and preserves content when switching modes', () => {
+		expect(
+			parseCourse( { ...summary, course_experience: undefined } )
+				.course_experience
+		).toBe( 'book' );
+		const kids = formFromCourse( { ...detail, course_experience: 'kids' } );
+		expect( toInput( kids, 2 ).course_experience ).toBe( 'kids' );
+		expect( { ...toInput( kids, 2 ), course_experience: 'book' } ).toEqual(
+			toInput( base, 2 )
+		);
+	} );
 	it( 'accept the contract shape', () => {
 		expect( parseCourse( summary ) ).toEqual( summary );
 		expect( parseCourseDetail( detail ) ).toEqual( detail );
@@ -50,6 +61,7 @@ describe( 'parsers', () => {
 		[ 'zero id', { ...summary, id: 0 } ],
 		[ 'unknown status', { ...summary, status: 'inherit' } ],
 		[ 'unknown level', { ...summary, level: 'godlike' } ],
+		[ 'unknown experience', { ...summary, course_experience: 'game' } ],
 		[ 'numeric price', { ...summary, regular_price: 49.5 } ],
 		[ 'bad date', { ...summary, sale_start_date: '2026-02-30' } ],
 		[
@@ -334,6 +346,7 @@ describe( 'toInput', () => {
 			description: '<p>Learn algebra.</p>',
 			excerpt: 'A short course.',
 			level: 'beginner',
+			course_experience: 'book',
 			price_type: 'paid',
 			regular_price: '49.50',
 			sale_price: '29.00',

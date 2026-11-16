@@ -176,11 +176,11 @@ try {
 	$journey_state['posts'][] = $journey_state['course'];
 	update_post_meta( $journey_state['course'], '_price_type', 'free' );
 	update_post_meta( $journey_state['course'], '_type', 'self-paced' );
-	$journey_unit                = Catalog::add_chapter( $journey_state['course'], 'Foundations' )['id'];
-	$journey_unit_two            = Catalog::add_chapter( $journey_state['course'], 'Applications' )['id'];
-	$journey_term_name           = 'Compare numbers ' . wp_generate_uuid4();
-	$journey_term                = wp_insert_term( $journey_term_name, Taxonomy::NAME );
-	$journey_state['skill']      = (int) $journey_term['term_id'];
+	$journey_unit           = Catalog::add_chapter( $journey_state['course'], 'Foundations' )['id'];
+	$journey_unit_two       = Catalog::add_chapter( $journey_state['course'], 'Applications' )['id'];
+	$journey_term_name      = 'Compare numbers ' . wp_generate_uuid4();
+	$journey_term           = wp_insert_term( $journey_term_name, Taxonomy::NAME );
+	$journey_state['skill'] = (int) $journey_term['term_id'];
 	// Since b0e21ca5 a lesson is a block lesson item, not a folder: programs keep no lesson groups and the
 	// learner outline lists each unit's activities in published order.
 	$journey_program             = CourseProgram::editor( $journey_state['course'] )['draft'];
@@ -248,9 +248,9 @@ try {
 		)
 	);
 	// A publication stored before b0e21ca5 still names a lesson group holding the unit's first two activities.
-	$journey_legacy_lesson = wp_generate_uuid4();
-	$journey_published_id  = CourseProgram::current( $journey_state['course'] )['id'];
-	$journey_stored        = json_decode( $wpdb->get_var( $wpdb->prepare( 'SELECT program FROM %i WHERE id = %d', Schema::table( 'programs' ), $journey_published_id ) ), true ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fixture publication only.
+	$journey_legacy_lesson    = wp_generate_uuid4();
+	$journey_published_id     = CourseProgram::current( $journey_state['course'] )['id'];
+	$journey_stored           = json_decode( $wpdb->get_var( $wpdb->prepare( 'SELECT program FROM %i WHERE id = %d', Schema::table( 'programs' ), $journey_published_id ) ), true ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fixture publication only.
 	$journey_stored['groups'] = array(
 		array(
 			'id'         => $journey_legacy_lesson,
@@ -265,7 +265,7 @@ try {
 	}
 	unset( $journey_stored_item );
 	$wpdb->update( Schema::table( 'programs' ), array( 'program' => wp_json_encode( $journey_stored ) ), array( 'id' => $journey_published_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Fixture publication only.
-	journey_check( $journey_unit === LegacyLessonLinks::unit_of( $journey_state['course'], $journey_legacy_lesson, 0 ), 'A stored lesson group still resolves to its unit.' );
+	journey_check( LegacyLessonLinks::unit_of( $journey_state['course'], $journey_legacy_lesson, 0 ) === $journey_unit, 'A stored lesson group still resolves to its unit.' );
 	wp_set_current_user( 0 );
 	journey_check( get_permalink( $journey_state['course'] ) . '#hub-unit-1' === LegacyLessonLinks::target( $journey_state['course'], $journey_legacy_lesson ), 'Visitors on an old lesson URL land on the unit of the public course page.' );
 	wp_set_current_user( $journey_state['learner'] );
@@ -280,6 +280,12 @@ try {
 	wp_set_current_user( $journey_state['learner'] );
 	$journey_outline = CourseOutline::get( $journey_state['course'], $journey_state['learner'] );
 	$journey_lesson  = $journey_outline['units'][0];
+	update_post_meta( $journey_state['course'], '_ohmylms_course_experience', 'kids' );
+	$journey_kids = CourseOutline::get( $journey_state['course'], $journey_state['learner'] );
+	journey_check( $journey_kids['units'][0]['items'][0]['available'] && ! $journey_kids['units'][0]['items'][1]['available'], 'Kids mode opens only the first unfinished step.' );
+	journey_check( 403 === journey_api( 'POST', 'courses/' . $journey_state['course'] . '/learning/activities/' . $journey_program['items'][1]['id'] . '/complete' )->get_status(), 'Kids mode rejects direct completion of a later step.' );
+	update_post_meta( $journey_state['course'], '_ohmylms_course_experience', 'book' );
+	journey_check( CourseOutline::get( $journey_state['course'], $journey_state['learner'] )['units'][0]['items'][1]['available'], 'Switching back to Book restores its existing access rules.' );
 	journey_check( ! empty( $journey_outline['enrolled'] ) && array( 'Read numbers', 'Watch numbers', $journey_term_name ) === array_column( $journey_lesson['items'], 'name' ) && array() === $journey_lesson['groups'], 'The unit lists its reading, video/reading and practice in published order: ' . wp_json_encode( array_column( $journey_lesson['items'], 'name' ) ) );
 	journey_check( $journey_lesson['items'] === $journey_lesson['ungrouped'] && ! isset( $journey_lesson['items'][0]['group_id'] ), 'Activities of a stored lesson group stay in published order inside their unit.' );
 	journey_check( 2 === LessonJourney::progress( $journey_lesson['items'] )['activity_total'] && 3 === $journey_outline['summary']['activity_total'], 'Practice stays outside activity completion denominators.' );
@@ -287,7 +293,7 @@ try {
 	$journey_nav = LessonJourney::activity( $journey_outline, $journey_state['posts'][1], 'content' );
 	journey_check( ! isset( $journey_nav['lesson'] ) && 'Read numbers' === $journey_nav['current']['name'] && 'Watch numbers' === $journey_nav['next']['name'], 'Player context keeps the current and next activity.' );
 	$journey_unit_url = Hub::course_url( $journey_state['course'] ) . '#hub-unit-1';
-	journey_check( $journey_unit_url === LegacyLessonLinks::target( $journey_state['course'], $journey_legacy_lesson ), 'An old lesson URL targets its unit on the course overview.' );
+	journey_check( LegacyLessonLinks::target( $journey_state['course'], $journey_legacy_lesson ) === $journey_unit_url, 'An old lesson URL targets its unit on the course overview.' );
 	journey_check( Hub::course_url( $journey_state['course'] ) === LegacyLessonLinks::target( $journey_state['course'], wp_generate_uuid4() ) && Hub::course_url( $journey_state['course'] ) === LegacyLessonLinks::target( $journey_state['course'], '<script>' ), 'Unknown or malformed lesson IDs land on the overview without exposing another unit.' );
 	$journey_redirect = array();
 	$journey_catch    = static function ( $status, $location ) use ( &$journey_redirect ) {
@@ -338,6 +344,10 @@ try {
 	$journey_outline = CourseOutline::get( $journey_state['course'], $journey_state['learner'] );
 	journey_check( 1 === $journey_outline['summary']['activity_done'] && 0 === $journey_outline['summary']['proficient'], 'Completing an activity does not grant skill proficiency.' );
 	journey_check( $journey_outline['continue']['url'] === $journey_lesson['items'][1]['url'], 'Reopening resumes at the next required activity.' );
+	update_post_meta( $journey_state['course'], '_ohmylms_course_experience', 'kids' );
+	$journey_kids = CourseOutline::get( $journey_state['course'], $journey_state['learner'] );
+	journey_check( $journey_kids['units'][0]['items'][0]['complete'] && $journey_kids['units'][0]['items'][0]['available'] && $journey_kids['units'][0]['items'][1]['available'], 'Kids mode preserves completion, allows replay and unlocks the next step immediately.' );
+	update_post_meta( $journey_state['course'], '_ohmylms_course_experience', 'book' );
 	$journey_retry = journey_api( 'POST', 'courses/' . $journey_state['course'] . '/learning/activities/' . $journey_program['items'][0]['id'] . '/complete' );
 	journey_check( 200 === $journey_retry->get_status() && 1 === CourseOutline::get( $journey_state['course'], $journey_state['learner'] )['summary']['activity_done'], 'Retrying completion does not double count activity progress.' );
 	wp_set_current_user( $journey_state['actor'] );
@@ -358,17 +368,20 @@ try {
 		$journey_guidance          = \OhMyLMS\Student\PracticeGuidance::get( $journey_state['course'], '', $journey_state['skill'] );
 		journey_check( 0 === $journey_guidance['skills'][0]['session_limit'] && null === $journey_guidance['recommended'], 'Empty question pools are visible and never recommended.' );
 		wp_set_current_user( $journey_state['actor'] );
-		for ( $journey_q = 0; $journey_q < 5; ++$journey_q ) {
+		for ( $journey_q = 0; $journey_q < 6; ++$journey_q ) {
 			$journey_question = journey_api(
 				'POST',
 				'questions',
 				array(
 					'name'     => 'Guidance question ' . wp_generate_uuid4(),
 					'settings' => array(
-						'type'  => 'single-choice',
-						'score' => array(
+						'type'       => 5 === $journey_q ? 'hangman' : 'single-choice',
+						'live_play'  => 5 === $journey_q,
+						'accepted'   => array( 'ball' ),
+						'max_misses' => 6,
+						'score'      => array(
 							'enabled' => true,
-							'value'   => 1,
+							'value'   => 5 === $journey_q ? 0 : 1,
 						),
 					),
 					'options'  => array(
@@ -436,7 +449,7 @@ try {
 		$journey_next_unit = \OhMyLMS\Student\PracticeGuidance::get( $journey_state['course'], '', $journey_state['skill'] );
 		$journey_extension = CourseOutline::get( $journey_state['course'], $journey_state['learner'] )['units'][1]['items'][0];
 		journey_check( 'Next unit: Applications' === $journey_next_unit['next']['label'] && $journey_extension['url'] === $journey_next_unit['next']['url'], 'A finished unit continues to the first open activity of the next unit: ' . wp_json_encode( $journey_next_unit['next'] ) );
-		journey_check( $journey_next_unit['next'] === \OhMyLMS\Student\PracticeGuidance::get( $journey_state['course'], $journey_legacy_lesson, $journey_state['skill'] )['next'], 'A legacy lesson argument no longer narrows guidance.' );
+		journey_check( \OhMyLMS\Student\PracticeGuidance::get( $journey_state['course'], $journey_legacy_lesson, $journey_state['skill'] )['next'] === $journey_next_unit['next'], 'A legacy lesson argument no longer narrows guidance.' );
 		$journey_lesson_only = new WP_REST_Request( 'GET', '/ohmylms/v1/courses/' . $journey_state['course'] . '/learning/practice-guidance' );
 		$journey_lesson_only->set_query_params( array( 'lesson' => $journey_legacy_lesson ) );
 		journey_check( 400 === rest_do_request( $journey_lesson_only )->get_status(), 'Guidance needs a skill now that lesson pages are gone.' );

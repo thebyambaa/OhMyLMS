@@ -50,6 +50,7 @@ export const summary: Course = {
 	author_id: 1,
 	author_name: 'Ada Admin',
 	level: 'beginner',
+	course_experience: 'book',
 	price_type: 'paid',
 	regular_price: '49.50',
 	sale_price: '29.00',

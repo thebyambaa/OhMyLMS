@@ -47,8 +47,8 @@ final class RevisionPublisher {
 		// own count towards these (see Skills\Evidence), as this revision had them.
 		$settings['skills'] = \OhMyLMS\Quiz\QuizSkills::get( (int) $quiz_id );
 		$sections           = self::sections( $raw );
-		$slots                        = array();
-		$total                        = 0.0;
+		$slots              = array();
+		$total              = 0.0;
 		foreach ( array_values( $quiz->get_questions() ) as $index => $link ) {
 			$type = (string) ( $link['settings']['type'] ?? '' );
 			if ( ! Registry::get( 'question', $type ) ) {
@@ -84,6 +84,9 @@ final class RevisionPublisher {
 			$slot_marks = $sections['marks'][ (int) $link['id'] ] ?? null;
 			if ( null !== $slot_marks ) {
 				$marks = max( 0, (float) $slot_marks ); }
+			if ( 'hangman' === ( $question_settings['type'] ?? '' ) && ! empty( $question_settings['live_play'] ) ) {
+				$marks = 0.0;
+			}
 			$slots[] = array(
 				'slot_no'         => $index + 1,
 				'section'         => (string) ( $sections['by_question'][ (int) $link['id'] ] ?? '' ),

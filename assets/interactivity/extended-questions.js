@@ -10,6 +10,8 @@
 		document.currentScript
 	);
 	const diagramModule = new URL( './diagram-labels.mjs', moduleScript.src );
+	const hangmanModule = new URL( './live-hangman.mjs', moduleScript.src );
+	hangmanModule.search = new URL( moduleScript.src ).search;
 	diagramModule.search = new URL( moduleScript.src ).search;
 	const { __, sprintf } = window.wp.i18n;
 	let instanceId = 0;
@@ -35,6 +37,7 @@
 	 * @property {ChoiceOption[]}                                                      [tokens]      Hot-text tokens.
 	 * @property {number|string}                                                       [max_misses]  Hangman.
 	 * @property {string}                                                              [shape]       Hangman word shape.
+	 * @property {boolean}                                                             [live_play]   Ungraded live Hangman.
 	 * @property {string}                                                              [passage]     Passage text.
 	 * @property {Array<{id: string, label?: string, prompt?: string, kind?: string}>} [parts]       Passage parts.
 	 * @property {boolean}                                                             [multiple]    Match grid: several columns per row.
@@ -1624,6 +1627,29 @@
 			return;
 		}
 		if ( type === 'hangman' ) {
+			if ( config.live_play ) {
+				import( hangmanModule.href )
+					.then( ( { renderHangman } ) =>
+						renderHangman(
+							root,
+							config,
+							{ el, setAnswer },
+							window.wp.i18n
+						)
+					)
+					.catch( () => {
+						root.append(
+							el( 'p', {
+								role: 'alert',
+								text: __(
+									'The game could not load. Reload this page to try again.',
+									'ohmylms'
+								),
+							} )
+						);
+					} );
+				return;
+			}
 			const max = Math.max( 1, Number( config.max_misses ) || 6 );
 			/** @type {string[]} */
 			const guessed = [];

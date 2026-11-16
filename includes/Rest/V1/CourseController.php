@@ -1094,6 +1094,9 @@ class CourseController extends RestController {
 		if ( $request->has_param( 'level' ) || $is_new ) {
 			$meta['_level'] = $request->has_param( 'level' ) ? (string) $request['level'] : 'beginner';
 		}
+		if ( $request->has_param( 'course_experience' ) || $is_new ) {
+			$meta['_ohmylms_course_experience'] = $request->has_param( 'course_experience' ) ? (string) $request['course_experience'] : 'book';
+		}
 		if ( $request->has_param( 'free_access' ) || $is_new ) {
 			$meta['_free_access'] = ( $request->has_param( 'free_access' ) ? (bool) $request['free_access'] : true ) ? '1' : '0';
 		}
@@ -1425,6 +1428,7 @@ class CourseController extends RestController {
 			'description'       => (string) $post->post_content,
 			'excerpt'           => (string) $post->post_excerpt,
 			'level'             => in_array( $level, self::LEVELS, true ) ? $level : 'beginner',
+			'course_experience' => \OhMyLMS\Learning\CourseExperience::mode( $id ),
 			'price_type'        => $free ? 'free' : 'paid',
 			'regular_price'     => $regular,
 			'sale_price'        => $sale,
@@ -1572,6 +1576,7 @@ class CourseController extends RestController {
 				'description'       => $text( __( 'Course description (HTML limited to post content).', 'ohmylms' ), $edit ),
 				'excerpt'           => $text( __( 'Short description.', 'ohmylms' ), $edit, array( 'maxLength' => self::MAX_TEXT ) ),
 				'level'             => $text( __( 'Course level.', 'ohmylms' ), $both, array( 'enum' => self::LEVELS ) ),
+				'course_experience' => $text( __( 'Course experience.', 'ohmylms' ), $both, array( 'enum' => array( 'book', 'kids' ) ) ),
 				'price_type'        => $text( __( 'Free or paid.', 'ohmylms' ), $both, array( 'enum' => array( 'free', 'paid' ) ) ),
 				'regular_price'     => $price( __( 'Regular price as a fixed-decimal string.', 'ohmylms' ), false ),
 				'sale_price'        => $price( __( 'Sale price, or null for no sale.', 'ohmylms' ), true ),

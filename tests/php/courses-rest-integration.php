@@ -222,6 +222,12 @@ try {
 	// Admin: create with defaults.
 	wp_set_current_user( $admin );
 	$default = make_course( array( 'title' => $tag . ' Defaults' ) );
+	ok( 'book' === $default['course_experience'], 'existing presentation defaults to Book mode' );
+	$experience = call_api( 'PUT', '/' . $default['id'], array( 'course_experience' => 'kids' ) );
+	ok( 200 === $experience->get_status() && 'kids' === $experience->get_data()['course_experience'], 'Kids mode persists through the course writer' );
+	ok( 400 === call_api( 'PUT', '/' . $default['id'], array( 'course_experience' => 'unknown' ) )->get_status(), 'unknown course experience is rejected' );
+	$experience = call_api( 'PUT', '/' . $default['id'], array( 'course_experience' => 'book' ) );
+	ok( 200 === $experience->get_status() && $default['title'] === $experience->get_data()['title'], 'switching presentation preserves course content' );
 	ok( 'draft' === $default['status'] && 'beginner' === $default['level'] && 'free' === $default['price_type'] && 'public' === $default['access_type'], 'create defaults' );
 	ok( '0.00' === $default['regular_price'] && '0.00' === $default['price'] && null === $default['sale_price'] && true === $default['enable_reviews'], 'free defaults' );
 	ok( true === $default['free_access'], 'a new course is free access' );

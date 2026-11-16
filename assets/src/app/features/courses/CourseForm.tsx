@@ -44,6 +44,7 @@ const SHOWN_FIELDS = [
 	'status',
 	'scheduled_at',
 	'level',
+	'course_experience',
 	'excerpt',
 	'description',
 	'learning_outcomes',
@@ -451,6 +452,30 @@ export function CourseForm( { id }: { id: number } ) {
 					<div className="oml-editor-aside">
 						<fieldset disabled={ busy || trashed }>
 							<legend>{ __( 'Details', 'ohmylms' ) }</legend>
+							<SelectControl
+								label={ __( 'Course experience', 'ohmylms' ) }
+								value={ form.course_experience ?? 'book' }
+								options={ [
+									{
+										value: 'book',
+										label: __( 'Book mode', 'ohmylms' ),
+									},
+									{
+										value: 'kids',
+										label: __( 'Kids mode', 'ohmylms' ),
+									},
+								] }
+								help={ __(
+									'Book mode uses the standard course layout. Kids mode shows a learning map and unlocks steps in order. Switching keeps all content and learner progress.',
+									'ohmylms'
+								) }
+								onChange={ ( next ) =>
+									update(
+										'course_experience',
+										next === 'kids' ? 'kids' : 'book'
+									)
+								}
+							/>
 							<SelectControl
 								label={ __( 'Level', 'ohmylms' ) }
 								value={ form.level }

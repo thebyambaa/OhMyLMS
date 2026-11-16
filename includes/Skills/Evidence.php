@@ -109,9 +109,12 @@ final class Evidence {
 		) ) as $part ) {
 			$parts[ (string) ( $part['id'] ?? 'p1' ) ] = max( 0, (float) ( $part['fraction'] ?? 1 ) );
 		}
-		$part_total  = array_sum( $parts );
-		$part_total  = $part_total ? $part_total : 1;
-		$settings    = json_decode( (string) $version['settings'], true );
+		$part_total = array_sum( $parts );
+		$part_total = $part_total ? $part_total : 1;
+		$settings   = json_decode( (string) $version['settings'], true );
+		if ( 'hangman' === ( $settings['type'] ?? '' ) && ! empty( $settings['live_play'] ) ) {
+			return 'skipped';
+		}
 		$is_template = \OhMyLMS\Assessment\Template::has( $settings ? $settings : array() );
 		$context     = self::context( $event );
 		$identity    = VersionPublisher::identity( (int) $event['question_id'], false );

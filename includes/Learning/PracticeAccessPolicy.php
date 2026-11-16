@@ -26,6 +26,9 @@ final class PracticeAccessPolicy {
 		if ( ! $enrollment ) {
 			return CourseProgram::error( __( 'You cannot practise in this course.', 'ohmylms' ), 403 ); }
 		$program = CourseProgram::for_enrollment( $enrollment );
+		if ( CourseExperience::locked( $course_id, (int) ( $owner['student_id'] ?? 0 ), $skill, 'practice' ) ) {
+			return CourseProgram::error( __( 'Finish the earlier steps on your learning map first.', 'ohmylms' ), 403 );
+		}
 		if ( ! $program || ! in_array( (int) $skill, array_column( $program['outcomes'], 'term_id' ), true ) ) {
 			return CourseProgram::error( __( 'This skill is not an outcome of your course.', 'ohmylms' ), 403 ); }
 		return true;

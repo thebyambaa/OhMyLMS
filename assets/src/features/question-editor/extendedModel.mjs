@@ -278,7 +278,12 @@ export function extendedDefaults( type ) {
 				seconds: 20,
 			};
 		case 'hangman':
-			return { accepted: [ 'word' ], max_misses: 6 };
+			return {
+				accepted: [ 'word' ],
+				max_misses: 6,
+				live_play: true,
+				score: { enabled: true, value: 0 },
+			};
 		case 'interactive-video':
 			return {
 				video_url: '',
@@ -320,7 +325,7 @@ export function extendedPublicView( type, settings ) {
 			'timed-true-false': [ 'choices', 'seconds' ],
 			'whack-a-mole': [ 'choices', 'seconds' ],
 			'flying-fruit': [ 'choices', 'seconds' ],
-			hangman: [ 'max_misses' ],
+			hangman: [ 'max_misses', 'live_play' ],
 			'interactive-video': [ 'video_url' ],
 		}[ type ] || [];
 	const view = structuredClone(

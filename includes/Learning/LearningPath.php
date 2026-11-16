@@ -18,7 +18,7 @@ final class LearningPath {
 		if ( empty( $item['available'] ) ) {
 			return false; }
 		if ( 'practice' === $item['type'] ) {
-			return true; }
+			return ! CourseExperience::locked( $course, $student, $item['content_id'], 'practice' ); }
 		return ! apply_filters( 'ohmylms_is_lesson_locked', false, $item['content_id'], $course, $student )
 			&& ! apply_filters( 'ohmylms_is_lesson_sequentially_locked', false, $item['content_id'], $course, $student );
 	}
@@ -33,7 +33,7 @@ final class LearningPath {
 			return null; }
 		$program = $state['program'];
 		foreach ( $program['items'] as $item ) {
-			if ( ! $item['available'] ) {
+			if ( ! self::available( $item, $state['student_id'], $program['course_id'] ) ) {
 				continue; }
 			if ( 'practice' === $item['type'] ) {
 				foreach ( $program['outcomes'] as $outcome ) {
@@ -44,7 +44,7 @@ final class LearningPath {
 							'reason' => __( 'Skill target remaining', 'ohmylms' ),
 						); }
 				}
-			} elseif ( $item['required'] && ! $item['complete'] && self::available( $item, $state['student_id'], $program['course_id'] ) ) {
+			} elseif ( ( $item['required'] || 'kids' === CourseExperience::mode( $program['course_id'] ) ) && ! $item['complete'] ) {
 				return array(
 					'name'   => $item['name'],
 					'url'    => $item['url'],
@@ -53,7 +53,7 @@ final class LearningPath {
 			}
 		}
 		foreach ( $program['outcomes'] as $outcome ) {
-			if ( $outcome['required'] && ! $outcome['met'] ) {
+			if ( $outcome['required'] && ! $outcome['met'] && ! CourseExperience::locked( $program['course_id'], $state['student_id'], $outcome['term_id'], 'practice' ) ) {
 				return array(
 					'name'   => $outcome['name'],
 					'url'    => $outcome['practice_url'],

@@ -209,7 +209,10 @@ final class Selector {
 								return null;
 							}
 						}
-						$settings           = json_decode( $row['settings'], true );
+						$settings = json_decode( $row['settings'], true );
+						if ( 'hangman' === $row['type'] && ! empty( $settings['live_play'] ) ) {
+							return null;
+						}
 						$row['is_template'] = \OhMyLMS\Assessment\Template::has( $settings ? $settings : array() );
 						unset( $row['settings'] );
 						return $row;

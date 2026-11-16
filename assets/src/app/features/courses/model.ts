@@ -194,6 +194,10 @@ export function parseCourse( value: unknown ): Course {
 		author_id: count( item.author_id ),
 		author_name: text( item.author_name ),
 		level: oneOf( item.level, LEVELS ),
+		course_experience:
+			undefined === item.course_experience
+				? 'book'
+				: oneOf( item.course_experience, [ 'book', 'kids' ] as const ),
 		price_type: oneOf( item.price_type, PRICE_TYPES ),
 		regular_price: price( item.regular_price ),
 		sale_price: null === item.sale_price ? null : price( item.sale_price ),
@@ -311,6 +315,7 @@ export function formFromCourse( course: CourseDetail ): FormState {
 		description: course.description,
 		excerpt: course.excerpt,
 		level: course.level,
+		course_experience: course.course_experience ?? 'book',
 		price_type: course.price_type,
 		regular_price: course.regular_price,
 		sale_price: course.sale_price ?? '',
@@ -582,6 +587,7 @@ export function toInput( form: FormState, decimals: number ): CourseInput {
 		description: form.description,
 		excerpt: form.excerpt.trim(),
 		level: form.level,
+		course_experience: form.course_experience ?? 'book',
 		price_type: form.price_type,
 		regular_price: paid
 			? normalizePrice( form.regular_price.trim(), decimals )

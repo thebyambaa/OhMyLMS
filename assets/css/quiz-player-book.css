@@ -81,7 +81,7 @@
 
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-quiz-form .ohmylms-quiz-box {
 	margin-bottom: 16px;
-	padding: 20px 24px;
+	padding: 16px 20px;
 	border: 1px solid var(--book-rule);
 	border-radius: 8px;
 	background: var(--book-paper);
@@ -89,7 +89,7 @@
 
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-quiz-form .quiz-box-header {
 	align-items: center;
-	padding: 0 0 12px;
+	padding: 0 0 8px;
 }
 
 /* The question number is the coral label of a practice question. */
@@ -112,7 +112,7 @@
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-quiz-form .question-box {
 	align-items: stretch;
 	min-height: 0;
-	margin-bottom: 14px;
+	margin-bottom: 10px;
 	padding: 0;
 	border: 0;
 	text-align: left;
@@ -122,9 +122,9 @@
 	.ohmylms-quiz-form .question-box
 	:is(.the-question, .ohmylms-question-block-content, p, h1, h2, h3) {
 	margin: 0 0 6px;
-	font-size: 17px;
+	font-size: 16px;
 	font-weight: 400;
-	line-height: 1.6;
+	line-height: 1.5;
 }
 
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-quiz-form .question-box .the-question {
@@ -134,7 +134,7 @@
 /* Answer choices: a column of lettered cards, as printed. */
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-quiz-form .quiz-checkbox-radio-options {
 	grid-template-columns: 1fr;
-	gap: 8px;
+	gap: 6px;
 	counter-reset: book-choice;
 }
 
@@ -143,8 +143,8 @@
 	.option-box {
 	justify-content: flex-start;
 	gap: 12px;
-	min-height: 0;
-	padding: 10px 14px;
+	min-height: 44px;
+	padding: 7px 12px;
 	border: 1px solid color-mix(in srgb, var(--book-violet) 38%, var(--book-paper));
 	border-radius: 5px;
 	background: var(--book-choice);
@@ -173,6 +173,8 @@
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-quiz-form .option-title {
 	font-size: 16px;
 	font-weight: 400;
+	line-height: 1.45;
+	overflow-wrap: anywhere;
 }
 
 :is(body.ohmylms-page, .ohmylms-inline-quiz) .ohmylms-quiz.ohmylms-player-template-book .ohmylms-quiz-form .checked-check {

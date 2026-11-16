@@ -26,7 +26,7 @@ foreach ( $player_outline['units'] as $player_index => $player_candidate ) {
 	}
 }
 ?>
-<div class="oml-player<?php echo $player_quiz ? ' oml-player-taking-quiz' : ''; ?>" data-theme="light">
+<div class="oml-player<?php echo $player_quiz ? ' oml-player-taking-quiz' : ''; ?><?php echo 'kids' === \OhMyLMS\Learning\CourseExperience::mode( $player_outline['id'] ) ? ' oml-kids-player' : ''; ?>" data-theme="light">
 	<header class="oml-player-context">
 		<?php if ( ! $player_quiz ) : ?>
 			<a class="oml-player-exit" href="<?php echo esc_url( PlayerContext::overview_url( $player_outline['id'] ) ); ?>">&larr; <?php esc_html_e( 'Course overview', 'ohmylms' ); ?></a>

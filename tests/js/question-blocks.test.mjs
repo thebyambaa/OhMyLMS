@@ -16,7 +16,7 @@ test( 'each question type creates the existing assessment data schema', () => {
 		assert.equal( patch.settings.type, type );
 		assert.equal(
 			patch.settings.score.value,
-			isUngradedType( type ) ? 0 : 1
+			isUngradedType( type ) || type === 'hangman' ? 0 : 1
 		);
 		assert.ok( Array.isArray( patch.questions ) );
 		if ( type === 'true-false' )

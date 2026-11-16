@@ -215,7 +215,7 @@ final class Composer {
 		}
 		$data = (array) get_post_meta( $id, Library::META, true );
 		foreach ( array_values( ohmylms_get_quiz( (int) $data['quiz_id'] )->get_questions() ) as $index => $link ) {
-			if ( in_array( $link['settings']['type'] ?? '', ExtendedQuestions::UNSCORED_TYPES, true ) ) {
+			if ( in_array( $link['settings']['type'] ?? '', ExtendedQuestions::UNSCORED_TYPES, true ) || ( 'hangman' === ( $link['settings']['type'] ?? '' ) && ! empty( $link['settings']['live_play'] ) ) ) {
 				/* translators: 1: question number, 2: question type. */
 				$problems[] = sprintf( __( 'Question %1$d (%2$s) is an ungraded activity that adds no marks. Remove it from the exam.', 'ohmylms' ), $index + 1, $link['settings']['type'] );
 			}

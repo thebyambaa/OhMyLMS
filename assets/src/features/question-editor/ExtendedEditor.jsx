@@ -811,6 +811,22 @@ export function ExtendedEditor( {
 			) }
 			{ type === 'hangman' && (
 				<>
+					<CheckboxControl
+						label={ __( 'Live game (no marks)', 'ohmylms' ) }
+						checked={ !! value.live_play }
+						help={ __(
+							'Reveal letters as learners play. Live games do not count toward grades or skills. Use Student preview to try the saved game.',
+							'ohmylms'
+						) }
+						onChange={ ( livePlay ) =>
+							set( {
+								live_play: livePlay,
+								...( livePlay
+									? { score: { enabled: true, value: 0 } }
+									: {} ),
+							} )
+						}
+					/>
 					<p className="ohmylms-editor-field-label">
 						{ __(
 							'Word or phrase to guess (extra lines are accepted spellings)',
@@ -825,7 +841,7 @@ export function ExtendedEditor( {
 							'ohmylms'
 						) }
 						help={ __(
-							'Put the clue in the question. Learners choose letters; too many wrong letters fails the question.',
+							'Put the clue in the question. In live mode, letters reveal immediately; the round ends at the mistake limit.',
 							'ohmylms'
 						) }
 						value={ ( value.accepted || [] ).join( '\n' ) }

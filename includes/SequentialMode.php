@@ -77,6 +77,9 @@ class SequentialMode {
 	 * @return bool
 	 */
 	public static function is_sequentially_locked( $content_id, $course_id, $student_id ) {
+		if ( 'kids' === \OhMyLMS\Learning\CourseExperience::mode( $course_id ) ) {
+			return \OhMyLMS\Learning\CourseExperience::locked( $course_id, $student_id, $content_id );
+		}
 		if ( ! $student_id ) {
 			return false;
 		}

@@ -34,6 +34,16 @@ class PracticeController extends RestController {
 	public function register_routes() {
 		register_rest_route(
 			$this->namespace,
+			'/hangman/play',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'permission_callback' => static function () {
+					return is_user_logged_in(); },
+				'callback'            => array( \OhMyLMS\Assessment\ExtendedQuestions::class, 'play_hangman' ),
+			)
+		);
+		register_rest_route(
+			$this->namespace,
 			'/practice/sessions',
 			array(
 				array(

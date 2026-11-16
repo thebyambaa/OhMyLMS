@@ -30,7 +30,8 @@ export function QuestionScoreField( { question, onChange, label } ) {
 			value={ String( settings.score?.value ?? 1 ) }
 			disabled={
 				[ 'structured', 'passage' ].includes( settings.type ) ||
-				isUngradedType( settings.type )
+				isUngradedType( settings.type ) ||
+				( settings.type === 'hangman' && !! settings.live_play )
 			}
 			onChange={ ( value ) =>
 				onChange( {

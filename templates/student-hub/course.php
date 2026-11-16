@@ -17,6 +17,17 @@ $hub_standalone = ! empty( $hub_standalone );
 $hub_outline    = CourseOutline::get( $hub_course_id, get_current_user_id() );
 $hub_back       = $hub_standalone ? Hub::catalog_url() : Hub::url( 'library' );
 
+if ( ! is_wp_error( $hub_outline ) && empty( $hub_outline['locked'] ) && ( ! empty( $hub_outline['enrolled'] ) || current_user_can( 'edit_post', $hub_course_id ) ) && 'kids' === \OhMyLMS\Learning\CourseExperience::mode( $hub_course_id ) ) {
+	ohmylms_get_template(
+		'student-hub/kids-course.php',
+		array(
+			'kids_outline' => $hub_outline,
+			'kids_back'    => $hub_back,
+		)
+	);
+	return;
+}
+
 $hub_back_label      = __( 'Browse subjects', 'ohmylms' );
 $hub_subject_context = absint( get_query_var( 'hub_subject', 0 ) );
 if ( $hub_subject_context ) {

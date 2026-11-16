@@ -112,6 +112,22 @@ final class ExtendedQuestions {
 			// Learners see the word's shape only: letters become blanks, other characters stay.
 			$word          = self::hangman_word( $settings );
 			$view['shape'] = preg_replace( '/[\p{L}\p{N}]/u', '_', preg_replace( '/\p{M}/u', '', $word ) );
+			if ( ! empty( $settings['live_play'] ) && get_current_user_id() ) {
+				$token = wp_generate_uuid4();
+				set_transient(
+					'ohmylms_hangman_' . $token,
+					array(
+						'user'  => get_current_user_id(),
+						'word'  => $word,
+						'limit' => (int) ( $settings['max_misses'] ?? 6 ),
+					),
+					4 * HOUR_IN_SECONDS
+				);
+				$view['live_play']  = true;
+				$view['play_token'] = $token;
+				$view['play_url']   = rest_url( 'ohmylms/v1/hangman/play' );
+				$view['play_nonce'] = wp_create_nonce( 'wp_rest' );
+			}
 		}
 		if ( 'labeling' === $type ) {
 			$view['targets'] = array_map(
@@ -260,7 +276,7 @@ final class ExtendedQuestions {
 				}
 			}
 		}
-		if ( in_array( $type, self::UNSCORED_TYPES, true ) ) {
+		if ( in_array( $type, self::UNSCORED_TYPES, true ) || ( 'hangman' === $type && ! empty( $settings['live_play'] ) ) ) {
 			$valid = $valid && 0.0 === (float) ( $settings['score']['value'] ?? 0 );
 		}
 		return $valid ? true : new \WP_Error( 'ohmylms_extended_settings', __( 'Complete the question response settings and correct answers.', 'ohmylms' ), array( 'status' => 400 ) );
@@ -401,6 +417,13 @@ final class ExtendedQuestions {
 	 * @return array
 	 */
 	public static function grade( $type, array $answer, array $settings ) {
+		if ( 'hangman' === $type && ! empty( $settings['live_play'] ) ) {
+			return array(
+				'correct'  => false,
+				'fraction' => 0.0,
+				'manual'   => false,
+			);
+		}
 		$correct = false;
 		if ( 'hot-text' === $type ) {
 			$ids      = array_map( 'strval', array_column( (array) ( $settings['tokens'] ?? array() ), 'id' ) );
@@ -509,6 +532,77 @@ final class ExtendedQuestions {
 			'correct'  => $correct,
 			'fraction' => $correct ? 1.0 : 0.0,
 			'manual'   => in_array( $type, self::MANUAL_TYPES, true ),
+		);
+	}
+
+	/**
+	 * Reveal guesses for an ungraded game using a short-lived, user-bound capability.
+	 * The target stays on the server. Restarting is allowed; no assessment evidence is written.
+	 *
+	 * @param \WP_REST_Request $request Game capability and chosen letters.
+	 * @return array|\WP_Error Public game progress.
+	 */
+	public static function play_hangman( $request ) {
+		$token   = $request['token'];
+		$guesses = $request['guesses'] ?? '';
+		if ( ! is_string( $token ) || ! wp_is_uuid( $token ) || ! is_string( $guesses ) || ! preg_match( '/\A[\p{L}\p{M}]{0,120}\z/u', $guesses ) ) {
+			return new \WP_Error( 'ohmylms_hangman_input', __( 'Choose one letter at a time.', 'ohmylms' ), array( 'status' => 400 ) );
+		}
+		$game = get_transient( 'ohmylms_hangman_' . $token );
+		if ( ! $game || get_current_user_id() !== $game['user'] ) {
+			return new \WP_Error( 'ohmylms_hangman_expired', __( 'Reload the question to start this game again.', 'ohmylms' ), array( 'status' => 410 ) );
+		}
+		return self::hangman_progress( $game['word'], $guesses, $game['limit'] );
+	}
+
+	/**
+	 * Project a bounded game without revealing unguessed letters before it ends.
+	 *
+	 * @param string $word Hidden word.
+	 * @param string $guesses Ordered letter guesses.
+	 * @param int    $limit Wrong guesses allowed.
+	 * @return array Public game progress.
+	 */
+	public static function hangman_progress( $word, $guesses, $limit ) {
+		preg_match_all( '/\X/u', $word, $segments );
+		preg_match_all( '/\X/u', mb_strtolower( $guesses, 'UTF-8' ), $chosen );
+		$target = array_map(
+			static function ( $letter ) {
+				return mb_strtolower( $letter, 'UTF-8' );
+			},
+			array_values(
+				array_filter(
+					$segments[0],
+					static function ( $letter ) {
+						return (bool) preg_match( '/\p{L}/u', $letter );
+					}
+				)
+			)
+		);
+		$used   = array();
+		$misses = 0;
+		$limit  = max( 1, min( 10, (int) $limit ) );
+		foreach ( array_unique( $chosen[0] ) as $letter ) {
+			if ( $misses >= $limit || ! array_diff( $target, $used ) ) {
+				break; }
+			$used[]  = $letter;
+			$misses += in_array( $letter, $target, true ) ? 0 : 1;
+		}
+		$solved  = ! array_diff( $target, $used );
+		$done    = $solved || $misses >= $limit;
+		$letters = array_map(
+			static function ( $letter ) use ( $used, $done ) {
+				return $done || ! preg_match( '/\p{L}/u', $letter ) || in_array( mb_strtolower( $letter, 'UTF-8' ), $used, true ) ? $letter : null;
+			},
+			$segments[0]
+		);
+		return array(
+			'letters'  => $letters,
+			'guessed'  => $used,
+			'mistakes' => $misses,
+			'limit'    => $limit,
+			'done'     => $done,
+			'solved'   => $solved,
 		);
 	}
 }

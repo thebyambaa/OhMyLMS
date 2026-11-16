@@ -25,6 +25,7 @@ export interface ContentCounts {
 
 /** A course as listed (`context=view`). Money is a fixed-decimal string; dates are `YYYY-MM-DD`. */
 export interface Course {
+	course_experience?: 'book' | 'kids';
 	id: number;
 	title: string;
 	slug: string;
@@ -76,6 +77,7 @@ export interface CourseDetail extends Course {
 
 /** The writable fields of a course, exactly as the REST API accepts them. */
 export interface CourseInput {
+	course_experience?: 'book' | 'kids';
 	title: string;
 	slug: string;
 	status: WritableStatus;
@@ -150,6 +152,7 @@ export interface CourseFilters {
 
 /** The editor state. Numbers stay strings until the form is validated and converted. */
 export interface FormState {
+	course_experience?: 'book' | 'kids';
 	title: string;
 	slug: string;
 	status: WritableStatus;

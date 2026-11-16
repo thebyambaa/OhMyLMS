@@ -548,3 +548,54 @@ body.ohmylms-diagram-open { overflow: hidden; }
 	outline: 2px solid var(--oml-focus);
 	outline-offset: 2px;
 }
+
+.ohmylms-live-hangman {
+	justify-items: center;
+	gap: 10px;
+	text-align: center;
+}
+
+.ohmylms-live-hangman .ohmylms-hangman-shape {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 4px;
+	margin: 0;
+}
+
+.ohmylms-live-hangman .ohmylms-hangman-shape span {
+	min-width: 1.1em;
+	border-bottom: 2px solid var(--oml-border);
+	color: var(--oml-text);
+}
+
+.ohmylms-live-hangman p {
+	margin: 0;
+}
+
+.ohmylms-live-hangman meter {
+	width: min(100%, 20rem);
+	height: 12px;
+}
+
+.ohmylms-hangman-input {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.ohmylms-live-hangman .ohmylms-hangman-input input {
+	width: 5em;
+	min-height: 44px;
+	text-align: center;
+}
+
+.ohmylms-live-hangman button {
+	min-width: 36px;
+	min-height: 36px;
+}
+
+.ohmylms-live-hangman button:focus-visible {
+	outline: 2px solid var(--oml-primary);
+	outline-offset: 2px;
+}
