@@ -116,12 +116,25 @@ final class Evidence {
 		$context     = self::context( $event );
 		$identity    = VersionPublisher::identity( (int) $event['question_id'], false );
 		$identity    = $identity ? $identity : array();
-		foreach ( SkillMap::for_version( (int) $event['version_id'] ) as $mapping ) {
+		$mappings    = SkillMap::for_version( (int) $event['version_id'] );
+		$from_quiz   = false;
+		if ( ! $mappings ) {
+			// A question with no skill of its own counts towards the skills of the quiz it was answered in.
+			$mappings  = self::quiz_mappings( $event );
+			$from_quiz = true;
+		}
+		foreach ( $mappings as $mapping ) {
 			$part = (string) $mapping['part_id'];
 			// Part-level events attribute only to their own part; whole-question events are split by part weight.
-			if ( '' !== $event['part_id'] && $event['part_id'] !== $part ) {
+			// A quiz's skill covers the whole question, so it takes every part's marks.
+			if ( ! $from_quiz && '' !== $event['part_id'] && $event['part_id'] !== $part ) {
 				continue; }
-			$share = '' !== $event['part_id'] ? 1.0 : ( ( $parts[ $part ] ?? 0 ) / $part_total );
+			if ( $from_quiz ) {
+				$part  = '' !== $event['part_id'] ? (string) $event['part_id'] : 'p1';
+				$share = 1.0;
+			} else {
+				$share = '' !== $event['part_id'] ? 1.0 : ( ( $parts[ $part ] ?? 0 ) / $part_total );
+			}
 			if ( $share <= 0 ) {
 				continue; }
 			$available = (float) $event['max_marks'] > 0 ? (float) $event['max_marks'] * $share : $share;
@@ -166,6 +179,42 @@ final class Evidence {
 		}
 		self::recompute( (int) $event['student_id'], array_keys( $terms ) );
 		return 'done';
+	}
+
+	/**
+	 * The quiz's skills as primary mappings, for a quiz answer to a question with no skill of its own.
+	 * They are read from the revision the attempt was taken under, so later edits to the quiz never
+	 * change what an old attempt counted towards. Attempts from before revisions froze skills, or
+	 * without a revision, use the quiz's skills now.
+	 *
+	 * @param array $event Grade event.
+	 * @return array[] Mappings: part_id, term_id, role.
+	 */
+	private static function quiz_mappings( array $event ) {
+		global $wpdb;
+		if ( 'quiz' !== $event['source_type'] || ! (int) $event['source_id'] ) {
+			return array();
+		}
+		$attempt  = (int) $event['source_id'];
+		$revision = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT revision_id FROM %i WHERE attempt_id=%d', Schema::table( 'attempt_context' ), $attempt ) );
+		$settings = $revision ? json_decode( (string) $wpdb->get_var( $wpdb->prepare( 'SELECT settings FROM %i WHERE id=%d', Schema::table( 'quiz_revisions' ), $revision ) ), true ) : null;
+		if ( is_array( $settings ) && array_key_exists( 'skills', $settings ) ) {
+			$terms = (array) $settings['skills'];
+		} else {
+			$quiz  = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT quiz_id FROM %i WHERE id=%d', $wpdb->prefix . 'ohmylms_quiz_attempts', $attempt ) );
+			$terms = $quiz ? \OhMyLMS\Quiz\QuizSkills::get( $quiz ) : array();
+		}
+		$mappings = array();
+		foreach ( array_unique( array_filter( array_map( 'intval', $terms ) ) ) as $term_id ) {
+			if ( term_exists( $term_id, Taxonomy::NAME ) ) {
+				$mappings[] = array(
+					'part_id' => 'p1',
+					'term_id' => $term_id,
+					'role'    => 'primary',
+				);
+			}
+		}
+		return $mappings;
 	}
 
 	/** Independence and first-try information from the response surface.

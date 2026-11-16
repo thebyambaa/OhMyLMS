@@ -43,7 +43,10 @@ final class RevisionPublisher {
 		$settings['passing_mark']     = (float) $quiz->get_passing_grade();
 		$settings['attempts_allowed'] = (int) $quiz->get_take_attempts();
 		$settings['kind']             = in_array( $raw['assessment_kind'] ?? 'quiz', array( 'quiz', 'practice', 'exam' ), true ) ? ( $raw['assessment_kind'] ?? 'quiz' ) : 'quiz';
-		$sections                     = self::sections( $raw );
+		// The quiz's own skills, frozen like everything else: answers to a question with no skill of its
+		// own count towards these (see Skills\Evidence), as this revision had them.
+		$settings['skills'] = \OhMyLMS\Quiz\QuizSkills::get( (int) $quiz_id );
+		$sections           = self::sections( $raw );
 		$slots                        = array();
 		$total                        = 0.0;
 		foreach ( array_values( $quiz->get_questions() ) as $index => $link ) {

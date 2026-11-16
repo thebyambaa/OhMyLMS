@@ -17,6 +17,13 @@ skill: marks, whether it was independent (no hint), whether it was a first try, 
 difficulty, and the activity it came from. Rows are written once per grade event and a regrade supersedes
 the old row. Everything below is derived from this table, so it can always be rebuilt.
 
+**Which skills an answer counts towards.** A question's own skills (frozen with each question version)
+decide it. A quiz answer to a question that has no skill of its own counts towards the quiz's skills
+instead, as primary evidence for each one, taking the question's full marks. The quiz's skills are frozen
+into each published quiz revision (`settings.skills`), so editing a quiz never changes what an earlier
+attempt counted towards; attempts on revisions published before this rule use the quiz's current skills.
+Lesson skills and course outlines say what is taught; they never produce evidence.
+
 **Which activities count.** *Settings → Gamification → XP and mastery → Answers that count toward skills*
 switches each activity (quiz, practice, exam, inline check, question player, or any registered assessment
 kind) on or off. A kind's default comes from its profile (`skills` => true; see

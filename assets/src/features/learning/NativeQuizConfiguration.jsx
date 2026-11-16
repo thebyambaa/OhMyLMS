@@ -380,7 +380,7 @@ export function NativeQuizConfiguration( { exam = false } ) {
 			<PanelBody title={ __( 'Skills', 'ohmylms' ) } initialOpen>
 				<p>
 					{ __(
-						'The skills this quiz assesses as a whole. What a student’s answers count towards is set on each question: select a question block to choose its skill.',
+						'The skills this quiz assesses. Answers to a question with its own skill count towards that skill; answers to every other question count towards these. Select a question block to give it its own skill.',
 						'ohmylms'
 					) }
 				</p>
