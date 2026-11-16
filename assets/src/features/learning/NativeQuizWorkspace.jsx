@@ -78,13 +78,26 @@ export function NativeQuizWorkspace( { onBank } ) {
 	const [ mode, setMode ] = useState( 'question' );
 	const [ activeId, setActiveId ] = useState( '' );
 	const paper = usePaperView();
-	const { questions, selectedId } = useSelect( ( getStore ) => {
-		const editor = getStore( 'core/block-editor' );
-		return {
-			questions: quizQuestions( editor.getBlocks() ),
-			selectedId: editor.getSelectedBlockClientId(),
-		};
-	}, [] );
+	const { questions, selectedId, moveIndex, siblingCount, canMove, canAdd } =
+		useSelect(
+			( getStore ) => {
+				const editor = getStore( 'core/block-editor' );
+				const root = editor.getBlockRootClientId( activeId ) || '';
+				return {
+					questions: quizQuestions( editor.getBlocks() ),
+					selectedId: editor.getSelectedBlockClientId(),
+					moveIndex: editor.getBlockIndex( activeId ),
+					siblingCount: editor.getBlockOrder( root ).length,
+					canMove:
+						!! activeId &&
+						editor.canMoveBlocks( [ activeId ], root ),
+					canAdd: editor.canInsertBlockType(
+						'ohmylms/shared-multiple-choice'
+					),
+				};
+			},
+			[ activeId ]
+		);
 	const {
 		selectBlock,
 		insertBlock,
@@ -182,7 +195,11 @@ export function NativeQuizWorkspace( { onBank } ) {
 		const root = editor.getBlockRootClientId( activeId ) || '';
 		const position = editor.getBlockIndex( activeId );
 		const target = position + direction;
-		if ( target >= 0 && target < editor.getBlockOrder( root ).length ) {
+		if (
+			editor.canMoveBlocks( [ activeId ], root ) &&
+			target >= 0 &&
+			target < editor.getBlockOrder( root ).length
+		) {
 			moveBlockToPosition( activeId, root, root, target );
 		}
 	};
@@ -245,6 +262,7 @@ export function NativeQuizWorkspace( { onBank } ) {
 					<div className="ohmylms-quiz-workspace-actions">
 						<Button
 							variant="primary"
+							disabled={ ! canAdd }
 							onClick={ () => {
 								const block = createBlock(
 									'ohmylms/shared-multiple-choice',
@@ -261,7 +279,11 @@ export function NativeQuizWorkspace( { onBank } ) {
 						>
 							{ __( 'Add question', 'ohmylms' ) }
 						</Button>
-						<Button variant="secondary" onClick={ onBank }>
+						<Button
+							variant="secondary"
+							onClick={ onBank }
+							disabled={ ! canAdd }
+						>
 							{ __( 'Question bank', 'ohmylms' ) }
 						</Button>
 					</div>
@@ -282,12 +304,16 @@ export function NativeQuizWorkspace( { onBank } ) {
 						<div className="ohmylms-quiz-workspace-actions">
 							<Button
 								variant="tertiary"
+								disabled={ ! canMove || moveIndex <= 0 }
 								onClick={ () => move( -1 ) }
 							>
 								{ __( 'Move up', 'ohmylms' ) }
 							</Button>
 							<Button
 								variant="tertiary"
+								disabled={
+									! canMove || moveIndex >= siblingCount - 1
+								}
 								onClick={ () => move( 1 ) }
 							>
 								{ __( 'Move down', 'ohmylms' ) }

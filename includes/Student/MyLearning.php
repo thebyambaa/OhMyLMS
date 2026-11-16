@@ -11,7 +11,6 @@
 
 namespace OhMyLMS\Student;
 
-
 defined( 'ABSPATH' ) || exit;
 
 /** Courses and followed collections for one learner. */
@@ -77,5 +76,4 @@ final class MyLearning {
 			'pages' => max( 1, (int) ceil( $total / $per_page ) ),
 		);
 	}
-
 }

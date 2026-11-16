@@ -19,6 +19,11 @@
  * @property {string}                  nextText            Next label.
  * @property {string}                  [markText]          Mark label.
  * @property {string}                  [markedText]        Marked label.
+ * @property {string}                  [questionLabel]     Palette number label.
+ * @property {string}                  [answeredText]      Answered status label.
+ * @property {string}                  [unansweredText]    Visited but unanswered label.
+ * @property {string}                  [notVisitedText]    Unvisited status label.
+ * @property {string}                  [currentText]       Current question label.
  * @property {boolean}                 submitting          A submission is running.
  * @property {boolean}                 exitOpen            The exit dialog is open.
  * @property {string}                  error               Error message.
@@ -109,6 +114,36 @@ export function createPlayerState( getContext ) {
 			return `${ c.duration ? Math.max( 0, ( c.remaining / c.duration ) * 100 ) : 0 }%`;
 		},
 		// Exam palette: one button per question, each with its own `questionNumber` context.
+		get questionStatusLabel() {
+			const c = getContext();
+			let status = c.notVisitedText;
+			if ( c.answered?.[ c.questionNumber ] ) {
+				status = c.answeredText;
+			} else if ( c.visited?.[ c.questionNumber ] ) {
+				status = c.unansweredText;
+			}
+			return [
+				( c.questionLabel || '' ).replace(
+					'%d',
+					String( c.questionNumber )
+				),
+				status,
+				c.marked?.[ c.questionNumber ] ? c.markedText : '',
+				c.page === c.questionNumber ? c.currentText : '',
+			]
+				.filter( Boolean )
+				.join( ', ' );
+		},
+		get questionStatusSymbol() {
+			const c = getContext();
+			if ( c.marked?.[ c.questionNumber ] ) {
+				return c.answered?.[ c.questionNumber ] ? '✓ ⚑' : '⚑';
+			}
+			if ( c.answered?.[ c.questionNumber ] ) {
+				return '✓';
+			}
+			return c.visited?.[ c.questionNumber ] ? '–' : '○';
+		},
 		get isCurrentQuestion() {
 			const c = getContext();
 			return c.page === c.questionNumber;

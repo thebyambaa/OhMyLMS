@@ -620,7 +620,7 @@ function LessonChoiceEdit( {
 					{ error }
 				</Notice>
 			) }
-			{ paper && ! preview && (
+			{ paper && (
 				<PaperQuestion
 					question={ question }
 					prompt={ questionPrompt( question ) }
@@ -635,7 +635,7 @@ function LessonChoiceEdit( {
 					{ incompleteMessage }
 				</p>
 			) }
-			{ preview && (
+			{ preview && ! paper && (
 				<QuestionBlockPreview
 					question={ question }
 					clientId={ clientId }

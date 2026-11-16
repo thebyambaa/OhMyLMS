@@ -317,5 +317,4 @@ final class LearnerProgress {
 			'shared' => self::combined( (int) $student, $term_ids, $entries ),
 		);
 	}
-
 }

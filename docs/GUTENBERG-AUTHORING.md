@@ -4,9 +4,13 @@ Quizzes and reusable questions now use the native WordPress block editor by defa
 
 ## Authoring
 
+**Assessment type** offers **Quiz** and **Exam** only. Existing practice records retain their saved rules until an author explicitly selects a supported type; rendering the selector never migrates stored data. Linked exams cannot be switched to a quiz.
+
 Quizzes open in a dedicated workspace around the native Gutenberg canvas: a numbered question navigator, **Add question**, **Question bank**, and a **Quiz settings** shortcut. Selecting a question focuses its existing editor without unmounting other question drafts or their save guards. **Title and introduction** shows the non-question content; **Full document layout** restores all blocks for arranging mixed or nested layouts. Move up/down keeps a question in its existing parent container. Duplicate question remains the question editor's independent-bank-copy action.
 
 Exams retain the structured document and paper workspace rather than the focused quiz workspace. Exam content supports online delivery and offline printing; paper view is an authoring/print presentation, not a separate question bank. Existing student preview, numbering, paper sections, page breaks, print controls and assessment settings remain in place.
+
+Paper view renders every question as printed content, including unselected questions. Selecting a question opens its editing fields in the block sidebar. Online exams use numbered palette buttons with colors, symbols and accessible labels for answered, unanswered, unvisited, marked and current questions. An answered question marked for review retains both indicators.
 
 - **Add Quiz** creates a draft and opens Gutenberg. Add core blocks for introductory content and Ohmylms Question blocks for questions. Drag blocks or use List view to order questions.
 - **New question** and editable bank question links open the standalone question editor. Its single question block is locked in place. The question statement and answers continue to live in the bank; the Gutenberg document is a reference shell, never a second copy of the answer key.

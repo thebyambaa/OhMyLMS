@@ -1,7 +1,7 @@
 /** @jsx createElement */
 import { createElement } from '@wordpress/element';
 import { dispatch, useSelect } from '@wordpress/data';
-import { SelectControl } from '@wordpress/components';
+import { RadioControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
 /**
@@ -50,25 +50,30 @@ export function NativeAssessmentType() {
 		window.ohmylmsNativeLesson?.profile?.panel === 'exam' &&
 		window.ohmylmsNativeLesson?.profile?.data?.id
 	);
-	const options = window.ohmylmsNativeLesson?.assessmentTypes || [
+	const options = [
 		{ value: 'quiz', label: __( 'Quiz', 'ohmylms' ) },
 		{ value: 'exam', label: __( 'Exam', 'ohmylms' ) },
-		{ value: 'practice', label: __( 'Practice', 'ohmylms' ) },
 	];
+	/** @type {string} */
+	let help = __(
+		'Use the same questions as a quiz or an exam. Review the settings below before saving.',
+		'ohmylms'
+	);
+	if ( linkedExam ) {
+		help = __( 'This assessment is linked to an exam.', 'ohmylms' );
+	} else if ( 'practice' === settings.kind ) {
+		help = __(
+			'This assessment retains its saved practice rules. Choose Quiz or Exam to change its type.',
+			'ohmylms'
+		);
+	}
 	return (
-		<SelectControl
+		<RadioControl
 			label={ __( 'Assessment type', 'ohmylms' ) }
-			value={ settings.kind }
+			selected={ settings.kind }
 			options={ options }
 			disabled={ linkedExam }
-			help={
-				linkedExam
-					? __( 'This assessment is linked to an exam.', 'ohmylms' )
-					: __(
-							'Use the same questions as a quiz or an exam. Review the settings below before saving.',
-							'ohmylms'
-						)
-			}
+			help={ help }
 			onChange={ ( kind ) => setSettings( { ...settings, kind } ) }
 		/>
 	);

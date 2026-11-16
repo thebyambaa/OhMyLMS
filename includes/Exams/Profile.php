@@ -84,12 +84,18 @@ final class Profile {
 	public static function context( $context, $quiz_id ) {
 		unset( $quiz_id );
 		$context += array(
-			'marked'        => (object) array(),
-			'visited'       => (object) array( 1 => true ),
-			'markText'      => __( 'Mark for review', 'ohmylms' ),
-			'markedText'    => __( 'Marked for review', 'ohmylms' ),
+			'marked'         => (object) array(),
+			'visited'        => (object) array( 1 => true ),
+			'markText'       => __( 'Mark for review', 'ohmylms' ),
+			'markedText'     => __( 'Marked for review', 'ohmylms' ),
+			/* translators: %d: question number. */
+			'questionLabel'  => __( 'Question %d', 'ohmylms' ),
+			'answeredText'   => __( 'Answered', 'ohmylms' ),
+			'unansweredText' => __( 'Not answered', 'ohmylms' ),
+			'notVisitedText' => __( 'Not visited', 'ohmylms' ),
+			'currentText'    => __( 'Current question', 'ohmylms' ),
 			/* translators: %d: number of questions without an answer. */
-			'confirmSubmit' => __( '%d questions have no answer yet. Submit the exam anyway?', 'ohmylms' ),
+			'confirmSubmit'  => __( '%d questions have no answer yet. Submit the exam anyway?', 'ohmylms' ),
 		);
 		$context['nextText'] = __( 'Save and Next', 'ohmylms' );
 		return $context;

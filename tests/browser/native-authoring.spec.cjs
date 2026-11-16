@@ -343,8 +343,8 @@ test( 'bank insertion stays in the native draft and unsaved assessment settings 
 		);
 		await openPanel( page, 'Quiz and exam' );
 		await page
-			.getByLabel( 'Assessment type', { exact: true } )
-			.selectOption( 'exam' );
+			.getByRole( 'radio', { name: 'Exam', exact: true } )
+			.check();
 		await expect
 			.poll( () =>
 				page.evaluate( () =>

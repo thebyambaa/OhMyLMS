@@ -32,16 +32,22 @@ if ( ! $groups ) {
 						data-wp-class--is-marked="state.isQuestionMarked"
 						data-wp-class--is-visited="state.isQuestionVisited"
 						data-wp-bind--aria-current="state.ariaCurrent"
-						aria-label="<?php echo esc_attr( sprintf( /* translators: %d: question number. */ __( 'Question %d', 'ohmylms' ), $number ) ); ?>"><?php echo (int) $number; ?></button>
+						data-wp-bind--aria-label="state.questionStatusLabel"
+						data-wp-bind--title="state.questionStatusLabel"
+						aria-label="<?php echo esc_attr( sprintf( /* translators: %d: question number. */ __( 'Question %d', 'ohmylms' ), $number ) ); ?>">
+						<span><?php echo (int) $number; ?></span>
+						<span class="ohmylms-exam-palette-status" aria-hidden="true" data-wp-text="state.questionStatusSymbol">○</span>
+					</button>
 				<?php endforeach; ?>
 			</div>
 		</div>
 	<?php endforeach; ?>
 	<ul class="ohmylms-exam-legend">
-		<li><span class="swatch is-answered"></span><?php esc_html_e( 'Answered', 'ohmylms' ); ?></li>
-		<li><span class="swatch is-visited"></span><?php esc_html_e( 'Not answered', 'ohmylms' ); ?></li>
-		<li><span class="swatch is-marked"></span><?php esc_html_e( 'Marked', 'ohmylms' ); ?></li>
-		<li><span class="swatch"></span><?php esc_html_e( 'Not visited', 'ohmylms' ); ?></li>
+		<li><span class="swatch is-answered" aria-hidden="true">✓</span><?php esc_html_e( 'Answered', 'ohmylms' ); ?></li>
+		<li><span class="swatch is-visited" aria-hidden="true">–</span><?php esc_html_e( 'Not answered', 'ohmylms' ); ?></li>
+		<li><span class="swatch is-marked" aria-hidden="true">⚑</span><?php esc_html_e( 'Marked', 'ohmylms' ); ?></li>
+		<li><span class="swatch" aria-hidden="true">○</span><?php esc_html_e( 'Not visited', 'ohmylms' ); ?></li>
+		<li><span class="swatch is-current" aria-hidden="true"></span><?php esc_html_e( 'Current question', 'ohmylms' ); ?></li>
 	</ul>
 </nav>
 

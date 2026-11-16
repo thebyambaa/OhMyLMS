@@ -28,6 +28,8 @@ export interface EditorSelectors {
 }
 
 export interface BlockEditorSelectors {
+	canMoveBlocks( clientIds: string[], rootClientId?: string ): boolean;
+	canInsertBlockType( blockName: string, rootClientId?: string ): boolean;
 	getSelectedBlockClientId(): string | null;
 	getBlock( clientId: string ): BlockInstance | null;
 	getBlocks( rootClientId?: string ): BlockInstance[];

@@ -1,6 +1,50 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createQuizPlayer } from '../../assets/interactivity/quiz-player/player.js';
+import { createPlayerState } from '../../assets/interactivity/quiz-player/state.js';
+
+test( 'exam palette describes unanswered, answered, marked and current states without relying on color', () => {
+	const context = {
+		questionNumber: 2,
+		page: 1,
+		totalPages: 2,
+		answered: {},
+		visited: {},
+		marked: {},
+		questionLabel: 'Question %d',
+		answeredText: 'Answered',
+		unansweredText: 'Not answered',
+		notVisitedText: 'Not visited',
+		currentText: 'Current question',
+		markedText: 'Marked for review',
+	};
+	const state = createPlayerState( () => context );
+	assert.equal( state.questionStatusLabel, 'Question 2, Not visited' );
+	assert.equal( state.questionStatusSymbol, '○' );
+	context.page = 2;
+	context.visited[ 2 ] = true;
+	assert.equal(
+		state.questionStatusLabel,
+		'Question 2, Not answered, Current question'
+	);
+	assert.equal( state.questionStatusSymbol, '–' );
+	context.answered[ 2 ] = true;
+	assert.equal( state.questionStatusSymbol, '✓' );
+	context.marked[ 2 ] = true;
+	assert.equal(
+		state.questionStatusLabel,
+		'Question 2, Answered, Marked for review, Current question'
+	);
+	assert.equal( state.questionStatusSymbol, '✓ ⚑' );
+	assert.equal( state.answeredCount, 1 );
+	assert.equal( state.markedCount, 1 );
+	context.answered[ 2 ] = false;
+	assert.equal( state.questionStatusSymbol, '⚑' );
+	context.marked[ 2 ] = false;
+	assert.equal( state.questionStatusSymbol, '–' );
+	assert.equal( state.notAnsweredCount, 1 );
+	assert.equal( state.notVisitedCount, 1 );
+} );
 
 test( 'expiry preserves embedded navigation and retains standalone redirects', async ( t ) => {
 	const destinations = [];

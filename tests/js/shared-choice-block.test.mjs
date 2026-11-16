@@ -269,6 +269,7 @@ function lessonHarness( {
 	approvalFailure = false,
 	refreshFailure = false,
 	pauseSave = false,
+	paper = false,
 	context = {},
 } = {} ) {
 	let cursor = 0;
@@ -298,6 +299,9 @@ function lessonHarness( {
 		current_version_id: 7,
 	};
 	const scope = {
+		usePaperQuestion: () => ( { view: paper, label: '1', settings: {} } ),
+		PaperQuestion: 'paper-question',
+		questionPrompt,
 		createElement: element,
 		Fragment: 'fragment',
 		__: ( text ) => text,
@@ -414,6 +418,58 @@ function lessonHarness( {
 	};
 	return { render, attributes, calls, state, effects, autosave, resumeSave };
 }
+
+test( 'paper questions remain printed when selected or unselected', () => {
+	const harness = lessonHarness( { paper: true } );
+	for ( const selected of [ true, false ] ) {
+		const tree = nodes( harness.render( selected ) );
+		assert.equal(
+			tree.filter( ( node ) => node.type === 'paper-question' ).length,
+			1
+		);
+		assert.ok( ! tree.some( ( node ) => node.type === 'student-frame' ) );
+		assert.equal(
+			tree.some( ( node ) => node.type === 'fields' ),
+			selected
+		);
+	}
+	assert.ok(
+		nodes( lessonHarness().render( false ) ).some(
+			( node ) => node.type === 'student-frame'
+		)
+	);
+} );
+
+test( 'assessment type offers only quiz and exam without changing saved rules on render', () => {
+	const edits = [];
+	const assessment = { kind: 'practice', accommodations: { extra: 5 } };
+	const Type = compile(
+		'assets/src/features/learning/NativeAssessmentSettings.jsx',
+		{
+			createElement: element,
+			__: ( text ) => text,
+			RadioControl: 'radio',
+			window: {},
+			useSelect: ( selector ) =>
+				selector( () => ( {
+					getEditedPostAttribute: () => ( { assessment } ),
+				} ) ),
+			dispatch: () => ( { editPost: ( value ) => edits.push( value ) } ),
+		},
+		'NativeAssessmentType'
+	);
+	const control = Type();
+	assert.deepEqual(
+		control.props.options.map( ( option ) => option.value ),
+		[ 'quiz', 'exam' ]
+	);
+	assert.equal( edits.length, 0 );
+	control.props.onChange( 'exam' );
+	assert.deepEqual( edits[ 0 ].ohmylms_quiz.assessment, {
+		...assessment,
+		kind: 'exam',
+	} );
+} );
 
 test( 'lesson save writes equations privately and persists only the question reference in content', async () => {
 	const harness = lessonHarness();

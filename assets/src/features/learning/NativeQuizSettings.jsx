@@ -25,6 +25,7 @@ import {
 	PaperInserter,
 	PaperSettingsPanel,
 	PaperViewToggle,
+	usePaperView,
 } from '../paper/public.mjs';
 import { ProfilePanel } from './ProfilePanel';
 import {
@@ -47,9 +48,12 @@ import { NativeQuizWorkspace } from './NativeQuizWorkspace';
  * Core has no public SlotFill for an arbitrary header action, so scope this
  * portal to its settings container; the sidebar link remains the fallback.
  *
+ * @param {Object}  props      Properties.
+ * @param {boolean} props.exam Whether this is an exam.
  * @return {React.ReactElement|null} Quiz preview action.
  */
-function QuizPreviewAction() {
+function QuizPreviewAction( { exam } ) {
+	const paper = usePaperView();
 	const [ container, setContainer ] = useState(
 		/** @type {HTMLSpanElement|null} */ ( null )
 	);
@@ -76,7 +80,7 @@ function QuizPreviewAction() {
 	return container
 		? createPortal(
 				<>
-					<PaperViewToggle />
+					{ ( exam || paper ) && <PaperViewToggle /> }
 					<QuizPreviewButton />
 				</>,
 				container
@@ -127,7 +131,7 @@ function NativeQuizSettings() {
 			{ ! exam && (
 				<NativeQuizWorkspace onBank={ () => setPickerOpen( true ) } />
 			) }
-			<QuizPreviewAction />
+			<QuizPreviewAction exam={ exam } />
 			<PaperCanvas />
 			<ProfilePanel />
 			<PluginDocumentSettingPanel
@@ -136,7 +140,7 @@ function NativeQuizSettings() {
 				initialOpen
 			>
 				<NativeAssessmentType />
-				<PaperInserter />
+				{ exam && <PaperInserter /> }
 				<p>
 					{ __(
 						'Add questions, arrange sections and use Student preview to try the assessment. Save applies your questions and assessment settings together.',

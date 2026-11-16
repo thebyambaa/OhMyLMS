@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName -- Preserve the established Composer class/file mapping; see docs/CODING-STANDARDS.md.
 /**
  * The AI tutor card on the Add-ons page.
  *
@@ -30,7 +30,7 @@ final class Integration {
 	 * @return array
 	 */
 	public static function manifest( $integrations ) {
-		$settings                = Settings::get();
+		$settings                 = Settings::get();
 		$integrations[ self::ID ] = array(
 			'label'       => __( 'AI tutor', 'ohmylms' ),
 			'description' => __( 'Hints and explanations for learners, and an exam converter, from the AI provider you connect.', 'ohmylms' ),

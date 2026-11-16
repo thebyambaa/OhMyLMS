@@ -39,6 +39,8 @@ This applies only to filename spelling and the `class-` prefix: every other PHP 
 Renaming those files would break case-sensitive PSR-4 loading, the published package classmap,
 or consumers that include the existing paths. Unmatched paths remain reported for review.
 
+`AI\Integration` likewise retains `includes/AI/Integration.php`: its existing Composer PSR-4 mapping and add-on hook registration depend on that public class. Its file-local filename annotation applies the same reviewed exception; all other standards checks remain enabled.
+
 `Assessment\Interactive::shuffled()` retains its public `$list` parameter for PHP named-argument
 compatibility. Its method-local annotation covers only the reserved-parameter-name warning;
 other standards checks remain active. New parameters must avoid reserved keywords.

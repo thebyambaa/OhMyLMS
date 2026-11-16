@@ -41,6 +41,10 @@ export function useQuizEditorTidy( active ) {
 		if ( active ) {
 			removeEditorPanel( 'taxonomy-panel-category' );
 			removeEditorPanel( 'taxonomy-panel-post_tag' );
+			removeEditorPanel( 'featured-image' );
+			removeEditorPanel( 'post-excerpt' );
+			removeEditorPanel( 'discussion-panel' );
+			removeEditorPanel( 'page-attributes' );
 		}
 	}, [ active, removeEditorPanel ] );
 	const showPaper = Boolean( paperView || paperPresentation );

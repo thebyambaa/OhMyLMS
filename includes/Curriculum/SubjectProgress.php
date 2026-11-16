@@ -7,7 +7,6 @@
 
 namespace OhMyLMS\Curriculum;
 
-
 defined( 'ABSPATH' ) || exit;
 
 /** Shared mastery and direct syllabus progress, without transferred credit. */

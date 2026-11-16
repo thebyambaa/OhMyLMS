@@ -505,5 +505,4 @@ final class Service {
 		$child = self::child( $learner_id );
 		self::audit( 'choices_updated', (int) $child['link_id'] );
 	}
-
 }

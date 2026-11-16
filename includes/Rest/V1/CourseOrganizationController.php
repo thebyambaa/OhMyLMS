@@ -146,5 +146,4 @@ class CourseOrganizationController extends RestController {
 			)
 		);
 	}
-
 }
