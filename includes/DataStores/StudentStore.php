@@ -766,7 +766,11 @@ class StudentStore extends DataStore {
 	public function complete_lesson( $student, $lesson_id, $course_id ) {
 		global $wpdb;
 		$content_type = ohmylms_get_content_type_id_by_content_id( $lesson_id );
-		$lesson       = ohmylms_get_content_object( $content_type, $lesson_id );
+		if ( ! $content_type ) {
+			// Content placed only by a course's learning program has no chapter row; its post type says what it is.
+			$content_type = OHMYLMS_QUIZ_CPT === get_post_type( $lesson_id ) ? 'quiz' : null;
+		}
+		$lesson = ohmylms_get_content_object( $content_type, $lesson_id );
 		if ( ! $lesson ) {
 			return false;
 		}

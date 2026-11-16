@@ -810,7 +810,10 @@ final class Service {
 		if ( $content ) {
 			$rel      = Schema::table( 'content_relationship' );
 			$chapters = Schema::table( 'chapter_relationship' );
-			self::need( $wpdb->get_var( $wpdb->prepare( 'SELECT r.id FROM %i r JOIN %i c ON c.chapter_id=r.chapter_id WHERE c.course_id=%d AND r.content_id=%d', $rel, $chapters, $course_id, $content ) ), 'This activity does not belong to the selected course.' );
+			// The activity is in the course's chapters, or placed by the course's published learning program.
+			$in_course = $wpdb->get_var( $wpdb->prepare( 'SELECT r.id FROM %i r JOIN %i c ON c.chapter_id=r.chapter_id WHERE c.course_id=%d AND r.content_id=%d', $rel, $chapters, $course_id, $content ) )
+				|| in_array( $course_id, array_map( 'intval', \OhMyLMS\Learning\Placements::courses_for( $content ) ), true );
+			self::need( $in_course, 'This activity does not belong to the selected course.' );
 		}
 		$m     = Schema::table( 'class_memberships' );
 		$sm    = Schema::table( 'school_memberships' );
