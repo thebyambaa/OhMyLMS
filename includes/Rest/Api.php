@@ -118,6 +118,7 @@ class Api {
 			\OhMyLMS\Rest\V1\QuestionsController::class,
 			\OhMyLMS\Rest\V1\QuestionImportController::class,
 			\OhMyLMS\Rest\V1\QuestionBankToolsController::class,
+			\OhMyLMS\Rest\V1\QuestionSkillSuggestionsController::class,
 			\OhMyLMS\Rest\V1\CourseStructureToolsController::class,
 			\OhMyLMS\Rest\V1\SkillAssessmentToolsController::class,
 			\OhMyLMS\Rest\V1\SkillController::class,

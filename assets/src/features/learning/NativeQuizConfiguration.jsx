@@ -11,6 +11,7 @@ import {
 import { __ } from '@wordpress/i18n';
 import { listSkills, loadBankQuestion } from '../question-bank/public.mjs';
 import { SkillField } from './SkillField';
+import { AiSkillConnect } from './AiSkillConnect';
 
 /**
  * IDs of the questions placed in the quiz, in document order.
@@ -458,6 +459,13 @@ export function NativeQuizConfiguration( { exam = false } ) {
 						{ gatherNote }
 					</Notice>
 				) }
+				<p className="ohmylms-ai-skill-intro">
+					{ __(
+						'Questions without a skill? Let AI suggest one for each from your curriculum, then review them.',
+						'ohmylms'
+					) }
+				</p>
+				<AiSkillConnect questionIds={ questionIds } />
 			</PanelBody>
 		</>
 	);

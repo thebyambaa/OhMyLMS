@@ -134,3 +134,33 @@
 		border-block-end: 1px solid #ddd;
 	}
 }
+
+/* Connect skills with AI: the review table in its dialog. */
+.ohmylms-ai-skill-table {
+	margin: 12px 0;
+}
+
+.ohmylms-ai-skill-table td {
+	vertical-align: top;
+}
+
+.ohmylms-ai-skill-table td:first-child {
+	width: 40px;
+}
+
+.ohmylms-ai-skill-note {
+	margin: 4px 0 0;
+	color: #595959;
+	font-size: 12px;
+}
+
+.ohmylms-ai-skill-actions {
+	display: flex;
+	gap: 8px;
+	margin: 16px 0 0;
+}
+
+.ohmylms-ai-skill-intro {
+	margin: 16px 0 8px;
+	color: #595959;
+}

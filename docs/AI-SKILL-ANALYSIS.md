@@ -111,6 +111,31 @@ MCP tools: `get_skill_placement_options`, `start_syllabus_analysis`, `advance_sy
 Storage: curriculum schema 8 adds `ai_analysis_runs`, `ai_suggestions`, and `source` and `confidence` on
 `skill_mappings`; schema 9 adds `skill_edges`.
 
+## Connecting questions to skills
+
+In the quiz editor's **Skills** panel (Quiz settings), **Connect skills with AI** suggests the one skill each
+question of the quiz assesses. Choose a curriculum item (a subject, syllabus or one of its first-level
+parts, each listed with its skill count) or the whole library. For every question without a primary skill,
+`Skills\QuestionSkillMatcher` ranks that curriculum's skills against the question's statement and answer
+options with the same keyword ranking as the analysis above, and the AI may choose one of that question's
+own candidates or none ("a wrong skill is worse than none"). A pick outside the candidates is dropped.
+Questions that already have a skill are left alone unless **Also suggest for questions that already have a
+skill** is ticked.
+
+The review list shows each suggestion with its confidence and reason. Suggestions for questions with no
+skill are ticked; the author can untick, or change the skill with the skill picker, then **Save**. Each
+accepted skill is saved through `PATCH /questions/<id>` like a manual change (so permissions, conflict
+checks and question versions behave the same), keeping the question's supporting skills. Nothing is saved
+before that.
+
+| Route | Purpose |
+| --- | --- |
+| `GET /ohmylms/v1/question-skill-suggestions/curricula` | Curriculum items with skills: `id`, `name`, `type`, `depth`, `skills` |
+| `POST /ohmylms/v1/question-skill-suggestions` | `question_ids` (1–10), `item_id` (0 for every skill), `include_mapped`; answers `rows` (`question`, `title`, `current`, `skill`, `confidence`, `reason`, `status`: suggested, no-match, has-skill or unavailable) and `meta` |
+
+Both routes need question-author access; each question is checked again, and one the user cannot edit
+comes back `unavailable` without being read. The editor sends ten questions per request, one AI call each.
+
 ## Next phases
 
 2. Prerequisite and "encompasses" links between shared skills, AI-proposed through the same review queue. Done.
