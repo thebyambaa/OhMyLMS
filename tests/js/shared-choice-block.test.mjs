@@ -114,6 +114,7 @@ test( 'shared block preserves equations without showing prompt or answer format 
 		Dropdown: 'dropdown',
 		Modal: 'modal',
 		QuestionOptionsBar: 'settings',
+		QuestionScoreField: 'marks',
 		MathVariables: { Provider: 'variables-provider' },
 		TemplatePanel: 'template-panel',
 		defaultTemplate,

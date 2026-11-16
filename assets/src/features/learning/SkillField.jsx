@@ -20,6 +20,24 @@ export function skillLabel( names, id ) {
 }
 
 /**
+ * What the button that opens the picker says.
+ *
+ * @param {boolean} single Whether exactly one skill is chosen.
+ * @param {boolean} chosen Whether anything is chosen yet.
+ * @return {string} Label.
+ */
+function skillButtonLabel( single, chosen ) {
+	if ( single ) {
+		return chosen
+			? __( 'Change skill', 'ohmylms' )
+			: __( 'Choose skill', 'ohmylms' );
+	}
+	return chosen
+		? __( 'Edit skills', 'ohmylms' )
+		: __( 'Add skills', 'ohmylms' );
+}
+
+/**
  * Chosen skills as removable chips, and a button that opens the searchable curriculum picker.
  *
  * @param {Object}                                                                        props
@@ -82,9 +100,7 @@ export function SkillField( {
 				disabled={ disabled }
 				onClick={ () => setOpen( true ) }
 			>
-				{ single && value.length
-					? __( 'Change skill', 'ohmylms' )
-					: __( 'Choose skills', 'ohmylms' ) }
+				{ skillButtonLabel( single, value.length > 0 ) }
 			</Button>
 			{ open && (
 				<SkillPicker

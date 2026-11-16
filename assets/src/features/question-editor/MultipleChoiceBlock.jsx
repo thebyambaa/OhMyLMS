@@ -26,7 +26,7 @@ import { MatchTableGridEditor } from './MatchTableGridEditor';
 import { choiceModePatch } from './choiceModel.mjs';
 import { questionTypePatch, QUESTION_BLOCK_TYPES } from './questionBlocks.mjs';
 import { nativeQuestionTypes } from '../learning/public.mjs';
-import { QuestionOptionsBar } from './QuestionOptionsBar';
+import { QuestionOptionsBar, QuestionScoreField } from './QuestionOptionsBar';
 import { QuestionTypeMenu } from './QuestionTypeMenu';
 import { VariableChips, variableNames } from './VariableChips';
 import { insertIntoStatement } from './formulaInput.mjs';
@@ -335,6 +335,11 @@ export function MultipleChoiceFields( {
 									onClick={ onRemove }
 								/>
 							) }
+							<QuestionScoreField
+								question={ question }
+								label={ __( 'Marks', 'ohmylms' ) }
+								onChange={ /** @type {OnPatch} */ ( onChange ) }
+							/>
 							<ToggleControl
 								label={
 									question.settings.type ===
@@ -438,6 +443,7 @@ export function MultipleChoiceFields( {
 												)
 											}
 											hideRequired
+											hideScore
 											hideRandomize={ [
 												'short-text',
 												'long-text',

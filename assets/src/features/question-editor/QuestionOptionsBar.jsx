@@ -9,17 +9,60 @@ import { TextControl, ToggleControl } from '@wordpress/components';
 /** @typedef {import('./editorTypes').OnPatch} OnPatch */
 
 /**
+ * How many marks a question is worth. Disabled for types that take their marks from their parts
+ * or are not graded.
+ *
+ * @param {Object}                props
+ * @param {Data}                  props.question Question.
+ * @param {(patch: Data) => void} props.onChange Receives a settings patch.
+ * @param {string}                [props.label]  Field label.
+ * @return {React.ReactElement} Field.
+ */
+export function QuestionScoreField( { question, onChange, label } ) {
+	const settings = question.settings || {};
+	return (
+		<TextControl
+			className="ohmylms-question-score-field"
+			label={ label || __( 'Score', 'ohmylms' ) }
+			type="number"
+			min={ 0 }
+			step="0.5"
+			value={ String( settings.score?.value ?? 1 ) }
+			disabled={
+				[ 'structured', 'passage' ].includes( settings.type ) ||
+				isUngradedType( settings.type )
+			}
+			onChange={ ( value ) =>
+				onChange( {
+					settings: {
+						...settings,
+						score: {
+							...settings.score,
+							enabled: true,
+							value: Number( value ),
+						},
+					},
+				} )
+			}
+			__nextHasNoMarginBottom
+		/>
+	);
+}
+
+/**
  * @param {Object}  root0
  * @param {Data}    root0.question
  * @param {OnPatch} root0.onChange
  * @param {boolean} [root0.hideRequired]
  * @param {boolean} [root0.hideRandomize]
+ * @param {boolean} [root0.hideScore]     The score is shown elsewhere.
  */
 export function QuestionOptionsBar( {
 	question,
 	onChange,
 	hideRequired = false,
 	hideRandomize = false,
+	hideScore = false,
 } ) {
 	const settings = question.settings || {};
 	const set = ( /** @type {Data} */ patch ) =>
@@ -44,27 +87,12 @@ export function QuestionOptionsBar( {
 						onChange={ ( randomize ) => set( { randomize } ) }
 					/>
 				) }
-				<TextControl
-					label={ __( 'Score', 'ohmylms' ) }
-					type="number"
-					min={ 0 }
-					step="0.5"
-					value={ String( settings.score?.value ?? 1 ) }
-					disabled={
-						[ 'structured', 'passage' ].includes( settings.type ) ||
-						isUngradedType( settings.type )
-					}
-					onChange={ ( value ) =>
-						set( {
-							score: {
-								...settings.score,
-								enabled: true,
-								value: Number( value ),
-							},
-						} )
-					}
-					__nextHasNoMarginBottom
-				/>
+				{ ! hideScore && (
+					<QuestionScoreField
+						question={ question }
+						onChange={ onChange }
+					/>
+				) }
 			</div>
 			<div className="ohmylms-question-options-feedback">
 				<RichContentControl

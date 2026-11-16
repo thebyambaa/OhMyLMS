@@ -162,7 +162,7 @@ export function NativeQuestionDetails( {
 					<>
 						<p>
 							{ __(
-								'The primary skill is what answers to this question count towards. The question is shared, so the skill applies wherever it is used.',
+								'Answers count towards the primary skill, in every quiz that uses this question.',
 								'ohmylms'
 							) }
 						</p>

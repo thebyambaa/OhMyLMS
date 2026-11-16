@@ -50,7 +50,7 @@ export function QuestionSkillFields( {
 							names={ names }
 							disabled={ disabled }
 							empty={ __(
-								'No primary skill. Answers to this question do not count towards a skill yet.',
+								'None yet, so answers do not count towards a skill.',
 								'ohmylms'
 							) }
 							onChange={ ( ids, picked ) =>
@@ -70,7 +70,7 @@ export function QuestionSkillFields( {
 							names={ names }
 							disabled={ disabled }
 							empty={ __(
-								'None. Supporting skills are recommendations only.',
+								'None. These only guide recommendations.',
 								'ohmylms'
 							) }
 							onChange={ ( ids, picked ) =>
