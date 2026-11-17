@@ -191,34 +191,34 @@ final class AdminNavigation {
 						'label'      => __( 'Tools', 'ohmylms' ),
 						'capability' => 'edit_posts',
 						'sections'   => array(
-							''              => __( 'Skill library', 'ohmylms' ),
+							''            => __( 'Skill library', 'ohmylms' ),
 							// School staff open the read-only map too; its learner overlays are scoped server-side.
-							'skill-map'     => array(
+							'skill-map'   => array(
 								'label'      => __( 'Skill map', 'ohmylms' ),
 								'capability' => \OhMyLMS\Dashboard\Access::CAPABILITY,
 							),
-							'assessments'   => array(
+							'assessments' => array(
 								'label'  => __( 'Assessments', 'ohmylms' ),
 								'render' => array( SkillAssessmentPage::class, 'render' ),
 							),
-							'ai-runs'       => array(
+							'ai-runs'     => array(
 								'label'      => __( 'AI runs', 'ohmylms' ),
 								'capability' => self::CAPABILITY,
 							),
 							// The skill workspace, whose endpoints need the curriculum administrator.
-							'mappings'      => array(
+							'mappings'    => array(
 								'label'      => __( 'Combined mappings', 'ohmylms' ),
 								'capability' => self::CAPABILITY,
 							),
-							'placement'     => array(
+							'placement'   => array(
 								'label'      => __( 'Domain placement', 'ohmylms' ),
 								'capability' => self::CAPABILITY,
 							),
-							'provenance'    => array(
+							'provenance'  => array(
 								'label'      => __( 'Provenance review', 'ohmylms' ),
 								'capability' => self::CAPABILITY,
 							),
-							'subjects'      => array(
+							'subjects'    => array(
 								'label'      => __( 'Subject profiles', 'ohmylms' ),
 								'capability' => self::CAPABILITY,
 							),
@@ -266,13 +266,13 @@ final class AdminNavigation {
 					'gamification' => array(
 						'label'           => __( 'Gamification', 'ohmylms' ),
 						'sections'        => array(
-							'points'              => __( 'Points', 'ohmylms' ),
-							'levels'              => __( 'Levels', 'ohmylms' ),
-							'badges'              => __( 'Badges', 'ohmylms' ),
-							'streaks'             => __( 'Streaks', 'ohmylms' ),
-							'xp'                  => __( 'XP and mastery', 'ohmylms' ),
-							'leaderboard'         => __( 'Leaderboard', 'ohmylms' ),
-							'rewards'             => __( 'Rewards', 'ohmylms' ),
+							'points'      => __( 'Points', 'ohmylms' ),
+							'levels'      => __( 'Levels', 'ohmylms' ),
+							'badges'      => __( 'Badges', 'ohmylms' ),
+							'streaks'     => __( 'Streaks', 'ohmylms' ),
+							'xp'          => __( 'XP and mastery', 'ohmylms' ),
+							'leaderboard' => __( 'Leaderboard', 'ohmylms' ),
+							'rewards'     => __( 'Rewards', 'ohmylms' ),
 						),
 						// Only with the Gamification add-on on; certificates have their own tab.
 						'flag'            => 'ohmylms_show_gamification_menu',
@@ -304,17 +304,17 @@ final class AdminNavigation {
 				'page'  => 'ohmylms-settings',
 				'label' => __( 'Settings', 'ohmylms' ),
 				'tabs'  => array(
-					'settings'     => array(
+					'settings' => array(
 						'label'           => __( 'Settings', 'ohmylms' ),
 						'sections'        => $settings_sections,
 						'default_section' => 'general',
 					),
-					'emails'       => array( 'label' => __( 'Emails', 'ohmylms' ) ),
-					'webhooks'     => array(
+					'emails'   => array( 'label' => __( 'Emails', 'ohmylms' ) ),
+					'webhooks' => array(
 						'label' => __( 'Webhooks', 'ohmylms' ),
 						'flag'  => 'ohmylms_should_enable_webhooks',
 					),
-					'setup'        => array( 'label' => __( 'Setup', 'ohmylms' ) ),
+					'setup'    => array( 'label' => __( 'Setup', 'ohmylms' ) ),
 				),
 			),
 		);
@@ -953,6 +953,13 @@ final class AdminNavigation {
 	 * @return array|null The new query parameters, or null when the address did not move.
 	 */
 	public static function moved_query( array $query ) {
+		// Keep existing dashboard bookmarks working; Courses is now the landing page.
+		if ( self::page_slug( 'dashboard' ) === ( $query['page'] ?? '' ) ) {
+			return array(
+				'page' => self::page_slug( 'content' ),
+				'tab'  => 'courses',
+			);
+		}
 		$first  = self::moved_content_query( $query );
 		$second = self::moved_place_query( null === $first ? $query : $first );
 		return null === $second ? $first : $second;
@@ -1226,18 +1233,14 @@ final class AdminNavigation {
 	}
 
 	/**
-	 * Drop the Dashboard entry from the printed submenu so the top-level OhMyLMS link is the dashboard (on
-	 * `admin_head`).
-	 *
-	 * WordPress links the top-level item to its first submenu entry and skips printing entries the user
-	 * cannot open, so the entry stays first with a capability nobody has. Removing it instead would point
-	 * OhMyLMS at Content Hub. This runs after WordPress has checked access to the current page.
+	 * Remove the Dashboard submenu so WordPress links the main menu directly to Courses.
+	 * Retain the public callback name and registered dashboard route for existing integrations.
 	 */
 	public static function hide_dashboard_entry() {
 		global $submenu;
 		foreach ( (array) ( $submenu[ OHMYLMS_SLUG ] ?? array() ) as $index => $item ) {
 			if ( OHMYLMS_SLUG === ( $item[2] ?? '' ) ) {
-				$submenu[ OHMYLMS_SLUG ][ $index ][1] = 'do_not_allow'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+				unset( $submenu[ OHMYLMS_SLUG ][ $index ] ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- WordPress navigation hook.
 			}
 		}
 	}
