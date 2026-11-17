@@ -19,7 +19,7 @@ import { FormFrame } from './FormFrame';
 import { useResource } from './useResource';
 
 /**
- * Checkout settings above the gateway forms: the order gateways are offered in at checkout, guest
+ * Checkout settings alongside the gateway forms: the order gateways are offered in at checkout, guest
  * checkout, the checkout login form, content protection, and the read-only Stripe status.
  *
  * @param props         Component props.
@@ -66,8 +66,9 @@ export function CheckoutPanel( {
 	return (
 		<FormFrame
 			title={ __( 'Checkout', 'ohmylms' ) }
+			hideTitle
 			description={ __(
-				'How the checkout page offers payment methods and who may buy.',
+				'Set payment order and choose how buyers sign in.',
 				'ohmylms'
 			) }
 			state={ state }

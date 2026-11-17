@@ -126,17 +126,21 @@ export function PaymentGatewaysForm( {
 		);
 	}
 	return (
-		<>
-			<Suspense fallback={ null }>
-				<CheckoutPanel active={ active } onDirty={ reportCheckout } />
-			</Suspense>
-			<h3>{ __( 'Payment gateways', 'ohmylms' ) }</h3>
-			<p>
-				{ __(
-					'Turn gateways on for checkout and enter their credentials. Saved credentials are never shown again; leave a credential empty to keep it.',
-					'ohmylms'
-				) }
-			</p>
+		<section
+			className="oml-payment-settings"
+			aria-labelledby="oml-payment-heading"
+		>
+			<header>
+				<h2 id="oml-payment-heading">
+					{ __( 'Payment gateways', 'ohmylms' ) }
+				</h2>
+				<p>
+					{ __(
+						'Choose which payment methods to offer at checkout.',
+						'ohmylms'
+					) }
+				</p>
+			</header>
 			{ ! gateways.length && (
 				<p>
 					{ __( 'No payment gateways are registered.', 'ohmylms' ) }
@@ -149,7 +153,21 @@ export function PaymentGatewaysForm( {
 					onDirty={ report }
 				/>
 			) ) }
-		</>
+			<details className="oml-payment-panel">
+				<summary>
+					<strong>{ __( 'Checkout settings', 'ohmylms' ) }</strong>
+					{ dirty[ 'checkout:settings' ] && (
+						<span>{ __( 'Unsaved changes', 'ohmylms' ) }</span>
+					) }
+				</summary>
+				<Suspense fallback={ null }>
+					<CheckoutPanel
+						active={ active }
+						onDirty={ reportCheckout }
+					/>
+				</Suspense>
+			</details>
+		</section>
 	);
 }
 
@@ -189,6 +207,17 @@ function GatewayPanel( {
 
 	const stored = state.snapshot;
 	const draft = state.draft;
+	const saved = stored ?? gateway;
+	const needsCredentials =
+		saved.enabled &&
+		visibleFields( saved, saved.mode ).some(
+			( item ) =>
+				'secret' === item.type && ! saved.secrets[ item.name ]?.hasValue
+		);
+	const status = saved.enabled ? 'enabled' : 'disabled';
+	const statusLabel = saved.enabled
+		? __( 'Enabled', 'ohmylms' )
+		: __( 'Disabled', 'ohmylms' );
 	const missing =
 		stored && draft && draft.enabled
 			? visibleFields( stored, draft.mode ).filter(
@@ -290,62 +319,91 @@ function GatewayPanel( {
 	}
 
 	return (
-		<FormFrame
-			title={ gateway.title }
-			description={ gateway.description }
-			state={ state }
-		>
-			{ stored && draft && (
-				<>
-					<ToggleField
-						label={ sprintf(
-							/* translators: %s: payment gateway name. */
-							__( 'Offer %s at checkout', 'ohmylms' ),
-							stored.title
-						) }
-						checked={ draft.enabled }
-						error={ state.errors.enabled }
-						onChange={ ( enabled ) =>
-							state.update(
-								( current ) => ( { ...current, enabled } ),
-								'enabled'
-							)
-						}
-					/>
-					{ null !== draft.mode && (
-						<SelectField
-							label={ __( 'Mode', 'ohmylms' ) }
-							value={ draft.mode }
-							options={ MODE_OPTIONS }
-							error={ state.errors.mode }
-							onChange={ ( mode ) =>
+		<details className="oml-payment-panel">
+			<summary>
+				<strong>{ saved.title }</strong>
+				<span
+					className="oml-payment-status"
+					data-state={ needsCredentials ? 'warning' : status }
+				>
+					{ needsCredentials
+						? __( 'Enabled · credentials missing', 'ohmylms' )
+						: statusLabel }
+				</span>
+				{ saved.mode && (
+					<span>
+						{ 'test' === saved.mode
+							? __( 'Test', 'ohmylms' )
+							: __( 'Live', 'ohmylms' ) }
+					</span>
+				) }
+				{ state.dirty && (
+					<span>{ __( 'Unsaved changes', 'ohmylms' ) }</span>
+				) }
+			</summary>
+			<FormFrame
+				title={ saved.title }
+				description={
+					saved.description === saved.title ? '' : saved.description
+				}
+				state={ state }
+				hideTitle
+			>
+				{ stored && draft && (
+					<>
+						<ToggleField
+							label={ sprintf(
+								/* translators: %s: payment gateway name. */
+								__( 'Offer %s at checkout', 'ohmylms' ),
+								stored.title
+							) }
+							checked={ draft.enabled }
+							error={ state.errors.enabled }
+							onChange={ ( enabled ) =>
 								state.update(
-									( current ) => ( {
-										...current,
-										mode: 'test' === mode ? 'test' : 'live',
-									} ),
-									'mode'
+									( current ) => ( { ...current, enabled } ),
+									'enabled'
 								)
 							}
 						/>
-					) }
-					{ missing.length > 0 && (
-						<Notice status="warning" isDismissible={ false }>
-							{ sprintf(
-								/* translators: %s: comma-separated credential names. */
-								__(
-									'Checkout with this gateway will fail until these credentials are set: %s.',
-									'ohmylms'
-								),
-								missing
-									.map( ( item ) => item.label )
-									.join( ', ' )
-							) }
-						</Notice>
-					) }
-					{ visibleFields( stored, draft.mode ).map( field ) }
-				</>
-			) }
-		</FormFrame>
+						{ null !== draft.mode && (
+							<SelectField
+								label={ __( 'Mode', 'ohmylms' ) }
+								value={ draft.mode }
+								options={ MODE_OPTIONS }
+								error={ state.errors.mode }
+								onChange={ ( mode ) =>
+									state.update(
+										( current ) => ( {
+											...current,
+											mode:
+												'test' === mode
+													? 'test'
+													: 'live',
+										} ),
+										'mode'
+									)
+								}
+							/>
+						) }
+						{ missing.length > 0 && (
+							<Notice status="warning" isDismissible={ false }>
+								{ sprintf(
+									/* translators: %s: comma-separated credential names. */
+									__(
+										'Checkout with this gateway will fail until these credentials are set: %s.',
+										'ohmylms'
+									),
+									missing
+										.map( ( item ) => item.label )
+										.join( ', ' )
+								) }
+							</Notice>
+						) }
+						{ visibleFields( stored, draft.mode ).map( field ) }
+					</>
+				) }
+			</FormFrame>
+		</details>
 	);
 }

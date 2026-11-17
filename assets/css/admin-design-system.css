@@ -1091,3 +1091,95 @@ body.oml-ds-branded .ohmylms-app .ohmylms-dashboard-widget .postbox-header .hndl
 	outline: 2px solid var(--oml-primary);
 	outline-offset: 2px;
 }
+
+/* Payment gateway settings. */
+#ohmylms-settings-panel-payment-gateways .oml-payment-settings {
+	max-width: 960px;
+	margin-block: 20px;
+}
+
+#ohmylms-settings-panel-payment-gateways .oml-payment-settings header {
+	margin-bottom: var(--oml-space-4);
+}
+
+#ohmylms-settings-panel-payment-gateways .oml-payment-settings h2 {
+	margin: 0;
+	font-size: 22px;
+}
+
+#ohmylms-settings-panel-payment-gateways .oml-payment-panel {
+	margin-block: var(--oml-space-2);
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-card);
+	background: var(--oml-surface);
+}
+
+#ohmylms-settings-panel-payment-gateways .oml-payment-settings .oml-payment-panel > summary {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--oml-space-2);
+	min-height: 28px;
+	padding: var(--oml-space-3) var(--oml-space-4);
+	border-radius: var(--oml-radius-card);
+	cursor: pointer;
+}
+
+#ohmylms-settings-panel-payment-gateways .oml-payment-settings .oml-payment-panel > summary:hover {
+	background: var(--oml-subtle);
+}
+
+#ohmylms-settings-panel-payment-gateways .oml-payment-settings .oml-payment-panel > summary:focus-visible {
+	outline: 2px solid var(--oml-primary);
+	outline-offset: 2px;
+}
+
+#ohmylms-settings-panel-payment-gateways .oml-payment-settings .oml-payment-panel > summary::after {
+	width: 7px;
+	height: 7px;
+	margin-inline-start: auto;
+	border: solid currentcolor;
+	border-width: 0 1px 1px 0;
+	transform: rotate(45deg);
+	content: "";
+}
+
+#ohmylms-settings-panel-payment-gateways .oml-payment-settings .oml-payment-panel[open] > summary::after {
+	transform: rotate(225deg);
+}
+
+#ohmylms-settings-panel-payment-gateways .oml-payment-settings .oml-payment-panel > summary strong {
+	font-size: 14px;
+}
+
+#ohmylms-settings-panel-payment-gateways .oml-payment-settings .oml-payment-panel > summary span {
+	padding: 2px 8px;
+	border-radius: 999px;
+	background: var(--oml-subtle);
+	color: var(--oml-payment-status-color, var(--oml-text));
+	font-size: 12px;
+}
+
+#ohmylms-settings-panel-payment-gateways .oml-payment-status[data-state="enabled"] {
+	--oml-payment-status-color: var(--oml-success);
+}
+
+#ohmylms-settings-panel-payment-gateways .oml-payment-status[data-state="warning"] {
+	--oml-payment-status-color: var(--oml-warning-text, var(--oml-text));
+	font-weight: 600;
+}
+
+#ohmylms-settings-panel-payment-gateways .oml-payment-panel > form {
+	padding: var(--oml-space-4);
+	border-top: 1px solid var(--oml-border);
+}
+
+#ohmylms-settings-panel-payment-gateways .oml-payment-panel .oml-gateway-order {
+	max-width: 620px;
+	margin-inline-start: 24px;
+}
+
+#ohmylms-settings-panel-payment-gateways .oml-payment-panel .oml-gateway-order li {
+	padding: 4px 8px;
+	border-bottom: 1px solid var(--oml-border);
+}

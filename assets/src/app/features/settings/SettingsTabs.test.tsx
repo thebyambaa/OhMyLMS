@@ -135,6 +135,9 @@ describe( 'Payment gateways tab', () => {
 	it( 'never shows a saved credential and sends only what changed', async () => {
 		const user = userEvent.setup();
 		renderTab( 'payment-gateways' );
+		await user.click(
+			await screen.findByText( 'Stripe', { selector: 'summary strong' } )
+		);
 		const form = await screen.findByRole( 'form', { name: 'Stripe' } );
 		const secret = within( form ).getByLabelText( 'Sandbox Secret Key' );
 		expect( secret ).toHaveValue( '' );
@@ -180,6 +183,9 @@ describe( 'Payment gateways tab', () => {
 	it( 'removes a saved credential with the explicit checkbox', async () => {
 		const user = userEvent.setup();
 		renderTab( 'payment-gateways' );
+		await user.click(
+			await screen.findByText( 'Stripe', { selector: 'summary strong' } )
+		);
 		const form = await screen.findByRole( 'form', { name: 'Stripe' } );
 		await user.click(
 			within( form ).getByLabelText(
@@ -217,6 +223,9 @@ describe( 'Payment gateways tab', () => {
 	it( 'switches to live mode, warns about missing credentials and shows server errors', async () => {
 		const user = userEvent.setup();
 		renderTab( 'payment-gateways' );
+		await user.click(
+			await screen.findByText( 'Stripe', { selector: 'summary strong' } )
+		);
 		const form = await screen.findByRole( 'form', { name: 'Stripe' } );
 		await user.selectOptions(
 			within( form ).getByLabelText( 'Mode' ),
@@ -260,6 +269,9 @@ describe( 'Payment gateways tab', () => {
 	it( 'blocks invalid input before the request', async () => {
 		const user = userEvent.setup();
 		renderTab( 'payment-gateways' );
+		await user.click(
+			await screen.findByText( 'Offline', { selector: 'summary strong' } )
+		);
 		const form = await screen.findByRole( 'form', { name: 'Offline' } );
 		await user.clear( within( form ).getByLabelText( 'Title' ) );
 		await user.click(

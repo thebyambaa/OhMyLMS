@@ -28,6 +28,7 @@ export interface FrameState {
  * @param props.children    The fields, rendered once values are loaded.
  * @param props.extra       Extra controls shown beside Save.
  * @param props.savedNote   Extra sentence appended to the success message.
+ * @param props.hideTitle   Use when the surrounding panel already names the form.
  */
 export function FormFrame( {
 	title,
@@ -36,6 +37,7 @@ export function FormFrame( {
 	children,
 	extra,
 	savedNote,
+	hideTitle,
 }: {
 	title: string;
 	description: string;
@@ -43,6 +45,7 @@ export function FormFrame( {
 	children: ReactNode;
 	extra?: ReactNode;
 	savedNote?: string;
+	hideTitle?: boolean;
 } ) {
 	if ( state.loading ) {
 		return (
@@ -82,8 +85,8 @@ export function FormFrame( {
 				void state.save();
 			} }
 		>
-			<h3>{ title }</h3>
-			<p>{ description }</p>
+			{ ! hideTitle && <h3>{ title }</h3> }
+			{ description && <p>{ description }</p> }
 			{ state.saveError && (
 				<Notice status="error" isDismissible={ false }>
 					{ state.saveError.message }
