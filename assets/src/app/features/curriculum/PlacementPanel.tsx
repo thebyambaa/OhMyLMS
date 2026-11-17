@@ -55,7 +55,7 @@ export function PlacementPanel() {
 	return (
 		<section aria-labelledby="oml-ws-placement">
 			<h3 id="oml-ws-placement">
-				{ __( 'Domain placement', 'ohmylms' ) }
+				{ __( 'Skill organization', 'ohmylms' ) }
 			</h3>
 			<p>
 				{ __(

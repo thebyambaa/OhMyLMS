@@ -35,7 +35,7 @@ function kindLabel( kind: string ) {
 	return (
 		{
 			syllabus: __( 'Syllabus analysis', 'ohmylms' ),
-			placement: __( 'Domain placement', 'ohmylms' ),
+			placement: __( 'Skill organization', 'ohmylms' ),
 			links: __( 'Prerequisites and links', 'ohmylms' ),
 			course: __( 'Course content', 'ohmylms' ),
 			new_skill: __( 'New shared skill', 'ohmylms' ),
@@ -104,7 +104,7 @@ export function AiRunsPanel() {
 	}
 	return (
 		<section aria-labelledby="oml-ws-ai">
-			<h3 id="oml-ws-ai">{ __( 'AI runs', 'ohmylms' ) }</h3>
+			<h3 id="oml-ws-ai">{ __( 'AI history', 'ohmylms' ) }</h3>
 			<p>
 				{ __(
 					'AI analysis places objectives in domains and levels and suggests mappings and new shared skills. Nothing changes until a person accepts a suggestion. Only curriculum text is sent, through the AI connection in Settings.',
@@ -165,7 +165,7 @@ export function AiRunsPanel() {
 				</Notice>
 			) }
 			<ListTable
-				caption={ __( 'AI runs', 'ohmylms' ) }
+				caption={ __( 'AI history', 'ohmylms' ) }
 				footer={ false }
 				busy={ runs.loading }
 				rows={ runs.data ?? [] }

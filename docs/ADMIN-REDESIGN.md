@@ -229,3 +229,11 @@ its tags were the bundles and its categories only repeated the curriculum; `/cat
 for old clients. What the folder `includes/Bundles/` held for other features moved: `Progress` became
 `Curriculum\LearnerProgress` (only `for_objectives()` and its helpers remain) and `Combined` became
 `Performance\Combined`.
+# Curriculum navigation cleanup
+
+Curriculum has two primary tabs: **Curriculum** and **Skills**. Skills shows
+**Skill library**, **Skill map** and **Assessments**. The less frequently used
+AI history, Skill connections, Skill organization, Source review and Subject
+settings screens live in a collapsed **Advanced tools** menu. Their permissions
+and existing `tab=tools&section=…` URLs are preserved for bookmarks and extensions.
+This is a navigation change; it does not remove skill records or maintenance tools.

@@ -80,9 +80,7 @@ export function ProvenancePanel() {
 	const rows = queue.data?.items ?? [];
 	return (
 		<section aria-labelledby="oml-ws-provenance">
-			<h3 id="oml-ws-provenance">
-				{ __( 'Provenance review', 'ohmylms' ) }
-			</h3>
+			<h3 id="oml-ws-provenance">{ __( 'Source review', 'ohmylms' ) }</h3>
 			<p>
 				{ __(
 					'Skills proposed by AI runs and other sources wait here. A pending or rejected skill can be used in course drafts but blocks publishing. Every decision is kept in the skill’s audit trail.',

@@ -1021,3 +1021,73 @@ body.oml-ds-branded .ohmylms-app .ohmylms-dashboard-widget .postbox-header .hndl
 	font-size: var(--oml-font-size-md);
 	font-weight: 600;
 }
+
+/* Curriculum: everyday skill tasks, with specialist tools tucked away. */
+#ohmylms-admin-sections.oml-skill-navigation {
+	display: flex;
+	align-items: flex-start;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 16px 0;
+	padding: 0;
+	list-style: none;
+}
+
+#ohmylms-admin-sections.oml-skill-navigation > li {
+	margin: 0;
+}
+
+#ohmylms-admin-sections.oml-skill-navigation a,
+#ohmylms-admin-sections.oml-skill-navigation summary {
+	display: block;
+	padding: 8px 12px;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	font-size: 13px;
+	line-height: 20px;
+	text-decoration: none;
+}
+
+#ohmylms-admin-sections.oml-skill-navigation a.current {
+	background: var(--oml-surface);
+	border-color: var(--oml-border);
+	color: var(--oml-text);
+	font-weight: 600;
+}
+
+#ohmylms-admin-sections.oml-skill-navigation summary {
+	display: list-item;
+	cursor: pointer;
+	color: var(--oml-muted);
+}
+
+#ohmylms-admin-sections .oml-skill-advanced {
+	position: relative;
+}
+
+#ohmylms-admin-sections .oml-skill-advanced ul {
+	position: absolute;
+	z-index: 20;
+	min-width: 190px;
+	margin: 4px 0 0;
+	padding: 6px;
+	border: 1px solid var(--oml-border);
+	border-radius: 6px;
+	background: var(--oml-surface);
+	list-style: none;
+}
+
+#ohmylms-admin-sections .oml-skill-advanced li {
+	margin: 0;
+}
+
+#ohmylms-admin-sections.oml-skill-navigation a:hover,
+#ohmylms-admin-sections.oml-skill-navigation summary:hover {
+	background: var(--oml-subtle);
+}
+
+#ohmylms-admin-sections.oml-skill-navigation a:focus-visible,
+#ohmylms-admin-sections.oml-skill-navigation summary:focus-visible {
+	outline: 2px solid var(--oml-primary);
+	outline-offset: 2px;
+}

@@ -35,7 +35,7 @@ export function MappingsPanel() {
 	return (
 		<section aria-labelledby="oml-ws-mappings">
 			<h3 id="oml-ws-mappings">
-				{ __( 'Combined mappings', 'ohmylms' ) }
+				{ __( 'Skill connections', 'ohmylms' ) }
 			</h3>
 			<p>
 				{ __(

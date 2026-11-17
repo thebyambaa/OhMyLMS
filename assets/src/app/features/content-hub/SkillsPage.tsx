@@ -126,7 +126,7 @@ export default function SkillsPage() {
 			</PageTitleActions>
 			<p>
 				{ __(
-					'Shared skills, hierarchy and prerequisites. Skills are a core feature.',
+					'Manage the skills students learn across your curriculums, courses and quizzes. Search for a skill or add a new one.',
 					'ohmylms'
 				) }
 			</p>

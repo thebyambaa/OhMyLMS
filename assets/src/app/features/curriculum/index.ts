@@ -43,7 +43,7 @@ export const skillMap: FeatureDefinition = {
 };
 export const subjectProfiles: FeatureDefinition = {
 	id: 'curriculum-subjects',
-	title: __( 'Subject profiles', 'ohmylms' ),
+	title: __( 'Subject settings', 'ohmylms' ),
 	path: '/content-hub/curriculum/subjects',
 	group: 'curriculum',
 	tab: 'tools',
@@ -70,7 +70,7 @@ const skillWorkspace = lazy(
 );
 export const skillWorkspaceMappings: FeatureDefinition = {
 	id: 'skill-workspace-mappings',
-	title: __( 'Combined mappings', 'ohmylms' ),
+	title: __( 'Skill connections', 'ohmylms' ),
 	path: '/content-hub/skills/mappings',
 	group: 'curriculum',
 	tab: 'tools',
@@ -81,7 +81,7 @@ export const skillWorkspaceMappings: FeatureDefinition = {
 };
 export const skillWorkspaceAiRuns: FeatureDefinition = {
 	id: 'skill-workspace-ai-runs',
-	title: __( 'AI runs', 'ohmylms' ),
+	title: __( 'AI history', 'ohmylms' ),
 	path: '/content-hub/skills/ai-runs',
 	group: 'curriculum',
 	tab: 'tools',
@@ -92,7 +92,7 @@ export const skillWorkspaceAiRuns: FeatureDefinition = {
 };
 export const skillWorkspacePlacement: FeatureDefinition = {
 	id: 'skill-workspace-placement',
-	title: __( 'Domain placement', 'ohmylms' ),
+	title: __( 'Skill organization', 'ohmylms' ),
 	path: '/content-hub/skills/placement',
 	group: 'curriculum',
 	tab: 'tools',
@@ -103,7 +103,7 @@ export const skillWorkspacePlacement: FeatureDefinition = {
 };
 export const skillWorkspaceProvenance: FeatureDefinition = {
 	id: 'skill-workspace-provenance',
-	title: __( 'Provenance review', 'ohmylms' ),
+	title: __( 'Source review', 'ohmylms' ),
 	path: '/content-hub/skills/provenance',
 	group: 'curriculum',
 	tab: 'tools',

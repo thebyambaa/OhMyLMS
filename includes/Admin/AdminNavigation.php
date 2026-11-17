@@ -188,7 +188,7 @@ final class AdminNavigation {
 				'tabs'  => array(
 					'workspace' => array( 'label' => __( 'Curriculum', 'ohmylms' ) ),
 					'tools'     => array(
-						'label'      => __( 'Tools', 'ohmylms' ),
+						'label'      => __( 'Skills', 'ohmylms' ),
 						'capability' => 'edit_posts',
 						'sections'   => array(
 							''            => __( 'Skill library', 'ohmylms' ),
@@ -202,24 +202,24 @@ final class AdminNavigation {
 								'render' => array( SkillAssessmentPage::class, 'render' ),
 							),
 							'ai-runs'     => array(
-								'label'      => __( 'AI runs', 'ohmylms' ),
+								'label'      => __( 'AI history', 'ohmylms' ),
 								'capability' => self::CAPABILITY,
 							),
 							// The skill workspace, whose endpoints need the curriculum administrator.
 							'mappings'    => array(
-								'label'      => __( 'Combined mappings', 'ohmylms' ),
+								'label'      => __( 'Skill connections', 'ohmylms' ),
 								'capability' => self::CAPABILITY,
 							),
 							'placement'   => array(
-								'label'      => __( 'Domain placement', 'ohmylms' ),
+								'label'      => __( 'Skill organization', 'ohmylms' ),
 								'capability' => self::CAPABILITY,
 							),
 							'provenance'  => array(
-								'label'      => __( 'Provenance review', 'ohmylms' ),
+								'label'      => __( 'Source review', 'ohmylms' ),
 								'capability' => self::CAPABILITY,
 							),
 							'subjects'    => array(
-								'label'      => __( 'Subject profiles', 'ohmylms' ),
+								'label'      => __( 'Subject settings', 'ohmylms' ),
 								'capability' => self::CAPABILITY,
 							),
 						),
@@ -1320,6 +1320,10 @@ final class AdminNavigation {
 	 * @param array $tab     Current tab.
 	 */
 	private static function render_sections( array $current, array $tab ) {
+		if ( 'curriculum' === $current['group'] && 'tools' === $current['tab'] ) {
+			self::render_skill_navigation( $current, $tab );
+			return;
+		}
 		$last = array_key_last( $tab['sections'] );
 		?>
 		<ul class="subsubsub" id="<?php echo esc_attr( self::SECTIONS_ID ); ?>" data-default-section="<?php echo esc_attr( self::default_section( $tab ) ); ?>">
@@ -1329,6 +1333,38 @@ final class AdminNavigation {
 			<?php endforeach; ?>
 		</ul>
 		<br class="clear">
+		<?php
+	}
+
+	/**
+	 * Keep everyday skill navigation separate from specialist maintenance tools.
+	 * Existing URLs and capability-filtered sections remain intact.
+	 *
+	 * @param array $current Current place.
+	 * @param array $tab Capability-filtered tab.
+	 */
+	private static function render_skill_navigation( array $current, array $tab ) {
+		$advanced_ids = array( 'ai-runs', 'mappings', 'placement', 'provenance', 'subjects' );
+		$advanced     = array_intersect_key( $tab['sections'], array_flip( $advanced_ids ) );
+		$everyday     = array_diff_key( $tab['sections'], $advanced );
+		?>
+		<ul class="oml-skill-navigation" id="<?php echo esc_attr( self::SECTIONS_ID ); ?>" data-default-section="">
+			<?php foreach ( $everyday as $id => $section ) : ?>
+				<li><a href="<?php echo esc_url( self::tab_url( 'curriculum', 'tools', (string) $id ) ); ?>" data-section="<?php echo esc_attr( $id ); ?>"<?php echo (string) $id === $current['section'] ? ' class="current" aria-current="page"' : ''; ?>><?php echo esc_html( $section['label'] ); ?></a></li>
+			<?php endforeach; ?>
+			<?php if ( $advanced ) : ?>
+				<li class="oml-skill-advanced">
+					<details <?php echo isset( $advanced[ $current['section'] ] ) ? 'open' : ''; ?>>
+						<summary><?php esc_html_e( 'Advanced tools', 'ohmylms' ); ?></summary>
+						<ul>
+							<?php foreach ( $advanced as $id => $section ) : ?>
+								<li><a href="<?php echo esc_url( self::tab_url( 'curriculum', 'tools', (string) $id ) ); ?>" data-section="<?php echo esc_attr( $id ); ?>"<?php echo $id === $current['section'] ? ' class="current" aria-current="page"' : ''; ?>><?php echo esc_html( $section['label'] ); ?></a></li>
+							<?php endforeach; ?>
+						</ul>
+					</details>
+				</li>
+			<?php endif; ?>
+		</ul>
 		<?php
 	}
 
