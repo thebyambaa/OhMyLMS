@@ -1,0 +1,385 @@
+[
+	{
+		"activity": "number-line",
+		"input": {},
+		"expected": {
+			"version": 1,
+			"min": 0,
+			"max": 10,
+			"step": 1,
+			"points": [
+				0
+			],
+			"snap": true
+		}
+	},
+	{
+		"activity": "number-line",
+		"input": {
+			"min": -5,
+			"max": 5,
+			"step": 0.5,
+			"points": [
+				0,
+				2.5,
+				99,
+				"x",
+				"1"
+			],
+			"snap": false
+		},
+		"expected": {
+			"version": 1,
+			"min": -5,
+			"max": 5,
+			"step": 0.5,
+			"points": [
+				0,
+				2.5,
+				5,
+				1
+			],
+			"snap": false
+		}
+	},
+	{
+		"activity": "number-line",
+		"input": {
+			"min": 10,
+			"max": 2,
+			"step": 0,
+			"points": []
+		},
+		"expected": {
+			"version": 1,
+			"min": 0,
+			"max": 10,
+			"step": 0.000001,
+			"points": [
+				0
+			],
+			"snap": true
+		}
+	},
+	{
+		"activity": "number-line",
+		"input": {
+			"min": 0,
+			"max": 1,
+			"step": 50,
+			"points": [
+				0.5,
+				-3
+			]
+		},
+		"expected": {
+			"version": 1,
+			"min": 0,
+			"max": 1,
+			"step": 1,
+			"points": [
+				0.5,
+				0
+			],
+			"snap": true
+		}
+	},
+	{
+		"activity": "fractions",
+		"input": {},
+		"expected": {
+			"version": 1,
+			"shape": "bar",
+			"parts": 4,
+			"shaded": 1,
+			"allowParts": true
+		}
+	},
+	{
+		"activity": "fractions",
+		"input": {
+			"shape": "circle",
+			"parts": 12,
+			"shaded": 5,
+			"allowParts": false
+		},
+		"expected": {
+			"version": 1,
+			"shape": "circle",
+			"parts": 12,
+			"shaded": 5,
+			"allowParts": false
+		}
+	},
+	{
+		"activity": "fractions",
+		"input": {
+			"shape": "star",
+			"parts": 99,
+			"shaded": 99
+		},
+		"expected": {
+			"version": 1,
+			"shape": "bar",
+			"parts": 24,
+			"shaded": 24,
+			"allowParts": true
+		}
+	},
+	{
+		"activity": "fractions",
+		"input": {
+			"parts": "abc",
+			"shaded": -4
+		},
+		"expected": {
+			"version": 1,
+			"shape": "bar",
+			"parts": 4,
+			"shaded": 0,
+			"allowParts": true
+		}
+	},
+	{
+		"activity": "clock",
+		"input": {},
+		"expected": {
+			"version": 1,
+			"hour": 3,
+			"minute": 0,
+			"snap": 5,
+			"showDigital": true,
+			"format24": false
+		}
+	},
+	{
+		"activity": "clock",
+		"input": {
+			"hour": 15,
+			"minute": 45,
+			"snap": 15,
+			"showDigital": false,
+			"format24": true
+		},
+		"expected": {
+			"version": 1,
+			"hour": 15,
+			"minute": 45,
+			"snap": 15,
+			"showDigital": false,
+			"format24": true
+		}
+	},
+	{
+		"activity": "clock",
+		"input": {
+			"hour": 99,
+			"minute": -3,
+			"snap": 7,
+			"format24": "yes"
+		},
+		"expected": {
+			"version": 1,
+			"hour": 23,
+			"minute": 0,
+			"snap": 5,
+			"showDigital": true,
+			"format24": false
+		}
+	},
+	{
+		"activity": "converter",
+		"input": {},
+		"expected": {
+			"version": 1,
+			"quantity": "length",
+			"from": "m",
+			"to": "cm",
+			"value": 1,
+			"allowQuantity": true
+		}
+	},
+	{
+		"activity": "converter",
+		"input": {
+			"quantity": "mass",
+			"from": "lb",
+			"to": "kg",
+			"value": "2.5",
+			"allowQuantity": false
+		},
+		"expected": {
+			"version": 1,
+			"quantity": "mass",
+			"from": "lb",
+			"to": "kg",
+			"value": 2.5,
+			"allowQuantity": false
+		}
+	},
+	{
+		"activity": "converter",
+		"input": {
+			"quantity": "time",
+			"from": "m",
+			"to": "cm",
+			"value": 1000000000000
+		},
+		"expected": {
+			"version": 1,
+			"quantity": "time",
+			"from": "h",
+			"to": "min",
+			"value": 1000000000,
+			"allowQuantity": true
+		}
+	},
+	{
+		"activity": "converter",
+		"input": {
+			"quantity": "speed"
+		},
+		"expected": {
+			"version": 1,
+			"quantity": "length",
+			"from": "m",
+			"to": "cm",
+			"value": 1,
+			"allowQuantity": true
+		}
+	},
+	{
+		"activity": "chart",
+		"input": {},
+		"expected": {
+			"version": 1,
+			"kind": "bar",
+			"title": "",
+			"items": [
+				{
+					"label": "Red",
+					"value": 4
+				},
+				{
+					"label": "Blue",
+					"value": 7
+				},
+				{
+					"label": "Green",
+					"value": 3
+				}
+			],
+			"allowEdit": true
+		}
+	},
+	{
+		"activity": "chart",
+		"input": {
+			"kind": "pie",
+			"title": "<b>Pets</b> owned",
+			"items": [
+				{
+					"label": "Cats",
+					"value": 5
+				},
+				{
+					"label": "<i>Dogs</i>",
+					"value": "7"
+				},
+				{
+					"label": "Fish",
+					"value": -2
+				}
+			],
+			"allowEdit": false
+		},
+		"expected": {
+			"version": 1,
+			"kind": "pie",
+			"title": "Pets owned",
+			"items": [
+				{
+					"label": "Cats",
+					"value": 5
+				},
+				{
+					"label": "Dogs",
+					"value": 7
+				},
+				{
+					"label": "Fish",
+					"value": 0
+				}
+			],
+			"allowEdit": false
+		}
+	},
+	{
+		"activity": "chart",
+		"input": {
+			"kind": "radar",
+			"items": [
+				{
+					"label": "Only one",
+					"value": 1
+				}
+			]
+		},
+		"expected": {
+			"version": 1,
+			"kind": "bar",
+			"title": "",
+			"items": [
+				{
+					"label": "Red",
+					"value": 4
+				},
+				{
+					"label": "Blue",
+					"value": 7
+				},
+				{
+					"label": "Green",
+					"value": 3
+				}
+			],
+			"allowEdit": true
+		}
+	},
+	{
+		"activity": "geometry",
+		"input": {},
+		"expected": {
+			"version": 1,
+			"shape": "triangle",
+			"snap": true,
+			"showMeasures": true
+		}
+	},
+	{
+		"activity": "geometry",
+		"input": {
+			"shape": "angle",
+			"snap": false,
+			"showMeasures": false
+		},
+		"expected": {
+			"version": 1,
+			"shape": "angle",
+			"snap": false,
+			"showMeasures": false
+		}
+	},
+	{
+		"activity": "geometry",
+		"input": {
+			"shape": "cube"
+		},
+		"expected": {
+			"version": 1,
+			"shape": "triangle",
+			"snap": true,
+			"showMeasures": true
+		}
+	}
+]

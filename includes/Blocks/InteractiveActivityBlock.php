@@ -11,11 +11,42 @@ defined( 'ABSPATH' ) || exit;
 
 /** Server-rendered host for client-side activities; learners' experiments are never stored. */
 final class InteractiveActivityBlock {
-	const VERSION       = 1;
-	const MAX_FUNCTIONS = 12;
-	const MAX_PARAMS    = 6;
-	const COLORS        = array( '#2563eb', '#dc2626', '#16a34a', '#9333ea', '#ea580c', '#0891b2' );
-	const ACTIVITIES    = array( 'function-graph' );
+	const VERSION         = 1;
+	const MAX_FUNCTIONS   = 12;
+	const MAX_PARAMS      = 6;
+	const COLORS          = array( '#2563eb', '#dc2626', '#16a34a', '#9333ea', '#ea580c', '#0891b2' );
+	const ACTIVITIES      = array( 'function-graph', 'number-line', 'fractions', 'clock', 'converter', 'chart', 'geometry' );
+	const CLOCK_SNAPS     = array( 1, 5, 15 );
+	const CHART_KINDS     = array( 'bar', 'pie', 'line' );
+	const SHAPES          = array( 'triangle', 'quadrilateral', 'circle', 'angle' );
+	const FRACTION_SHAPES = array( 'bar', 'circle' );
+	/** Unit symbols per quantity; the sizes live in assets/src/blocks/interactive-activity/activities.mjs. */
+	const UNITS               = array(
+		'length' => array( 'mm', 'cm', 'm', 'km', 'in', 'ft', 'mi' ),
+		'mass'   => array( 'mg', 'g', 'kg', 't', 'oz', 'lb' ),
+		'time'   => array( 'ms', 's', 'min', 'h', 'day', 'week' ),
+		'volume' => array( 'ml', 'l', 'tsp', 'cup', 'gal' ),
+	);
+	const DEFAULT_UNITS       = array(
+		'length' => array( 'm', 'cm' ),
+		'mass'   => array( 'kg', 'g' ),
+		'time'   => array( 'h', 'min' ),
+		'volume' => array( 'l', 'ml' ),
+	);
+	const DEFAULT_CHART_ITEMS = array(
+		array(
+			'label' => 'Red',
+			'value' => 4,
+		),
+		array(
+			'label' => 'Blue',
+			'value' => 7,
+		),
+		array(
+			'label' => 'Green',
+			'value' => 3,
+		),
+	);
 
 	/** Register the block. */
 	public static function init() {
@@ -130,6 +161,198 @@ final class InteractiveActivityBlock {
 	}
 
 	/**
+	 * Whether a value is a number or a numeric string, like the JavaScript contract.
+	 *
+	 * @param mixed $value Candidate.
+	 * @return bool
+	 */
+	private static function numeric( $value ) {
+		return is_int( $value ) || is_float( $value ) || ( is_string( $value ) && '' !== trim( $value ) && is_numeric( $value ) );
+	}
+
+	/**
+	 * Whole number in range.
+	 *
+	 * @param mixed $value    Candidate.
+	 * @param int   $fallback Used when the candidate is not numeric.
+	 * @param int   $min      Lower limit.
+	 * @param int   $max      Upper limit.
+	 * @return int
+	 */
+	private static function whole( $value, $fallback, $min, $max ) {
+		return (int) round( self::number( $value, $fallback, $min, $max ) );
+	}
+
+	/**
+	 * One of the allowed strings.
+	 *
+	 * @param mixed    $value    Candidate.
+	 * @param string[] $allowed  Accepted values.
+	 * @param string   $fallback Used otherwise.
+	 * @return string
+	 */
+	private static function choice( $value, array $allowed, $fallback ) {
+		return is_string( $value ) && in_array( $value, $allowed, true ) ? $value : $fallback;
+	}
+
+	/**
+	 * Plain text of at most a given length.
+	 *
+	 * @param mixed $value Candidate.
+	 * @param int   $max   Maximum length.
+	 * @return string
+	 */
+	private static function plain( $value, $max ) {
+		return is_string( $value ) ? mb_substr( preg_replace( '/<[^>]*>/', '', $value ), 0, $max ) : '';
+	}
+
+	/**
+	 * Apply the contract of an activity other than the function graph; mirrors
+	 * assets/src/blocks/interactive-activity/activities.mjs (tests/fixtures/interactive-activity-contract.json).
+	 *
+	 * @param string $activity Activity type.
+	 * @param mixed  $input    Stored configuration.
+	 * @return array Safe configuration.
+	 */
+	public static function sanitize_activity( $activity, $input ) {
+		$input = is_array( $input ) ? $input : array();
+		switch ( $activity ) {
+			case 'number-line':
+				$min = self::number( $input['min'] ?? null, 0, -1e6, 1e6 );
+				$max = self::number( $input['max'] ?? null, 10, -1e6, 1e6 );
+				if ( $min >= $max ) {
+					$min = 0.0;
+					$max = 10.0;
+				}
+				$step   = min( $max - $min, self::number( $input['step'] ?? null, 1, 1e-6, 1e6 ) );
+				$points = array();
+				foreach ( is_array( $input['points'] ?? null ) ? $input['points'] : array() as $point ) {
+					if ( self::numeric( $point ) ) {
+						$points[] = self::number( $point, $min, $min, $max );
+					}
+				}
+				$points = array_slice( $points, 0, 4 );
+				return array(
+					'version' => self::VERSION,
+					'min'     => $min,
+					'max'     => $max,
+					'step'    => $step,
+					'points'  => $points ? $points : array( $min ),
+					'snap'    => false !== ( $input['snap'] ?? true ),
+				);
+			case 'fractions':
+				$parts = self::whole( $input['parts'] ?? null, 4, 1, 24 );
+				return array(
+					'version'    => self::VERSION,
+					'shape'      => self::choice( $input['shape'] ?? null, self::FRACTION_SHAPES, 'bar' ),
+					'parts'      => $parts,
+					'shaded'     => self::whole( $input['shaded'] ?? null, 1, 0, $parts ),
+					'allowParts' => false !== ( $input['allowParts'] ?? true ),
+				);
+			case 'clock':
+				$snap = $input['snap'] ?? null;
+				return array(
+					'version'     => self::VERSION,
+					'hour'        => self::whole( $input['hour'] ?? null, 3, 0, 23 ),
+					'minute'      => self::whole( $input['minute'] ?? null, 0, 0, 59 ),
+					'snap'        => self::numeric( $snap ) && in_array( $snap + 0, self::CLOCK_SNAPS, true ) ? (int) $snap : 5,
+					'showDigital' => false !== ( $input['showDigital'] ?? true ),
+					'format24'    => true === ( $input['format24'] ?? false ),
+				);
+			case 'converter':
+				$quantity = self::choice( $input['quantity'] ?? null, array_keys( self::UNITS ), 'length' );
+				return array(
+					'version'       => self::VERSION,
+					'quantity'      => $quantity,
+					'from'          => self::choice( $input['from'] ?? null, self::UNITS[ $quantity ], self::DEFAULT_UNITS[ $quantity ][0] ),
+					'to'            => self::choice( $input['to'] ?? null, self::UNITS[ $quantity ], self::DEFAULT_UNITS[ $quantity ][1] ),
+					'value'         => self::number( $input['value'] ?? null, 1, -1e9, 1e9 ),
+					'allowQuantity' => false !== ( $input['allowQuantity'] ?? true ),
+				);
+			case 'chart':
+				$items = array();
+				foreach ( array_slice( is_array( $input['items'] ?? null ) ? $input['items'] : array(), 0, 12 ) as $item ) {
+					$item    = is_array( $item ) ? $item : array();
+					$items[] = array(
+						'label' => self::plain( $item['label'] ?? null, 40 ),
+						'value' => self::number( $item['value'] ?? null, 0, 0, 1e6 ),
+					);
+				}
+				return array(
+					'version'   => self::VERSION,
+					'kind'      => self::choice( $input['kind'] ?? null, self::CHART_KINDS, 'bar' ),
+					'title'     => self::plain( $input['title'] ?? null, 80 ),
+					'items'     => count( $items ) >= 2 ? $items : self::DEFAULT_CHART_ITEMS,
+					'allowEdit' => false !== ( $input['allowEdit'] ?? true ),
+				);
+			case 'geometry':
+				return array(
+					'version'      => self::VERSION,
+					'shape'        => self::choice( $input['shape'] ?? null, self::SHAPES, 'triangle' ),
+					'snap'         => false !== ( $input['snap'] ?? true ),
+					'showMeasures' => false !== ( $input['showMeasures'] ?? true ),
+				);
+			default:
+				return self::sanitize_config( $input );
+		}
+	}
+
+	/**
+	 * Interface text of every activity, in the site language.
+	 *
+	 * @return string[]
+	 */
+	private static function labels() {
+		return array(
+			'graph'         => __( 'Graph', 'ohmylms' ),
+			'equations'     => __( 'Equations', 'ohmylms' ),
+			'equation'      => __( 'Equation', 'ohmylms' ),
+			'addFunction'   => __( 'Add function', 'ohmylms' ),
+			'remove'        => __( 'Remove function', 'ohmylms' ),
+			'parameters'    => __( 'Parameters', 'ohmylms' ),
+			'invalid'       => __( 'Cannot graph this expression yet.', 'ohmylms' ),
+			'numberLine'    => __( 'Number line', 'ohmylms' ),
+			'point'         => __( 'Point', 'ohmylms' ),
+			'value'         => __( 'Value', 'ohmylms' ),
+			'fractions'     => __( 'Fraction', 'ohmylms' ),
+			'parts'         => __( 'Equal parts', 'ohmylms' ),
+			'shaded'        => __( 'Shaded', 'ohmylms' ),
+			'part'          => __( 'Part', 'ohmylms' ),
+			'simplified'    => __( 'Simplest form', 'ohmylms' ),
+			'decimal'       => __( 'Decimal', 'ohmylms' ),
+			'percent'       => __( 'Percent', 'ohmylms' ),
+			'clock'         => __( 'Clock', 'ohmylms' ),
+			'hours'         => __( 'Hours', 'ohmylms' ),
+			'minutes'       => __( 'Minutes', 'ohmylms' ),
+			'converter'     => __( 'Unit converter', 'ohmylms' ),
+			'quantity'      => __( 'Quantity', 'ohmylms' ),
+			'amount'        => __( 'Amount', 'ohmylms' ),
+			'from'          => __( 'From', 'ohmylms' ),
+			'to'            => __( 'To', 'ohmylms' ),
+			'length'        => __( 'Length', 'ohmylms' ),
+			'mass'          => __( 'Mass', 'ohmylms' ),
+			'time'          => __( 'Time', 'ohmylms' ),
+			'volume'        => __( 'Volume', 'ohmylms' ),
+			'chart'         => __( 'Chart', 'ohmylms' ),
+			'label'         => __( 'Label', 'ohmylms' ),
+			'total'         => __( 'Total', 'ohmylms' ),
+			'mean'          => __( 'Mean', 'ohmylms' ),
+			'median'        => __( 'Median', 'ohmylms' ),
+			'mode'          => __( 'Mode', 'ohmylms' ),
+			'noMode'        => __( 'none', 'ohmylms' ),
+			'range'         => __( 'Range', 'ohmylms' ),
+			'geometry'      => __( 'Geometry', 'ohmylms' ),
+			'side'          => __( 'Side', 'ohmylms' ),
+			'perimeter'     => __( 'Perimeter', 'ohmylms' ),
+			'area'          => __( 'Area', 'ohmylms' ),
+			'angle'         => __( 'Angle', 'ohmylms' ),
+			'radius'        => __( 'Radius', 'ohmylms' ),
+			'circumference' => __( 'Circumference', 'ohmylms' ),
+			'noArea'        => __( 'The sides cross, so there is no single area.', 'ohmylms' ),
+		);
+	}
+
+	/**
 	 * Render the host element; the view script mounts the activity from its data attributes.
 	 *
 	 * @param array $attributes Block attributes.
@@ -138,25 +361,18 @@ final class InteractiveActivityBlock {
 	public static function render( $attributes ) {
 		$activity = in_array( $attributes['activity'] ?? '', self::ACTIVITIES, true ) ? $attributes['activity'] : 'function-graph';
 		$stored   = $attributes['config'] ?? array();
-		$config   = self::sanitize_config(
-			! empty( $stored['version'] ) ? $stored : array(
+		if ( 'function-graph' === $activity ) {
+			$stored = ! empty( $stored['version'] ) ? $stored : array(
 				'functions' => array(
 					array(
 						'id'    => 'f1',
 						'latex' => 'x^2',
 					),
 				),
-			)
-		);
-		$labels   = array(
-			'graph'       => __( 'Graph', 'ohmylms' ),
-			'equations'   => __( 'Equations', 'ohmylms' ),
-			'equation'    => __( 'Equation', 'ohmylms' ),
-			'addFunction' => __( 'Add function', 'ohmylms' ),
-			'remove'      => __( 'Remove function', 'ohmylms' ),
-			'parameters'  => __( 'Parameters', 'ohmylms' ),
-			'invalid'     => __( 'Cannot graph this expression yet.', 'ohmylms' ),
-		);
+			);
+		}
+		$config = self::sanitize_activity( $activity, $stored );
+		$labels = self::labels();
 		return '<div ' . get_block_wrapper_attributes( array( 'class' => 'ohmylms-activity' ) )
 			. ' data-ohmylms-activity="' . esc_attr( $activity ) . '"'
 			. ' data-config="' . esc_attr( wp_json_encode( $config ) ) . '"'

@@ -1,7 +1,4 @@
-import { mountFunctionGraph } from './function-graph.mjs';
-
-/** Activity types the page can mount. New types register here and in the editor. */
-const ACTIVITIES = { 'function-graph': mountFunctionGraph };
+import { MOUNTERS as ACTIVITIES } from './registry.mjs';
 
 /**
  * Mount every server-rendered activity on the page. The configuration is data, never script.

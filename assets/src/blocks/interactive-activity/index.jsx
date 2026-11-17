@@ -5,20 +5,17 @@ import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import {
 	Button,
 	PanelBody,
+	SelectControl,
 	TextControl,
 	ToggleControl,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { MathfieldElement } from 'ohmylms/mathlive';
 import metadata from './block.json';
-import {
-	COLORS,
-	DEFAULT_CONFIG,
-	MAX_FUNCTIONS,
-	MAX_PARAMS,
-	normalizeConfig,
-} from './config.mjs';
-import { mountFunctionGraph } from './function-graph.mjs';
+import { COLORS, MAX_FUNCTIONS, MAX_PARAMS } from './config.mjs';
+import { GRAPH, defaultConfig, normalizeActivity } from './activities.mjs';
+import { MOUNTERS } from './registry.mjs';
+import { ActivitySettings } from './settings.jsx';
 
 /**
  * @return {Object} Interface text for the activity, translated for the editor.
@@ -32,7 +29,58 @@ function labels() {
 		remove: __( 'Remove function', 'ohmylms' ),
 		parameters: __( 'Parameters', 'ohmylms' ),
 		invalid: __( 'Cannot graph this expression yet.', 'ohmylms' ),
+		numberLine: __( 'Number line', 'ohmylms' ),
+		point: __( 'Point', 'ohmylms' ),
+		value: __( 'Value', 'ohmylms' ),
+		fractions: __( 'Fraction', 'ohmylms' ),
+		parts: __( 'Equal parts', 'ohmylms' ),
+		shaded: __( 'Shaded', 'ohmylms' ),
+		part: __( 'Part', 'ohmylms' ),
+		simplified: __( 'Simplest form', 'ohmylms' ),
+		decimal: __( 'Decimal', 'ohmylms' ),
+		percent: __( 'Percent', 'ohmylms' ),
+		clock: __( 'Clock', 'ohmylms' ),
+		hours: __( 'Hours', 'ohmylms' ),
+		minutes: __( 'Minutes', 'ohmylms' ),
+		converter: __( 'Unit converter', 'ohmylms' ),
+		quantity: __( 'Quantity', 'ohmylms' ),
+		amount: __( 'Amount', 'ohmylms' ),
+		from: __( 'From', 'ohmylms' ),
+		to: __( 'To', 'ohmylms' ),
+		length: __( 'Length', 'ohmylms' ),
+		mass: __( 'Mass', 'ohmylms' ),
+		time: __( 'Time', 'ohmylms' ),
+		volume: __( 'Volume', 'ohmylms' ),
+		chart: __( 'Chart', 'ohmylms' ),
+		label: __( 'Label', 'ohmylms' ),
+		total: __( 'Total', 'ohmylms' ),
+		mean: __( 'Mean', 'ohmylms' ),
+		median: __( 'Median', 'ohmylms' ),
+		mode: __( 'Mode', 'ohmylms' ),
+		noMode: __( 'none', 'ohmylms' ),
+		range: __( 'Range', 'ohmylms' ),
+		geometry: __( 'Geometry', 'ohmylms' ),
+		side: __( 'Side', 'ohmylms' ),
+		perimeter: __( 'Perimeter', 'ohmylms' ),
+		area: __( 'Area', 'ohmylms' ),
+		angle: __( 'Angle', 'ohmylms' ),
+		radius: __( 'Radius', 'ohmylms' ),
+		circumference: __( 'Circumference', 'ohmylms' ),
+		noArea: __( 'The sides cross, so there is no single area.', 'ohmylms' ),
 	};
+}
+
+/** @return {Object[]} Picker choices, one per activity type. */
+function activityChoices() {
+	return [
+		{ value: GRAPH, label: __( 'Function graph', 'ohmylms' ) },
+		{ value: 'number-line', label: __( 'Number line', 'ohmylms' ) },
+		{ value: 'fractions', label: __( 'Fractions', 'ohmylms' ) },
+		{ value: 'clock', label: __( 'Clock', 'ohmylms' ) },
+		{ value: 'converter', label: __( 'Unit converter', 'ohmylms' ) },
+		{ value: 'chart', label: __( 'Chart', 'ohmylms' ) },
+		{ value: 'geometry', label: __( 'Geometry', 'ohmylms' ) },
+	];
 }
 
 /**
@@ -106,24 +154,25 @@ function EquationField( { label, value, onChange } ) {
 }
 
 /**
- * Live preview of the learner view; its equations are edited in the sidebar.
+ * Live preview of the learner view; the graph's equations are edited in the sidebar.
  *
- * @param {Object} props        Preview properties.
- * @param {Object} props.config Normalized configuration.
+ * @param {Object} props          Preview properties.
+ * @param {string} props.activity Activity type.
+ * @param {Object} props.config   Normalized configuration.
  * @return {Element} Preview host.
  */
-function ActivityPreview( { config } ) {
+function ActivityPreview( { activity, config } ) {
 	const host = useRef( null );
 	const handle = useRef( null );
 	useEffect( () => {
-		handle.current = mountFunctionGraph( host.current, config, {
+		handle.current = MOUNTERS[ activity ]( host.current, config, {
 			preview: true,
 			labels: labels(),
 		} );
 		return () => handle.current.destroy();
-		// Mounted once; later edits go through update().
+		// Mounted again for another activity; later edits go through update().
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [] );
+	}, [ activity ] );
 	useEffect( () => {
 		handle.current?.update( config );
 	}, [ config ] );
@@ -139,9 +188,13 @@ function ActivityPreview( { config } ) {
  * @return {Element} Editor.
  */
 export function InteractiveActivityEdit( { attributes, setAttributes } ) {
+	const activity = MOUNTERS[ attributes.activity ]
+		? attributes.activity
+		: GRAPH;
+	const isGraph = activity === GRAPH;
 	const config = attributes.config?.version
-		? normalizeConfig( attributes.config )
-		: DEFAULT_CONFIG;
+		? normalizeActivity( activity, attributes.config )
+		: defaultConfig( activity );
 	const blockProps = useBlockProps( { className: 'ohmylms-activity' } );
 	const save = ( next ) => setAttributes( { config: next } );
 	const setView = ( key, value ) =>
@@ -189,152 +242,189 @@ export function InteractiveActivityEdit( { attributes, setAttributes } ) {
 	return (
 		<div { ...blockProps }>
 			<InspectorControls>
-				<PanelBody title={ __( 'Equations', 'ohmylms' ) }>
-					{ config.functions.map( ( item, index ) => (
-						<div
-							key={ item.id }
-							className="ohmylms-activity-equation-editor"
-							style={ { '--ohmylms-activity-color': item.color } }
-						>
-							<EquationField
-								label={ __( 'Equation', 'ohmylms' ) }
-								value={ item.latex }
-								onChange={ ( latex ) =>
-									setFunction( index, latex )
-								}
+				<PanelBody title={ __( 'Activity', 'ohmylms' ) }>
+					<SelectControl
+						label={ __( 'Type', 'ohmylms' ) }
+						value={ activity }
+						options={ activityChoices() }
+						onChange={ ( next ) =>
+							setAttributes( {
+								activity: next,
+								config: defaultConfig( next ),
+							} )
+						}
+					/>
+				</PanelBody>
+			</InspectorControls>
+			{ ! isGraph && (
+				<ActivitySettings
+					activity={ activity }
+					config={ config }
+					save={ save }
+				/>
+			) }
+			{ isGraph && (
+				<InspectorControls>
+					<PanelBody title={ __( 'Equations', 'ohmylms' ) }>
+						{ config.functions.map( ( item, index ) => (
+							<div
+								key={ item.id }
+								className="ohmylms-activity-equation-editor"
+								style={ {
+									'--ohmylms-activity-color': item.color,
+								} }
+							>
+								<EquationField
+									label={ __( 'Equation', 'ohmylms' ) }
+									value={ item.latex }
+									onChange={ ( latex ) =>
+										setFunction( index, latex )
+									}
+								/>
+								{ config.functions.length > 1 && (
+									<Button
+										variant="link"
+										isDestructive
+										onClick={ () =>
+											save( {
+												...config,
+												functions:
+													config.functions.filter(
+														( other, position ) =>
+															position !== index
+													),
+											} )
+										}
+									>
+										{ __( 'Remove function', 'ohmylms' ) }
+									</Button>
+								) }
+							</div>
+						) ) }
+						{ config.functions.length < MAX_FUNCTIONS && (
+							<Button variant="secondary" onClick={ addFunction }>
+								{ __( 'Add function', 'ohmylms' ) }
+							</Button>
+						) }
+					</PanelBody>
+					<PanelBody title={ __( 'Graph window', 'ohmylms' ) }>
+						{ [
+							[ 'xMin', __( 'x minimum', 'ohmylms' ) ],
+							[ 'xMax', __( 'x maximum', 'ohmylms' ) ],
+							[ 'yMin', __( 'y minimum', 'ohmylms' ) ],
+							[ 'yMax', __( 'y maximum', 'ohmylms' ) ],
+						].map( ( [ key, label ] ) => (
+							<NumberControl
+								key={ key }
+								label={ label }
+								value={ config.view[ key ] }
+								onChange={ ( value ) => setView( key, value ) }
 							/>
-							{ config.functions.length > 1 && (
+						) ) }
+					</PanelBody>
+					<PanelBody
+						title={ __( 'Variables (sliders)', 'ohmylms' ) }
+						initialOpen
+					>
+						<p>
+							{ __(
+								'Use a variable name as a letter in an equation, for example a x^2 + b.',
+								'ohmylms'
+							) }
+						</p>
+						{ config.params.map( ( param, index ) => (
+							<div
+								key={ param.name }
+								className="ohmylms-activity-param-editor"
+							>
+								<strong>{ param.name }</strong>
+								{ [
+									[ 'min', __( 'Minimum', 'ohmylms' ) ],
+									[ 'max', __( 'Maximum', 'ohmylms' ) ],
+									[ 'step', __( 'Step', 'ohmylms' ) ],
+									[ 'value', __( 'Start value', 'ohmylms' ) ],
+								].map( ( [ key, label ] ) => (
+									<NumberControl
+										key={ key }
+										label={ label }
+										value={ param[ key ] }
+										onChange={ ( value ) =>
+											setParam( index, key, value )
+										}
+									/>
+								) ) }
 								<Button
 									variant="link"
 									isDestructive
 									onClick={ () =>
 										save( {
 											...config,
-											functions: config.functions.filter(
-												( other, position ) =>
+											params: config.params.filter(
+												( item, position ) =>
 													position !== index
 											),
 										} )
 									}
 								>
-									{ __( 'Remove function', 'ohmylms' ) }
+									{ __( 'Remove variable', 'ohmylms' ) }
 								</Button>
-							) }
-						</div>
-					) ) }
-					{ config.functions.length < MAX_FUNCTIONS && (
-						<Button variant="secondary" onClick={ addFunction }>
-							{ __( 'Add function', 'ohmylms' ) }
-						</Button>
-					) }
-				</PanelBody>
-				<PanelBody title={ __( 'Graph window', 'ohmylms' ) }>
-					{ [
-						[ 'xMin', __( 'x minimum', 'ohmylms' ) ],
-						[ 'xMax', __( 'x maximum', 'ohmylms' ) ],
-						[ 'yMin', __( 'y minimum', 'ohmylms' ) ],
-						[ 'yMax', __( 'y maximum', 'ohmylms' ) ],
-					].map( ( [ key, label ] ) => (
-						<NumberControl
-							key={ key }
-							label={ label }
-							value={ config.view[ key ] }
-							onChange={ ( value ) => setView( key, value ) }
-						/>
-					) ) }
-				</PanelBody>
-				<PanelBody
-					title={ __( 'Variables (sliders)', 'ohmylms' ) }
-					initialOpen
-				>
-					<p>
-						{ __(
-							'Use a variable name as a letter in an equation, for example a x^2 + b.',
-							'ohmylms'
-						) }
-					</p>
-					{ config.params.map( ( param, index ) => (
-						<div
-							key={ param.name }
-							className="ohmylms-activity-param-editor"
-						>
-							<strong>{ param.name }</strong>
-							{ [
-								[ 'min', __( 'Minimum', 'ohmylms' ) ],
-								[ 'max', __( 'Maximum', 'ohmylms' ) ],
-								[ 'step', __( 'Step', 'ohmylms' ) ],
-								[ 'value', __( 'Start value', 'ohmylms' ) ],
-							].map( ( [ key, label ] ) => (
-								<NumberControl
-									key={ key }
-									label={ label }
-									value={ param[ key ] }
-									onChange={ ( value ) =>
-										setParam( index, key, value )
-									}
-								/>
-							) ) }
+							</div>
+						) ) }
+						{ config.params.length < MAX_PARAMS && freeName && (
 							<Button
-								variant="link"
-								isDestructive
+								variant="secondary"
 								onClick={ () =>
 									save( {
 										...config,
-										params: config.params.filter(
-											( item, position ) =>
-												position !== index
-										),
+										params: [
+											...config.params,
+											{
+												name: freeName,
+												min: -5,
+												max: 5,
+												step: 0.1,
+												value: 1,
+											},
+										],
 									} )
 								}
 							>
-								{ __( 'Remove variable', 'ohmylms' ) }
+								{ __( 'Add variable', 'ohmylms' ) }
 							</Button>
-						</div>
-					) ) }
-					{ config.params.length < MAX_PARAMS && freeName && (
-						<Button
-							variant="secondary"
-							onClick={ () =>
-								save( {
-									...config,
-									params: [
-										...config.params,
-										{
-											name: freeName,
-											min: -5,
-											max: 5,
-											step: 0.1,
-											value: 1,
-										},
-									],
-								} )
+						) }
+					</PanelBody>
+					<PanelBody
+						title={ __( 'Learner options', 'ohmylms' ) }
+						initialOpen={ false }
+					>
+						<ToggleControl
+							label={ __(
+								'Learners can edit equations',
+								'ohmylms'
+							) }
+							checked={ config.allowEdit }
+							onChange={ ( value ) =>
+								save( { ...config, allowEdit: value } )
 							}
-						>
-							{ __( 'Add variable', 'ohmylms' ) }
-						</Button>
-					) }
-				</PanelBody>
-				<PanelBody
-					title={ __( 'Learner options', 'ohmylms' ) }
-					initialOpen={ false }
-				>
-					<ToggleControl
-						label={ __( 'Learners can edit equations', 'ohmylms' ) }
-						checked={ config.allowEdit }
-						onChange={ ( value ) =>
-							save( { ...config, allowEdit: value } )
-						}
-					/>
-					<ToggleControl
-						label={ __( 'Learners can add functions', 'ohmylms' ) }
-						checked={ config.allowAdd }
-						onChange={ ( value ) =>
-							save( { ...config, allowAdd: value } )
-						}
-					/>
-				</PanelBody>
-			</InspectorControls>
-			<ActivityPreview config={ config } />
+						/>
+						<ToggleControl
+							label={ __(
+								'Learners can add functions',
+								'ohmylms'
+							) }
+							checked={ config.allowAdd }
+							onChange={ ( value ) =>
+								save( { ...config, allowAdd: value } )
+							}
+						/>
+					</PanelBody>
+				</InspectorControls>
+			) }
+			<ActivityPreview
+				key={ activity }
+				activity={ activity }
+				config={ config }
+			/>
 		</div>
 	);
 }

@@ -126,3 +126,154 @@
 code.ohmylms-activity-field {
 	overflow-wrap: anywhere;
 }
+
+/* Activities other than the function graph. */
+.ohmylms-activity-kit {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	max-width: 640px;
+}
+
+.ohmylms-activity-kit.is-geometry,
+.ohmylms-activity-kit.is-chart {
+	max-width: 720px;
+}
+
+.ohmylms-activity-svg {
+	display: block;
+	width: 100%;
+	height: auto;
+	border: 1px solid #d0d5dd;
+	border-radius: 8px;
+	background: #fff;
+	touch-action: none;
+}
+
+.ohmylms-activity-svg.is-fractions {
+	max-width: 360px;
+}
+
+.ohmylms-activity-svg.is-clock {
+	max-width: 280px;
+	align-self: center;
+}
+
+.ohmylms-activity-axis,
+.ohmylms-activity-tick {
+	stroke: #475467;
+	stroke-width: 2;
+}
+
+.ohmylms-activity-tick {
+	stroke-width: 1.5;
+}
+
+.ohmylms-activity-tick-label {
+	fill: #344054;
+	font-size: 13px;
+}
+
+.ohmylms-activity-handle {
+	cursor: grab;
+	stroke: #fff;
+	stroke-width: 3;
+}
+
+.ohmylms-activity-handle:focus-visible {
+	outline: 3px solid #101828;
+	outline-offset: 2px;
+}
+
+.ohmylms-activity-part {
+	cursor: pointer;
+	stroke: #1d4ed8;
+	stroke-width: 2;
+}
+
+.ohmylms-activity-part:focus-visible {
+	outline: 3px solid #101828;
+	outline-offset: 2px;
+}
+
+.ohmylms-activity-part.is-shaded {
+	fill-opacity: 0.75;
+}
+
+.ohmylms-activity-readout,
+.ohmylms-activity-facts {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	font-variant-numeric: tabular-nums;
+}
+
+.ohmylms-activity-readout {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 20px;
+}
+
+.ohmylms-activity-controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px 20px;
+}
+
+.ohmylms-activity-control {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 120px;
+}
+
+.ohmylms-activity-control input,
+.ohmylms-activity-control select,
+.ohmylms-activity-table input {
+	min-height: 36px;
+	padding: 4px 8px;
+	border: 1px solid #d0d5dd;
+	border-radius: 6px;
+	background: #fff;
+}
+
+.ohmylms-activity-digital {
+	margin: 0;
+	font-size: 1.6em;
+	font-variant-numeric: tabular-nums;
+	font-weight: 600;
+	text-align: center;
+}
+
+.ohmylms-activity-clock-face {
+	fill: #fff;
+	stroke: #475467;
+	stroke-width: 3;
+}
+
+.ohmylms-activity-hand {
+	stroke: #101828;
+	stroke-linecap: round;
+}
+
+.ohmylms-activity-hand.is-hour {
+	stroke-width: 7;
+}
+
+.ohmylms-activity-hand.is-minute {
+	stroke-width: 4;
+}
+
+.ohmylms-activity-title {
+	margin: 0;
+}
+
+.ohmylms-activity-table {
+	border-collapse: collapse;
+}
+
+.ohmylms-activity-table th,
+.ohmylms-activity-table td {
+	padding: 4px 12px 4px 0;
+	text-align: left;
+}
