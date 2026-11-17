@@ -463,9 +463,15 @@ class EngagementHook {
 		if ( ! is_user_logged_in() ) {
 			return;
 		}
-		get_current_user_id();
 		$student_id = get_current_user_id();
 		$message    = '';
+		// The three markers are read on every page: load them, and their expiry times, in one query.
+		$markers = array();
+		foreach ( array( 'badge', 'level', 'points' ) as $kind ) {
+			$markers[] = '_transient_' . $kind . '_added_for_user_' . $student_id;
+			$markers[] = '_transient_timeout_' . $kind . '_added_for_user_' . $student_id;
+		}
+		wp_prime_option_caches( $markers );
 
 		if ( get_transient( 'badge_added_for_user_' . $student_id ) ) {
 			delete_transient( 'badge_added_for_user_' . $student_id ); // clear after use.

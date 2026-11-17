@@ -28,7 +28,9 @@ class SessionReminderScheduler {
 	 * Init for Session reminder scheduler.
 	 */
 	public static function init() {
-		add_action( 'init', array( __CLASS__, 'schedule_reminder' ) );
+		// Make sure the hourly job exists from admin and background requests (admin_init also runs for
+		// admin-ajax, which the Action Scheduler queue runner uses), not from every page view.
+		add_action( 'admin_init', array( __CLASS__, 'schedule_reminder' ) );
 		add_action( self::ACTION_HOOK, array( __CLASS__, 'handle_reminder' ) );
 	}
 

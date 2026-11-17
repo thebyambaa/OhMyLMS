@@ -45,7 +45,64 @@ class Menu {
 	}
 
 	/**
+	 * Option holding the number of orders nobody has opened yet, so admin pages do not count them each time.
+	 */
+	const UNCHECKED_ORDERS_OPTION = 'ohmylms_unchecked_orders_count';
+
+	/**
+	 * Clear the saved count whenever an order or its opened marker changes, from any request.
+	 *
+	 * @return void
+	 */
+	public static function watch_unchecked_orders() {
+		add_action( 'save_post_ohmylms-order', array( __CLASS__, 'forget_unchecked_orders' ) );
+		foreach ( array( 'deleted_post', 'trashed_post', 'untrashed_post' ) as $hook ) {
+			add_action( $hook, array( __CLASS__, 'forget_unchecked_order_post' ) );
+		}
+		foreach ( array( 'added_post_meta', 'updated_post_meta', 'deleted_post_meta' ) as $hook ) {
+			add_action( $hook, array( __CLASS__, 'forget_unchecked_order_meta' ), 10, 3 );
+		}
+	}
+
+	/**
+	 * Drop the saved count; the next admin page counts again.
+	 *
+	 * @return void
+	 */
+	public static function forget_unchecked_orders() {
+		delete_option( self::UNCHECKED_ORDERS_OPTION );
+	}
+
+	/**
+	 * Drop the saved count when an order is deleted, trashed or restored.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return void
+	 */
+	public static function forget_unchecked_order_post( $post_id ) {
+		if ( 'ohmylms-order' === get_post_type( $post_id ) ) {
+			self::forget_unchecked_orders();
+		}
+	}
+
+	/**
+	 * Drop the saved count when an order's opened marker is added, changed or removed.
+	 *
+	 * @param int|int[] $meta_ids Meta ID or IDs.
+	 * @param int       $post_id  Post ID.
+	 * @param string    $meta_key Meta key.
+	 * @return void
+	 */
+	public static function forget_unchecked_order_meta( $meta_ids, $post_id, $meta_key ) {
+		if ( '_is_open' === $meta_key ) {
+			self::forget_unchecked_orders();
+		}
+	}
+
+	/**
 	 * Count orders nobody has opened yet.
+	 *
+	 * The count is saved and cleared by watch_unchecked_orders() when orders change.
 	 *
 	 * @return int
 	 *
@@ -55,13 +112,18 @@ class Menu {
 		if ( ! current_user_can( AdminNavigation::CAPABILITY ) ) {
 			return 0;
 		}
+		$saved = get_option( self::UNCHECKED_ORDERS_OPTION, false );
+		if ( false !== $saved ) {
+			return (int) $saved;
+		}
 		$query = new \WP_Query(
 			array(
 				'post_type'      => 'ohmylms-order',
 				'post_status'    => 'any',
 				'posts_per_page' => 1,
 				'fields'         => 'ids',
-				'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- One count per admin request, as before.
+				'no_found_rows'  => false,
+				'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Runs only after an order changes; the result is saved.
 					array(
 						'key'     => '_is_open',
 						'compare' => 'NOT EXISTS',
@@ -69,7 +131,9 @@ class Menu {
 				),
 			)
 		);
-		return (int) $query->found_posts;
+		$count = (int) $query->found_posts;
+		update_option( self::UNCHECKED_ORDERS_OPTION, $count, true );
+		return $count;
 	}
 
 	/**

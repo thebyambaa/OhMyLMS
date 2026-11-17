@@ -565,6 +565,8 @@ final class OhMyLMS {
 			// Vendor promotions are not part of this distribution.
 		}
 
+		// Orders change from checkout and REST too, so the admin badge's saved count is cleared from any request.
+		\OhMyLMS\Admin\Menu::watch_unchecked_orders();
 		$this->rest_api = new OhMyLMS\Rest\Api();
 		new \OhMyLMS\Integrations\GoogleSignIn\GoogleSignIn();
 		new \OhMyLMS\Integrations\MicrosoftSignIn\MicrosoftSignIn();

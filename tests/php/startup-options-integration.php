@@ -46,7 +46,8 @@ if ( $single ) {
 	$failures[] = 'startup read these options one query each; add them to StartupOptions::NAMES or autoload them: ' . implode( ', ', array_unique( $single ) );
 }
 foreach ( \OhMyLMS\Utility\StartupOptions::NAMES as $name ) {
-	if ( 0 !== strpos( $name, 'ohmylms_' ) ) {
+	// The plugin's own options, or the stored rows of its own transients.
+	if ( 1 !== preg_match( '/^(?:_transient_(?:timeout_)?_?)?ohmylms_/', $name ) ) {
 		$failures[] = "only the plugin's own options are primed: $name";
 	}
 }
