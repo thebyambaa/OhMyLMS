@@ -244,9 +244,16 @@ final class InterfaceLanguage {
 		if ( isset( $_GET['rest_route'] ) ) {
 			return true;
 		}
-		$uri    = isset( $_SERVER['REQUEST_URI'] ) && is_string( $_SERVER['REQUEST_URI'] ) ? sanitize_url( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
-		$prefix = (string) wp_parse_url( home_url( '/' . rest_get_url_prefix() . '/' ), PHP_URL_PATH );
-		return '' !== $uri && '' !== $prefix && 0 === strpos( $uri, $prefix );
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Only a cache key; the path is sanitized below.
+		$raw = isset( $_SERVER['REQUEST_URI'] ) && is_string( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+		// The locale filter asks many times per request; work out each path once.
+		static $paths = array();
+		if ( ! isset( $paths[ $raw ] ) ) {
+			$uri           = '' !== $raw ? sanitize_url( $raw ) : '';
+			$prefix        = (string) wp_parse_url( home_url( '/' . rest_get_url_prefix() . '/' ), PHP_URL_PATH );
+			$paths[ $raw ] = '' !== $uri && '' !== $prefix && 0 === strpos( $uri, $prefix );
+		}
+		return $paths[ $raw ];
 	}
 
 	/**

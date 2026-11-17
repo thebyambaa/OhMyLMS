@@ -19,6 +19,13 @@ final class Hub {
 
 	const OPTION = 'ohmylms_student_hub';
 
+	/**
+	 * The saved value and its sanitized form, or null.
+	 *
+	 * @var array{raw:mixed,clean:array}|null
+	 */
+	private static $settings = null;
+
 	/** Slug of the generated public hub page. */
 	const SLUG = 'dashboard';
 
@@ -39,6 +46,10 @@ final class Hub {
 
 	/** Register the shortcode, settings page, and compatible legacy navigation. */
 	public static function init() {
+		// Section labels are translated: sanitize again after a locale or site switch.
+		foreach ( array( 'change_locale', 'switch_blog' ) as $hook ) {
+			add_action( $hook, array( __CLASS__, 'forget_settings' ), 0 );
+		}
 		LegacyPages::init();
 		LegacyLessonLinks::init();
 		TeacherActions::init();
@@ -131,17 +142,17 @@ final class Hub {
 			'page_id'       => absint( $input['page_id'] ?? 0 ),
 			'title'         => sanitize_text_field( is_string( $input['title'] ?? null ) ? $input['title'] : __( 'Student Home', 'ohmylms' ) ),
 			// The resolved color: the brand color while following it, so callers always get a hex value.
-			'accent'          => $follow_brand ? \OhMyLMS\Design\Tokens::color( 'ohmylms_primary_color_scheme' ) : $own_accent,
-			'accent_brand'    => $follow_brand,
-			'layout'          => in_array( $input['layout'] ?? '', array( 'sidebar', 'top' ), true ) ? $input['layout'] : 'sidebar',
-			'commerce'        => ! empty( $input['commerce'] ),
-			'personalize'     => ! empty( $input['personalize'] ),
-			'enabled'         => ! empty( $input['enabled'] ),
-			'library_types'   => array(),
-			'tabs'            => array(),
-			'cards'           => array(),
-			'labels'          => array(),
-			'default'         => 'home',
+			'accent'        => $follow_brand ? \OhMyLMS\Design\Tokens::color( 'ohmylms_primary_color_scheme' ) : $own_accent,
+			'accent_brand'  => $follow_brand,
+			'layout'        => in_array( $input['layout'] ?? '', array( 'sidebar', 'top' ), true ) ? $input['layout'] : 'sidebar',
+			'commerce'      => ! empty( $input['commerce'] ),
+			'personalize'   => ! empty( $input['personalize'] ),
+			'enabled'       => ! empty( $input['enabled'] ),
+			'library_types' => array(),
+			'tabs'          => array(),
+			'cards'         => array(),
+			'labels'        => array(),
+			'default'       => 'home',
 		);
 		foreach ( array(
 			'tabs'  => self::sections(),
@@ -186,16 +197,31 @@ final class Hub {
 	 * @return array
 	 */
 	public static function settings() {
-		return self::sanitize(
-			get_option(
-				self::OPTION,
-				array(
-					'enabled'     => true,
-					'commerce'    => true,
-					'personalize' => true,
-				)
+		$raw = get_option(
+			self::OPTION,
+			array(
+				'enabled'     => true,
+				'commerce'    => true,
+				'personalize' => true,
 			)
 		);
+		// Read several times per page; sanitize each saved value once.
+		if ( null === self::$settings || self::$settings['raw'] !== $raw ) {
+			self::$settings = array(
+				'raw'   => $raw,
+				'clean' => self::sanitize( $raw ),
+			);
+		}
+		return self::$settings['clean'];
+	}
+
+	/**
+	 * Drop the sanitized copy, so its translated labels are built again.
+	 *
+	 * @return void
+	 */
+	public static function forget_settings() {
+		self::$settings = null;
 	}
 
 	/** Provision one page; never rewrite or delete existing student pages. */

@@ -17,12 +17,23 @@ defined( 'ABSPATH' ) || exit;
 /** Renames "chapter" in every translatable string of the plugin's text domains. */
 final class Terminology {
 
-	const OPTION  = 'ohmylms_terminology';
-	const DOMAINS = array( 'ohmylms', 'ohmylms-pro' );
-	const HANDLE  = 'wp-i18n';
+	const OPTION = 'ohmylms_terminology';
+
+	/**
+	 * The saved value and its sanitized form, or null.
+	 *
+	 * @var array{raw:mixed,clean:array{enabled:bool,singular:string,plural:string}}|null
+	 */
+	private static $settings = null;
+	const DOMAINS            = array( 'ohmylms', 'ohmylms-pro' );
+	const HANDLE             = 'wp-i18n';
 
 	/** Register the PHP and JavaScript string filters. */
 	public static function init() {
+		// The default wording is translated: sanitize again after a locale or site switch.
+		foreach ( array( 'change_locale', 'switch_blog' ) as $hook ) {
+			add_action( $hook, array( __CLASS__, 'forget_settings' ), 0 );
+		}
 		add_filter( 'gettext', array( __CLASS__, 'gettext' ), 20, 3 );
 		add_filter( 'gettext_with_context', array( __CLASS__, 'gettext_with_context' ), 20, 4 );
 		add_filter( 'ngettext', array( __CLASS__, 'ngettext' ), 20, 5 );
@@ -37,7 +48,24 @@ final class Terminology {
 	 * @return array{enabled:bool,singular:string,plural:string}
 	 */
 	public static function settings() {
-		return self::sanitize( get_option( self::OPTION, array() ) );
+		$raw = get_option( self::OPTION, array() );
+		// Translation filters call this for every string; sanitize each saved value once.
+		if ( null === self::$settings || self::$settings['raw'] !== $raw ) {
+			self::$settings = array(
+				'raw'   => $raw,
+				'clean' => self::sanitize( $raw ),
+			);
+		}
+		return self::$settings['clean'];
+	}
+
+	/**
+	 * Drop the sanitized copy, so its default wording is translated again.
+	 *
+	 * @return void
+	 */
+	public static function forget_settings() {
+		self::$settings = null;
 	}
 
 	/**
