@@ -61,6 +61,8 @@ composer dump-autoload --no-plugins --no-scripts --working-dir=packages/e-commer
 npm run build
 ```
 
+Both manifests set `optimize-autoloader`, so these commands write a full class map and a request finds each class without checking the disk. Run them after adding, moving or deleting a PHP class; `tests/php/autoload-classmap-unit.php` (in `npm run test:php`) fails while the map is out of date.
+
 Do not edit Composer-generated loaders directly. The recovered admin bundles and the `tools/commerce-adapters.mjs` path rewriting they needed were deleted at the cutover ([CUTOVER.md](CUTOVER.md)); the typed app calls the commerce routes directly.
 
 Run `tests/php/creatorlms-coexistence.php` in fresh PHP processes with `OHMYLMS_TEST_CREDENTIALS` pointing to the isolated fixture site's credentials, using these scenarios: `activate-creatorlms`, `activate-ohmylms`, `ohmylms-first`, `creatorlms-first`, `ohmylms-only`, and `ohmylms-legacy`. The fixture must use the `ohmylms_source_test` database and contain both plugin checkouts. The legacy-only case uses `wp-content/standalone-plugins` containing only OhMyLMS. Test credential access uses local CLI file streams; the two filesystem standards warnings are limited to that fixture input.

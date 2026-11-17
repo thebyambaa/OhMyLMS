@@ -17,6 +17,7 @@
 		}
 	],
 	"config": {
-		"autoloader-suffix": "OhMyLMSCommerce"
+		"autoloader-suffix": "OhMyLMSCommerce",
+		"optimize-autoloader": true
 	}
 }
