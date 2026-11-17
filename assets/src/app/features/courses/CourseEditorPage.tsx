@@ -1,7 +1,7 @@
 import { Button, Modal, Notice } from '@wordpress/components';
 import { lazy, Suspense, useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
-import { Link, Navigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useBootstrap } from '../../bootstrap/BootstrapContext';
 import { hasCapability } from '../../bootstrap/config';
 import { BuilderSaveProvider } from '../../hooks/useBuilderSave';
@@ -74,6 +74,7 @@ function CourseViewAction( { id, refresh }: { id: number; refresh: number } ) {
  * `manage_options`, as on the server. The old `/settings` step opens Basics.
  */
 export default function CourseEditorPage() {
+	const navigate = useNavigate();
 	const params = useParams();
 	const id = routeId( params.id );
 	const [ publishing, setPublishing ] = useState( false );
@@ -292,6 +293,10 @@ export default function CourseEditorPage() {
 										setPublished( ( count ) => count + 1 )
 									}
 									onClose={ () => setPublishing( false ) }
+									onEdit={ () => {
+										setPublishing( false );
+										navigate( stepLink( id, 'outline' ) );
+									} }
 									viewLink={
 										<CourseViewAction
 											id={ id }

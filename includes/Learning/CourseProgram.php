@@ -569,7 +569,7 @@ final class CourseProgram {
 		if ( $syllabus && ! $program['outcomes'] ) {
 			$errors[] = __( 'Add at least one skill before publishing the syllabus.', 'ohmylms' ); }
 		if ( ! $required && ! $required_outcomes ) {
-			$errors[] = __( 'Select at least one completion requirement.', 'ohmylms' ); }
+			$errors[] = __( 'Add a required lesson, quiz or assignment, or choose a required skill target, so students can complete this course.', 'ohmylms' ); }
 		if ( 'traditional' !== $program['mode'] && ! $required_outcomes ) {
 			$errors[] = __( 'Skill-based and blended courses need a required skill outcome.', 'ohmylms' ); }
 		return $errors;

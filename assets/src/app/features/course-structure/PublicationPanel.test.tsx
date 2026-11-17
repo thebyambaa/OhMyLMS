@@ -30,6 +30,32 @@ const preview: api.Publication = {
 };
 beforeEach( () => vi.resetAllMocks() );
 
+it( 'returns an empty course to editing without attempting publication', async () => {
+	const user = userEvent.setup();
+	const onEdit = vi.fn();
+	vi.mocked( api.previewPublication ).mockResolvedValue( {
+		...preview,
+		units: [ { id: 3, title: 'Unit 1', items: [] } ],
+		readiness: [ 'A completion requirement is missing.' ],
+	} );
+	render(
+		<PublicationPanel
+			course={ 12 }
+			disabled={ false }
+			onPublished={ vi.fn() }
+			onEdit={ onEdit }
+		/>
+	);
+	await user.click(
+		await screen.findByRole( 'button', { name: 'Add lessons or quizzes' } )
+	);
+	expect( onEdit ).toHaveBeenCalledOnce();
+	expect( api.publishCourse ).not.toHaveBeenCalled();
+	expect(
+		screen.getByRole( 'button', { name: 'Publish course' } )
+	).toBeDisabled();
+} );
+
 it( 'reads the saved course by itself and publishes the shown revision with one button', async () => {
 	const user = userEvent.setup();
 	const onPublished = vi.fn();
@@ -110,7 +136,7 @@ it( 'says what students see: nothing yet, or the last published version', async 
 		/>
 	);
 	expect(
-		await screen.findByText( /cannot see this course yet/ )
+		await screen.findByText( /for students with access/ )
 	).toBeInTheDocument();
 	unmount();
 	vi.mocked( api.previewPublication ).mockResolvedValueOnce( {

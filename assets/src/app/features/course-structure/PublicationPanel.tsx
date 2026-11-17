@@ -60,6 +60,7 @@ function contents( preview: Publication ) {
  * @param props.onPublished Called after the course is published.
  * @param props.onClose     Closes the surrounding dialog; when given, the panel ends on a "done" screen.
  * @param props.viewLink    Link to the published course, shown on the "done" screen.
+ * @param props.onEdit      Returns to the outline to resolve publication issues.
  */
 export function PublicationPanel( {
 	course,
@@ -67,12 +68,14 @@ export function PublicationPanel( {
 	onPublished,
 	onClose,
 	viewLink,
+	onEdit,
 }: {
 	course: number;
 	disabled: boolean;
 	onPublished: () => void;
 	onClose?: () => void;
 	viewLink?: ReactNode;
+	onEdit?: () => void;
 } ) {
 	const { busy, error, run } = useOperation();
 	const [ preview, setPreview ] = useState< Publication | null >( null );
@@ -110,6 +113,11 @@ export function PublicationPanel( {
 		);
 	}
 	const blocked = Boolean( preview && preview.readiness.length > 0 );
+	const empty = Boolean(
+		preview &&
+		preview.outcomes === 0 &&
+		preview.units.every( ( unit ) => unit.items.length === 0 )
+	);
 	return (
 		<section aria-label={ __( 'Course publication', 'ohmylms' ) }>
 			{ done && published }
@@ -133,7 +141,7 @@ export function PublicationPanel( {
 					{ preview.units.length > 0 && (
 						<details className="oml-publication-contents">
 							<summary>
-								{ __( 'See what is included', 'ohmylms' ) }
+								{ __( 'Included content', 'ohmylms' ) }
 							</summary>
 							{ preview.units.map( ( unit ) => (
 								<div key={ unit.id }>
@@ -152,7 +160,7 @@ export function PublicationPanel( {
 					{ 0 === preview.published_program_id && (
 						<p role="status">
 							{ __(
-								'Students cannot see this course yet. Publishing shows it to them, together with the draft lessons and quizzes in it.',
+								'Publish this course and its draft lessons and quizzes for students with access. Keep as draft to edit later.',
 								'ohmylms'
 							) }
 						</p>
@@ -161,24 +169,47 @@ export function PublicationPanel( {
 						preview.unpublished_changes && (
 							<p role="status">
 								{ __(
-									'Students still see the last published version. Publish to show them your latest changes; students already in the course keep their version.',
+									'Students still see the last published version. Publish changes for new students; enrolled students keep their version.',
 									'ohmylms'
 								) }
 							</p>
 						) }
 					{ blocked && (
 						<Notice status="warning" isDismissible={ false }>
-							<p>
-								{ __(
-									'Resolve these items before publishing:',
-									'ohmylms'
-								) }
-							</p>
-							<ul>
-								{ preview.readiness.map( ( issue, index ) => (
-									<li key={ index }>{ issue }</li>
-								) ) }
-							</ul>
+							{ empty && (
+								<p>
+									{ __(
+										'Add a lesson or quiz, then save and publish.',
+										'ohmylms'
+									) }
+								</p>
+							) }
+							{ ! empty && (
+								<ul>
+									{ preview.readiness.map(
+										( issue, index ) => (
+											<li key={ index }>{ issue }</li>
+										)
+									) }
+								</ul>
+							) }
+							{ onEdit && (
+								<Button
+									variant="secondary"
+									onClick={ onEdit }
+									disabled={ busy }
+								>
+									{ empty
+										? __(
+												'Add lessons or quizzes',
+												'ohmylms'
+											)
+										: __(
+												'Edit outline',
+												'ohmylms'
+											) }
+								</Button>
+							) }
 						</Notice>
 					) }
 					<div className="oml-publication-actions">
