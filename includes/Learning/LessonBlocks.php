@@ -18,7 +18,18 @@ final class LessonBlocks {
 		'core/paragraph',
 		'core/heading',
 		'core/list',
+		'core/list-item',
 		'core/image',
+		// Layout.
+		'core/columns',
+		'core/column',
+		'core/group',
+		'core/spacer',
+		'core/separator',
+		// Code: a custom HTML block, and preformatted code to show on the page. WordPress filters custom
+		// HTML on save for authors without the unfiltered_html capability.
+		'core/html',
+		'core/code',
 		'ohmylms/lesson-video',
 		'ohmylms/lesson-callout',
 		'ohmylms/lesson-math',
