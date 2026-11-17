@@ -34,6 +34,8 @@ final class LessonBlocks {
 		'ohmylms/lesson-callout',
 		'ohmylms/lesson-math',
 		'ohmylms/lesson-exercise',
+		// Try-and-learn activity: type an equation and watch it graph.
+		'ohmylms/interactive-activity',
 	);
 
 	/** Register the blocks, the allowlist and the starter template. */
