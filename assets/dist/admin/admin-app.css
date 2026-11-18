@@ -854,6 +854,10 @@ body.oml-builder-fullscreen .oml-editor-header .oml-editor-view-link {
 	display: none;
 }
 
+.ohmylms-app .oml-editor :is(.oml-builder-bar, .oml-outline) :is(button, .button, .components-button) {
+	border-radius: max(8px, var(--oml-radius-button, 8px));
+}
+
 .ohmylms-app .oml-unit-quick-add {
 	display: flex;
 	align-items: center;
@@ -861,6 +865,15 @@ body.oml-builder-fullscreen .oml-editor-header .oml-editor-view-link {
 	flex-wrap: wrap;
 	padding: var(--oml-space-2) var(--oml-space-3);
 	border-top: 1px solid var(--oml-border);
+}
+
+.ohmylms-app .oml-editor .oml-unit-quick-add .components-base-control {
+	margin-bottom: 0;
+}
+
+.ohmylms-app .oml-unit-quick-add :is(select, input[type="text"]) {
+	box-sizing: border-box;
+	height: 40px;
 }
 
 .ohmylms-app .oml-unit-quick-add input[type="text"] {

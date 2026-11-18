@@ -121,8 +121,8 @@ export function QuickAdd( {
 		>
 			<SelectControl< ResourceType >
 				__nextHasNoMarginBottom
+				__next40pxDefaultSize
 				hideLabelFromVision
-				size="small"
 				label={ __( 'Type of new activity', 'ohmylms' ) }
 				value={ type }
 				options={ [
