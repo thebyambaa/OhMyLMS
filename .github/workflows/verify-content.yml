@@ -1,0 +1,26 @@
+name: Verify content change
+
+on:
+  push:
+    branches: [ verify-math-references-and-downloads ]
+
+permissions:
+  contents: read
+
+jobs:
+  coding-standards:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: composer
+      - uses: ramsey/composer-install@v3
+        with:
+          working-directory: tools/coding-standards
+          composer-options: --no-plugins --no-scripts
+      - run: |
+          paths=(includes/Downloads includes/References includes/Membership/Members.php ohmylms.php tests/php/memberships-rest-integration.php)
+          tools/coding-standards/vendor/bin/phpcs -n -s --report=full --standard=phpcs.xml.dist "${paths[@]}"
