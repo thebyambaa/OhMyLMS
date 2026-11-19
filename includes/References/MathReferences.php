@@ -118,7 +118,17 @@ final class MathReferences {
 		wp_set_script_translations( 'ohmylms-reference-editor', 'ohmylms' );
 
 		$options = array();
-		foreach ( get_posts( array( 'post_type' => self::POST_TYPE, 'post_status' => 'publish', 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC', 'has_password' => false ) ) as $post ) {
+		$posts   = get_posts(
+			array(
+				'post_type'      => self::POST_TYPE,
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'orderby'        => 'title',
+				'order'          => 'ASC',
+				'has_password'   => false,
+			)
+		);
+		foreach ( $posts as $post ) {
 			$meta      = self::metadata( $post->ID );
 			$options[] = array(
 				'value' => (string) $post->ID,
@@ -159,7 +169,11 @@ final class MathReferences {
 		$links = new \WP_HTML_Tag_Processor( $html );
 		$cards = array();
 		$group = '';
-		while ( $links->next_tag( array( 'tag_name' => 'A', 'class_name' => 'ohmylms-reference-link' ) ) ) {
+		$query = array(
+			'tag_name'   => 'A',
+			'class_name' => 'ohmylms-reference-link',
+		);
+		while ( $links->next_tag( $query ) ) {
 			$id = absint( $links->get_attribute( 'data-ohmylms-reference' ) );
 			if ( ! $id ) {
 				continue;
@@ -171,7 +185,10 @@ final class MathReferences {
 				continue;
 			}
 
-			$group = $group ?: wp_unique_id( 'ohmylms-reference-' );
+			if ( '' === $group ) {
+				$group = wp_unique_id( 'ohmylms-reference-' );
+			}
+
 			$key   = $group . '-' . $id;
 			$url   = get_permalink( $post );
 			$links->set_attribute( 'href', esc_url_raw( $url ) );
@@ -198,7 +215,7 @@ final class MathReferences {
 	 */
 	private static function card( \WP_Post $post, string $url, string $key ): string {
 		$meta     = self::metadata( $post->ID );
-		$summary  = wp_trim_words( wp_strip_all_tags( strip_shortcodes( $post->post_excerpt ?: $post->post_content ), true ), 36 );
+		$summary  = wp_trim_words( wp_strip_all_tags( strip_shortcodes( $post->post_excerpt ? $post->post_excerpt : $post->post_content ), true ), 36 );
 		$portrait = 'mathematician' === $meta['kind'] ? get_the_post_thumbnail( $post, 'thumbnail', array( 'loading' => 'lazy' ) ) : '';
 		return '<template id="' . esc_attr( $key ) . '"><div class="ohmylms-reference-card" role="dialog" aria-labelledby="' . esc_attr( $key . '-title' ) . '" popover="auto">'
 			. '<div class="ohmylms-reference-card-header"><span>' . esc_html( self::kinds()[ $meta['kind'] ] ) . '</span>'
@@ -255,7 +272,14 @@ final class MathReferences {
 	 * @return array Reference metadata.
 	 */
 	private static function metadata( int $id ): array {
-		$meta = wp_parse_args( (array) get_post_meta( $id, self::META_KEY, true ), array( 'kind' => 'definition', 'equation' => '', 'source' => '' ) );
+		$meta         = wp_parse_args(
+			(array) get_post_meta( $id, self::META_KEY, true ),
+			array(
+				'kind'     => 'definition',
+				'equation' => '',
+				'source'   => '',
+			)
+		);
 		$meta['kind'] = isset( self::kinds()[ $meta['kind'] ] ) ? $meta['kind'] : 'definition';
 		return $meta;
 	}

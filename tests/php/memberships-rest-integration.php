@@ -494,12 +494,26 @@ try {
 
 	$wpdb->update( $access_table, array( 'end_date' => '2000-01-01 00:00:00' ), array( 'id' => $member_row ) );
 	ok( ! \OhMyLMS\Membership\Members::has_active_plan( $member, $access_plans ), 'an expired membership cannot download even if still marked enrolled' );
-	$wpdb->update( $access_table, array( 'end_date' => '0000-00-00 00:00:00', 'status' => 'pending' ), array( 'id' => $member_row ) );
+	$wpdb->update(
+		$access_table,
+		array(
+			'end_date' => '0000-00-00 00:00:00',
+			'status'   => 'pending',
+		),
+		array( 'id' => $member_row )
+	);
 	ok( ! \OhMyLMS\Membership\Members::has_active_plan( $member, $access_plans ), 'pending memberships cannot download' );
 	$wpdb->update( $access_table, array( 'status' => 'enrolled' ), array( 'id' => $member_row ) );
-	update_user_meta( $member, \OhMyLMS\Membership\FreeSale::META, array( $member_row => array( 'plan_id' => $beta['id'], 'expires' => time() - 1 ) ) );
+	$grants = array(
+		$member_row => array(
+			'plan_id' => $beta['id'],
+			'expires' => time() - 1,
+		),
+	);
+	update_user_meta( $member, \OhMyLMS\Membership\FreeSale::META, $grants );
 	ok( ! \OhMyLMS\Membership\Members::has_active_plan( $member, $access_plans ), 'expired promotional access cannot download before cron runs' );
-	update_user_meta( $member, \OhMyLMS\Membership\FreeSale::META, array( $member_row => array( 'plan_id' => $beta['id'], 'expires' => time() + MINUTE_IN_SECONDS ) ) );
+	$grants[ $member_row ]['expires'] = time() + MINUTE_IN_SECONDS;
+	update_user_meta( $member, \OhMyLMS\Membership\FreeSale::META, $grants );
 	ok( \OhMyLMS\Membership\Members::has_active_plan( $member, $access_plans ), 'current promotional access can download' );
 	delete_user_meta( $member, \OhMyLMS\Membership\FreeSale::META );
 	call_api( 'PATCH', '/' . $beta['id'], array( 'course_ids' => array( $c1, $c2 ) ) );
