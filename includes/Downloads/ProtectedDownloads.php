@@ -12,7 +12,7 @@ use OhMyLMS\Utility\Lock;
 
 defined( 'ABSPATH' ) || exit;
 
-/** Membership-restricted PDFs for lessons and WordPress content. */
+/** Membership-restricted files for lessons and WordPress content. */
 final class ProtectedDownloads {
 
 	const POST_TYPE = 'ohmylms-download';
@@ -106,7 +106,7 @@ final class ProtectedDownloads {
 		);
 	}
 
-	/** Register the PDF and membership form. */
+	/** Register the file and membership form. */
 	public static function add_meta_box(): void {
 		add_meta_box( 'ohmylms-download-settings', __( 'File and membership access', 'ohmylms' ), array( __CLASS__, 'meta_box' ), self::POST_TYPE, 'normal', 'high' );
 	}
@@ -129,6 +129,7 @@ final class ProtectedDownloads {
 	 */
 	public static function meta_box( \WP_Post $post ): void {
 		$record = self::record( $post->ID );
+		$plans  = self::published_posts( 'ohmylms-membership' );
 		wp_nonce_field( self::ACTION . $post->ID, '_ohmylms_download_nonce' );
 
 		$notice_key = 'ohmylms_download_error_' . get_current_user_id() . '_' . $post->ID;
@@ -138,22 +139,31 @@ final class ProtectedDownloads {
 			echo '<p role="alert"><strong>' . esc_html( $notice ) . '</strong></p>';
 		}
 
-		$directory = PrivateFiles::directory();
+		$directory = PrivateFiles::directory( current_user_can( 'manage_options' ) );
 		if ( ! $directory || ! is_writable( $directory ) ) {
-			echo '<p>' . esc_html__( 'Set OHMYLMS_PRIVATE_DOWNLOAD_DIR in wp-config.php to a writable folder outside the web root to enable PDF uploads.', 'ohmylms' ) . '</p>';
+			echo '<p>' . esc_html__( 'Set OHMYLMS_PRIVATE_DOWNLOAD_DIR in wp-config.php to a writable folder outside the web root to enable uploads.', 'ohmylms' ) . '</p>';
 		}
 
 		if ( ! empty( $record['file']['name'] ) ) {
-			/* translators: %s: Filename of the current PDF. */
+			/* translators: %s: Filename of the current download. */
 			echo '<p>' . esc_html( sprintf( __( 'Current file: %s', 'ohmylms' ), $record['file']['name'] ) ) . '</p>';
 		}
 		?>
-		<p><label for="ohmylms-download-file"><?php esc_html_e( 'Upload or replace PDF', 'ohmylms' ); ?></label>
-			<input id="ohmylms-download-file" type="file" name="ohmylms_download_file" accept=".pdf,application/pdf"></p>
+		<p><label for="ohmylms-download-file"><?php esc_html_e( 'Upload or replace file', 'ohmylms' ); ?></label>
+			<input id="ohmylms-download-file" type="file" name="ohmylms_download_file" accept="<?php echo esc_attr( '.' . implode( ',.', array_keys( PrivateFiles::MIME_TYPES ) ) ); ?>" aria-describedby="ohmylms-download-types"></p>
+		<p id="ohmylms-download-types" class="description">
+			<?php
+			/* translators: %s: Comma-separated file extensions. */
+			printf( esc_html__( 'Supported files: %s.', 'ohmylms' ), esc_html( strtoupper( implode( ', ', array_keys( PrivateFiles::MIME_TYPES ) ) ) ) );
+			?>
+		</p>
 		<fieldset>
 			<legend><strong><?php esc_html_e( 'Eligible membership plans', 'ohmylms' ); ?></strong></legend>
 			<p><?php esc_html_e( 'Members need any one of the selected plans. Leave all plans unchecked to disable downloads.', 'ohmylms' ); ?></p>
-			<?php foreach ( self::published_posts( 'ohmylms-membership' ) as $plan ) : ?>
+			<?php if ( ! $plans ) : ?>
+				<p><?php esc_html_e( 'Publish a membership plan in OhMyLMS Commerce to make it available here.', 'ohmylms' ); ?></p>
+			<?php endif; ?>
+			<?php foreach ( $plans as $plan ) : ?>
 				<div><label><input type="checkbox" name="ohmylms_download_plans[]" value="<?php echo esc_attr( $plan->ID ); ?>" <?php checked( in_array( $plan->ID, $record['plans'] ?? array(), true ) ); ?>> <?php echo esc_html( $plan->post_title ); ?></label></div>
 			<?php endforeach; ?>
 		</fieldset>
@@ -268,8 +278,8 @@ final class ProtectedDownloads {
 			return '';
 		}
 
-		/* translators: %s: Title of the protected PDF. */
-		$label = sprintf( __( 'Download %s (PDF)', 'ohmylms' ), $post->post_title );
+		/* translators: %s: Title of the protected download. */
+		$label = sprintf( __( 'Download %s', 'ohmylms' ), $post->post_title );
 		return '<div ' . get_block_wrapper_attributes() . '><a href="' . esc_url( self::url( $id ) ) . '">' . esc_html( $label ) . '</a></div>';
 	}
 
@@ -314,10 +324,12 @@ final class ProtectedDownloads {
 			self::unavailable();
 		}
 
-		$name = sanitize_file_name( $record['file']['name'] ?? 'download.pdf' );
-		header( 'Content-Type: application/pdf' );
+		$extension = pathinfo( $path, PATHINFO_EXTENSION );
+		$fallback  = 'download.' . $extension;
+		$name      = sanitize_file_name( $record['file']['name'] ?? $fallback );
+		header( 'Content-Type: ' . PrivateFiles::MIME_TYPES[ $extension ] );
 		header( 'X-Content-Type-Options: nosniff' );
-		header( "Content-Disposition: attachment; filename=\"download.pdf\"; filename*=UTF-8''" . rawurlencode( $name ) );
+		header( 'Content-Disposition: attachment; filename="' . $fallback . '"; filename*=UTF-8\'\'' . rawurlencode( $name ) );
 		if ( 'HEAD' !== strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ?? '' ) ) ) ) {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fpassthru -- Stream the authorized binary response directly.
 			fpassthru( $file );
