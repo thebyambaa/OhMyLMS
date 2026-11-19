@@ -13,7 +13,7 @@
 		attributes: {
 			downloadId: { type: 'integer', default: 0 },
 		},
-		edit( { attributes, setAttributes } ) {
+		edit: function Edit( { attributes, setAttributes } ) {
 			const props = useBlockProps();
 			const { options, catalogUrl } = ohmylmsProtectedDownloads;
 			const selected = String( attributes.downloadId || '' );
@@ -26,19 +26,29 @@
 							value: selected || null,
 							options,
 							onChange: ( value ) =>
-								setAttributes( { downloadId: Number( value ) || 0 } ),
-					  } )
-					: catalogUrl && createElement(
-							'a',
-							{ href: catalogUrl },
-							__( 'Browse or create protected downloads', 'ohmylms' )
-					  ),
-				selected && ! options.some( ( option ) => option.value === selected )
+								setAttributes( {
+									downloadId: Number( value ) || 0,
+								} ),
+						} )
+					: catalogUrl &&
+							createElement(
+								'a',
+								{ href: catalogUrl },
+								__(
+									'Browse or create protected downloads',
+									'ohmylms'
+								)
+							),
+				selected &&
+					! options.some( ( option ) => option.value === selected )
 					? createElement(
 							'p',
 							null,
-							__( 'The selected download is unavailable.', 'ohmylms' )
-					  )
+							__(
+								'The selected download is unavailable.',
+								'ohmylms'
+							)
+						)
 					: null
 			);
 		},

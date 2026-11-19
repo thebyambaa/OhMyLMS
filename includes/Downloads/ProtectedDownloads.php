@@ -71,7 +71,12 @@ final class ProtectedDownloads {
 			'ohmylms/protected-download',
 			array(
 				'api_version'     => 3,
-				'attributes'      => array( 'downloadId' => array( 'type' => 'integer', 'default' => 0 ) ),
+				'attributes'      => array(
+					'downloadId' => array(
+						'type'    => 'integer',
+						'default' => 0,
+					),
+				),
 				'editor_script'   => 'ohmylms-protected-download-editor',
 				'render_callback' => array( __CLASS__, 'render' ),
 			)
@@ -172,6 +177,7 @@ final class ProtectedDownloads {
 			return;
 		}
 
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Each scalar plan ID is normalized and checked against the published plans below.
 		$requested = isset( $_POST['ohmylms_download_plans'] ) && is_array( $_POST['ohmylms_download_plans'] ) ? wp_unslash( $_POST['ohmylms_download_plans'] ) : array();
 		$plans     = array_values( array_map( 'intval', array_intersect( wp_list_pluck( self::published_posts( 'ohmylms-membership' ), 'ID' ), array_map( 'absint', array_filter( $requested, 'is_scalar' ) ) ) ) );
 		$lock      = 'protected-download:' . $post_id;
@@ -181,8 +187,9 @@ final class ProtectedDownloads {
 		}
 
 		try {
-			$record = self::record( $post_id );
-			$file   = $record['file'] ?? array();
+			$record        = self::record( $post_id );
+			$previous_file = $record['file'] ?? array();
+			$file          = $previous_file;
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- PrivateFiles validates the upload and sanitizes its filename.
 			$upload = $_FILES['ohmylms_download_file'] ?? array();
 			if ( UPLOAD_ERR_NO_FILE !== ( $upload['error'] ?? UPLOAD_ERR_NO_FILE ) ) {
@@ -201,7 +208,7 @@ final class ProtectedDownloads {
 				return;
 			}
 			if ( self::POST_TYPE !== get_post_type( $post_id ) || ! update_post_meta( $post_id, self::META_KEY, $next ) ) {
-				if ( $file !== ( $record['file'] ?? array() ) ) {
+				if ( $file !== $previous_file ) {
 					PrivateFiles::delete( $file['key'] );
 				}
 				self::save_error( $post_id, __( 'The download settings could not be saved.', 'ohmylms' ) );
