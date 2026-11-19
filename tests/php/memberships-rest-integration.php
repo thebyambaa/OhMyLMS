@@ -481,11 +481,27 @@ try {
 			'membership_id' => $beta['id'],
 			'status'        => 'enrolled',
 			'progress'      => 'running',
-			'start_date'    => gmdate( 'Y-m-d H:i:s' ),
+			'start_date'    => current_time( 'mysql' ),
 		)
 	);
 	$member_row = (int) $wpdb->insert_id;
 	ok( $member_row > 0, 'member row inserted' );
+	$access_table = $wpdb->prefix . 'ohmylms_user_membership';
+	$access_plans = array( (int) $beta['id'] );
+	ok( \OhMyLMS\Membership\Members::has_active_plan( $member, $access_plans ), 'a current member can download' );
+	ok( ! \OhMyLMS\Membership\Members::has_active_plan( 0, $access_plans ), 'guests cannot download' );
+	ok( ! \OhMyLMS\Membership\Members::has_active_plan( $member, array( 0 ) ), 'an unrelated plan cannot unlock a download' );
+
+	$wpdb->update( $access_table, array( 'end_date' => '2000-01-01 00:00:00' ), array( 'id' => $member_row ) );
+	ok( ! \OhMyLMS\Membership\Members::has_active_plan( $member, $access_plans ), 'an expired membership cannot download even if still marked enrolled' );
+	$wpdb->update( $access_table, array( 'end_date' => '0000-00-00 00:00:00', 'status' => 'pending' ), array( 'id' => $member_row ) );
+	ok( ! \OhMyLMS\Membership\Members::has_active_plan( $member, $access_plans ), 'pending memberships cannot download' );
+	$wpdb->update( $access_table, array( 'status' => 'enrolled' ), array( 'id' => $member_row ) );
+	update_user_meta( $member, \OhMyLMS\Membership\FreeSale::META, array( $member_row => array( 'plan_id' => $beta['id'], 'expires' => time() - 1 ) ) );
+	ok( ! \OhMyLMS\Membership\Members::has_active_plan( $member, $access_plans ), 'expired promotional access cannot download before cron runs' );
+	update_user_meta( $member, \OhMyLMS\Membership\FreeSale::META, array( $member_row => array( 'plan_id' => $beta['id'], 'expires' => time() + MINUTE_IN_SECONDS ) ) );
+	ok( \OhMyLMS\Membership\Members::has_active_plan( $member, $access_plans ), 'current promotional access can download' );
+	delete_user_meta( $member, \OhMyLMS\Membership\FreeSale::META );
 	call_api( 'PATCH', '/' . $beta['id'], array( 'course_ids' => array( $c1, $c2 ) ) );
 	$enrolled = $wpdb->get_col( $wpdb->prepare( "SELECT course_id FROM {$wpdb->prefix}ohmylms_user_enrollment WHERE user_id = %d AND membership_id = %d AND status = 'enrolled' ORDER BY course_id", $member, $beta['id'] ) );
 	ok( array( (string) $c1, (string) $c2 ) === $enrolled, 'members gain the plan courses when it is saved' );

@@ -17,6 +17,54 @@ defined( 'ABSPATH' ) || exit;
 final class Members {
 
 	/**
+	 * Check whether the user currently holds any of the specified published plans.
+	 *
+	 * @param int   $user_id  User ID.
+	 * @param int[] $plan_ids Eligible membership IDs.
+	 * @return bool Whether a membership is enrolled and within its access dates.
+	 */
+	public static function has_active_plan( int $user_id, array $plan_ids ): bool {
+		if ( ! $user_id || ! $plan_ids ) {
+			return false;
+		}
+
+		global $wpdb;
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT m.id, m.membership_id, m.order_id, m.subscription_id, m.start_date, m.end_date
+				FROM %i m
+				INNER JOIN %i p ON p.ID = m.membership_id
+				WHERE m.user_id = %d AND m.status = 'enrolled'
+				AND p.post_type = 'ohmylms-membership' AND p.post_status = 'publish' AND p.post_password = ''",
+				self::table(),
+				$wpdb->posts,
+				$user_id
+			)
+		);
+
+		$now    = current_time( 'mysql' );
+		$grants = (array) get_user_meta( $user_id, FreeSale::META, true );
+		foreach ( (array) $rows as $row ) {
+			if ( ! in_array( (int) $row->membership_id, $plan_ids, true ) ) {
+				continue;
+			}
+			$grant = $grants[ $row->id ] ?? null;
+			if ( is_array( $grant ) && ! (int) $row->order_id && ! (int) $row->subscription_id ) {
+				// FreeSale tracks the exact UTC cutoff separately from the site-local legacy fields.
+				if ( time() < (int) ( $grant['expires'] ?? 0 ) ) {
+					return true;
+				}
+				continue;
+			}
+			if ( $row->start_date <= $now && ( '0000-00-00 00:00:00' === $row->end_date || $row->end_date > $now ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Delete member rows matching an owning workflow's conditions.
 	 *
 	 * @param array $where Equality conditions.
