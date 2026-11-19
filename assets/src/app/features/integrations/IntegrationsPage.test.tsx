@@ -75,7 +75,7 @@ describe( 'IntegrationsPage OAuth result', () => {
 	} );
 	it( 'shows nothing without an OAuth result', async () => {
 		renderPage();
-		await screen.findByRole( 'table' );
+		await screen.findByRole( 'list', { name: 'Add-ons' } );
 		expect(
 			screen.queryByText( /Google Meet/, {
 				selector: '.components-notice__content',
@@ -85,13 +85,13 @@ describe( 'IntegrationsPage OAuth result', () => {
 } );
 
 describe( 'IntegrationsPage list', () => {
-	it( 'shows loading, then a named table with switches and server reasons', async () => {
+	it( 'shows loading, then a card catalogue with switches and server reasons', async () => {
 		renderPage();
 		expect( screen.getAllByRole( 'status' )[ 0 ] ).toHaveTextContent(
-			'Loading integrations'
+			'Loading add-ons'
 		);
 		expect(
-			await screen.findByRole( 'table', { name: 'Integrations' } )
+			await screen.findByRole( 'list', { name: 'Add-ons' } )
 		).toBeInTheDocument();
 		expect(
 			screen.getByRole( 'checkbox', { name: 'Enable Gamification' } )
@@ -118,36 +118,37 @@ describe( 'IntegrationsPage list', () => {
 	it( 'filters by search text and category and offers a way back', async () => {
 		const user = userEvent.setup();
 		renderPage();
-		await screen.findByRole( 'table' );
+		await screen.findByRole( 'list', { name: 'Add-ons' } );
 		await user.type(
-			screen.getByRole( 'searchbox', { name: 'Search integrations' } ),
+			screen.getByRole( 'searchbox', { name: 'Search add-ons' } ),
 			'zoo'
 		);
-		expect(
-			screen.getAllByText( '1 integration shown.' )[ 0 ]
-		).toHaveClass( 'displaying-num' );
+		expect( screen.getByText( '1 add-on' ) ).toBeInTheDocument();
 		expect(
 			screen.queryByRole( 'checkbox', { name: 'Enable Gamification' } )
 		).not.toBeInTheDocument();
-		await user.selectOptions(
-			screen.getByRole( 'combobox', { name: 'Category' } ),
-			'crm'
+		const crm = screen.getByRole( 'link', { name: 'CRM' } );
+		await user.click( crm );
+		expect( crm ).toHaveAttribute( 'aria-current', 'page' );
+		expect( screen.getByTestId( 'search' ) ).toHaveTextContent(
+			'category=crm'
 		);
 		expect(
-			screen.getByText( /No integrations match your filters\./ )
+			screen.getByText( /No add-ons match your filters\./ )
 		).toBeInTheDocument();
 		await user.click(
 			screen.getByRole( 'button', { name: 'Clear filters' } )
 		);
-		expect(
-			screen.getAllByText( '3 integrations shown.' )[ 0 ]
-		).toBeInTheDocument();
+		expect( screen.getByText( '3 add-ons' ) ).toBeInTheDocument();
 	} );
-	it( 'lists enabled and disabled integrations as views, as the Plugins screen does', async () => {
+	it( 'filters by enabled or disabled status', async () => {
 		const user = userEvent.setup();
 		renderPage();
-		await screen.findByRole( 'table', { name: 'Integrations' } );
-		await user.click( screen.getByRole( 'link', { name: /^Enabled/ } ) );
+		await screen.findByRole( 'list', { name: 'Add-ons' } );
+		await user.selectOptions(
+			screen.getByRole( 'combobox', { name: 'Status' } ),
+			'enabled'
+		);
 		expect(
 			screen.getByRole( 'checkbox', { name: 'Enable Gamification' } )
 		).toBeInTheDocument();
@@ -166,7 +167,7 @@ describe( 'IntegrationsPage list', () => {
 		renderPage();
 		await notice( /Request failed/ );
 		await user.click( screen.getByRole( 'button', { name: 'Try again' } ) );
-		await screen.findByRole( 'table' );
+		await screen.findByRole( 'list', { name: 'Add-ons' } );
 	} );
 	it( 'does not offer a retry when access is denied', async () => {
 		vi.mocked( api.listIntegrations ).mockRejectedValue( forbidden() );
@@ -175,7 +176,9 @@ describe( 'IntegrationsPage list', () => {
 		expect(
 			screen.queryByRole( 'button', { name: 'Try again' } )
 		).not.toBeInTheDocument();
-		expect( screen.queryByRole( 'table' ) ).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'list', { name: 'Add-ons' } )
+		).not.toBeInTheDocument();
 	} );
 	it( 'hides the route and makes no request without manage_options', () => {
 		renderShell( [ integrations ], { route: '/integrations' } );

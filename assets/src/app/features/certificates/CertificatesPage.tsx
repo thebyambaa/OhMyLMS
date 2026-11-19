@@ -1,9 +1,17 @@
-import { ListTable } from '../../../ui/ListTable';
-import { Button, Modal, Notice, TextControl } from '@wordpress/components';
+import { Badge } from '../../../ui/Badge';
+import {
+	Button,
+	Dashicon,
+	Modal,
+	Notice,
+	TextControl,
+} from '@wordpress/components';
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
-import { statusViews } from '../../components/listViews';
+import { EngagementToolbar } from '../../components/EngagementToolbar';
+import { Pagination } from '../../components/Pagination';
+import { useAdminPlace } from '../../routing/place';
 import {
 	PageTitleAction,
 	PageTitleActions,
@@ -22,7 +30,7 @@ const ISSUED = 'issued';
 
 function statusFilters(): Option[] {
 	return [
-		{ value: 'all', label: __( 'All', 'ohmylms' ) },
+		{ value: 'all', label: __( 'Any status', 'ohmylms' ) },
 		{ value: 'publish', label: __( 'Published', 'ohmylms' ) },
 		{ value: 'draft', label: __( 'Draft', 'ohmylms' ) },
 	];
@@ -56,6 +64,7 @@ export default function CertificatesPage() {
  */
 function TemplatesList() {
 	const list = useCertificates();
+	const place = useAdminPlace();
 	const navigate = useNavigate();
 	const [ query, setQuery ] = useState( list.searchTerm );
 	useEffect( () => setQuery( list.searchTerm ), [ list.searchTerm ] );
@@ -145,8 +154,38 @@ function TemplatesList() {
 
 	return (
 		<>
-			<PageTitleActions>
-				<PageTitleAction
+			{ ! place && (
+				<PageTitleActions>
+					<PageTitleAction to="/certificates/issued">
+						{ __( 'Issued certificates', 'ohmylms' ) }
+					</PageTitleAction>
+				</PageTitleActions>
+			) }
+			<EngagementToolbar
+				searchLabel={ __( 'Search certificate templates', 'ohmylms' ) }
+				search={ query }
+				onSearchChange={ setQuery }
+				onSearch={ () => list.search( query ) }
+				status={ list.status }
+				statusOptions={ statusFilters() }
+				onStatusChange={ list.setStatus }
+				count={
+					list.loading || list.error
+						? ''
+						: sprintf(
+								/* translators: %d: total template count. */
+								_n(
+									'%d template found.',
+									'%d templates found.',
+									list.data.total,
+									'ohmylms'
+								),
+								list.data.total
+							)
+				}
+			>
+				<Button
+					variant="primary"
 					disabled={ busy }
 					onClick={ () => {
 						setName( '' );
@@ -155,17 +194,8 @@ function TemplatesList() {
 					} }
 				>
 					{ __( 'Add template', 'ohmylms' ) }
-				</PageTitleAction>
-				<PageTitleAction to="/certificates/issued">
-					{ __( 'Issued certificates', 'ohmylms' ) }
-				</PageTitleAction>
-			</PageTitleActions>
-			<p>
-				{ __(
-					'Design certificate templates and assign them to courses.',
-					'ohmylms'
-				) }
-			</p>
+				</Button>
+			</EngagementToolbar>
 			{ message && (
 				<Notice status="success" onRemove={ () => setMessage( null ) }>
 					{ message }
@@ -190,152 +220,162 @@ function TemplatesList() {
 				</p>
 			) }
 			{ ! list.loading && ! list.error && (
-				<ListTable< Certificate >
-					caption={ __( 'Certificate templates', 'ohmylms' ) }
-					heading={ __( 'Certificate templates list', 'ohmylms' ) }
-					formLabel={ __(
-						'Search certificate templates',
-						'ohmylms'
-					) }
-					busy={ busy }
-					rows={ list.data.items }
-					rowKey={ ( item ) => item.id }
-					emptyMessage={ __(
-						'No certificate templates found.',
-						'ohmylms'
-					) }
-					views={ statusViews(
-						statusFilters(),
-						list.status,
-						list.data.total,
-						list.setStatus,
-						list.statusHref
-					) }
-					search={ {
-						label: __( 'Search certificate templates', 'ohmylms' ),
-						submitLabel: __( 'Search', 'ohmylms' ),
-						value: query,
-						onChange: setQuery,
-						onSubmit: () => list.search( query ),
-					} }
-					pagination={ {
-						page: list.page,
-						totalPages: list.data.totalPages,
-						totalItems: list.data.total,
-						itemsLabel: sprintf(
-							/* translators: %d: total template count. */
-							_n(
-								'%d template found.',
-								'%d templates found.',
-								list.data.total,
+				<>
+					{ list.data.items.length ? (
+						<ul
+							className="oml-engagement-grid"
+							aria-label={ __(
+								'Certificate templates',
 								'ohmylms'
-							),
-							list.data.total
-						),
-						onChange: list.setPage,
-						href: list.pageHref,
-					} }
-					columns={ [
-						{
-							id: 'name',
-							label: __( 'Name', 'ohmylms' ),
-							primary: true,
-							render: ( item ) => (
-								<strong>
-									<Link
-										className="row-title"
-										to={ `/certificates/${ item.id }` }
+							) }
+						>
+							{ list.data.items.map( ( item ) => {
+								const published = 'publish' === item.status;
+								const editor = `/certificates/${ item.id }`;
+								return (
+									<li
+										className="oml-engagement-card"
+										key={ item.id }
 									>
-										{ item.name }
-									</Link>
-								</strong>
-							),
-						},
-						{
-							id: 'preview',
-							label: __( 'Preview', 'ohmylms' ),
-							render: ( item ) =>
-								item.background_url ? (
-									<img
-										src={ item.background_url }
-										alt=""
-										width={ 64 }
-										loading="lazy"
-									/>
-								) : (
-									__( 'No image', 'ohmylms' )
-								),
-						},
-						{
-							id: 'status',
-							label: __( 'Status', 'ohmylms' ),
-							render: ( item ) =>
-								'publish' === item.status
-									? __( 'Published', 'ohmylms' )
-									: __( 'Draft', 'ohmylms' ),
-						},
-						{
-							id: 'layout',
-							label: __( 'Layout', 'ohmylms' ),
-							render: ( item ) =>
-								`${
-									'portrait' === item.orientation
-										? __( 'Portrait', 'ohmylms' )
-										: __( 'Landscape', 'ohmylms' )
-								}, ${ item.size.toUpperCase() }`,
-						},
-						{
-							id: 'courses',
-							label: __( 'Courses', 'ohmylms' ),
-							className: 'num',
-							render: ( item ) => item.course_count,
-						},
-					] }
-					rowActions={ ( item ) => [
-						{
-							key: 'edit',
-							label: __( 'Edit', 'ohmylms' ),
-							render: (
-								<Link
-									to={ `/certificates/${ item.id }` }
-									aria-label={ sprintf(
-										/* translators: %s: template name. */
-										__( 'Edit %s', 'ohmylms' ),
-										item.name
-									) }
-								>
-									{ __( 'Edit', 'ohmylms' ) }
-								</Link>
-							),
-						},
-						{
-							key: 'duplicate',
-							label: __( 'Duplicate', 'ohmylms' ),
-							disabled: busy,
-							onClick: () => duplicate( item ),
-							ariaLabel: sprintf(
-								/* translators: %s: template name. */
-								__( 'Duplicate %s', 'ohmylms' ),
-								item.name
-							),
-						},
-						{
-							key: 'delete',
-							label: __( 'Delete', 'ohmylms' ),
-							destructive: true,
-							disabled: busy,
-							onClick: () => {
-								setError( null );
-								setDialog( { kind: 'delete', item } );
-							},
-							ariaLabel: sprintf(
-								/* translators: %s: template name. */
-								__( 'Delete %s', 'ohmylms' ),
-								item.name
-							),
-						},
-					] }
-				/>
+										<div className="oml-certificate-thumbnail">
+											{ item.background_url ? (
+												<img
+													src={ item.background_url }
+													alt=""
+													loading="lazy"
+												/>
+											) : (
+												<Dashicon
+													icon="awards"
+													aria-hidden="true"
+												/>
+											) }
+										</div>
+										<div className="oml-engagement-card-heading">
+											<h2>
+												<Link to={ editor }>
+													{ item.name }
+												</Link>
+											</h2>
+											<Badge
+												tone={
+													published
+														? 'success'
+														: undefined
+												}
+											>
+												{ published
+													? __(
+															'Published',
+															'ohmylms'
+														)
+													: __( 'Draft', 'ohmylms' ) }
+											</Badge>
+										</div>
+										<p className="oml-engagement-card-meta">
+											{ sprintf(
+												/* translators: 1: orientation, 2: paper size. */
+												__( '%1$s, %2$s', 'ohmylms' ),
+												'portrait' === item.orientation
+													? __(
+															'Portrait',
+															'ohmylms'
+														)
+													: __(
+															'Landscape',
+															'ohmylms'
+														),
+												item.size.toUpperCase()
+											) }
+											<span>
+												{ sprintf(
+													/* translators: %d: number of courses using the template. */
+													_n(
+														'%d course',
+														'%d courses',
+														item.course_count,
+														'ohmylms'
+													),
+													item.course_count
+												) }
+											</span>
+										</p>
+										<div className="oml-engagement-card-actions">
+											<Link
+												className="button button-secondary"
+												to={ editor }
+												aria-label={ sprintf(
+													/* translators: %s: template name. */
+													__( 'Edit %s', 'ohmylms' ),
+													item.name
+												) }
+											>
+												{ __( 'Edit', 'ohmylms' ) }
+											</Link>
+											<Button
+												variant="tertiary"
+												disabled={ busy }
+												aria-label={ sprintf(
+													/* translators: %s: template name. */
+													__(
+														'Duplicate %s',
+														'ohmylms'
+													),
+													item.name
+												) }
+												onClick={ () =>
+													duplicate( item )
+												}
+											>
+												{ __( 'Duplicate', 'ohmylms' ) }
+											</Button>
+											<Button
+												variant="tertiary"
+												isDestructive
+												disabled={ busy }
+												aria-label={ sprintf(
+													/* translators: %s: template name. */
+													__(
+														'Delete %s',
+														'ohmylms'
+													),
+													item.name
+												) }
+												onClick={ () => {
+													setError( null );
+													setDialog( {
+														kind: 'delete',
+														item,
+													} );
+												} }
+											>
+												{ __( 'Delete', 'ohmylms' ) }
+											</Button>
+										</div>
+									</li>
+								);
+							} ) }
+						</ul>
+					) : (
+						<p className="oml-engagement-panel">
+							{ __(
+								'No certificate templates found.',
+								'ohmylms'
+							) }
+						</p>
+					) }
+					{ list.data.totalPages > 1 && (
+						<div className="oml-engagement-pagination">
+							<Pagination
+								page={ list.page }
+								pages={ list.data.totalPages }
+								busy={ busy }
+								onChange={ list.setPage }
+								href={ list.pageHref }
+							/>
+						</div>
+					) }
+				</>
 			) }
 			{ dialog?.kind === 'create' && (
 				<Modal

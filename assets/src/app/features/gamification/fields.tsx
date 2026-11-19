@@ -23,14 +23,17 @@ export function TextField( {
 	value,
 	onChange,
 	maxLength,
+	fullWidth = false,
 	...field
 }: FieldProps & {
 	value: string;
 	onChange: ( value: string ) => void;
 	maxLength?: number;
+	fullWidth?: boolean;
 } ) {
 	return (
 		<TextControl
+			className={ fullWidth ? undefined : 'oml-gamification-field' }
 			__next40pxDefaultSize
 			__nextHasNoMarginBottom
 			label={ field.label }
@@ -52,6 +55,7 @@ export function NumberField( {
 	min,
 	max,
 	step = 1,
+	accessibleLabel,
 	...field
 }: FieldProps & {
 	value: number | null;
@@ -59,13 +63,16 @@ export function NumberField( {
 	min: number;
 	max: number;
 	step?: number;
+	accessibleLabel?: string;
 } ) {
 	return (
 		<TextControl
 			__next40pxDefaultSize
 			__nextHasNoMarginBottom
+			className="oml-gamification-field oml-gamification-number"
 			type="number"
 			label={ field.label }
+			aria-label={ accessibleLabel }
 			value={ null === value ? '' : String( value ) }
 			onChange={ ( input: string ) => onChange( toNumber( input ) ) }
 			help={ message( field ) }
@@ -85,6 +92,7 @@ export function ToggleField( {
 }: FieldProps & { checked: boolean; onChange: ( value: boolean ) => void } ) {
 	return (
 		<ToggleControl
+			className="oml-gamification-field oml-gamification-toggle"
 			__nextHasNoMarginBottom
 			label={ field.label }
 			checked={ checked }
@@ -107,6 +115,7 @@ export function SelectField< T extends string >( {
 } ) {
 	return (
 		<SelectControl
+			className="oml-gamification-field"
 			__next40pxDefaultSize
 			__nextHasNoMarginBottom
 			label={ field.label }
@@ -162,7 +171,7 @@ export function ColorField( {
 } ) {
 	const swatch = pickerColor( value );
 	return (
-		<div>
+		<div className="oml-gamification-field oml-gamification-colour">
 			<TextField
 				{ ...field }
 				value={ value }

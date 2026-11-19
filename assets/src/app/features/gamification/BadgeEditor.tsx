@@ -118,6 +118,7 @@ export function BadgeEditor( {
 
 	return (
 		<Modal
+			size="medium"
 			title={
 				badge
 					? __( 'Edit badge', 'ohmylms' )
@@ -131,6 +132,7 @@ export function BadgeEditor( {
 			shouldCloseOnClickOutside={ false }
 		>
 			<form
+				className="oml-gamification-fields"
 				noValidate
 				onSubmit={ ( event ) => {
 					event.preventDefault();
@@ -199,99 +201,112 @@ export function BadgeEditor( {
 						<legend>
 							{ __( 'Conditions (all must be met)', 'ohmylms' ) }
 						</legend>
-						{ shown.criteria && (
-							<p role="alert">{ shown.criteria }</p>
-						) }
-						{ draft.criteria.map( ( criterion, index ) => (
-							<div key={ index }>
-								<SelectField
-									label={ sprintf(
-										/* translators: %d: condition number. */
-										__(
-											'Condition %d: measure',
-											'ohmylms'
-										),
-										index + 1
-									) }
-									value={ criterion.metric }
-									options={ metrics }
-									onChange={ ( metric ) =>
-										changeCriterion( index, { metric } )
-									}
-								/>
-								<SelectField
-									label={ sprintf(
-										/* translators: %d: condition number. */
-										__(
-											'Condition %d: comparison',
-											'ohmylms'
-										),
-										index + 1
-									) }
-									value={ criterion.operator }
-									options={ operators }
-									onChange={ ( operator ) =>
-										changeCriterion( index, { operator } )
-									}
-								/>
-								<NumberField
-									label={ sprintf(
-										/* translators: %d: condition number. */
-										__( 'Condition %d: value', 'ohmylms' ),
-										index + 1
-									) }
-									value={ criterion.value }
-									min={ 0 }
-									max={ limits.max_criterion_value }
-									error={
-										shown[ `criteria.${ index }.value` ]
-									}
-									onChange={ ( value ) =>
-										changeCriterion( index, { value } )
-									}
-								/>
-								<Button
-									variant="tertiary"
-									isDestructive
-									disabled={ draft.criteria.length <= 1 }
-									accessibleWhenDisabled
-									onClick={ () =>
-										change( {
-											criteria: draft.criteria.filter(
-												( _, position ) =>
-													position !== index
-											),
-										} )
-									}
+						<div className="oml-gamification-fields">
+							{ shown.criteria && (
+								<p role="alert">{ shown.criteria }</p>
+							) }
+							{ draft.criteria.map( ( criterion, index ) => (
+								<div
+									className="oml-gamification-fields"
+									key={ index }
 								>
-									{ sprintf(
-										/* translators: %d: condition number. */
-										__( 'Remove condition %d', 'ohmylms' ),
-										index + 1
-									) }
-								</Button>
-							</div>
-						) ) }
-						<Button
-							variant="secondary"
-							disabled={
-								draft.criteria.length >= limits.max_criteria
-							}
-							accessibleWhenDisabled
-							onClick={ () =>
-								change( {
-									criteria: [
-										...draft.criteria,
-										newCriterion(),
-									],
-								} )
-							}
-						>
-							{ __( 'Add condition', 'ohmylms' ) }
-						</Button>
+									<SelectField
+										label={ sprintf(
+											/* translators: %d: condition number. */
+											__(
+												'Condition %d: measure',
+												'ohmylms'
+											),
+											index + 1
+										) }
+										value={ criterion.metric }
+										options={ metrics }
+										onChange={ ( metric ) =>
+											changeCriterion( index, { metric } )
+										}
+									/>
+									<SelectField
+										label={ sprintf(
+											/* translators: %d: condition number. */
+											__(
+												'Condition %d: comparison',
+												'ohmylms'
+											),
+											index + 1
+										) }
+										value={ criterion.operator }
+										options={ operators }
+										onChange={ ( operator ) =>
+											changeCriterion( index, {
+												operator,
+											} )
+										}
+									/>
+									<NumberField
+										label={ sprintf(
+											/* translators: %d: condition number. */
+											__(
+												'Condition %d: value',
+												'ohmylms'
+											),
+											index + 1
+										) }
+										value={ criterion.value }
+										min={ 0 }
+										max={ limits.max_criterion_value }
+										error={
+											shown[ `criteria.${ index }.value` ]
+										}
+										onChange={ ( value ) =>
+											changeCriterion( index, { value } )
+										}
+									/>
+									<Button
+										variant="tertiary"
+										isDestructive
+										disabled={ draft.criteria.length <= 1 }
+										accessibleWhenDisabled
+										onClick={ () =>
+											change( {
+												criteria: draft.criteria.filter(
+													( _, position ) =>
+														position !== index
+												),
+											} )
+										}
+									>
+										{ sprintf(
+											/* translators: %d: condition number. */
+											__(
+												'Remove condition %d',
+												'ohmylms'
+											),
+											index + 1
+										) }
+									</Button>
+								</div>
+							) ) }
+							<Button
+								variant="secondary"
+								disabled={
+									draft.criteria.length >= limits.max_criteria
+								}
+								accessibleWhenDisabled
+								onClick={ () =>
+									change( {
+										criteria: [
+											...draft.criteria,
+											newCriterion(),
+										],
+									} )
+								}
+							>
+								{ __( 'Add condition', 'ohmylms' ) }
+							</Button>
+						</div>
 					</fieldset>
 				) }
-				<p>
+				<div className="oml-gamification-form-actions">
 					<Button
 						variant="primary"
 						type="submit"
@@ -310,7 +325,7 @@ export function BadgeEditor( {
 					>
 						{ __( 'Cancel', 'ohmylms' ) }
 					</Button>
-				</p>
+				</div>
 			</form>
 		</Modal>
 	);

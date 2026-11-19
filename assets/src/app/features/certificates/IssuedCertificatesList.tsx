@@ -11,6 +11,7 @@ import {
 } from '../../layout/PageTitleActions';
 import { normalizeApiError } from '../../lib/api';
 import type { Collection } from '../../lib/api/collection';
+import { useAdminPlace } from '../../routing/place';
 import { IssueCertificateDialog } from './IssueCertificateDialog';
 import {
 	formatIssuedDate,
@@ -54,6 +55,7 @@ function statusOptions() {
  * confirmation; issue by hand. The list state is kept in the address.
  */
 export default function IssuedCertificatesList() {
+	const place = useAdminPlace();
 	const list = useListState( FILTERS, { search: 's' } );
 	const { filters, page } = list;
 	const operation = useOperation();
@@ -162,7 +164,7 @@ export default function IssuedCertificatesList() {
 	}
 
 	return (
-		<>
+		<section className="oml-engagement-panel">
 			<PageTitleActions>
 				<PageTitleAction
 					disabled={ operation.busy }
@@ -173,9 +175,11 @@ export default function IssuedCertificatesList() {
 				>
 					{ __( 'Issue certificate', 'ohmylms' ) }
 				</PageTitleAction>
-				<PageTitleAction to="/certificates">
-					{ __( 'Templates', 'ohmylms' ) }
-				</PageTitleAction>
+				{ ! place && (
+					<PageTitleAction to="/certificates">
+						{ __( 'Templates', 'ohmylms' ) }
+					</PageTitleAction>
+				) }
 			</PageTitleActions>
 			<p>
 				{ __(
@@ -534,6 +538,6 @@ export default function IssuedCertificatesList() {
 					} }
 				/>
 			) }
-		</>
+		</section>
 	);
 }

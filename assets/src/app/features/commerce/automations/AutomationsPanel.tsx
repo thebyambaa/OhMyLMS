@@ -1,13 +1,13 @@
+import { Badge } from '../../../../ui/Badge';
 import { ListTable } from '../../../../ui/ListTable';
 import { Button, Modal, Notice } from '@wordpress/components';
 import { useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
+import type { MouseEvent } from 'react';
+import { EngagementToolbar } from '../../../components/EngagementToolbar';
+import { Pagination } from '../../../components/Pagination';
 import { useListQuery } from '../../../components/listQuery';
 import { statusViews } from '../../../components/listViews';
-import {
-	PageTitleAction,
-	PageTitleActions,
-} from '../../../layout/PageTitleActions';
 import { useOperation } from '../../../hooks/useOperation';
 import { useRequest } from '../../../hooks/useRequest';
 import {
@@ -170,28 +170,63 @@ function RuleList( { options }: { options: RuleOptions } ) {
 	};
 	const data = request.data;
 
+	const listLink = (
+		patch: Partial< Pick< typeof DEFAULTS, 'rule' | 'show' > >
+	) => ( {
+		href: list.href( patch ),
+		onClick: ( event: MouseEvent ) => {
+			if (
+				event.metaKey ||
+				event.ctrlKey ||
+				event.shiftKey ||
+				event.altKey
+			) {
+				return;
+			}
+			event.preventDefault();
+			list.set( patch );
+		},
+	} );
+
 	return (
 		<>
-			<PageTitleActions>
-				<PageTitleAction onClick={ () => list.set( { rule: 'new' } ) }>
-					{ __( 'Add rule', 'ohmylms' ) }
-				</PageTitleAction>
-			</PageTitleActions>
-			<p>
-				{ __(
-					'Rules run when something happens to a learner: when <event> then <actions>. Rules only choose from the events and actions below; every run is logged.',
-					'ohmylms'
-				) }{ ' ' }
-				<a
-					href={ list.href( { show: 'log' } ) }
-					onClick={ ( event ) => {
-						event.preventDefault();
-						list.set( { show: 'log' } );
-					} }
-				>
+			<EngagementToolbar
+				searchLabel={ __( 'Search rules', 'ohmylms' ) }
+				search={ term }
+				onSearchChange={ setTerm }
+				onSearch={ () => list.set( { s: term.trim() } ) }
+				status={ query.status }
+				statusOptions={ [
+					{ value: 'any', label: __( 'Any status', 'ohmylms' ) },
+					{ value: 'active', label: __( 'Active', 'ohmylms' ) },
+					{ value: 'paused', label: __( 'Paused', 'ohmylms' ) },
+				] }
+				onStatusChange={ ( value ) => list.set( { status: value } ) }
+				count={
+					data
+						? sprintf(
+								/* translators: %d: number of rules. */
+								_n(
+									'%d rule',
+									'%d rules',
+									data.total,
+									'ohmylms'
+								),
+								data.total
+							)
+						: ''
+				}
+			>
+				<Button variant="secondary" { ...listLink( { show: 'log' } ) }>
 					{ __( 'View the run log', 'ohmylms' ) }
-				</a>
-			</p>
+				</Button>
+				<Button
+					variant="primary"
+					onClick={ () => list.set( { rule: 'new' } ) }
+				>
+					{ __( 'Add rule', 'ohmylms' ) }
+				</Button>
+			</EngagementToolbar>
 			{ message && (
 				<Notice status="success" onRemove={ () => setMessage( null ) }>
 					{ message }
@@ -206,143 +241,139 @@ function RuleList( { options }: { options: RuleOptions } ) {
 				<p role="status">{ __( 'Loading rules…', 'ohmylms' ) }</p>
 			) }
 			{ data && (
-				<ListTable< Rule >
-					caption={ __( 'Automation rules', 'ohmylms' ) }
-					heading={ __( 'Automation rules list', 'ohmylms' ) }
-					formLabel={ __( 'Search rules', 'ohmylms' ) }
-					busy={ request.loading || operation.busy }
-					rows={ data.items }
-					rowKey={ ( rule ) => rule.id }
-					emptyMessage={ __( 'No rules yet.', 'ohmylms' ) }
-					views={ statusViews(
-						[
-							{ value: 'any', label: __( 'All', 'ohmylms' ) },
-							{
-								value: 'active',
-								label: __( 'Active', 'ohmylms' ),
-							},
-							{
-								value: 'paused',
-								label: __( 'Paused', 'ohmylms' ),
-							},
-						],
-						query.status,
-						data.total,
-						( value ) => list.set( { status: value } ),
-						( value ) => list.href( { status: value } )
-					) }
-					search={ {
-						label: __( 'Search rules', 'ohmylms' ),
-						submitLabel: __( 'Search', 'ohmylms' ),
-						value: term,
-						onChange: setTerm,
-						onSubmit: () => list.set( { s: term.trim() } ),
-					} }
-					pagination={ {
-						page: list.page,
-						totalPages: data.totalPages,
-						totalItems: data.total,
-						itemsLabel: sprintf(
-							/* translators: %d: number of rules. */
-							_n( '%d rule', '%d rules', data.total, 'ohmylms' ),
-							data.total
-						),
-						onChange: ( page ) => list.set( { page } ),
-						href: ( page ) => list.href( { page } ),
-					} }
-					columns={ [
-						{
-							id: 'name',
-							label: __( 'Rule', 'ohmylms' ),
-							primary: true,
-							render: ( rule ) => (
-								<strong>
-									<a
-										className="row-title"
-										href={ list.href( {
-											rule: String( rule.id ),
-										} ) }
-										onClick={ ( event ) => {
-											event.preventDefault();
-											list.set( {
-												rule: String( rule.id ),
-											} );
-										} }
+				<>
+					{ data.items.length ? (
+						<ul
+							className="oml-engagement-grid"
+							aria-label={ __( 'Automation rules', 'ohmylms' ) }
+							aria-busy={ request.loading }
+						>
+							{ data.items.map( ( rule ) => {
+								const active = 'active' === rule.status;
+								const edit = listLink( {
+									rule: String( rule.id ),
+								} );
+								return (
+									<li
+										className="oml-engagement-card"
+										key={ rule.id }
 									>
-										{ rule.name }
-									</a>
-								</strong>
-							),
-						},
-						{
-							id: 'when',
-							label: __( 'When', 'ohmylms' ),
-							render: ( rule ) =>
-								eventLabel( options, rule.event ),
-						},
-						{
-							id: 'then',
-							label: __( 'Then', 'ohmylms' ),
-							render: ( rule ) =>
-								rule.actions
-									.map( ( action ) =>
-										actionLabel( options, action.type )
+										<div className="oml-engagement-card-heading">
+											<h2>
+												<a { ...edit }>{ rule.name }</a>
+											</h2>
+											<Badge
+												tone={
+													active
+														? 'success'
+														: undefined
+												}
+											>
+												{ active
+													? __( 'Active', 'ohmylms' )
+													: __(
+															'Paused',
+															'ohmylms'
+														) }
+											</Badge>
+										</div>
+										<dl className="oml-engagement-rule-summary">
+											<dt>{ __( 'When', 'ohmylms' ) }</dt>
+											<dd>
+												{ eventLabel(
+													options,
+													rule.event
+												) }
+											</dd>
+											<dt>{ __( 'Then', 'ohmylms' ) }</dt>
+											<dd>
+												{ rule.actions
+													.map( ( action ) =>
+														actionLabel(
+															options,
+															action.type
+														)
+													)
+													.join( ', ' ) }
+											</dd>
+											<dt>{ __( 'Runs', 'ohmylms' ) }</dt>
+											<dd>{ rule.run_count }</dd>
+											<dt>
+												{ __( 'Last run', 'ohmylms' ) }
+											</dt>
+											<dd>
+												{ plainDate(
+													rule.last_run_at
+												) }
+											</dd>
+										</dl>
+										<div className="oml-engagement-card-actions">
+											<Button
+												variant="secondary"
+												{ ...edit }
+											>
+												{ __( 'Edit', 'ohmylms' ) }
+											</Button>
+											<Button
+												variant="tertiary"
+												disabled={ operation.busy }
+												onClick={ () =>
+													void toggle( rule )
+												}
+											>
+												{ active
+													? __( 'Pause', 'ohmylms' )
+													: __(
+															'Activate',
+															'ohmylms'
+														) }
+											</Button>
+											<Button
+												variant="tertiary"
+												isDestructive
+												disabled={ operation.busy }
+												aria-label={ sprintf(
+													/* translators: %s: rule name. */
+													__(
+														'Delete %s',
+														'ohmylms'
+													),
+													rule.name
+												) }
+												onClick={ () => {
+													operation.clearError();
+													setRemoving( rule );
+												} }
+											>
+												{ __( 'Delete', 'ohmylms' ) }
+											</Button>
+										</div>
+									</li>
+								);
+							} ) }
+						</ul>
+					) : (
+						<p className="oml-engagement-panel">
+							{ query.search || query.status !== 'any'
+								? __(
+										'No rules match your filters.',
+										'ohmylms'
 									)
-									.join( ', ' ),
-						},
-						{
-							id: 'status',
-							label: __( 'Status', 'ohmylms' ),
-							render: ( rule ) =>
-								'active' === rule.status
-									? __( 'Active', 'ohmylms' )
-									: __( 'Paused', 'ohmylms' ),
-						},
-						{
-							id: 'runs',
-							label: __( 'Runs', 'ohmylms' ),
-							className: 'num',
-							render: ( rule ) => rule.run_count,
-						},
-						{
-							id: 'last',
-							label: __( 'Last run', 'ohmylms' ),
-							render: ( rule ) => plainDate( rule.last_run_at ),
-						},
-					] }
-					rowActions={ ( rule ) => [
-						{
-							key: 'edit',
-							label: __( 'Edit', 'ohmylms' ),
-							href: list.href( { rule: String( rule.id ) } ),
-							onClick: () =>
-								list.set( { rule: String( rule.id ) } ),
-						},
-						{
-							key: 'status',
-							label:
-								'active' === rule.status
-									? __( 'Pause', 'ohmylms' )
-									: __( 'Activate', 'ohmylms' ),
-							disabled: operation.busy,
-							onClick: () => void toggle( rule ),
-						},
-						{
-							key: 'trash',
-							label: __( 'Delete', 'ohmylms' ),
-							destructive: true,
-							ariaLabel: sprintf(
-								/* translators: %s: rule name. */
-								__( 'Delete %s', 'ohmylms' ),
-								rule.name
-							),
-							onClick: () => {
-								operation.clearError();
-								setRemoving( rule );
-							},
-						},
-					] }
-				/>
+								: __( 'No rules yet.', 'ohmylms' ) }
+						</p>
+					) }
+					{ data.totalPages > 1 && (
+						<div className="oml-engagement-pagination">
+							<Pagination
+								page={ list.page }
+								pages={ data.totalPages }
+								busy={ request.loading || operation.busy }
+								onChange={ ( page ) => list.set( { page } ) }
+								href={ ( page ) => list.href( { page } ) }
+							/>
+						</div>
+					) }
+				</>
 			) }
 			{ removing && (
 				<Modal
@@ -398,7 +429,7 @@ function RunLog( { options }: { options: RuleOptions } ) {
 	);
 	const data = request.data;
 	return (
-		<>
+		<section className="oml-engagement-panel">
 			<p>
 				<a
 					href={ list.href( { show: '', result: 'any' } ) }
@@ -500,6 +531,6 @@ function RunLog( { options }: { options: RuleOptions } ) {
 					] }
 				/>
 			) }
-		</>
+		</section>
 	);
 }

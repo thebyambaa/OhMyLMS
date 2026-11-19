@@ -16,6 +16,7 @@ import type {
 export const GROUP_PAGES: Readonly< Record< AdminGroup, string > > = {
 	dashboard: 'ohmylms',
 	content: 'ohmylms-content',
+	gradebook: 'ohmylms-gradebook',
 	bank: 'ohmylms-bank',
 	curriculum: 'ohmylms-curriculum',
 	accounts: 'ohmylms-accounts',

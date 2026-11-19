@@ -7,6 +7,7 @@
 
 namespace OhMyLMS\Dashboard;
 
+use OhMyLMS\Admin\AdminNavigation;
 use OhMyLMS\Schools\Access;
 use OhMyLMS\Schools\Schema;
 use OhMyLMS\Student\StudioWorkspace;
@@ -188,7 +189,7 @@ final class Front {
 			'nav'       => $scope['nav'],
 			'section'   => sanitize_key( $section ),
 			'links'     => array(
-				'gradebook' => admin_url( 'admin.php?page=ohmylms-content&tab=gradebook' ),
+				'gradebook' => AdminNavigation::url( '/content-hub/gradebook' ),
 				'courses'   => admin_url( 'admin.php?page=ohmylms-content&tab=courses' ),
 				'lessons'   => admin_url( 'admin.php?page=ohmylms-bank&tab=lessons' ),
 				'quizzes'   => admin_url( 'admin.php?page=ohmylms-bank&tab=quizzes' ),

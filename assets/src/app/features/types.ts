@@ -7,6 +7,7 @@ import type { ComponentType, Element } from '@wordpress/element';
 export type AdminGroup =
 	| 'dashboard'
 	| 'content'
+	| 'gradebook'
 	| 'bank'
 	| 'curriculum'
 	| 'accounts'

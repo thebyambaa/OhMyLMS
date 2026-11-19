@@ -1,6 +1,6 @@
 <?php // phpcs:ignore WordPress.Files.FileName -- PSR-4 class/file mapping (OhMyLMS\ => includes/); see docs/CODING-STANDARDS.md.
 /**
- * The seven OhMyLMS admin pages, their tabs and sections, and the addresses of the app's screens.
+ * The OhMyLMS admin pages, their tabs and sections, and the addresses of the app's screens.
  *
  * @package OhMyLMS
  */
@@ -16,9 +16,8 @@ defined( 'ABSPATH' ) || exit;
 /**
  * One source for the admin navigation (docs/ADMIN-REDESIGN.md, "Pages and tabs").
  *
- * - {@see AdminNavigation::groups()}: the pages (Dashboard, Content Hub, Content Bank, Account Hub, Commerce, Engagement,
- *   Settings) with their tabs (`&tab=`) and sections (`&section=`, `.subsubsub` links), each tab with a
- *   capability and an optional flag filter.
+ * - {@see AdminNavigation::groups()}: the sidebar pages with their tabs (`&tab=`) and sections
+ *   (`&section=`, `.subsubsub` links), each tab with a capability and an optional flag filter.
  * - {@see AdminNavigation::routes()}: every screen of the admin app with its place on those pages; the
  *   same table as the `group`/`tab`/`section`/`view`/`params` fields of assets/src/app/features (a contract
  *   test compares them through tests/fixtures/admin-navigation.json).
@@ -127,7 +126,7 @@ final class AdminNavigation {
 				'page'  => 'ohmylms-content',
 				'label' => __( 'Courses', 'ohmylms' ),
 				'tabs'  => array(
-					'courses'   => array(
+					'courses' => array(
 						'label'      => __( 'Courses', 'ohmylms' ),
 						'capability' => 'edit_posts',
 						'sections'   => array(
@@ -135,6 +134,12 @@ final class AdminNavigation {
 							'overview' => __( 'Overview', 'ohmylms' ),
 						),
 					),
+				),
+			),
+			'gradebook'  => array(
+				'page'  => 'ohmylms-gradebook',
+				'label' => __( 'Gradebook', 'ohmylms' ),
+				'tabs'  => array(
 					'gradebook' => array(
 						'label'      => __( 'Gradebook', 'ohmylms' ),
 						'capability' => \OhMyLMS\Gradebook\Access::CAPABILITY,
@@ -281,7 +286,7 @@ final class AdminNavigation {
 					'certificates' => array(
 						'label'    => __( 'Certificates', 'ohmylms' ),
 						'sections' => array(
-							''                    => __( 'Certificates', 'ohmylms' ),
+							''                    => __( 'Templates', 'ohmylms' ),
 							'issued-certificates' => __( 'Issued certificates', 'ohmylms' ),
 						),
 					),
@@ -385,6 +390,11 @@ final class AdminNavigation {
 	 * @return array[] Each with `id`, `path`, `group` and optionally `tab`, `tabs`, `section`, `view`, `params`.
 	 */
 	public static function routes() {
+		$gradebook = array(
+			'group' => 'gradebook',
+			'tab'   => 'gradebook',
+		);
+
 		$content  = array( 'group' => 'content' );
 		$bank     = array( 'group' => 'bank' );
 		$curr     = array( 'group' => 'curriculum' );
@@ -549,38 +559,26 @@ final class AdminNavigation {
 					'view' => 'submissions',
 				),
 			),
-			array( 'gradebook', '/content-hub/gradebook', $content + array( 'tab' => 'gradebook' ) ),
+			array( 'gradebook', '/content-hub/gradebook', $gradebook ),
 			array(
 				'gradebook-roster',
 				'/content-hub/gradebook/roster',
-				$content + array(
-					'tab'     => 'gradebook',
-					'section' => 'roster',
-				),
+				$gradebook + array( 'section' => 'roster' ),
 			),
 			array(
 				'gradebook-student',
 				'/content-hub/gradebook/student',
-				$content + array(
-					'tab'     => 'gradebook',
-					'section' => 'student',
-				),
+				$gradebook + array( 'section' => 'student' ),
 			),
 			array(
 				'gradebook-mastery',
 				'/content-hub/gradebook/mastery',
-				$content + array(
-					'tab'     => 'gradebook',
-					'section' => 'mastery',
-				),
+				$gradebook + array( 'section' => 'mastery' ),
 			),
 			array(
 				'gradebook-rollup',
 				'/content-hub/gradebook/rollup',
-				$content + array(
-					'tab'     => 'gradebook',
-					'section' => 'rollup',
-				),
+				$gradebook + array( 'section' => 'rollup' ),
 			),
 			array( 'exams', '/exams', $bank + array( 'tab' => 'exams' ) ),
 			array(
@@ -789,7 +787,7 @@ final class AdminNavigation {
 
 	/**
 	 * Capability a group's page requires. The Dashboard is also open to school administrators and teachers,
-	 * whose endpoints are scoped server-side; every other page needs {@see AdminNavigation::CAPABILITY}.
+	 * whose endpoints are scoped server-side. Gradebook requires its own staff capability.
 	 *
 	 * @param string $group Group id.
 	 * @return string
@@ -798,10 +796,13 @@ final class AdminNavigation {
 		if ( 'dashboard' === $group ) {
 			return \OhMyLMS\Dashboard\Access::CAPABILITY;
 		}
+		if ( 'gradebook' === $group ) {
+			return \OhMyLMS\Gradebook\Access::CAPABILITY;
+		}
 		if ( current_user_can( self::CAPABILITY ) ) {
 			return self::CAPABILITY;
 		}
-		// School staff open a page through the first staff tab they can see (for example the Gradebook).
+		// School staff open a page through the first staff tab they can see.
 		foreach ( self::visible_tabs( $group ) as $tab ) {
 			return $tab['capability'];
 		}
@@ -928,6 +929,7 @@ final class AdminNavigation {
 	 * (group, tab, section; null keeps the section, false drops it). Every other query parameter is kept.
 	 */
 	const MOVED_PLACES = array(
+		array( array( 'content', 'gradebook', null ), array( 'gradebook', 'gradebook', null ) ),
 		array( array( 'commerce', 'cohorts', null ), array( 'accounts', 'cohorts', false ) ),
 		array( array( 'commerce', 'automations', null ), array( 'engagement', 'automations', false ) ),
 		array( array( 'engagement', 'emails', null ), array( 'settings', 'emails', false ) ),
@@ -955,6 +957,9 @@ final class AdminNavigation {
 	public static function moved_query( array $query ) {
 		// Keep existing dashboard bookmarks working; Courses is now the landing page.
 		if ( self::page_slug( 'dashboard' ) === ( $query['page'] ?? '' ) ) {
+			if ( ! self::can_open( 'content' ) && self::can_open( 'gradebook' ) ) {
+				return array( 'page' => self::page_slug( 'gradebook' ) );
+			}
 			return array(
 				'page' => self::page_slug( 'content' ),
 				'tab'  => 'courses',
@@ -1035,7 +1040,7 @@ final class AdminNavigation {
 	}
 
 	/**
-	 * Send an old Content Hub Skills or Curriculum address to its new place (on `admin_init`).
+	 * Send a moved admin address to its new place (on `admin_init`).
 	 */
 	public static function redirect_moved_tabs() {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Navigation only.
@@ -1269,10 +1274,10 @@ final class AdminNavigation {
 				<span id="<?php echo esc_attr( self::TITLE_ACTIONS_ID ); ?>" class="ohmylms-title-actions"></span>
 			<?php endif; ?>
 			<hr class="wp-header-end">
-			<?php if ( $tabs ) : ?>
+			<?php if ( $tabs && 'gradebook' !== $current['group'] ) : ?>
 				<?php self::render_tabs( $current, $tabs ); ?>
 			<?php endif; ?>
-			<?php if ( isset( $tabs[ $current['tab'] ] ) && count( $tabs[ $current['tab'] ]['sections'] ) > 1 ) : ?>
+			<?php if ( isset( $tabs[ $current['tab'] ] ) && count( $tabs[ $current['tab'] ]['sections'] ) > 1 && ! ( 'content' === $current['group'] && 'courses' === $current['tab'] ) ) : ?>
 				<?php self::render_sections( $current, $tabs[ $current['tab'] ] ); ?>
 			<?php endif; ?>
 			<?php if ( 'dashboard' === $current['group'] ) : ?>
@@ -1302,12 +1307,23 @@ final class AdminNavigation {
 	 * @param array $tabs    Visible tabs.
 	 */
 	private static function render_tabs( array $current, array $tabs ) {
-		$group = self::groups()[ $current['group'] ];
+		$group   = self::groups()[ $current['group'] ];
+		$courses = 'content' === $current['group'] ? ( $tabs['courses'] ?? null ) : null;
+		$layout  = 'engagement' === $current['group'] ? ' oml-engagement-tabs' : '';
 		?>
-		<nav class="nav-tab-wrapper wp-clearfix" id="<?php echo esc_attr( self::TABS_ID ); ?>" aria-label="<?php echo esc_attr( $group['label'] ); ?>">
+		<nav class="nav-tab-wrapper wp-clearfix<?php echo esc_attr( $layout ); ?>" id="<?php echo esc_attr( self::TABS_ID ); ?>" aria-label="<?php echo esc_attr( $group['label'] ); ?>"<?php if ( ! empty( $courses['sections'] ) ) : ?> data-section-tab="courses" data-default-section="<?php echo esc_attr( self::default_section( $courses ) ); ?>"<?php endif; ?>>
 			<?php foreach ( $tabs as $id => $tab ) : ?>
 				<?php $active = $id === $current['tab']; ?>
-				<a data-tab="<?php echo esc_attr( $id ); ?>" href="<?php echo esc_url( self::tab_url( $current['group'], $id ) ); ?>" class="nav-tab<?php echo $active ? ' nav-tab-active' : ''; ?>"<?php echo $active ? ' aria-current="page"' : ''; ?>><?php echo esc_html( $tab['label'] ); ?></a>
+				<?php if ( 'addons' === $current['group'] && 'integrations' === $id && $active ) : ?>
+					<span id="ohmylms-addon-categories"></span>
+				<?php elseif ( 'courses' === $id && ! empty( $courses['sections'] ) ) : ?>
+					<?php foreach ( $courses['sections'] as $section_id => $section ) : ?>
+						<?php $selected = $active && (string) $section_id === $current['section']; ?>
+						<a data-section="<?php echo esc_attr( $section_id ); ?>" href="<?php echo esc_url( self::tab_url( $current['group'], $id, (string) $section_id ) ); ?>" class="nav-tab<?php echo $selected ? ' nav-tab-active' : ''; ?>"<?php echo $selected ? ' aria-current="page"' : ''; ?>><?php echo esc_html( $section['label'] ); ?></a>
+					<?php endforeach; ?>
+				<?php else : ?>
+					<a data-tab="<?php echo esc_attr( $id ); ?>" href="<?php echo esc_url( self::tab_url( $current['group'], $id ) ); ?>" class="nav-tab<?php echo $active ? ' nav-tab-active' : ''; ?>"<?php echo $active ? ' aria-current="page"' : ''; ?>><?php echo esc_html( $tab['label'] ); ?></a>
+				<?php endif; ?>
 			<?php endforeach; ?>
 		</nav>
 		<?php
@@ -1324,12 +1340,13 @@ final class AdminNavigation {
 			self::render_skill_navigation( $current, $tab );
 			return;
 		}
-		$last = array_key_last( $tab['sections'] );
+		$last       = array_key_last( $tab['sections'] );
+		$engagement = 'engagement' === $current['group'];
 		?>
-		<ul class="subsubsub" id="<?php echo esc_attr( self::SECTIONS_ID ); ?>" data-default-section="<?php echo esc_attr( self::default_section( $tab ) ); ?>">
+		<ul class="subsubsub<?php echo $engagement ? ' oml-engagement-sections' : ''; ?>" id="<?php echo esc_attr( self::SECTIONS_ID ); ?>" data-default-section="<?php echo esc_attr( self::default_section( $tab ) ); ?>">
 			<?php foreach ( $tab['sections'] as $id => $section ) : ?>
 				<?php $active = (string) $id === $current['section']; ?>
-				<li class="<?php echo esc_attr( '' === (string) $id ? 'all' : $id ); ?>"><a href="<?php echo esc_url( self::tab_url( $current['group'], $current['tab'], (string) $id ) ); ?>" data-section="<?php echo esc_attr( $id ); ?>"<?php echo $active ? ' class="current" aria-current="page"' : ''; ?>><?php echo esc_html( $section['label'] ); ?></a><?php echo $id === $last ? '' : ' |'; ?></li>
+				<li class="<?php echo esc_attr( '' === (string) $id ? 'all' : $id ); ?>"><a href="<?php echo esc_url( self::tab_url( $current['group'], $current['tab'], (string) $id ) ); ?>" data-section="<?php echo esc_attr( $id ); ?>"<?php echo $active ? ' class="current" aria-current="page"' : ''; ?>><?php echo esc_html( $section['label'] ); ?></a><?php echo $engagement || $id === $last ? '' : ' |'; ?></li>
 			<?php endforeach; ?>
 		</ul>
 		<br class="clear">

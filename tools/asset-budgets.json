@@ -19,8 +19,8 @@
 			"gzip": 2600
 		},
 		"admin-app.css": {
-			"raw": 22600,
-			"gzip": 4700
+			"raw": 26500,
+			"gzip": 5500
 		},
 		"admin-app.js": {
 			"raw": 94600,
@@ -278,6 +278,10 @@
 			"raw": 600,
 			"gzip": 400
 		},
+		"chunks/admin-app-gamification.css": {
+			"raw": 3200,
+			"gzip": 1100
+		},
 		"chunks/admin-app-gamification.js": {
 			"raw": 56600,
 			"gzip": 15200
@@ -321,6 +325,10 @@
 		"chunks/admin-app-gradebook.js": {
 			"raw": 29300,
 			"gzip": 8500
+		},
+		"chunks/admin-app-integrations.css": {
+			"raw": 3000,
+			"gzip": 1100
 		},
 		"chunks/admin-app-integrations.js": {
 			"raw": 16100,

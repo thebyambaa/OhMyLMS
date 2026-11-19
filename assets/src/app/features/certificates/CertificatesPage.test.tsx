@@ -76,7 +76,7 @@ describe( 'CertificatesPage', () => {
 			capabilities: { manage_options: true },
 		} );
 		expect(
-			await screen.findByRole( 'table', {
+			await screen.findByRole( 'list', {
 				name: 'Certificate templates',
 			} )
 		).toBeInTheDocument();
@@ -85,22 +85,22 @@ describe( 'CertificatesPage', () => {
 			tab: 'certificates',
 		} );
 	} );
-	it( 'shows loading, then a named table with thumbnails, links and counts', async () => {
+	it( 'shows loading, then a card catalogue with thumbnails, links and counts', async () => {
 		renderPage();
 		expect( screen.getByRole( 'status' ) ).toHaveTextContent(
 			'Loading certificate templates'
 		);
-		const table = await screen.findByRole( 'table', {
+		const cards = await screen.findByRole( 'list', {
 			name: 'Certificate templates',
 		} );
 		expect(
-			within( table ).getByRole( 'link', { name: 'Completion' } )
+			within( cards ).getByRole( 'link', { name: 'Completion' } )
 		).toHaveAttribute( 'href', '/certificates/7' );
-		expect( within( table ).getByText( 'Draft' ) ).toBeInTheDocument();
+		expect( within( cards ).getByText( 'Draft' ) ).toBeInTheDocument();
 		expect(
-			within( table ).getByText( 'Landscape, A4' )
+			within( cards ).getByText( 'Landscape, A4' )
 		).toBeInTheDocument();
-		const image = table.querySelector( 'img' );
+		const image = cards.querySelector( 'img' );
 		expect( image ).toHaveAttribute( 'src', 'https://example.test/bg.png' );
 		expect( image ).toHaveAttribute( 'alt', '' );
 		expect(
@@ -114,7 +114,7 @@ describe( 'CertificatesPage', () => {
 			await screen.findByText( 'No certificate templates found.' )
 		).toBeInTheDocument();
 	} );
-	it( 'reports a permission error from the server without showing a table', async () => {
+	it( 'reports a permission error from the server without showing cards', async () => {
 		listMock.mockRejectedValue( forbidden() );
 		renderPage();
 		expect(
@@ -122,7 +122,9 @@ describe( 'CertificatesPage', () => {
 				'Sorry, you are not allowed to view certificate templates.'
 			)
 		).toBeInTheDocument();
-		expect( screen.queryByRole( 'table' ) ).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole( 'list', { name: 'Certificate templates' } )
+		).not.toBeInTheDocument();
 	} );
 	it( 'retries a failed request and searches and filters through the form', async () => {
 		const user = userEvent.setup();
@@ -145,8 +147,9 @@ describe( 'CertificatesPage', () => {
 				expect.any( AbortSignal )
 			)
 		);
-		await user.click(
-			await screen.findByRole( 'link', { name: 'Published' } )
+		await user.selectOptions(
+			screen.getByRole( 'combobox', { name: 'Status' } ),
+			'publish'
 		);
 		await waitFor( () =>
 			expect( listMock ).toHaveBeenLastCalledWith(

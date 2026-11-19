@@ -66,29 +66,38 @@ function toLocation( route: string, state: unknown, key: string ): Location {
 }
 
 /**
- * Mark the current `.subsubsub` link after a move inside the tab. The list names the section an
- * address without `&section=` shows (`data-default-section`).
+ * Mark the current section link after navigation. Sections can appear as WordPress tabs or a list.
  *
  * @param doc     Document.
+ * @param tab     Server tab hosting the section.
  * @param section Section of the address (`''` when it names none).
  */
-function markSection( doc: Document, section: string ) {
-	const list = doc.getElementById( SECTIONS_ID );
+function markSection( doc: Document, tab: string, section: string ) {
+	const tabs = doc.querySelector< HTMLElement >( 'nav[data-section-tab]' );
+	const sectionTabs = tabs?.dataset.sectionTab === tab ? tabs : null;
+	const list = sectionTabs ?? doc.getElementById( SECTIONS_ID );
 	if ( ! list ) {
 		return;
 	}
-	const current = section || ( list.dataset.defaultSection ?? '' );
-	list.querySelectorAll< HTMLAnchorElement >( 'a[data-section]' ).forEach(
-		( link ) => {
-			const active = link.dataset.section === current;
-			link.classList.toggle( 'current', active );
-			if ( active ) {
-				link.setAttribute( 'aria-current', 'page' );
-			} else {
-				link.removeAttribute( 'aria-current' );
-			}
-		}
+	const links = Array.from(
+		list.querySelectorAll< HTMLAnchorElement >( 'a[data-section]' )
 	);
+	const current =
+		section && links.some( ( link ) => link.dataset.section === section )
+			? section
+			: ( list.dataset.defaultSection ?? '' );
+	links.forEach( ( link ) => {
+		const active = link.dataset.section === current;
+		link.classList.toggle(
+			sectionTabs ? 'nav-tab-active' : 'current',
+			active
+		);
+		if ( active ) {
+			link.setAttribute( 'aria-current', 'page' );
+		} else {
+			link.removeAttribute( 'aria-current' );
+		}
+	} );
 }
 
 /**
@@ -292,9 +301,10 @@ export function QueryRouter( {
 	useEffect( () => {
 		markSection(
 			win.document,
+			place.tab,
 			sectionOf( parseQuery( win.location.search ) )
 		);
-	}, [ state.location, win ] );
+	}, [ place.tab, state.location, win ] );
 
 	return (
 		<PlaceProvider value={ place }>

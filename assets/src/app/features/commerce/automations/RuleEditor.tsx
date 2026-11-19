@@ -397,6 +397,7 @@ export function RuleEditor( {
 
 	return (
 		<form
+			className="oml-engagement-panel"
 			noValidate
 			aria-label={
 				rule

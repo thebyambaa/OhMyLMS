@@ -31,7 +31,7 @@ export default function SessionsPage() {
 	const total = request.data?.total ?? 0;
 
 	return (
-		<>
+		<section className="oml-engagement-panel">
 			<PageTitleActions>
 				<PageTitleAction to="/sessions/new">
 					{ __( 'Schedule a session', 'ohmylms' ) }
@@ -180,6 +180,6 @@ export default function SessionsPage() {
 					] }
 				/>
 			) }
-		</>
+		</section>
 	);
 }

@@ -19,7 +19,13 @@
 					],
 					"serverSections": [],
 					"defaultSection": ""
-				},
+				}
+			]
+		},
+		{
+			"id": "gradebook",
+			"page": "ohmylms-gradebook",
+			"tabs": [
 				{
 					"id": "gradebook",
 					"capability": "ohmylms_view_gradebook",
@@ -553,34 +559,34 @@
 		{
 			"id": "gradebook",
 			"path": "/content-hub/gradebook",
-			"group": "content",
+			"group": "gradebook",
 			"tab": "gradebook"
 		},
 		{
 			"id": "gradebook-roster",
 			"path": "/content-hub/gradebook/roster",
-			"group": "content",
+			"group": "gradebook",
 			"tab": "gradebook",
 			"section": "roster"
 		},
 		{
 			"id": "gradebook-student",
 			"path": "/content-hub/gradebook/student",
-			"group": "content",
+			"group": "gradebook",
 			"tab": "gradebook",
 			"section": "student"
 		},
 		{
 			"id": "gradebook-mastery",
 			"path": "/content-hub/gradebook/mastery",
-			"group": "content",
+			"group": "gradebook",
 			"tab": "gradebook",
 			"section": "mastery"
 		},
 		{
 			"id": "gradebook-rollup",
 			"path": "/content-hub/gradebook/rollup",
-			"group": "content",
+			"group": "gradebook",
 			"tab": "gradebook",
 			"section": "rollup"
 		},
@@ -1124,6 +1130,14 @@
 		[
 			"/no-such-screen",
 			null
+		],
+		[
+			"/content-hub/gradebook?course=983",
+			"page=ohmylms-gradebook&tab=gradebook&course=983"
+		],
+		[
+			"/content-hub/gradebook/mastery?course=983&scope=all",
+			"page=ohmylms-gradebook&tab=gradebook&section=mastery&course=983&scope=all"
 		]
 	]
 }

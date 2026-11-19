@@ -10,6 +10,7 @@ import {
 } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { Link, useNavigate } from 'react-router-dom';
+import { useBootstrap } from '../../bootstrap/BootstrapContext';
 import { statusViews } from '../../components/listViews';
 import {
 	PageTitleAction,
@@ -180,6 +181,8 @@ type Dialog =
  * `#/courses/<id>`.
  */
 export default function CoursesPage() {
+	const { user } = useBootstrap();
+	const canViewGradebook = user.capabilities.ohmylms_view_gradebook;
 	const list = useCourses();
 	const navigate = useNavigate();
 	const [ draft, setDraft ] = useState< CourseFilters >( list.filters );
@@ -632,6 +635,27 @@ export default function CoursesPage() {
 											</Link>
 										),
 									},
+									...( canViewGradebook
+										? [
+												{
+													key: 'gradebook',
+													label: __(
+														'View gradebook',
+														'ohmylms'
+													),
+													render: (
+														<Link
+															to={ `/content-hub/gradebook?course=${ item.id }` }
+														>
+															{ __(
+																'View gradebook',
+																'ohmylms'
+															) }
+														</Link>
+													),
+												},
+											]
+										: [] ),
 									{
 										key: 'duplicate',
 										label: __( 'Duplicate', 'ohmylms' ),

@@ -34,6 +34,15 @@ const features: FeatureDefinition[] = [
 		component: none,
 	},
 	{
+		id: 'courses-overview',
+		title: 'Overview',
+		path: '/content-hub',
+		group: 'content',
+		tab: 'courses',
+		section: 'overview',
+		component: none,
+	},
+	{
 		id: 'orders',
 		title: 'Orders',
 		path: '/orders',
@@ -93,6 +102,7 @@ function renderRouter( place: AdminPlace, load = vi.fn() ) {
 		<QueryRouter features={ features } place={ place } load={ load }>
 			<Routes>
 				<Route path="/courses" element={ <CourseList /> } />
+				<Route path="/content-hub" element={ <h2>Overview</h2> } />
 				<Route path="/courses/:id/:tab?" element={ <CourseEditor /> } />
 				<Route path="/settings" element={ <SettingsScreen /> } />
 				<Route path="*" element={ <h2>Not found</h2> } />
@@ -215,6 +225,35 @@ describe( 'query router', () => {
 			screen.getByRole( 'link', { name: 'General' } )
 		).not.toHaveClass( 'current' );
 		expect( load ).not.toHaveBeenCalled();
+	} );
+
+	it( 'keeps the active Courses tab in sync with the current section', async () => {
+		const user = userEvent.setup();
+		const tabs = document.createElement( 'nav' );
+		tabs.dataset.sectionTab = 'courses';
+		tabs.dataset.defaultSection = '';
+		tabs.innerHTML =
+			'<a data-section="" class="nav-tab nav-tab-active" aria-current="page" href="admin.php?page=ohmylms-content&amp;tab=courses">All courses</a>' +
+			'<a data-section="overview" class="nav-tab" href="admin.php?page=ohmylms-content&amp;tab=courses&amp;section=overview">Overview</a>';
+		document.body.append( tabs );
+		setAddress( 'page=ohmylms-content&tab=courses' );
+		const load = renderRouter( content );
+		const allCourses = screen.getByRole( 'link', { name: 'All courses' } );
+		const overview = screen.getByRole( 'link', { name: 'Overview' } );
+
+		await user.click( overview );
+		expect(
+			screen.getByRole( 'heading', { name: 'Overview' } )
+		).toBeInTheDocument();
+		expect( overview ).toHaveClass( 'nav-tab-active' );
+		expect( overview ).toHaveAttribute( 'aria-current', 'page' );
+		expect( allCourses ).not.toHaveAttribute( 'aria-current' );
+
+		await user.click( allCourses );
+		expect( allCourses ).toHaveClass( 'nav-tab-active' );
+		expect( overview ).not.toHaveClass( 'nav-tab-active' );
+		expect( load ).not.toHaveBeenCalled();
+		tabs.remove();
 	} );
 
 	it( 'opens an old #/route hash on the same tab and drops the hash', () => {
