@@ -47,7 +47,7 @@ This folder is the source of truth for how the plugin is built, extended and ver
 Content hub, syllabus, skills, assessments, commerce, schools, gamification and related topics live as standalone guides in this folder (for example [CONTENT-HUB.md](CONTENT-HUB.md), [ASSESSMENT-ENGINE.md](ASSESSMENT-ENGINE.md), [GUTENBERG-AUTHORING.md](GUTENBERG-AUTHORING.md), [SCHOOL-FAMILY-SETUP.md](SCHOOL-FAMILY-SETUP.md)). Use the root README’s “Authoring content” and “Learners” sections for the curated list.
 
 - [Math References](MATH-REFERENCES.md) covers reusable entries and inline previews.
-- [Protected Downloads](PROTECTED-DOWNLOADS.md) covers private PDF storage, publishing, and membership access.
+- [Protected Downloads](PROTECTED-DOWNLOADS.md) covers private storage for documents and ZIP archives, publishing, and membership access.
 
 ## REST API contracts
 
