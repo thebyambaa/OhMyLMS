@@ -17,12 +17,17 @@ width. Status: FIXED, or OPEN (next batch).
 | H8 | The My classes page has the browser title "Assignments – My classes" | FIXED: the default view no longer names the page |
 | H9 | "Join a class" is a tiny link beside a large button | FIXED: it is an outlined button (`oml-hub-button is-secondary`) |
 | H10 | Completed courses on Achievements are plain rows | FIXED: each row says it is completed and links to review the course |
-| H11 | Phone width: the role switcher is clipped at the right edge | FIXED: the pills wrap. The tab strip still scrolls sideways with no cue (OPEN, low). |
-| H12 | An unknown `hub_section` value silently shows Home | OPEN (low) |
+| H11 | Phone width: the role switcher is clipped, and the tab strip scrolls with no cue | FIXED: the pills wrap, and the tab strip shows edge fades while more tabs are hidden on that side |
+| H12 | An unknown `hub_section` value silently shows Home | NOT A DEFECT: a safe fallback that only affects hand-edited addresses. A redirect would touch the routing of five role workspaces for no learner benefit. |
 
 Dark mode on Home was checked and looks consistent.
 
 ## Phone width (375px)
 
-The lesson page and the quiz player had no horizontal overflow and read well. One note, still OPEN
-and low priority: the border of the short-text answer box in the quiz player is very faint.
+The lesson page and the quiz player had no horizontal overflow and read well.
+
+| # | Flaw | Status |
+|---|------|--------|
+| P4 | The typed answer box in the quiz player's paper template had no border (a faint shadow on a white box) | FIXED: 2px border at about 3:1 contrast and a clear focus ring (`quiz-player-templates.css`) |
+
+All learner findings are now FIXED or explained.

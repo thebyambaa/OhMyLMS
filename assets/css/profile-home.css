@@ -139,7 +139,14 @@
 	gap: 0.2rem;
 	overflow-x: auto;
 	border-bottom: 1px solid var(--oml-border);
-	background: var(--oml-surface);
+
+	/* Edge shadows show only while more tabs are hidden on that side, so a clipped tab reads as scrollable. */
+	background:
+		linear-gradient(to right, var(--oml-surface) 30%, transparent) left center / 48px 100% no-repeat local,
+		linear-gradient(to left, var(--oml-surface) 30%, transparent) right center / 48px 100% no-repeat local,
+		linear-gradient(to right, color-mix(in srgb, var(--oml-text) 28%, transparent), transparent) left center / 28px 100% no-repeat scroll,
+		linear-gradient(to left, color-mix(in srgb, var(--oml-text) 28%, transparent), transparent) right center / 28px 100% no-repeat scroll,
+		var(--oml-surface);
 }
 
 .oml-profile-tabs a {
