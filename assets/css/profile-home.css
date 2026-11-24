@@ -108,6 +108,8 @@
 
 .oml-profile-roles {
 	display: inline-flex;
+	flex-wrap: wrap;
+	max-width: 100%;
 	padding: 3px;
 	border-radius: 999px;
 	background: color-mix(in srgb, var(--oml-on-primary) 18%, transparent);

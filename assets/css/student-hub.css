@@ -336,6 +336,14 @@
 	text-decoration: none;
 }
 
+/* A second action beside a primary button: outlined, same size. */
+.ohmylms-student-hub .oml-hub-button.is-secondary {
+	border: 2px solid var(--hub-accent);
+	background: transparent;
+	box-shadow: none;
+	color: var(--hub-selected-text);
+}
+
 .ohmylms-student-hub .oml-hub-class-switcher {
 	display: flex;
 	flex-wrap: wrap;
@@ -2457,4 +2465,65 @@
 	.ohmylms-student-hub.oml-hub-signin > .oml-hub-settings-card {
 		margin-top: 0;
 	}
+}
+
+/* My skills: the exam planner and placement list use the same controls as the rest of the hub. */
+.ohmylms-student-hub .oml-hub-legacy .ohmylms-exam-form {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-3, 16px);
+	align-items: flex-end;
+}
+
+.ohmylms-student-hub .oml-hub-legacy .ohmylms-exam-form label {
+	display: grid;
+	gap: var(--oml-space-1, 4px);
+	font-size: var(--oml-font-size-sm, 14px);
+	font-weight: 600;
+}
+
+.ohmylms-student-hub .oml-hub-legacy .ohmylms-exam-form :is(select, input[type="date"]) {
+	box-sizing: border-box;
+	min-height: 44px;
+	padding: 8px 12px;
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-control, 8px);
+	font: inherit;
+}
+
+.ohmylms-student-hub .oml-hub-legacy .ohmylms-exam-form button {
+	min-height: 44px;
+	padding: 8px 20px;
+	border: 0;
+	border-radius: var(--oml-radius-control, 8px);
+	background: var(--oml-primary);
+	color: var(--oml-on-primary);
+	font: inherit;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.ohmylms-student-hub .oml-hub-legacy .ohmylms-placement-summary ul {
+	padding: 0;
+	list-style: none;
+}
+
+.ohmylms-student-hub .oml-hub-legacy .ohmylms-placement-summary li {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--oml-space-3, 16px);
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--oml-space-3, 16px);
+	border: 1px solid var(--oml-border);
+	border-radius: var(--oml-radius-card, 12px);
+}
+
+.ohmylms-student-hub .oml-hub-legacy .ohmylms-placement-link {
+	padding: 8px 16px;
+	border: 2px solid var(--oml-primary);
+	border-radius: var(--oml-radius-control, 8px);
+	color: var(--oml-primary);
+	font-weight: 700;
+	text-decoration: none;
 }
