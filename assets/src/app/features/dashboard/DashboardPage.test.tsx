@@ -21,7 +21,7 @@ import {
 	dashboard as dashboardFeature,
 	earnings as earningsFeature,
 } from './index';
-import { formatMoney } from './model';
+import { countryName, formatMoney } from './model';
 import * as shellApi from './shell/api';
 import { adminScopes, envelope } from './shell/fixtures';
 
@@ -429,7 +429,9 @@ describe( 'earnings report', () => {
 		const countries = screen.getByRole( 'table', {
 			name: 'Orders by country',
 		} );
-		expect( within( countries ).getByText( 'US' ) ).toBeInTheDocument();
+		expect(
+			within( countries ).getByText( countryName( 'US' ) )
+		).toBeInTheDocument();
 
 		const orders = await screen.findByRole( 'table', {
 			name: 'Transactions',

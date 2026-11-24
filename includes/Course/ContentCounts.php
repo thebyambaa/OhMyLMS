@@ -61,6 +61,42 @@ final class ContentCounts {
 				$out[ (int) $row->course_id ][ $key ] += (int) $row->total;
 			}
 		}
+		// The course builder saves activities in the course program, so it wins over the older relationship tables.
+		foreach ( $ids as $id ) {
+			$placed = self::from_program( $id, $group );
+			if ( null !== $placed ) {
+				$out[ $id ] = array( 'units' => $out[ $id ]['units'] ) + $placed;
+			}
+		}
 		return $out;
+	}
+
+	/**
+	 * Lessons, quizzes and assignments placed in a course's published program, or its draft before the first publish.
+	 *
+	 * @param int      $course_id Course ID.
+	 * @param string[] $group     Content type => count key.
+	 * @return array{lessons:int,quizzes:int,assignments:int}|null Null when the course has no program items.
+	 */
+	private static function from_program( $course_id, array $group ) {
+		$program = \OhMyLMS\Learning\CourseProgram::current( $course_id );
+		if ( ! is_array( $program ) || empty( $program['items'] ) ) {
+			$program = get_post_meta( $course_id, \OhMyLMS\Learning\CourseProgram::DRAFT, true );
+		}
+		if ( ! is_array( $program ) || empty( $program['items'] ) || ! is_array( $program['items'] ) ) {
+			return null;
+		}
+		$counts = array(
+			'lessons'     => 0,
+			'quizzes'     => 0,
+			'assignments' => 0,
+		);
+		foreach ( $program['items'] as $item ) {
+			$key = $group[ (string) ( $item['type'] ?? '' ) ] ?? '';
+			if ( '' !== $key ) {
+				++$counts[ $key ];
+			}
+		}
+		return $counts;
 	}
 }

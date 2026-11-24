@@ -720,6 +720,28 @@ export function formatNumber( value: number ): string {
 }
 
 /**
+ * Readable name of a billing country.
+ *
+ * @param code   Two-letter country code, for example `MN`.
+ * @param locale Language of the name; the reader's language when omitted.
+ * @return The country name, or the code when it is not a known region.
+ */
+export function countryName( code: string, locale?: string ): string {
+	const region = code.trim().toUpperCase();
+	if ( ! /^[A-Z]{2}$/.test( region ) ) {
+		return code;
+	}
+	try {
+		return (
+			new Intl.DisplayNames( locale, { type: 'region' } ).of( region ) ??
+			code
+		);
+	} catch {
+		return code;
+	}
+}
+
+/**
  * Format an ISO site-time date for display.
  *
  * @param value ISO string or `YYYY-MM-DD`, or null.

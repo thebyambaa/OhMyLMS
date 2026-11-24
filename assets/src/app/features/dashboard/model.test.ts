@@ -9,6 +9,7 @@ import {
 	buildRangeQuery,
 	buildStudentQuery,
 	buildTransactionQuery,
+	countryName,
 	courseReportPath,
 	daysBetween,
 	describeChange,
@@ -42,6 +43,18 @@ import {
 	student,
 	transaction,
 } from './fixtures';
+
+describe( 'countryName', () => {
+	it( 'names a known region', () => {
+		expect( countryName( 'MN', 'en' ) ).toBe( 'Mongolia' );
+		expect( countryName( 'mn', 'en' ) ).toBe( 'Mongolia' );
+	} );
+
+	it( 'keeps what is not a two-letter code', () => {
+		expect( countryName( '' ) ).toBe( '' );
+		expect( countryName( 'Unknown' ) ).toBe( 'Unknown' );
+	} );
+} );
 
 describe( 'percentChange', () => {
 	it( 'computes the change and rounds to one decimal', () => {
