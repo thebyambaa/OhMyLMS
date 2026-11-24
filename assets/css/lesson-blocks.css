@@ -1,0 +1,48 @@
+/* Lesson blocks: callout, video and math. Loaded on learner lesson pages and in the lesson editor. */
+.oml-lesson-callout {
+	margin: var(--oml-space-4, 1rem) 0;
+	padding: var(--oml-space-3, 0.75rem) var(--oml-space-4, 1rem);
+	border: 1px solid var(--oml-border);
+	border-inline-start: 4px solid var(--oml-info);
+	border-radius: var(--oml-radius-card, 12px);
+	background: var(--oml-info-soft, var(--oml-surface));
+	color: var(--oml-text);
+	font-size: var(--oml-font-size-md, 1rem);
+	line-height: var(--oml-line-normal, 1.5);
+}
+
+.oml-lesson-callout.is-success {
+	border-inline-start-color: var(--oml-success);
+	background: var(--oml-success-soft, var(--oml-surface));
+}
+
+.oml-lesson-callout.is-warning {
+	border-inline-start-color: var(--oml-warning);
+	background: var(--oml-warning-soft, var(--oml-surface));
+}
+
+.oml-lesson-video {
+	margin: var(--oml-space-4, 1rem) 0;
+}
+
+.oml-lesson-video video,
+.oml-lesson-video iframe {
+	display: block;
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	border: 0;
+	border-radius: var(--oml-radius-card, 12px);
+	background: var(--oml-surface);
+}
+
+.oml-lesson-video figcaption {
+	margin-top: var(--oml-space-2, 0.5rem);
+	color: var(--oml-muted);
+	font-size: 0.875em;
+}
+
+.oml-lesson-math {
+	margin: var(--oml-space-4, 1rem) 0;
+	overflow-x: auto;
+	text-align: center;
+}

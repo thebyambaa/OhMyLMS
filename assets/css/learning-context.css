@@ -7,13 +7,24 @@
 
 .oml-player-origin p {
 	margin: 0 0 12px;
+	font-size: var(--oml-font-size-sm, 0.875rem);
+	line-height: var(--oml-line-normal, 1.5);
 }
 
 .oml-player-origin a {
-	color: var(--oml-link);
 	display: inline-block;
-	margin: 0 12px 8px 0;
-	text-decoration: underline;
+	margin: 0 var(--oml-space-2, 0.5rem) var(--oml-space-2, 0.5rem) 0;
+	padding: var(--oml-space-1, 0.25rem) var(--oml-space-3, 0.75rem);
+	border: 1px solid var(--oml-primary);
+	border-radius: var(--oml-radius-control, 8px);
+	color: var(--oml-primary);
+	font-size: var(--oml-font-size-sm, 0.875rem);
+	font-weight: var(--oml-weight-strong, 600);
+	text-decoration: none;
+}
+
+.oml-player-origin a:hover {
+	background: var(--oml-primary-soft);
 }
 
 .oml-player-origin a:focus-visible {

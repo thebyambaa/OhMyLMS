@@ -516,7 +516,11 @@ export function OutlineWorkspace( {
 				</Notice>
 			) }
 			{ message && (
-				<Notice status="success" isDismissible={ false }>
+				<Notice
+					className="oml-outline-toast"
+					status="success"
+					isDismissible={ false }
+				>
 					{ message }
 				</Notice>
 			) }

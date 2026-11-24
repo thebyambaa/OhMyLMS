@@ -81,6 +81,8 @@ $is_preview = \OhMyLMS\Quiz\Submission::is_preview( get_the_ID(), get_current_us
 						<?php
 						if ( 'in-review' === $preview_result['status'] ) {
 							echo '<span class="pending">' . esc_html__( 'Needs manual grading (not available in preview)', 'ohmylms' ) . '</span>';
+						} elseif ( $preview_result['passing'] <= 0 ) {
+							echo '<span class="pending">' . esc_html__( 'Completed (no pass mark set)', 'ohmylms' ) . '</span>';
 						} elseif ( $preview_result['total'] >= $preview_result['passing'] ) {
 							echo '<span class="passed">' . esc_html__( 'Pass', 'ohmylms' ) . '</span>';
 						} else {
@@ -141,6 +143,8 @@ $is_preview = \OhMyLMS\Quiz\Submission::is_preview( get_the_ID(), get_current_us
 								echo '<span class="pending">' . esc_html__( 'Awaiting review', 'ohmylms' ) . '</span>';
 							} elseif ( 'in-progress' === $attempt['status'] ) {
 									echo '<span class="pending">' . esc_html__( 'In progress', 'ohmylms' ) . '</span>';
+							} elseif ( $basis['passing'] <= 0 && $earned < $basis['max'] ) {
+								echo '<span class="pending">' . esc_html__( 'Completed (no pass mark set)', 'ohmylms' ) . '</span>';
 							} elseif ( $earned >= $basis['max'] && $basis['max'] > 0 ) {
 								echo '<span class="passed">' . esc_html__( 'Pass', 'ohmylms' ) . '</span>';
 							} elseif ( $earned >= $basis['passing'] ) {

@@ -37,7 +37,7 @@ final class Authoring {
 			$result = self::check( $definition, $settings );
 		}
 		if ( true !== $result ) {
-			throw new \OhMyLMS\DataException( 'ohmylms_invalid_question_settings', is_string( $result ) ? $result : __( 'Invalid question settings.', 'ohmylms' ), 400 ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Callers convert it to REST error data.
+			throw new \OhMyLMS\DataException( 'ohmylms_invalid_question_settings', is_string( $result ) ? $result : self::fallback_message( $definition ), 400 ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Callers convert it to REST error data.
 		}
 	}
 
@@ -52,7 +52,7 @@ final class Authoring {
 		if ( ! empty( $definition['validate_settings'] ) && is_callable( $definition['validate_settings'] ) ) {
 			$result = call_user_func( $definition['validate_settings'], $settings );
 			if ( true !== $result ) {
-				return is_string( $result ) ? $result : __( 'Invalid question settings.', 'ohmylms' );
+				return is_string( $result ) ? $result : self::fallback_message( $definition );
 			}
 		}
 		$schema = $definition['editor']['schema'] ?? null;
@@ -63,5 +63,20 @@ final class Authoring {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Message for a type whose settings check failed without saying why.
+	 *
+	 * @param mixed $definition Question type definition.
+	 * @return string
+	 */
+	private static function fallback_message( $definition ) {
+		$label = is_array( $definition ) && ! empty( $definition['label'] ) ? (string) $definition['label'] : '';
+		if ( '' === $label ) {
+			return __( 'Complete the required settings for this question type.', 'ohmylms' );
+		}
+		/* translators: %s: question type name. */
+		return sprintf( __( 'Complete the required settings for the "%s" question type.', 'ohmylms' ), $label );
 	}
 }

@@ -64,6 +64,12 @@ final class LessonBlocks {
 			OHMYLMS_VERSION,
 			true
 		);
+		wp_register_style(
+			'ohmylms-lesson-blocks',
+			plugins_url( 'assets/css/lesson-blocks.css', OHMYLMS_FILE ),
+			array(),
+			(string) filemtime( OHMYLMS_DIR . '/assets/css/lesson-blocks.css' )
+		);
 		self::block(
 			'ohmylms/lesson-video',
 			array(
@@ -134,6 +140,8 @@ final class LessonBlocks {
 				'attributes'      => $attributes,
 				'render_callback' => $render,
 				'editor_script'   => 'ohmylms-lesson-blocks',
+				'style'           => 'ohmylms-lesson-blocks',
+				'editor_style'    => 'ohmylms-lesson-blocks',
 			)
 		);
 	}
@@ -154,18 +162,57 @@ final class LessonBlocks {
 	}
 
 	/**
-	 * Video URL. Only http(s) URLs are printed.
+	 * Video. YouTube and Vimeo links become a privacy-friendly embed; any other http(s) URL plays as a file.
 	 *
 	 * @param array $attributes Attributes.
 	 * @return string
 	 */
 	public static function render_video( $attributes ) {
-		$url   = isset( $attributes['url'] ) ? esc_url( $attributes['url'] ) : '';
+		$url   = isset( $attributes['url'] ) ? esc_url( $attributes['url'], array( 'http', 'https' ) ) : '';
 		$title = isset( $attributes['title'] ) ? sanitize_text_field( $attributes['title'] ) : '';
 		if ( '' === $url ) {
 			return '';
 		}
-		return '<figure class="oml-lesson-video"><video controls src="' . $url . '"></video><figcaption>' . esc_html( $title ) . '</figcaption></figure>';
+		$embed   = self::embed_url( $url );
+		$caption = '' === $title ? '' : '<figcaption>' . esc_html( $title ) . '</figcaption>';
+		if ( '' !== $embed ) {
+			$label = '' === $title ? __( 'Lesson video', 'ohmylms' ) : $title;
+			return '<figure class="oml-lesson-video is-embed"><iframe src="' . esc_url( $embed ) . '" title="' . esc_attr( $label ) . '" loading="lazy" allow="fullscreen; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>' . $caption . '</figure>';
+		}
+		return '<figure class="oml-lesson-video"><video controls preload="metadata" src="' . esc_url( $url ) . '"></video>' . $caption . '</figure>';
+	}
+
+	/**
+	 * Embed address for a YouTube or Vimeo page link, or an empty string for anything else.
+	 *
+	 * @param string $url Video page URL.
+	 * @return string
+	 */
+	public static function embed_url( $url ) {
+		$parts = wp_parse_url( (string) $url );
+		$host  = isset( $parts['host'] ) ? strtolower( preg_replace( '/^www\./', '', $parts['host'] ) ) : '';
+		$path  = isset( $parts['path'] ) ? $parts['path'] : '';
+		$query = array();
+		if ( isset( $parts['query'] ) ) {
+			wp_parse_str( $parts['query'], $query );
+		}
+		$id = '';
+		if ( in_array( $host, array( 'youtube.com', 'm.youtube.com', 'youtube-nocookie.com' ), true ) ) {
+			if ( '/watch' === $path && isset( $query['v'] ) ) {
+				$id = (string) $query['v'];
+			} elseif ( preg_match( '#^/(?:embed|shorts|live)/([\w-]{11})#', $path, $match ) ) {
+				$id = $match[1];
+			}
+		} elseif ( 'youtu.be' === $host && preg_match( '#^/([\w-]{11})#', $path, $match ) ) {
+			$id = $match[1];
+		}
+		if ( preg_match( '/^[\w-]{11}$/', $id ) ) {
+			return 'https://www.youtube-nocookie.com/embed/' . $id;
+		}
+		if ( in_array( $host, array( 'vimeo.com', 'player.vimeo.com' ), true ) && preg_match( '#/(\d{6,12})(?:$|/)#', $path, $match ) ) {
+			return 'https://player.vimeo.com/video/' . $match[1];
+		}
+		return '';
 	}
 
 	/**
@@ -184,7 +231,7 @@ final class LessonBlocks {
 	}
 
 	/**
-	 * TeX source. MathLive on the learner page typesets elements with data-latex.
+	 * TeX source, printed as a display-math marker that the learner page typesets.
 	 *
 	 * @param array $attributes Attributes.
 	 * @return string
@@ -194,7 +241,9 @@ final class LessonBlocks {
 		if ( '' === trim( $tex ) ) {
 			return '';
 		}
-		return '<span class="oml-math" data-latex="' . esc_attr( $tex ) . '">' . esc_html( $tex ) . '</span>';
+		// Without the math runtime the TeX stays readable between the markers.
+		$tex = str_replace( array( '[[/ohmylms-math]]', '[[ohmylms-math:' ), '', $tex );
+		return '<div class="oml-lesson-math">[[ohmylms-math:latex:display]]' . esc_html( $tex ) . '[[/ohmylms-math]]</div>';
 	}
 
 	/**
