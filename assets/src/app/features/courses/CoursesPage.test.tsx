@@ -6,6 +6,12 @@ import * as api from './api';
 import { detail, draftFree, summary } from './fixtures';
 import CoursesPage from './CoursesPage';
 
+vi.mock( '../../bootstrap/BootstrapContext', () => ( {
+	useBootstrap: () => ( {
+		user: { capabilities: { ohmylms_view_gradebook: true } },
+	} ),
+} ) );
+
 vi.mock( './api', () => ( {
 	listCourses: vi.fn(),
 	createCourse: vi.fn(),
@@ -72,10 +78,12 @@ describe( 'CoursesPage', () => {
 		expect( first.getByText( '5 lessons' ) ).toBeInTheDocument();
 		expect( first.getByText( '1 quiz' ) ).toBeInTheDocument();
 		// The view link sits with the thumbnail.
-		expect( first.getByRole( 'link', { name: /View/ } ) ).toHaveAttribute(
-			'href',
-			summary.permalink
-		);
+		expect(
+			first.getByRole( 'link', { name: /^View course/ } )
+		).toHaveAttribute( 'href', summary.permalink );
+		expect(
+			first.getByRole( 'link', { name: 'View gradebook' } )
+		).toHaveAttribute( 'href', '/content-hub/gradebook?course=7' );
 		for ( const gone of [ 'Level', 'Author', 'Students', 'Price' ] ) {
 			expect(
 				screen.queryByRole( 'columnheader', { name: gone } )

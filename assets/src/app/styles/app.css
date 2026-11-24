@@ -191,3 +191,15 @@ p.ohmylms-title-actions .page-title-action:first-child {
 	color: var(--oml-muted);
 	font-size: var(--oml-font-size-sm);
 }
+
+/* Page pickers on Settings: the search box, the list and its help read as one field, with a gap before the next. */
+.ohmylms-app .oml-page-picker {
+	min-width: 0;
+	margin: 0 0 var(--oml-space-5);
+	padding: 0;
+	border: 0;
+}
+
+.ohmylms-app .oml-page-picker > * + * {
+	margin-top: var(--oml-space-2);
+}

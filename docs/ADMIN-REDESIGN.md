@@ -43,7 +43,8 @@ order: menu and WordPress look, then the dashboard, then the gradebook. Also dec
 | Submenu | Page slug | Tabs (`&tab=`) |
 | --- | --- | --- |
 | Dashboard | `ohmylms` | none (Home and Dashboard merged; Help & Feedback becomes a link here) |
-| Content Hub | `ohmylms-content` | courses, lessons, quizzes, exams, assignments, gradebook (phase C), question-bank, skills, curriculum |
+| Content Hub | `ohmylms-content` | courses, lessons, quizzes, exams, assignments, question-bank, skills, curriculum |
+| Gradebook | `ohmylms-gradebook` | Course × Students, Roster × Assignments, Student transcript, Skill mastery, Org roll-up |
 | Account Hub | `ohmylms-accounts` | students, schools, classes, teachers, parents, users (All accounts) |
 | Commerce | `ohmylms-commerce` | earnings, orders, memberships, subscriptions, coupons, payments (sections currency, tax, payment-gateways) |
 | Engagement | `ohmylms-engagement` | gamification (only with the Gamification add-on), certificates (templates and issued), automations, sessions (only with `ohmylms_show_sessions_menu`) |
@@ -183,7 +184,11 @@ separately from DNS when investigating dashboard speed.
 
 ## Phase C: gradebook
 
-Content Hub › Gradebook with five views: Course × Students (audience filter: all / individuals only / one roster),
+Gradebook has its own sidebar page below Courses. The course list links to Gradebook with the course
+selected. Old `ohmylms-content&tab=gradebook` bookmarks redirect to the new page with their query parameters
+intact. The internal `/content-hub/gradebook` routes stay stable for existing extensions.
+
+Gradebook has five views: Course × Students (audience filter: all / individuals only / one roster),
 Roster × Assignments, student transcript, skill mastery, org roll-up (district → school → class). Saved views,
 share link and CSV export; per-course weighting with a roster override.
 

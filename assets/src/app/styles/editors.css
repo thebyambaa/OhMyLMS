@@ -745,3 +745,11 @@ body.oml-builder-fullscreen .oml-editor-header .oml-editor-view-link {
 .ohmylms-app .oml-course-placement[open] > summary {
 	margin-bottom: var(--oml-space-3);
 }
+
+/* Row actions of the quiz questions table: one wrapping group, buttons and links aligned. */
+.ohmylms-app .oml-question-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--oml-space-2) var(--oml-space-3);
+}

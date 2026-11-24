@@ -186,43 +186,52 @@ export function XpTab( {
 							<p role="alert">{ score.errors.bands }</p>
 						) }
 						{ score.draft.bands.map( ( band, index ) => (
-							<fieldset key={ index }>
+							<fieldset
+								className="oml-gamification-band"
+								key={ index }
+							>
 								<legend>
 									{ BAND_LABELS[ index ] ??
 										String( index + 1 ) }
 								</legend>
-								<NumberField
-									label={ __(
-										'Gain per correct answer',
-										'ohmylms'
-									) }
-									value={ band.gain }
-									min={ 0 }
-									max={ 50 }
-									step={ 0.5 }
-									error={
-										score.errors[ `bands.${ index }.gain` ]
-									}
-									onChange={ ( gain ) =>
-										setBand( index, { gain } )
-									}
-								/>
-								<NumberField
-									label={ __(
-										'Loss per mistake',
-										'ohmylms'
-									) }
-									value={ band.loss }
-									min={ 0 }
-									max={ 50 }
-									step={ 0.5 }
-									error={
-										score.errors[ `bands.${ index }.loss` ]
-									}
-									onChange={ ( loss ) =>
-										setBand( index, { loss } )
-									}
-								/>
+								<div className="oml-gamification-fields">
+									<NumberField
+										label={ __(
+											'Gain per correct answer',
+											'ohmylms'
+										) }
+										value={ band.gain }
+										min={ 0 }
+										max={ 50 }
+										step={ 0.5 }
+										error={
+											score.errors[
+												`bands.${ index }.gain`
+											]
+										}
+										onChange={ ( gain ) =>
+											setBand( index, { gain } )
+										}
+									/>
+									<NumberField
+										label={ __(
+											'Loss per mistake',
+											'ohmylms'
+										) }
+										value={ band.loss }
+										min={ 0 }
+										max={ 50 }
+										step={ 0.5 }
+										error={
+											score.errors[
+												`bands.${ index }.loss`
+											]
+										}
+										onChange={ ( loss ) =>
+											setBand( index, { loss } )
+										}
+									/>
+								</div>
 							</fieldset>
 						) ) }
 						<NumberField
@@ -318,28 +327,33 @@ export function XpTab( {
 									'ohmylms'
 								) }
 							</legend>
-							{ mastery.saved.surface_options.map(
-								( surface ) => (
-									<ToggleField
-										key={ surface.id }
-										label={ surface.label }
-										checked={
-											mastery.draft?.surfaces[
-												surface.id
-											] ?? surface.counts
-										}
-										onChange={ ( value ) =>
-											mastery.update( ( current ) => ( {
-												...current,
-												surfaces: {
-													...current.surfaces,
-													[ surface.id ]: value,
-												},
-											} ) )
-										}
-									/>
-								)
-							) }
+							<div className="oml-gamification-fields">
+								{ mastery.saved.surface_options.map(
+									( surface ) => (
+										<ToggleField
+											key={ surface.id }
+											label={ surface.label }
+											checked={
+												mastery.draft?.surfaces[
+													surface.id
+												] ?? surface.counts
+											}
+											onChange={ ( value ) =>
+												mastery.update(
+													( current ) => ( {
+														...current,
+														surfaces: {
+															...current.surfaces,
+															[ surface.id ]:
+																value,
+														},
+													} )
+												)
+											}
+										/>
+									)
+								) }
+							</div>
 						</fieldset>
 						<ToggleField
 							label={ __(

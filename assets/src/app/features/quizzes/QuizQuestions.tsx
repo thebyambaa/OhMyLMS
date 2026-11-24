@@ -1080,97 +1080,106 @@ function SlotRow( {
 			<td>{ deliveryLabel( slot ) }</td>
 			{ ! readOnly && (
 				<td>
-					<Button
-						ref={ register( `${ slot.question_id }:up` ) }
-						variant="secondary"
-						size="small"
-						disabled={ disabled || 0 === index }
-						aria-label={ sprintf(
-							/* translators: %s: question name. */
-							__( 'Move %s up', 'ohmylms' ),
-							name
+					<div className="oml-question-actions">
+						<Button
+							ref={ register( `${ slot.question_id }:up` ) }
+							variant="secondary"
+							size="small"
+							disabled={ disabled || 0 === index }
+							aria-label={ sprintf(
+								/* translators: %s: question name. */
+								__( 'Move %s up', 'ohmylms' ),
+								name
+							) }
+							onClick={ () => onMove( index, -1 ) }
+						>
+							{ __( 'Up', 'ohmylms' ) }
+						</Button>{ ' ' }
+						<Button
+							ref={ register( `${ slot.question_id }:down` ) }
+							variant="secondary"
+							size="small"
+							disabled={ disabled || last }
+							aria-label={ sprintf(
+								/* translators: %s: question name. */
+								__( 'Move %s down', 'ohmylms' ),
+								name
+							) }
+							onClick={ () => onMove( index, 1 ) }
+						>
+							{ __( 'Down', 'ohmylms' ) }
+						</Button>{ ' ' }
+						{ slot.permissions.can_edit && (
+							<>
+								<Link
+									to={ questionEditorPath(
+										slot.question_id
+									) }
+									aria-label={ sprintf(
+										/* translators: %s: question name. */
+										__( 'Edit %s', 'ohmylms' ),
+										name
+									) }
+								>
+									{ __( 'Edit', 'ohmylms' ) }
+								</Link>{ ' ' }
+							</>
 						) }
-						onClick={ () => onMove( index, -1 ) }
-					>
-						{ __( 'Up', 'ohmylms' ) }
-					</Button>{ ' ' }
-					<Button
-						ref={ register( `${ slot.question_id }:down` ) }
-						variant="secondary"
-						size="small"
-						disabled={ disabled || last }
-						aria-label={ sprintf(
-							/* translators: %s: question name. */
-							__( 'Move %s down', 'ohmylms' ),
-							name
+						{ ( pinned || slot.permissions.can_use ) && (
+							<>
+								<Button
+									ref={ register(
+										`${ slot.question_id }:pin`
+									) }
+									variant="link"
+									disabled={ disabled }
+									aria-label={ pinLabel }
+									onClick={ () =>
+										onPin( slot, pinned ? null : 'current' )
+									}
+								>
+									{ pinned
+										? __( 'Unpin', 'ohmylms' )
+										: __( 'Pin version', 'ohmylms' ) }
+								</Button>{ ' ' }
+							</>
 						) }
-						onClick={ () => onMove( index, 1 ) }
-					>
-						{ __( 'Down', 'ohmylms' ) }
-					</Button>{ ' ' }
-					{ slot.permissions.can_edit && (
-						<>
-							<Link
-								to={ questionEditorPath( slot.question_id ) }
-								aria-label={ sprintf(
-									/* translators: %s: question name. */
-									__( 'Edit %s', 'ohmylms' ),
-									name
-								) }
-							>
-								{ __( 'Edit', 'ohmylms' ) }
-							</Link>{ ' ' }
-						</>
-					) }
-					{ ( pinned || slot.permissions.can_use ) && (
-						<>
-							<Button
-								ref={ register( `${ slot.question_id }:pin` ) }
-								variant="link"
-								disabled={ disabled }
-								aria-label={ pinLabel }
-								onClick={ () =>
-									onPin( slot, pinned ? null : 'current' )
-								}
-							>
-								{ pinned
-									? __( 'Unpin', 'ohmylms' )
-									: __( 'Pin version', 'ohmylms' ) }
-							</Button>{ ' ' }
-						</>
-					) }
-					{ slot.permissions.can_edit && slot.version > 0 && (
-						<>
-							<Button
-								ref={ register(
-									`${ slot.question_id }:versions`
-								) }
-								variant="link"
-								disabled={ disabled }
-								aria-label={ sprintf(
-									/* translators: %s: question name. */
-									__( 'Choose a version of %s', 'ohmylms' ),
-									name
-								) }
-								onClick={ () => onVersions( slot ) }
-							>
-								{ __( 'Versions', 'ohmylms' ) }
-							</Button>{ ' ' }
-						</>
-					) }
-					<Button
-						variant="link"
-						isDestructive
-						disabled={ disabled }
-						aria-label={ sprintf(
-							/* translators: %s: question name. */
-							__( 'Remove %s', 'ohmylms' ),
-							name
+						{ slot.permissions.can_edit && slot.version > 0 && (
+							<>
+								<Button
+									ref={ register(
+										`${ slot.question_id }:versions`
+									) }
+									variant="link"
+									disabled={ disabled }
+									aria-label={ sprintf(
+										/* translators: %s: question name. */
+										__(
+											'Choose a version of %s',
+											'ohmylms'
+										),
+										name
+									) }
+									onClick={ () => onVersions( slot ) }
+								>
+									{ __( 'Versions', 'ohmylms' ) }
+								</Button>{ ' ' }
+							</>
 						) }
-						onClick={ () => onRemove( slot ) }
-					>
-						{ __( 'Remove', 'ohmylms' ) }
-					</Button>
+						<Button
+							variant="link"
+							isDestructive
+							disabled={ disabled }
+							aria-label={ sprintf(
+								/* translators: %s: question name. */
+								__( 'Remove %s', 'ohmylms' ),
+								name
+							) }
+							onClick={ () => onRemove( slot ) }
+						>
+							{ __( 'Remove', 'ohmylms' ) }
+						</Button>
+					</div>
 				</td>
 			) }
 		</tr>

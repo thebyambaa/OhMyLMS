@@ -161,7 +161,7 @@ final class ExtendedQuestions {
 	public static function validate_settings( $type, array $settings ) {
 		$valid = true;
 		if ( 'passage' === $type ) {
-			return Structured::validate_settings( $settings );
+			return Structured::validate_settings( $settings, true );
 		}
 		if ( in_array( $type, array( 'labeling', 'hotspot', 'interactive-video' ), true ) ) {
 			$url   = $settings[ 'interactive-video' === $type ? 'video_url' : 'image_url' ] ?? '';
@@ -279,7 +279,39 @@ final class ExtendedQuestions {
 		if ( in_array( $type, self::UNSCORED_TYPES, true ) || ( 'hangman' === $type && ! empty( $settings['live_play'] ) ) ) {
 			$valid = $valid && 0.0 === (float) ( $settings['score']['value'] ?? 0 );
 		}
-		return $valid ? true : new \WP_Error( 'ohmylms_extended_settings', __( 'Complete the question response settings and correct answers.', 'ohmylms' ), array( 'status' => 400 ) );
+		return $valid ? true : new \WP_Error( 'ohmylms_extended_settings', self::settings_hint( $type ), array( 'status' => 400 ) );
+	}
+
+	/**
+	 * What an author must add for a response format whose settings were refused.
+	 *
+	 * @param string $type Response format.
+	 * @return string
+	 */
+	private static function settings_hint( $type ) {
+		if ( in_array( $type, self::DECK_TYPES, true ) ) {
+			$hint = __( 'Add at least one card with text (30 cards at most).', 'ohmylms' );
+		} elseif ( in_array( $type, self::CHOICE_GAMES, true ) ) {
+			$hint = __( 'Add 2 to 6 choices, mark the correct one and set the seconds between 5 and 120.', 'ohmylms' );
+		} else {
+			$hints = array(
+				'graphing'          => __( 'Add the correct points (exactly two for a line) inside the axis range.', 'ohmylms' ),
+				'hot-text'          => __( 'Add at least two tokens with unique IDs and mark the correct ones.', 'ohmylms' ),
+				'match-table-grid'  => __( 'Add rows and columns and choose the correct column for every row.', 'ohmylms' ),
+				'labeling'          => __( 'Add an image address starting with http(s):// and at least one label target.', 'ohmylms' ),
+				'hotspot'           => __( 'Add an image address starting with http(s):// and at least one zone with a radius.', 'ohmylms' ),
+				'interactive-video' => __( 'Add a video address starting with http(s):// and a checkpoint with a time and an answer.', 'ohmylms' ),
+				'hangman'           => __( 'Add 1 to 20 accepted words.', 'ohmylms' ),
+				'poll'              => __( 'Add at least two choices.', 'ohmylms' ),
+				'audio-response'    => __( 'Set the recording length between 1 and 300 seconds.', 'ohmylms' ),
+				'video-response'    => __( 'Set the recording length between 1 and 300 seconds and keep camera or screen on.', 'ohmylms' ),
+			);
+			$hint  = $hints[ $type ] ?? __( 'Complete the question response settings and correct answers.', 'ohmylms' );
+		}
+		if ( in_array( $type, self::UNSCORED_TYPES, true ) ) {
+			$hint .= ' ' . __( 'This type is not scored, so its points must be 0.', 'ohmylms' );
+		}
+		return $hint;
 	}
 
 	const HOT_TEXT_MARK = '/\[\[([A-Za-z0-9_-]+)\]\]/';

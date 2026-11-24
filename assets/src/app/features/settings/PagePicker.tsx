@@ -124,7 +124,7 @@ export function PagePicker( {
 	];
 
 	return (
-		<fieldset>
+		<fieldset className="oml-page-picker">
 			<legend className="screen-reader-text">{ label }</legend>
 			<TextField
 				label={ sprintf(

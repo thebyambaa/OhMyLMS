@@ -1,6 +1,18 @@
-import { ListTable, ListTableSelect } from '../../../ui/ListTable';
-import { Button, Notice, ToggleControl } from '@wordpress/components';
-import { lazy, Suspense, useEffect, useState } from '@wordpress/element';
+import { Badge } from '../../../ui/Badge';
+import {
+	Button,
+	Notice,
+	SearchControl,
+	SelectControl,
+	ToggleControl,
+} from '@wordpress/components';
+import {
+	createPortal,
+	lazy,
+	Suspense,
+	useEffect,
+	useState,
+} from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { useSearchParams } from 'react-router-dom';
 import { useListQuery } from '../../components/listQuery';
@@ -18,6 +30,7 @@ import {
 } from './model';
 import { SettingsDialog } from './SettingsDialog';
 import type { Integration } from './types';
+import './IntegrationsPage.css';
 
 // The xAPI, AI tutor and MCP forms are large, so they load only when a popup opens.
 const AddonSettingsDialog = lazy(
@@ -36,7 +49,11 @@ const STATES: ReadonlyArray< {
 	label: () => string;
 	matches: ( item: Integration ) => boolean;
 } > = [
-	{ value: 'all', label: () => __( 'All', 'ohmylms' ), matches: () => true },
+	{
+		value: 'all',
+		label: () => __( 'Any status', 'ohmylms' ),
+		matches: () => true,
+	},
 	{
 		value: 'enabled',
 		label: () => __( 'Enabled', 'ohmylms' ),
@@ -50,14 +67,33 @@ const STATES: ReadonlyArray< {
 ];
 
 /**
- * Integrations (Settings › Integrations), listed like the Plugins screen: views by state, search and
- * category filter (kept in the address), a switch per add-on and its settings as a row action.
+ * The state shown on an add-on card.
+ *
+ * @param props      Component props.
+ * @param props.item Add-on shown on the card.
  */
+function AddonStatus( { item }: { item: Integration } ) {
+	if ( item.enabled ) {
+		return <Badge tone="success">{ __( 'Enabled', 'ohmylms' ) }</Badge>;
+	}
+	if ( item.available ) {
+		return <Badge>{ __( 'Disabled', 'ohmylms' ) }</Badge>;
+	}
+	return <Badge tone="warning">{ __( 'Unavailable', 'ohmylms' ) }</Badge>;
+}
+
+/** Add-on catalogue with addressable category tabs and filters. */
 export default function IntegrationsPage() {
 	const list = useIntegrations();
 	const toggle = useOperation( { errorShape: 'object' } );
 	const query = useListQuery( ADDRESS_DEFAULTS );
-	const filters = { search: query.values.s, category: query.values.category };
+	const categories = categoryOptions( list.items );
+	const category = categories.some(
+		( option ) => option.value === query.values.category
+	)
+		? query.values.category
+		: ALL;
+	const filters = { search: query.values.s, category };
 	const status =
 		STATES.find( ( state ) => state.value === query.values.status )
 			?.value ?? 'all';
@@ -92,6 +128,35 @@ export default function IntegrationsPage() {
 		STATES.find( ( state ) => state.value === status )?.matches ??
 		( () => true );
 	const shown = filterIntegrations( list.items, filters ).filter( matches );
+
+	const categorySlot = document.getElementById( 'ohmylms-addon-categories' );
+	const categoryTabs = categories.map( ( { value, label } ) => {
+		const active = value === category;
+		return (
+			<a
+				key={ value }
+				className={ `nav-tab${ active ? ' nav-tab-active' : '' }` }
+				aria-current={ active ? 'page' : undefined }
+				href={ query.href( { category: value } ) }
+				onClick={ ( event ) => {
+					if (
+						0 === event.button &&
+						! (
+							event.metaKey ||
+							event.ctrlKey ||
+							event.shiftKey ||
+							event.altKey
+						)
+					) {
+						event.preventDefault();
+						query.set( { category: value } );
+					}
+				} }
+			>
+				{ value === ALL ? __( 'All add-ons', 'ohmylms' ) : label }
+			</a>
+		);
+	} );
 
 	function dismissAuth() {
 		setParams(
@@ -139,13 +204,19 @@ export default function IntegrationsPage() {
 	}
 
 	return (
-		<>
-			<p>
-				{ __(
-					'Switch add-ons on or off and connect them to other services.',
-					'ohmylms'
-				) }
-			</p>
+		<div className="oml-addons">
+			{ ! list.loading &&
+				! list.error &&
+				( categorySlot ? (
+					createPortal( categoryTabs, categorySlot )
+				) : (
+					<nav
+						className="nav-tab-wrapper oml-addon-tabs"
+						aria-label={ __( 'Add-on types', 'ohmylms' ) }
+					>
+						{ categoryTabs }
+					</nav>
+				) ) }
 			{ auth && (
 				<Notice status={ auth.status } onRemove={ dismissAuth }>
 					{ auth.text }
@@ -189,152 +260,157 @@ export default function IntegrationsPage() {
 				</Notice>
 			) }
 			{ list.loading && (
-				<p role="status">
-					{ __( 'Loading integrations…', 'ohmylms' ) }
-				</p>
+				<p role="status">{ __( 'Loading add-ons.', 'ohmylms' ) }</p>
 			) }
 			{ ! list.loading && ! list.error && (
-				<ListTable< Integration >
-					caption={ __( 'Integrations', 'ohmylms' ) }
-					heading={ __( 'Integrations list', 'ohmylms' ) }
-					formLabel={ __( 'Filter integrations', 'ohmylms' ) }
-					rows={ shown }
-					rowKey={ ( item ) => item.id }
-					rowLabel={ ( item ) => item.label }
-					views={ STATES.map( ( state ) => ( {
-						key: state.value,
-						label: state.label(),
-						current: state.value === status,
-						count: list.items.filter( state.matches ).length,
-						href: query.href( { status: state.value } ),
-						onSelect: () => query.set( { status: state.value } ),
-					} ) ) }
-					search={ {
-						label: __( 'Search integrations', 'ohmylms' ),
-						submitLabel: __( 'Search', 'ohmylms' ),
-						value: filters.search,
-						onChange: ( search ) =>
-							query.set( { s: search }, { replace: true } ),
-					} }
-					filters={
-						<ListTableSelect
-							label={ __( 'Category', 'ohmylms' ) }
-							value={ filters.category }
-							options={ categoryOptions( list.items ) }
-							onChange={ ( category ) =>
-								query.set( { category } )
+				<>
+					<div className="oml-addon-toolbar">
+						<SearchControl
+							label={ __( 'Search add-ons', 'ohmylms' ) }
+							placeholder={ __( 'Search add-ons', 'ohmylms' ) }
+							value={ filters.search }
+							onChange={ ( search ) =>
+								query.set( { s: search }, { replace: true } )
 							}
+							__nextHasNoMarginBottom
 						/>
-					}
-					filterLabel={ null }
-					pagination={ {
-						page: 1,
-						totalPages: 1,
-						totalItems: shown.length,
-						itemsLabel: sprintf(
-							/* translators: %d: number of integrations shown. */
-							_n(
-								'%d integration shown.',
-								'%d integrations shown.',
-								shown.length,
-								'ohmylms'
-							),
-							shown.length
-						),
-						onChange: () => undefined,
-					} }
-					emptyMessage={
-						<>
-							{ __(
-								'No integrations match your filters.',
-								'ohmylms'
-							) }{ ' ' }
+						<SelectControl
+							label={ __( 'Status', 'ohmylms' ) }
+							hideLabelFromVision
+							value={ status }
+							options={ STATES.map( ( state ) => ( {
+								value: state.value,
+								label: state.label(),
+							} ) ) }
+							onChange={ ( next ) =>
+								query.set( { status: next } )
+							}
+							__nextHasNoMarginBottom
+							__next40pxDefaultSize
+						/>
+						<p className="oml-addon-result-count" role="status">
+							{ sprintf(
+								/* translators: %d: number of matching add-ons. */
+								_n(
+									'%d add-on',
+									'%d add-ons',
+									shown.length,
+									'ohmylms'
+								),
+								shown.length
+							) }
+						</p>
+					</div>
+					{ shown.length ? (
+						<ul
+							className="oml-addon-grid"
+							aria-label={ __( 'Add-ons', 'ohmylms' ) }
+						>
+							{ shown.map( ( item ) => (
+								<li className="oml-addon-card" key={ item.id }>
+									<div className="oml-addon-card-header">
+										{ item.icon && (
+											<img
+												src={ item.icon }
+												alt=""
+												width="36"
+												height="36"
+											/>
+										) }
+										<AddonStatus item={ item } />
+									</div>
+									<h2>{ item.label }</h2>
+									{ category === ALL &&
+										item.categories.length > 0 && (
+											<p className="oml-addon-category">
+												{ item.categories
+													.map( categoryLabel )
+													.join( ', ' ) }
+											</p>
+										) }
+									<p className="oml-addon-description">
+										{ item.description }
+									</p>
+									<div className="oml-addon-actions">
+										<div className="oml-addon-toggle">
+											<ToggleControl
+												label={ sprintf(
+													/* translators: %s: add-on name. */
+													__(
+														'Enable %s',
+														'ohmylms'
+													),
+													item.label
+												) }
+												checked={ item.enabled }
+												disabled={
+													toggle.busy ||
+													( ! item.available &&
+														! item.enabled )
+												}
+												help={
+													( item.available
+														? item.dependency
+														: item.unavailable_reason ) ??
+													undefined
+												}
+												onChange={ ( next ) =>
+													change( item, next )
+												}
+												__nextHasNoMarginBottom
+											/>
+											{ pending === item.id && (
+												<span role="status">
+													{ __(
+														'Saving…',
+														'ohmylms'
+													) }
+												</span>
+											) }
+										</div>
+										{ ( item.configurable ||
+											FORM_ADDON_IDS.includes(
+												item.id
+											) ) && (
+											<Button
+												variant="secondary"
+												disabled={ toggle.busy }
+												aria-label={ sprintf(
+													/* translators: %s: add-on name. */
+													__(
+														'Settings for %s',
+														'ohmylms'
+													),
+													item.label
+												) }
+												onClick={ () =>
+													setSettingsFor( item )
+												}
+											>
+												{ __( 'Settings', 'ohmylms' ) }
+											</Button>
+										) }
+									</div>
+								</li>
+							) ) }
+						</ul>
+					) : (
+						<div className="oml-addon-empty">
+							<p>
+								{ __(
+									'No add-ons match your filters.',
+									'ohmylms'
+								) }
+							</p>
 							<Button
-								variant="link"
-								onClick={ () =>
-									query.set( {
-										s: '',
-										category: ALL,
-										status: 'all',
-									} )
-								}
+								variant="secondary"
+								onClick={ () => query.set( ADDRESS_DEFAULTS ) }
 							>
 								{ __( 'Clear filters', 'ohmylms' ) }
 							</Button>
-						</>
-					}
-					columns={ [
-						{
-							id: 'integration',
-							label: __( 'Integration', 'ohmylms' ),
-							primary: true,
-							render: ( item ) => (
-								<>
-									<strong>{ item.label }</strong>
-									<p>{ item.description }</p>
-								</>
-							),
-						},
-						{
-							id: 'category',
-							label: __( 'Category', 'ohmylms' ),
-							render: ( item ) =>
-								item.categories
-									.map( categoryLabel )
-									.join( ', ' ),
-						},
-						{
-							id: 'status',
-							label: __( 'Status', 'ohmylms' ),
-							render: ( item ) => (
-								<>
-									<ToggleControl
-										label={ sprintf(
-											/* translators: %s: integration name. */
-											__( 'Enable %s', 'ohmylms' ),
-											item.label
-										) }
-										checked={ item.enabled }
-										disabled={
-											toggle.busy ||
-											( ! item.available &&
-												! item.enabled )
-										}
-										help={
-											( item.available
-												? item.dependency
-												: item.unavailable_reason ) ??
-											undefined
-										}
-										onChange={ ( next ) =>
-											change( item, next )
-										}
-										__nextHasNoMarginBottom
-									/>
-									{ pending === item.id && (
-										<span role="status">
-											{ __( 'Saving…', 'ohmylms' ) }
-										</span>
-									) }
-								</>
-							),
-						},
-					] }
-					rowActions={ ( item ) => [
-						( item.configurable ||
-							FORM_ADDON_IDS.includes( item.id ) ) && {
-							key: 'settings',
-							label: __( 'Settings', 'ohmylms' ),
-							disabled: toggle.busy,
-							ariaLabel: sprintf(
-								/* translators: %s: integration name. */
-								__( 'Settings for %s', 'ohmylms' ),
-								item.label
-							),
-							onClick: () => setSettingsFor( item ),
-						},
-					] }
-				/>
+						</div>
+					) }
+				</>
 			) }
 			{ settingsFor && FORM_ADDON_IDS.includes( settingsFor.id ) && (
 				<Suspense fallback={ null }>
@@ -360,6 +436,6 @@ export default function IntegrationsPage() {
 					} }
 				/>
 			) }
-		</>
+		</div>
 	);
 }

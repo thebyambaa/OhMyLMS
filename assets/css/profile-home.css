@@ -36,6 +36,11 @@
 	color: var(--oml-on-primary);
 }
 
+/* The student hub colours its own headings; the band keeps light text on its dark gradient. */
+.ohmylms-student-hub .oml-hub-content .oml-profile-band :is(h1, h2, p) {
+	color: var(--oml-on-primary);
+}
+
 .oml-profile-band-row,
 .oml-profile-actions,
 .oml-profile-pills {
@@ -103,6 +108,8 @@
 
 .oml-profile-roles {
 	display: inline-flex;
+	flex-wrap: wrap;
+	max-width: 100%;
 	padding: 3px;
 	border-radius: 999px;
 	background: color-mix(in srgb, var(--oml-on-primary) 18%, transparent);
@@ -132,7 +139,14 @@
 	gap: 0.2rem;
 	overflow-x: auto;
 	border-bottom: 1px solid var(--oml-border);
-	background: var(--oml-surface);
+
+	/* Edge shadows show only while more tabs are hidden on that side, so a clipped tab reads as scrollable. */
+	background:
+		linear-gradient(to right, var(--oml-surface) 30%, transparent) left center / 48px 100% no-repeat local,
+		linear-gradient(to left, var(--oml-surface) 30%, transparent) right center / 48px 100% no-repeat local,
+		linear-gradient(to right, color-mix(in srgb, var(--oml-text) 28%, transparent), transparent) left center / 28px 100% no-repeat scroll,
+		linear-gradient(to left, color-mix(in srgb, var(--oml-text) 28%, transparent), transparent) right center / 28px 100% no-repeat scroll,
+		var(--oml-surface);
 }
 
 .oml-profile-tabs a {
@@ -176,6 +190,19 @@
 .oml-profile h3 {
 	margin: 0 0 0.4rem;
 	color: var(--oml-heading);
+	font-size: var(--oml-font-size-xl, 1.25rem);
+	font-weight: 700;
+	line-height: var(--oml-line-tight, 1.25);
+}
+
+/* Empty-state lines are body text, not the theme's large paragraph size. */
+.oml-profile-empty p,
+.oml-profile-card > p:not(.oml-profile-stat, .oml-profile-note) {
+	margin: 0;
+	color: var(--oml-muted);
+	font-size: var(--oml-font-size-md, 1rem);
+	font-weight: 400;
+	line-height: var(--oml-line-normal, 1.5);
 }
 
 .oml-profile-card-head {

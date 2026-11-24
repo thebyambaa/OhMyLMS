@@ -49,7 +49,8 @@ $levels = array(
  *
  * @param array $course Course row from ProfileHome.
  */
-$course_card = static function ( array $course ) use ( $levels ) {
+$note_shown  = false;
+$course_card = static function ( array $course ) use ( $levels, &$note_shown ) {
 	?>
 	<article class="oml-profile-card oml-profile-course">
 		<h3><?php echo esc_html( $course['name'] ); ?></h3>
@@ -68,7 +69,10 @@ $course_card = static function ( array $course ) use ( $levels ) {
 			<div class="oml-profile-mbar" role="progressbar" aria-valuenow="<?php echo esc_attr( (int) $course['percent'] ); ?>" aria-valuemin="0" aria-valuemax="100" aria-label="<?php echo esc_attr( $course['name'] ); ?>">
 				<span class="is-proficient" style="width:<?php echo esc_attr( (int) $course['percent'] ); ?>%"></span>
 			</div>
-			<p class="oml-profile-note"><?php esc_html_e( 'Skill levels appear when this course has skills. The bar shows course progress.', 'ohmylms' ); ?></p>
+			<?php if ( ! $note_shown ) : ?>
+				<?php $note_shown = true; ?>
+				<p class="oml-profile-note"><?php esc_html_e( 'Skill levels appear when a course has skills. Until then the bar shows course progress.', 'ohmylms' ); ?></p>
+			<?php endif; ?>
 		<?php endif; ?>
 		<div class="oml-profile-course-row">
 			<strong>
@@ -82,7 +86,7 @@ $course_card = static function ( array $course ) use ( $levels ) {
 				);
 				?>
 			</strong>
-			<a class="oml-hub-button oml-profile-continue" href="<?php echo esc_url( $course['url'] ); ?>"><?php esc_html_e( 'Continue', 'ohmylms' ); ?></a>
+			<a class="oml-hub-button oml-profile-continue" href="<?php echo esc_url( $course['url'] ); ?>"><?php echo esc_html( (int) $course['percent'] >= 100 ? __( 'Review', 'ohmylms' ) : __( 'Continue', 'ohmylms' ) ); ?></a>
 		</div>
 	</article>
 	<?php

@@ -66,6 +66,7 @@ export function LevelEditor( {
 
 	return (
 		<Modal
+			size="medium"
 			title={
 				level
 					? __( 'Edit level', 'ohmylms' )
@@ -79,6 +80,7 @@ export function LevelEditor( {
 			shouldCloseOnClickOutside={ false }
 		>
 			<form
+				className="oml-gamification-fields"
 				noValidate
 				onSubmit={ ( event ) => {
 					event.preventDefault();
@@ -97,12 +99,6 @@ export function LevelEditor( {
 					error={ shown.name }
 					onChange={ ( name ) => change( { name } ) }
 				/>
-				<TextAreaField
-					label={ __( 'Description', 'ohmylms' ) }
-					value={ draft.description }
-					error={ shown.description }
-					onChange={ ( description ) => change( { description } ) }
-				/>
 				<NumberField
 					label={ __( 'Points needed', 'ohmylms' ) }
 					help={ __(
@@ -114,6 +110,12 @@ export function LevelEditor( {
 					max={ limits.max_criterion_value }
 					error={ shown.points }
 					onChange={ ( points ) => change( { points } ) }
+				/>
+				<TextAreaField
+					label={ __( 'Description', 'ohmylms' ) }
+					value={ draft.description }
+					error={ shown.description }
+					onChange={ ( description ) => change( { description } ) }
 				/>
 				<ColorField
 					label={ __( 'Background colour', 'ohmylms' ) }
@@ -129,7 +131,7 @@ export function LevelEditor( {
 					error={ shown.text_color }
 					onChange={ ( value ) => change( { text_color: value } ) }
 				/>
-				<p>
+				<div className="oml-gamification-form-actions">
 					<Button
 						variant="primary"
 						type="submit"
@@ -148,7 +150,7 @@ export function LevelEditor( {
 					>
 						{ __( 'Cancel', 'ohmylms' ) }
 					</Button>
-				</p>
+				</div>
 			</form>
 		</Modal>
 	);

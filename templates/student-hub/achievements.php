@@ -88,10 +88,13 @@ $hub_completed = $student->get_completed_course();
 Issuer::sync_for_user( $hub_user );
 $hub_certificates = Issuer::for_user( $hub_user );
 $hub_awarded      = array_column( $hub_certificates, 'course_id' );
-$hub_uncertified  = array_filter(
+// Roadmap source courses and unpublished courses are not shown to learners anywhere else, so they are not listed here either.
+$hub_roadmap     = \OhMyLMS\Student\LearnerCatalog::roadmap_course_ids();
+$hub_uncertified = array_filter(
 	(array) $hub_completed,
-	static function ( $hub_course ) use ( $hub_awarded ) {
-		return ! in_array( (int) $hub_course->get_id(), $hub_awarded, true );
+	static function ( $hub_course ) use ( $hub_awarded, $hub_roadmap ) {
+		$hub_id = (int) $hub_course->get_id();
+		return ! in_array( $hub_id, $hub_awarded, true ) && ! in_array( $hub_id, $hub_roadmap, true ) && 'publish' === get_post_status( $hub_id );
 	}
 );
 ?>
@@ -121,7 +124,11 @@ $hub_uncertified  = array_filter(
 			<?php endforeach; ?>
 			<?php foreach ( $hub_uncertified as $hub_course ) : ?>
 				<li class="oml-hub-row">
-					<span class="oml-hub-row-name"><?php echo esc_html( $hub_course->get_name() ); ?></span>
+					<span class="oml-hub-row-name">
+						<?php echo esc_html( $hub_course->get_name() ); ?>
+						<span class="oml-hub-muted"><?php esc_html_e( 'Completed · no certificate for this course', 'ohmylms' ); ?></span>
+					</span>
+					<a href="<?php echo esc_url( Hub::course_url( (int) $hub_course->get_id() ) ); ?>"><?php esc_html_e( 'Review course', 'ohmylms' ); ?></a>
 				</li>
 			<?php endforeach; ?>
 		</ul>

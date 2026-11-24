@@ -89,6 +89,7 @@ export function SectionFrame( {
 	}
 	return (
 		<form
+			className="oml-gamification-form"
 			aria-label={ title }
 			noValidate
 			onSubmit={ ( event ) => {
@@ -96,8 +97,10 @@ export function SectionFrame( {
 				void state.save();
 			} }
 		>
-			<h3>{ title }</h3>
-			<p>{ description }</p>
+			<header className="oml-gamification-form-heading">
+				<h2>{ title }</h2>
+				<p>{ description }</p>
+			</header>
 			{ state.saveError && (
 				<Notice status="error" isDismissible={ false }>
 					{ state.saveError.message }
@@ -108,8 +111,8 @@ export function SectionFrame( {
 					{ __( 'Settings saved.', 'ohmylms' ) }
 				</Notice>
 			) }
-			{ children }
-			<p>
+			<div className="oml-gamification-fields">{ children }</div>
+			<div className="oml-gamification-form-actions">
 				<Button
 					variant="primary"
 					type="submit"
@@ -120,7 +123,7 @@ export function SectionFrame( {
 					{ state.saving
 						? __( 'Saving…', 'ohmylms' )
 						: __( 'Save changes', 'ohmylms' ) }
-				</Button>{ ' ' }
+				</Button>
 				<Button
 					variant="tertiary"
 					onClick={ state.reset }
@@ -129,7 +132,7 @@ export function SectionFrame( {
 				>
 					{ __( 'Discard changes', 'ohmylms' ) }
 				</Button>
-			</p>
+			</div>
 		</form>
 	);
 }

@@ -3,7 +3,13 @@ import { Table } from '../../../ui/Table';
 import { CourseReportTable } from './CourseReportTable';
 import { EarningsChart } from './EarningsChart';
 import { useEarnings, useRange } from './hooks';
-import { buildCards, describeRange, formatMoney, formatNumber } from './model';
+import {
+	buildCards,
+	countryName,
+	describeRange,
+	formatMoney,
+	formatNumber,
+} from './model';
 import { RangeFilter } from './RangeFilter';
 import { RequestStatus } from './RequestStatus';
 import { SummaryCards } from './SummaryCards';
@@ -71,7 +77,9 @@ export default function EarningsPage() {
 								<tbody>
 									{ data.by_country.map( ( row ) => (
 										<tr key={ row.country }>
-											<th scope="row">{ row.country }</th>
+											<th scope="row">
+												{ countryName( row.country ) }
+											</th>
 											<td>
 												{ formatNumber( row.orders ) }
 											</td>

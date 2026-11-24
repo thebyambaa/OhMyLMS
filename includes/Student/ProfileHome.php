@@ -305,12 +305,20 @@ final class ProfileHome {
 			return array();
 		}
 		$courses = $student->get_enrolled_courses();
-		$out     = array();
-		foreach ( array_slice( (array) $courses, 0, 12 ) as $course ) {
+		// Same rule as My learning: roadmap source courses and unpublished courses are not listed.
+		$hidden = array_flip( LearnerCatalog::roadmap_course_ids() );
+		$out    = array();
+		foreach ( (array) $courses as $course ) {
+			if ( count( $out ) >= 12 ) {
+				break;
+			}
 			if ( ! is_object( $course ) || ! method_exists( $course, 'get_id' ) ) {
 				continue;
 			}
-			$id       = (int) $course->get_id();
+			$id = (int) $course->get_id();
+			if ( isset( $hidden[ $id ] ) || 'publish' !== get_post_status( $id ) ) {
+				continue;
+			}
 			$segments = self::segments( $user_id, $id );
 			$percent  = (float) $student->get_course_progress_percentage( $id );
 			if ( $segments ) {

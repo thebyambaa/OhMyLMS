@@ -100,192 +100,232 @@ export function StreaksTab( {
 						<legend>
 							{ __( 'What makes a learning day', 'ohmylms' ) }
 						</legend>
-						<ToggleField
-							label={ __( 'A completed lesson', 'ohmylms' ) }
-							checked={ draft.lesson }
-							onChange={ ( value ) => set( 'lesson', value ) }
-						/>
-						<ToggleField
-							label={ __( 'A finished quiz', 'ohmylms' ) }
-							checked={ draft.quiz }
-							onChange={ ( value ) => set( 'quiz', value ) }
-						/>
-						<ToggleField
-							label={ __( 'A practice session', 'ohmylms' ) }
-							checked={ draft.practice }
-							onChange={ ( value ) => set( 'practice', value ) }
-						/>
-						<NumberField
-							label={ __(
-								'Answers a practice session needs',
-								'ohmylms'
-							) }
-							value={ draft.practice_minimum }
-							min={ 1 }
-							max={ 30 }
-							error={ errors.practice_minimum }
-							onChange={ ( value ) =>
-								set( 'practice_minimum', value )
-							}
-						/>
+						<div className="oml-gamification-fields">
+							<ToggleField
+								label={ __( 'A completed lesson', 'ohmylms' ) }
+								checked={ draft.lesson }
+								onChange={ ( value ) => set( 'lesson', value ) }
+							/>
+							<ToggleField
+								label={ __( 'A finished quiz', 'ohmylms' ) }
+								checked={ draft.quiz }
+								onChange={ ( value ) => set( 'quiz', value ) }
+							/>
+							<ToggleField
+								label={ __( 'A practice session', 'ohmylms' ) }
+								checked={ draft.practice }
+								onChange={ ( value ) =>
+									set( 'practice', value )
+								}
+							/>
+							<NumberField
+								label={ __(
+									'Answers a practice session needs',
+									'ohmylms'
+								) }
+								value={ draft.practice_minimum }
+								min={ 1 }
+								max={ 30 }
+								error={ errors.practice_minimum }
+								onChange={ ( value ) =>
+									set( 'practice_minimum', value )
+								}
+							/>
+						</div>
 					</fieldset>
 					<fieldset>
 						<legend>{ __( 'Freezes', 'ohmylms' ) }</legend>
-						<ToggleField
-							label={ __(
-								'Let freezes protect a missed day',
-								'ohmylms'
-							) }
-							checked={ draft.freezes }
-							onChange={ ( value ) => set( 'freezes', value ) }
-						/>
-						<NumberField
-							label={ __(
-								'Freezes a new learner starts with',
-								'ohmylms'
-							) }
-							value={ draft.initial_freezes }
-							min={ 0 }
-							max={ 10 }
-							error={ errors.initial_freezes }
-							onChange={ ( value ) =>
-								set( 'initial_freezes', value )
-							}
-						/>
-						<NumberField
-							label={ __(
-								'Most freezes a learner can hold',
-								'ohmylms'
-							) }
-							value={ draft.maximum_freezes }
-							min={ 0 }
-							max={ 10 }
-							error={ errors.maximum_freezes }
-							onChange={ ( value ) =>
-								set( 'maximum_freezes', value )
-							}
-						/>
-						<NumberField
-							label={ __(
-								'Learning days that earn a freeze back',
-								'ohmylms'
-							) }
-							value={ draft.refill_days }
-							min={ 1 }
-							max={ 365 }
-							error={ errors.refill_days }
-							onChange={ ( value ) =>
-								set( 'refill_days', value )
-							}
-						/>
+						<div className="oml-gamification-fields">
+							<ToggleField
+								label={ __(
+									'Let freezes protect a missed day',
+									'ohmylms'
+								) }
+								checked={ draft.freezes }
+								onChange={ ( value ) =>
+									set( 'freezes', value )
+								}
+							/>
+							<NumberField
+								label={ __(
+									'Freezes a new learner starts with',
+									'ohmylms'
+								) }
+								value={ draft.initial_freezes }
+								min={ 0 }
+								max={ 10 }
+								error={ errors.initial_freezes }
+								onChange={ ( value ) =>
+									set( 'initial_freezes', value )
+								}
+							/>
+							<NumberField
+								label={ __(
+									'Most freezes a learner can hold',
+									'ohmylms'
+								) }
+								value={ draft.maximum_freezes }
+								min={ 0 }
+								max={ 10 }
+								error={ errors.maximum_freezes }
+								onChange={ ( value ) =>
+									set( 'maximum_freezes', value )
+								}
+							/>
+							<NumberField
+								label={ __(
+									'Learning days that earn a freeze back',
+									'ohmylms'
+								) }
+								value={ draft.refill_days }
+								min={ 1 }
+								max={ 365 }
+								error={ errors.refill_days }
+								onChange={ ( value ) =>
+									set( 'refill_days', value )
+								}
+							/>
+						</div>
 					</fieldset>
 					<fieldset>
 						<legend>{ __( 'Milestones', 'ohmylms' ) }</legend>
-						<p>
-							{ __(
-								'Each milestone is awarded once per learner. Bonus points need the points feature to be on.',
-								'ohmylms'
-							) }
-						</p>
-						{ badgeError && (
-							<Notice status="warning" isDismissible={ false }>
-								{ sprintf(
-									/* translators: %s: error message. */
-									__(
-										'The badge list could not be loaded: %s',
-										'ohmylms'
-									),
-									badgeError
+						<div className="oml-gamification-fields">
+							<p>
+								{ __(
+									'Each milestone is awarded once per learner. Bonus points need the points feature to be on.',
+									'ohmylms'
 								) }
-							</Notice>
-						) }
-						{ errors.milestones && (
-							<Notice status="error" isDismissible={ false }>
-								{ errors.milestones }
-							</Notice>
-						) }
-						{ draft.milestones.map( ( milestone, index ) => (
-							<fieldset key={ index }>
-								<legend>
-									{ sprintf(
-										/* translators: %d: milestone number. */
-										__( 'Milestone %d', 'ohmylms' ),
-										index + 1
-									) }
-								</legend>
-								<NumberField
-									label={ __( 'Days in a row', 'ohmylms' ) }
-									value={ milestone.days }
-									min={ 1 }
-									max={ 10000 }
-									error={
-										errors[ `milestones.${ index }.days` ]
-									}
-									onChange={ ( days ) =>
-										setMilestone( index, { days } )
-									}
-								/>
-								<SelectField
-									label={ __( 'Badge', 'ohmylms' ) }
-									value={ milestone.badge }
-									options={ badgeOptions( milestone.badge ) }
-									onChange={ ( badge ) =>
-										setMilestone( index, { badge } )
-									}
-								/>
-								<NumberField
-									label={ __( 'Bonus points', 'ohmylms' ) }
-									value={ milestone.points }
-									min={ 0 }
-									max={ 100000 }
-									error={
-										errors[ `milestones.${ index }.points` ]
-									}
-									onChange={ ( points ) =>
-										setMilestone( index, { points } )
-									}
-								/>
-								<Button
-									variant="link"
-									isDestructive
-									onClick={ () =>
-										state.update( ( current ) => ( {
-											...current,
-											milestones:
-												current.milestones.filter(
-													( _item, position ) =>
-														position !== index
-												),
-										} ) )
-									}
+							</p>
+							{ badgeError && (
+								<Notice
+									status="warning"
+									isDismissible={ false }
 								>
 									{ sprintf(
-										/* translators: %d: milestone number. */
-										__( 'Remove milestone %d', 'ohmylms' ),
-										index + 1
+										/* translators: %s: error message. */
+										__(
+											'The badge list could not be loaded: %s',
+											'ohmylms'
+										),
+										badgeError
 									) }
-								</Button>
-							</fieldset>
-						) ) }
-						<Button
-							variant="secondary"
-							disabled={
-								draft.milestones.length >=
-								ENGAGEMENT_LIMITS.maxMilestones
-							}
-							accessibleWhenDisabled
-							onClick={ () =>
-								state.update( ( current ) => ( {
-									...current,
-									milestones: [
-										...current.milestones,
-										{ days: null, badge: '', points: 0 },
-									],
-								} ) )
-							}
-						>
-							{ __( 'Add milestone', 'ohmylms' ) }
-						</Button>
+								</Notice>
+							) }
+							{ errors.milestones && (
+								<Notice status="error" isDismissible={ false }>
+									{ errors.milestones }
+								</Notice>
+							) }
+							{ draft.milestones.map( ( milestone, index ) => (
+								<fieldset key={ index }>
+									<legend>
+										{ sprintf(
+											/* translators: %d: milestone number. */
+											__( 'Milestone %d', 'ohmylms' ),
+											index + 1
+										) }
+									</legend>
+									<div className="oml-gamification-fields">
+										<NumberField
+											label={ __(
+												'Days in a row',
+												'ohmylms'
+											) }
+											value={ milestone.days }
+											min={ 1 }
+											max={ 10000 }
+											error={
+												errors[
+													`milestones.${ index }.days`
+												]
+											}
+											onChange={ ( days ) =>
+												setMilestone( index, { days } )
+											}
+										/>
+										<SelectField
+											label={ __( 'Badge', 'ohmylms' ) }
+											value={ milestone.badge }
+											options={ badgeOptions(
+												milestone.badge
+											) }
+											onChange={ ( badge ) =>
+												setMilestone( index, { badge } )
+											}
+										/>
+										<NumberField
+											label={ __(
+												'Bonus points',
+												'ohmylms'
+											) }
+											value={ milestone.points }
+											min={ 0 }
+											max={ 100000 }
+											error={
+												errors[
+													`milestones.${ index }.points`
+												]
+											}
+											onChange={ ( points ) =>
+												setMilestone( index, {
+													points,
+												} )
+											}
+										/>
+										<Button
+											variant="link"
+											isDestructive
+											onClick={ () =>
+												state.update( ( current ) => ( {
+													...current,
+													milestones:
+														current.milestones.filter(
+															(
+																_item,
+																position
+															) =>
+																position !==
+																index
+														),
+												} ) )
+											}
+										>
+											{ sprintf(
+												/* translators: %d: milestone number. */
+												__(
+													'Remove milestone %d',
+													'ohmylms'
+												),
+												index + 1
+											) }
+										</Button>
+									</div>
+								</fieldset>
+							) ) }
+							<Button
+								variant="secondary"
+								disabled={
+									draft.milestones.length >=
+									ENGAGEMENT_LIMITS.maxMilestones
+								}
+								accessibleWhenDisabled
+								onClick={ () =>
+									state.update( ( current ) => ( {
+										...current,
+										milestones: [
+											...current.milestones,
+											{
+												days: null,
+												badge: '',
+												points: 0,
+											},
+										],
+									} ) )
+								}
+							>
+								{ __( 'Add milestone', 'ohmylms' ) }
+							</Button>
+						</div>
 					</fieldset>
 				</>
 			) }

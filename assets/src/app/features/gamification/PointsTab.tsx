@@ -55,144 +55,158 @@ export function PointsTab( {
 					{ draft.rules.map( ( rule ) => (
 						<fieldset key={ rule.event } disabled={ state.saving }>
 							<legend>{ rule.label }</legend>
-							<p>{ rule.description }</p>
-							<ToggleField
-								label={ sprintf(
-									/* translators: %s: event name. */
-									__( 'Enable “%s”', 'ohmylms' ),
-									rule.label
-								) }
-								checked={ rule.enabled }
-								onChange={ ( enabled ) =>
-									setRule( rule.event, ( current ) => ( {
-										...current,
-										enabled,
-									} ) )
-								}
-							/>
-							<NumberField
-								label={ sprintf(
-									/* translators: %s: event name. */
-									__( 'Points for “%s”', 'ohmylms' ),
-									rule.label
-								) }
-								value={ rule.points }
-								min={ 0 }
-								max={ limits.max_points }
-								error={
-									errors[ `rules.${ rule.event }.points` ]
-								}
-								onChange={ ( points ) =>
-									setRule( rule.event, ( current ) => ( {
-										...current,
-										points,
-									} ) )
-								}
-							/>
-							{ rule.supports_threshold && (
+							<div className="oml-gamification-fields">
+								<p>{ rule.description }</p>
+								<ToggleField
+									label={ sprintf(
+										/* translators: %s: event name. */
+										__( 'Enable “%s”', 'ohmylms' ),
+										rule.label
+									) }
+									checked={ rule.enabled }
+									onChange={ ( enabled ) =>
+										setRule( rule.event, ( current ) => ( {
+											...current,
+											enabled,
+										} ) )
+									}
+								/>
 								<NumberField
+									label={ __( 'Points', 'ohmylms' ) }
+									accessibleLabel={ sprintf(
+										/* translators: %s: event name. */
+										__( 'Points for “%s”', 'ohmylms' ),
+										rule.label
+									) }
+									value={ rule.points }
+									min={ 0 }
+									max={ limits.max_points }
+									error={
+										errors[ `rules.${ rule.event }.points` ]
+									}
+									onChange={ ( points ) =>
+										setRule( rule.event, ( current ) => ( {
+											...current,
+											points,
+										} ) )
+									}
+								/>
+								{ rule.supports_threshold && (
+									<NumberField
+										label={ __(
+											'Minimum percentage',
+											'ohmylms'
+										) }
+										accessibleLabel={ sprintf(
+											/* translators: %s: event name. */
+											__(
+												'Minimum percentage for “%s”',
+												'ohmylms'
+											),
+											rule.label
+										) }
+										value={ rule.threshold }
+										min={ 0 }
+										max={ 100 }
+										error={
+											errors[
+												`rules.${ rule.event }.threshold`
+											]
+										}
+										onChange={ ( threshold ) =>
+											setRule(
+												rule.event,
+												( current ) => ( {
+													...current,
+													threshold,
+												} )
+											)
+										}
+									/>
+								) }
+								<ToggleField
 									label={ sprintf(
 										/* translators: %s: event name. */
 										__(
-											'Minimum percentage for “%s”',
+											'Email the learner for “%s”',
 											'ohmylms'
 										),
 										rule.label
 									) }
-									value={ rule.threshold }
-									min={ 0 }
-									max={ 100 }
-									error={
-										errors[
-											`rules.${ rule.event }.threshold`
-										]
-									}
-									onChange={ ( threshold ) =>
+									checked={ rule.email.enabled }
+									onChange={ ( enabled ) =>
 										setRule( rule.event, ( current ) => ( {
 											...current,
-											threshold,
+											email: {
+												...current.email,
+												enabled,
+											},
 										} ) )
 									}
 								/>
-							) }
-							<ToggleField
-								label={ sprintf(
-									/* translators: %s: event name. */
-									__(
-										'Email the learner for “%s”',
-										'ohmylms'
-									),
-									rule.label
+								{ rule.email.enabled && (
+									<>
+										<TextField
+											fullWidth
+											label={ sprintf(
+												/* translators: %s: event name. */
+												__(
+													'Email subject for “%s”',
+													'ohmylms'
+												),
+												rule.label
+											) }
+											value={ rule.email.subject }
+											maxLength={ 150 }
+											error={
+												errors[
+													`rules.${ rule.event }.email.subject`
+												]
+											}
+											onChange={ ( subject ) =>
+												setRule(
+													rule.event,
+													( current ) => ( {
+														...current,
+														email: {
+															...current.email,
+															subject,
+														},
+													} )
+												)
+											}
+										/>
+										<TextAreaField
+											label={ sprintf(
+												/* translators: %s: event name. */
+												__(
+													'Email message for “%s”',
+													'ohmylms'
+												),
+												rule.label
+											) }
+											value={ rule.email.body }
+											error={
+												errors[
+													`rules.${ rule.event }.email.body`
+												]
+											}
+											onChange={ ( body ) =>
+												setRule(
+													rule.event,
+													( current ) => ( {
+														...current,
+														email: {
+															...current.email,
+															body,
+														},
+													} )
+												)
+											}
+										/>
+									</>
 								) }
-								checked={ rule.email.enabled }
-								onChange={ ( enabled ) =>
-									setRule( rule.event, ( current ) => ( {
-										...current,
-										email: { ...current.email, enabled },
-									} ) )
-								}
-							/>
-							{ rule.email.enabled && (
-								<>
-									<TextField
-										label={ sprintf(
-											/* translators: %s: event name. */
-											__(
-												'Email subject for “%s”',
-												'ohmylms'
-											),
-											rule.label
-										) }
-										value={ rule.email.subject }
-										maxLength={ 150 }
-										error={
-											errors[
-												`rules.${ rule.event }.email.subject`
-											]
-										}
-										onChange={ ( subject ) =>
-											setRule(
-												rule.event,
-												( current ) => ( {
-													...current,
-													email: {
-														...current.email,
-														subject,
-													},
-												} )
-											)
-										}
-									/>
-									<TextAreaField
-										label={ sprintf(
-											/* translators: %s: event name. */
-											__(
-												'Email message for “%s”',
-												'ohmylms'
-											),
-											rule.label
-										) }
-										value={ rule.email.body }
-										error={
-											errors[
-												`rules.${ rule.event }.email.body`
-											]
-										}
-										onChange={ ( body ) =>
-											setRule(
-												rule.event,
-												( current ) => ( {
-													...current,
-													email: {
-														...current.email,
-														body,
-													},
-												} )
-											)
-										}
-									/>
-								</>
-							) }
+							</div>
 						</fieldset>
 					) ) }
 				</>

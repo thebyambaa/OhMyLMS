@@ -41,7 +41,7 @@ $work_page       = max( 1, absint( get_query_var( 'current_page', 1 ) ) );
 		<p><?php esc_html_e( 'Join with your teacher’s invitation. You can explore courses and learn on your own right away.', 'ohmylms' ); ?></p>
 		<p>
 			<a class="oml-hub-button" href="<?php echo esc_url( Hub::url( 'library' ) ); ?>"><?php esc_html_e( 'Go to library', 'ohmylms' ); ?></a>
-			<a class="oml-hub-textlink" href="<?php echo esc_url( Hub::url( 'classes', 'join' ) ); ?>"><?php esc_html_e( 'Join a class', 'ohmylms' ); ?></a>
+			<a class="oml-hub-button is-secondary" href="<?php echo esc_url( Hub::url( 'classes', 'join' ) ); ?>"><?php esc_html_e( 'Join a class', 'ohmylms' ); ?></a>
 		</p>
 	</section>
 	<?php ohmylms_get_template( 'student-hub/family-connections.php' ); ?>

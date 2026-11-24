@@ -6,7 +6,7 @@
 	var __ = wp.i18n.__;
 	var useBlockProps = wp.blockEditor.useBlockProps;
 
-	function field( label, value, onChange, type ) {
+	function field( label, value, onChange, type, hint ) {
 		return el(
 			'label',
 			{ style: { display: 'block', marginBottom: '8px' } },
@@ -14,11 +14,19 @@
 			el( 'input', {
 				type: type || 'text',
 				value: value || '',
+				placeholder: hint ? hint.placeholder : undefined,
 				onChange: function ( event ) {
 					onChange( event.target.value );
 				},
 				style: { display: 'block', width: '100%' },
-			} )
+			} ),
+			hint && hint.help
+				? el(
+						'span',
+						{ style: { display: 'block', opacity: 0.7, fontSize: '12px' } },
+						hint.help
+				  )
+				: null
 		);
 	}
 
@@ -49,12 +57,30 @@
 			return el(
 				'div',
 				useBlockProps(),
-				field( __( 'Video URL', 'ohmylms' ), props.attributes.url, function ( value ) {
-					props.setAttributes( { url: value } );
-				} ),
-				field( __( 'Caption', 'ohmylms' ), props.attributes.title, function ( value ) {
-					props.setAttributes( { title: value } );
-				} )
+				field(
+					__( 'Video URL', 'ohmylms' ),
+					props.attributes.url,
+					function ( value ) {
+						props.setAttributes( { url: value } );
+					},
+					'url',
+					{
+						placeholder: 'https://www.youtube.com/watch?v=…',
+						help: __(
+							'A YouTube or Vimeo page link, or a direct video file address.',
+							'ohmylms'
+						),
+					}
+				),
+				field(
+					__( 'Caption', 'ohmylms' ),
+					props.attributes.title,
+					function ( value ) {
+						props.setAttributes( { title: value } );
+					},
+					'text',
+					{ placeholder: __( 'Optional caption', 'ohmylms' ) }
+				)
 			);
 		}
 	);
@@ -69,11 +95,13 @@
 		function ( props ) {
 			return el(
 				'div',
-				useBlockProps(),
+				useBlockProps( {
+					className: 'oml-lesson-callout is-' + props.attributes.tone,
+				} ),
 				el(
 					'label',
 					{ style: { display: 'block' } },
-					__( 'Tone', 'ohmylms' ),
+					__( 'Tone', 'ohmylms' ) + ' ',
 					el(
 						'select',
 						{
@@ -89,6 +117,8 @@
 				),
 				el( 'textarea', {
 					value: props.attributes.text,
+					placeholder: __( 'Write the callout text', 'ohmylms' ),
+					'aria-label': __( 'Callout text', 'ohmylms' ),
 					rows: 3,
 					onChange: function ( event ) {
 						props.setAttributes( { text: event.target.value } );
@@ -107,9 +137,21 @@
 			return el(
 				'div',
 				useBlockProps(),
-				field( __( 'TeX', 'ohmylms' ), props.attributes.tex, function ( value ) {
-					props.setAttributes( { tex: value } );
-				} )
+				field(
+					__( 'TeX', 'ohmylms' ),
+					props.attributes.tex,
+					function ( value ) {
+						props.setAttributes( { tex: value } );
+					},
+					'text',
+					{
+						placeholder: 'x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}',
+						help: __(
+							'Type the equation as TeX. Learners see it typeset.',
+							'ohmylms'
+						),
+					}
+				)
 			);
 		}
 	);

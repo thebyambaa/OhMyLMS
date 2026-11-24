@@ -33,6 +33,7 @@ import {
 import { useEngagement } from './useEngagement';
 import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
 import { XpTab } from './XpTab';
+import './GamificationPage.css';
 
 const LABELS: Record< TabId, string > = {
 	points: __( 'Points', 'ohmylms' ),
@@ -187,7 +188,11 @@ export default function GamificationPage() {
 				}
 			/>
 			{ TAB_IDS.map( ( id ) => (
-				<div key={ id } { ...panelProps( id, selected ) }>
+				<div
+					key={ id }
+					className="oml-engagement-panel oml-gamification-settings"
+					{ ...panelProps( id, selected ) }
+				>
 					{ ( id === selected || visited[ id ] ) && panels[ id ] }
 				</div>
 			) ) }

@@ -969,7 +969,8 @@ final class Hub {
 					$names[] = 'home_learning' === get_query_var( 'hub_scope', '' ) ? __( 'Home-learning activity', 'ohmylms' ) : __( 'Learner overview', 'ohmylms' );
 				} elseif ( 'library' === $section && $course && OHMYLMS_COURSE_CPT === get_post_type( $course ) && 'publish' === get_post_status( $course ) ) {
 					$names[] = get_the_title( $course );
-				} elseif ( $views && isset( $views[ $view ] ) ) {
+				} elseif ( $views && isset( $views[ $view ] ) && ! ( 'classes' === $section && '' === (string) get_query_var( 'hub_view', '' ) ) ) {
+					// The default view of My classes is not shown as a tab, so it does not name the page.
 					$names[] = $views[ $view ];
 				}
 				$names[] = $config['labels'][ $section ] ?? '';

@@ -128,7 +128,13 @@ export function UnitEditor( {
 	course?: number;
 } ) {
 	const bodyId = useId();
-	const unitName = unit.title || __( 'New unit', 'ohmylms' );
+	// The server names a course's first unit "Untitled"; show it as unnamed until the author names it.
+	const unnamed =
+		! unit.title.trim() ||
+		[ 'Untitled', __( 'Untitled', 'ohmylms' ) ].includes(
+			unit.title.trim()
+		);
+	const unitName = unnamed ? __( 'New unit', 'ohmylms' ) : unit.title;
 	// A unit that is not saved yet opens on its fields so it can be named; saved units show their activities.
 	const [ open, setOpen ] = useState( 'number' !== typeof unit.id );
 	// The WordPress block editor, which comes back to this outline.
@@ -266,7 +272,11 @@ export function UnitEditor( {
 					<div className="oml-unit-row">
 						<TextControl
 							label={ __( 'Unit title', 'ohmylms' ) }
-							value={ unit.title }
+							placeholder={ __(
+								'Name this unit, for example “Getting started”',
+								'ohmylms'
+							) }
+							value={ unnamed ? '' : unit.title }
 							onChange={ ( title ) => onChange( { title } ) }
 						/>
 						<TextControl

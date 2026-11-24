@@ -62,15 +62,15 @@ beforeEach( () => {
 describe( 'automations panel', () => {
 	it( 'lists rules as "when … then …" with their runs', async () => {
 		show( '/automations' );
-		const table = await screen.findByRole( 'table', {
+		const cards = await screen.findByRole( 'list', {
 			name: 'Automation rules',
 		} );
-		expect( within( table ).getByText( 'Welcome' ) ).toBeInTheDocument();
+		expect( within( cards ).getByText( 'Welcome' ) ).toBeInTheDocument();
 		expect(
-			within( table ).getByText( 'A learner is enrolled in a course' )
+			within( cards ).getByText( 'A learner is enrolled in a course' )
 		).toBeInTheDocument();
 		expect(
-			within( table ).getByText( 'Send an email, Enrol in a course' )
+			within( cards ).getByText( 'Send an email, Enrol in a course' )
 		).toBeInTheDocument();
 	} );
 
@@ -82,11 +82,11 @@ describe( 'automations panel', () => {
 		const user = userEvent.setup();
 		// The former Memberships panel address opens the Automations tab.
 		show( '/memberships?panel=automations' );
-		const table = await screen.findByRole( 'table', {
+		const cards = await screen.findByRole( 'list', {
 			name: 'Automation rules',
 		} );
 		await user.click(
-			within( table ).getByRole( 'button', { name: 'Pause' } )
+			within( cards ).getByRole( 'button', { name: 'Pause' } )
 		);
 		expect( api.updateRule ).toHaveBeenCalledWith(
 			7,

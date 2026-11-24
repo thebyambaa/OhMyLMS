@@ -142,6 +142,17 @@
 	width: 1px;
 }
 
+/* The saved message floats over the page so it never pushes the outline down under the pointer. */
+.ohmylms-app .oml-outline-toast {
+	position: fixed;
+	inset-block-end: var(--oml-space-5);
+	inset-inline-end: var(--oml-space-5);
+	z-index: var(--oml-z-toast, 100000);
+	max-width: min(28rem, calc(100vw - 2 * var(--oml-space-5)));
+	margin: 0;
+	box-shadow: var(--oml-shadow-md);
+}
+
 /* The builder bar has Save, and the stale-outline notice has Reload; these only serve the outline outside the builder. */
 body.oml-builder-fullscreen .oml-outline-actions {
 	display: none;
