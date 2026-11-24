@@ -36,6 +36,11 @@
 	color: var(--oml-on-primary);
 }
 
+/* The student hub colours its own headings; the band keeps light text on its dark gradient. */
+.ohmylms-student-hub .oml-hub-content .oml-profile-band :is(h1, h2, p) {
+	color: var(--oml-on-primary);
+}
+
 .oml-profile-band-row,
 .oml-profile-actions,
 .oml-profile-pills {
@@ -176,6 +181,19 @@
 .oml-profile h3 {
 	margin: 0 0 0.4rem;
 	color: var(--oml-heading);
+	font-size: var(--oml-font-size-xl, 1.25rem);
+	font-weight: 700;
+	line-height: var(--oml-line-tight, 1.25);
+}
+
+/* Empty-state lines are body text, not the theme's large paragraph size. */
+.oml-profile-empty p,
+.oml-profile-card > p:not(.oml-profile-stat, .oml-profile-note) {
+	margin: 0;
+	color: var(--oml-muted);
+	font-size: var(--oml-font-size-md, 1rem);
+	font-weight: 400;
+	line-height: var(--oml-line-normal, 1.5);
 }
 
 .oml-profile-card-head {
