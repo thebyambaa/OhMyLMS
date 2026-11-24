@@ -96,7 +96,6 @@ function typeGroups(): TypeGroup[] {
 			label: __( 'Content and opinion, not scored', 'ohmylms' ),
 			types: [
 				'passage',
-				'statement',
 				'slide',
 				'interactive-video',
 				'poll',
@@ -118,6 +117,10 @@ function typeHints(): Record< string, string > {
 		'text-entry': __( 'A typed answer, marked automatically.', 'ohmylms' ),
 		'fill-in-the-blank': __( 'Missing words in a sentence.', 'ohmylms' ),
 		numerical: __( 'A number as the answer.', 'ohmylms' ),
+		statement: __(
+			'A typed answer checked against the expected answers you list.',
+			'ohmylms'
+		),
 	};
 }
 

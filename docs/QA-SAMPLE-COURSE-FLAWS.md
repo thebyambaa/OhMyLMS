@@ -2,17 +2,17 @@
 
 Run on 800.local, 2026-11-25. Course 23933 "Sample Course: All Features": one unit, one
 lesson page (23936) with core and OhMyLMS blocks, one quiz (23937) with 13 questions.
-Status: FIXED (verified in the browser), NOT A DEFECT (explained), DEFERRED (needs a decision).
+Status: FIXED (verified in the browser) or NOT A DEFECT (explained). Nothing is deferred.
 
 ## Course builder
 
 | # | Flaw | Status |
 |---|------|--------|
 | B1 | Stray "Example course editor panel" text under every builder step | NOT A DEFECT. It comes from the opt-in `modules/examples` module, which this test site enables (it also adds the "Example number" question type). |
-| B2 | A new unit is named "Untitled" instead of asking for a title | DEFERRED. `BlankDraft::discard()` recognises an untouched draft by that exact name, so renaming the default needs that check changed with it. |
+| B2 | A new unit is named "Untitled" instead of asking for a title | FIXED: the outline shows an unnamed default unit as "New unit" with a "Name this unit" placeholder; the stored name is unchanged so `BlankDraft::discard()` still works |
 | B3 | The "Draft saved" banner inserted above the content and shifted the layout under the pointer | FIXED: the message is a fixed toast (`.oml-outline-toast`), the outline no longer moves |
 | B4 | Lesson rows have no "Block editor" link while quiz rows do | NOT A DEFECT. A lesson's title link opens its block editor; a quiz's title opens its settings, so only quizzes need the extra link. |
-| B5 | Publish dialog does not warn about draft questions or a pass mark of 0 | DEFERRED (new feature: needs a server-side readiness summary) |
+| B5 | Publish dialog does not warn about draft questions or a pass mark of 0 | NOT A DEFECT on review. Empty quizzes already block publishing, draft-status questions publish normally, and a pass mark of 0 now reads "no pass mark set" (P1). |
 
 ## Lesson page
 
@@ -36,11 +36,11 @@ Status: FIXED (verified in the browser), NOT A DEFECT (explained), DEFERRED (nee
 | Q3 | Choice questions start with "Option 1" and "Option 2" | NOT A DEFECT. Option 1 starts marked correct, and the server needs at least two options. |
 | Q4 | Sticky question toolbar lets the settings header show through | NOT A DEFECT. Normal sticky scrolling: content passes under the bar. |
 | Q5 | Question list actions were cramped and misaligned | FIXED: one wrapping flex group (`.oml-question-actions`) |
-| Q6 | "Statement" demands an expected answer yet is listed under not-scored content | DEFERRED (the type and its label need a product decision) |
-| Q7 | About 19 types answered "Invalid question settings." with no reason | FIXED in part: the message names the type (`Extensions/Authoring.php`). Field-level reasons are DEFERRED. |
+| Q6 | "Statement" demands an expected answer yet was listed under not-scored content | FIXED: it is a scored typed-answer type, so the picker moves it to "More types" with the hint "A typed answer checked against the expected answers you list." |
+| Q7 | About 19 types answered "Invalid question settings." with no reason | FIXED: `Authoring::check()` keeps `WP_Error` messages and `ExtendedQuestions::settings_hint()` says what each type needs, for example "Add 1 to 20 accepted words." |
 | Q8 | Raw schema wording such as "expected is a required property of settings" | NOT A DEFECT for core: it comes from the example module's `example-number` type. |
-| Q9 | Passage says "A structured question needs at least one part" | DEFERRED (low priority, passage reuses the structured check) |
-| Q10 | Fill in the blank saved through the API ignores `{blank}` in the body unless options are sent | DEFERRED (API only; the editor sends options) |
+| Q9 | Passage says "A structured question needs at least one part" | FIXED: "A passage needs at least one question part (50 at most)." |
+| Q10 | Fill in the blank saved through the API ignores `{blank}` in the body unless options are sent | FIXED as wording: the server reads blanks from the question name, and the message now says so. The editor already copies the statement into the name. |
 
 ## Quiz learner view
 

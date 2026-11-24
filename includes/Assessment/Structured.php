@@ -231,12 +231,13 @@ final class Structured {
 	 * Validate private part settings.
 	 *
 	 * @param array $settings Private settings.
+	 * @param bool  $passage  Whether the settings belong to a reading passage, for wording.
 	 * @return true|string Validation result.
 	 */
-	public static function validate_settings( array $settings ) {
+	public static function validate_settings( array $settings, $passage = false ) {
 		$parts = (array) ( $settings['parts'] ?? array() );
 		if ( ! $parts || count( $parts ) > 50 ) {
-			return __( 'A structured question needs at least one part.', 'ohmylms' ); }
+			return $passage ? __( 'A passage needs at least one question part (50 at most).', 'ohmylms' ) : __( 'A structured question needs at least one part.', 'ohmylms' ); }
 		$ids = array();
 		foreach ( $parts as $part ) {
 			if ( ! is_array( $part ) ) {

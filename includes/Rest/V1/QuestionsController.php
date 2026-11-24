@@ -1433,7 +1433,7 @@ class QuestionsController extends RestController {
 					return true;
 				}
 			}
-			return $this->invalid_options( __( 'Write each answer in {curly brackets} in the question, or add an accepted answer.', 'ohmylms' ), 'options' );
+			return $this->invalid_options( __( 'Write each answer in {curly brackets} in the question name, or add an accepted answer option.', 'ohmylms' ), 'options' );
 		}
 		if ( ! in_array( $type, self::OPTION_TYPES, true ) ) {
 			return true;

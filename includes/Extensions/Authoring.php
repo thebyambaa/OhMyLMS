@@ -52,6 +52,9 @@ final class Authoring {
 		if ( ! empty( $definition['validate_settings'] ) && is_callable( $definition['validate_settings'] ) ) {
 			$result = call_user_func( $definition['validate_settings'], $settings );
 			if ( true !== $result ) {
+				if ( is_wp_error( $result ) ) {
+					return $result->get_error_message();
+				}
 				return is_string( $result ) ? $result : self::fallback_message( $definition );
 			}
 		}
