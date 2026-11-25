@@ -294,6 +294,11 @@ class Api {
 			}
 			break;
 		}
+		if ( $listing && doing_action( 'rest_api_init' ) ) {
+			// Code that reads the routes while the server boots (such as the Abilities API's own
+			// registration) is not a request or a listing for a client; keep registering on demand.
+			return $endpoints;
+		}
 		if ( $listing ) {
 			$this->register_all();
 		}
