@@ -124,7 +124,7 @@ final class AdminNavigation {
 			),
 			'content'    => array(
 				'page'  => 'ohmylms-content',
-				'label' => __( 'Courses', 'ohmylms' ),
+				'label' => __( 'Teaching', 'ohmylms' ),
 				'tabs'  => array(
 					'courses' => array(
 						'label'      => __( 'Courses', 'ohmylms' ),
@@ -134,29 +134,6 @@ final class AdminNavigation {
 							'overview' => __( 'Overview', 'ohmylms' ),
 						),
 					),
-				),
-			),
-			'gradebook'  => array(
-				'page'  => 'ohmylms-gradebook',
-				'label' => __( 'Gradebook', 'ohmylms' ),
-				'tabs'  => array(
-					'gradebook' => array(
-						'label'      => __( 'Gradebook', 'ohmylms' ),
-						'capability' => \OhMyLMS\Gradebook\Access::CAPABILITY,
-						'sections'   => array(
-							''        => __( 'Course × Students', 'ohmylms' ),
-							'roster'  => __( 'Roster × Assignments', 'ohmylms' ),
-							'student' => __( 'Student transcript', 'ohmylms' ),
-							'mastery' => __( 'Skill mastery', 'ohmylms' ),
-							'rollup'  => __( 'Org roll-up', 'ohmylms' ),
-						),
-					),
-				),
-			),
-			'bank'       => array(
-				'page'  => 'ohmylms-bank',
-				'label' => __( 'Lessons & Quizzes', 'ohmylms' ),
-				'tabs'  => array(
 					'lessons'       => array( 'label' => __( 'Lessons', 'ohmylms' ) ),
 					'quizzes'       => array(
 						'label'      => __( 'Quizzes', 'ohmylms' ),
@@ -183,6 +160,44 @@ final class AdminNavigation {
 								'label'  => __( 'Import review', 'ohmylms' ),
 								'render' => array( ImportPage::class, 'render' ),
 							),
+						),
+					),
+					// WordPress post types listed inside this page, so every Teaching tab shares one address.
+					'math-references' => array(
+						'label'      => __( 'Math references', 'ohmylms' ),
+						'capability' => 'edit_pages',
+						'sections'   => array(
+							'' => array(
+								'label'  => __( 'Math references', 'ohmylms' ),
+								'render' => array( TeachingList::class, 'math_references' ),
+							),
+						),
+					),
+					'downloads'       => array(
+						'label'      => __( 'Downloads', 'ohmylms' ),
+						'capability' => self::CAPABILITY,
+						'sections'   => array(
+							'' => array(
+								'label'  => __( 'Downloads', 'ohmylms' ),
+								'render' => array( TeachingList::class, 'downloads' ),
+							),
+						),
+					),
+				),
+			),
+			'gradebook'  => array(
+				'page'  => 'ohmylms-gradebook',
+				'label' => __( 'Gradebook', 'ohmylms' ),
+				'tabs'  => array(
+					'gradebook' => array(
+						'label'      => __( 'Gradebook', 'ohmylms' ),
+						'capability' => \OhMyLMS\Gradebook\Access::CAPABILITY,
+						'sections'   => array(
+							''        => __( 'Course × Students', 'ohmylms' ),
+							'roster'  => __( 'Roster × Assignments', 'ohmylms' ),
+							'student' => __( 'Student transcript', 'ohmylms' ),
+							'mastery' => __( 'Skill mastery', 'ohmylms' ),
+							'rollup'  => __( 'Org roll-up', 'ohmylms' ),
 						),
 					),
 				),
@@ -396,7 +411,7 @@ final class AdminNavigation {
 		);
 
 		$content  = array( 'group' => 'content' );
-		$bank     = array( 'group' => 'bank' );
+		$bank     = array( 'group' => 'content' );
 		$curr     = array( 'group' => 'curriculum' );
 		$commerce = array( 'group' => 'commerce' );
 		$accounts = array( 'group' => 'accounts' );
@@ -852,8 +867,8 @@ final class AdminNavigation {
 			return isset( $query[ $name ] ) && is_string( $query[ $name ] ) ? sanitize_key( $query[ $name ] ) : '';
 		};
 		$group   = self::group_of_page( $read( 'page' ) ) ?? 'dashboard';
-		$tabs    = self::visible_tabs( $group );
 		$tab     = $read( 'tab' );
+		$tabs    = self::visible_tabs( $group );
 		$section = $read( 'section' );
 		$render  = null;
 		if ( ! $tabs ) {
@@ -1043,6 +1058,7 @@ final class AdminNavigation {
 	 * Send a moved admin address to its new place (on `admin_init`).
 	 */
 	public static function redirect_moved_tabs() {
+		self::redirect_teaching();
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Navigation only.
 		$moved = self::moved_query( wp_unslash( $_GET ) );
 		if ( null === $moved ) {
@@ -1056,6 +1072,47 @@ final class AdminNavigation {
 		}
 		wp_safe_redirect( admin_url( 'admin.php?' . self::format_query( $pairs ) ) );
 		exit;
+	}
+
+	/**
+	 * Send the retired Bank page and the plain Teaching post type lists to the Content page (on `admin_menu`,
+	 * before WordPress checks access to a page that is no longer registered).
+	 */
+	public static function redirect_teaching() {
+		$target = self::teaching_redirect( wp_unslash( $_GET ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Navigation only.
+		if ( null !== $target && 'GET' === ( $_SERVER['REQUEST_METHOD'] ?? '' ) && ! wp_doing_ajax() ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Compared, not used.
+			wp_safe_redirect( $target );
+			exit;
+		}
+	}
+
+	/**
+	 * Where a Teaching address that is not the single Teaching page lives: the Bank page, and the plain
+	 * list screens of the math reference and download post types, open the Content page's tab instead.
+	 *
+	 * @param array $query Query parameters of the request.
+	 * @return string|null Absolute URL, or null when the address stays.
+	 */
+	public static function teaching_redirect( array $query ) {
+		$page = isset( $query['page'] ) && is_string( $query['page'] ) ? sanitize_key( $query['page'] ) : '';
+		if ( '' !== $page && self::LEGACY_BANK_PAGE === $page ) {
+			$pairs = array();
+			foreach ( $query as $name => $value ) {
+				if ( is_string( $value ) ) {
+					$pairs[] = array( (string) $name, 'page' === $name ? self::page_slug( 'content' ) : $value );
+				}
+			}
+			return admin_url( 'admin.php?' . self::format_query( $pairs ) );
+		}
+		global $pagenow;
+		if ( 'edit.php' === $pagenow && isset( $query['post_type'] ) && is_string( $query['post_type'] ) && 1 === count( $query ) ) {
+			foreach ( self::teaching_post_type_tabs() as $id => $tab ) {
+				if ( $tab['post_type'] === $query['post_type'] ) {
+					return self::tab_url( 'content', $id );
+				}
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -1215,10 +1272,12 @@ final class AdminNavigation {
 		global $menu, $submenu;
 		$render = array( __CLASS__, 'render' );
 		add_menu_page( __( 'OhMyLMS', 'ohmylms' ), __( 'OhMyLMS', 'ohmylms' ), self::page_capability( 'dashboard' ), OHMYLMS_SLUG, $render, $icon, 6 );
-		foreach ( self::groups() as $id => $group ) {
+		$groups = self::groups();
+		foreach ( self::menu_order( array_keys( $groups ) ) as $id ) {
 			if ( ! self::can_open( $id ) ) {
 				continue;
 			}
+			$group = $groups[ $id ];
 			add_submenu_page( OHMYLMS_SLUG, $group['label'], $group['label'], self::page_capability( $id ), $group['page'], $render );
 		}
 		if ( '' === $badge ) {
@@ -1238,14 +1297,85 @@ final class AdminNavigation {
 	}
 
 	/**
-	 * Remove the Dashboard submenu so WordPress links the main menu directly to Courses.
-	 * Retain the public callback name and registered dashboard route for existing integrations.
+	 * Sidebar order of the pages, role-first: teaching work, grades, curriculum, people, then engagement,
+	 * commerce, add-ons and settings. Groups not listed keep their place after the listed ones.
+	 *
+	 * @param string[] $ids Group ids in table order.
+	 * @return string[]
+	 */
+	public static function menu_order( array $ids ) {
+		$order = array( 'dashboard', 'content', 'gradebook', 'curriculum', 'accounts', 'engagement', 'commerce', 'addons', 'settings' );
+		$known = array_values( array_intersect( $order, $ids ) );
+		return array_merge( $known, array_values( array_diff( $ids, $order ) ) );
+	}
+
+	/**
+	 * Retired page of the Content Bank; its address opens the same tab on the Content page.
+	 */
+	const LEGACY_BANK_PAGE = 'ohmylms-bank';
+
+	/**
+	 * Teaching tabs that are WordPress list screens rather than app tabs: id => label, post type, capability.
+	 *
+	 * @return array<string, array{label: string, post_type: string, capability: string}>
+	 */
+	public static function teaching_post_type_tabs() {
+		return array(
+			'math-references' => array(
+				'label'      => __( 'Math references', 'ohmylms' ),
+				'post_type'  => 'ohmylms-reference',
+				'capability' => 'edit_pages',
+			),
+			'downloads'       => array(
+				'label'      => __( 'Downloads', 'ohmylms' ),
+				'post_type'  => 'ohmylms-download',
+				'capability' => self::CAPABILITY,
+			),
+		);
+	}
+
+	/**
+	 * Remove the Dashboard submenu so WordPress links the main menu directly to Teaching. Retain the public callback
+	 * name and registered dashboard route for existing integrations.
 	 */
 	public static function hide_dashboard_entry() {
-		global $submenu;
+		global $submenu, $submenu_file, $parent_file;
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		foreach ( self::teaching_post_type_tabs() as $tab ) {
+			if ( $screen && $tab['post_type'] === $screen->post_type ) {
+				$parent_file  = OHMYLMS_SLUG; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Highlights Teaching for its post type tabs.
+				$submenu_file = self::page_slug( 'content' ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Highlights Teaching for its post type tabs.
+			}
+		}
 		foreach ( (array) ( $submenu[ OHMYLMS_SLUG ] ?? array() ) as $index => $item ) {
 			if ( OHMYLMS_SLUG === ( $item[2] ?? '' ) ) {
 				unset( $submenu[ OHMYLMS_SLUG ][ $index ] ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- WordPress navigation hook.
+			}
+		}
+	}
+
+	/**
+	 * Print the Teaching tab row above a post type list screen (math references, downloads) so it reads as
+	 * one page with the app tabs.
+	 */
+	public static function render_post_type_tabs() {
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		if ( ! $screen ) {
+			return;
+		}
+		foreach ( self::teaching_post_type_tabs() as $id => $tab ) {
+			if ( $tab['post_type'] === $screen->post_type && in_array( $screen->base, array( 'edit', 'post' ), true ) ) {
+				echo '<div class="wrap ohmylms-admin-page ohmylms-admin-page--content" style="margin-bottom:-10px">';
+				self::render_tabs(
+					array(
+						'group'   => 'content',
+						'tab'     => $id,
+						'section' => '',
+					),
+					self::visible_tabs( 'content' )
+				);
+				echo '</div>';
+				return;
 			}
 		}
 	}
@@ -1277,7 +1407,7 @@ final class AdminNavigation {
 			<?php if ( $tabs && 'gradebook' !== $current['group'] ) : ?>
 				<?php self::render_tabs( $current, $tabs ); ?>
 			<?php endif; ?>
-			<?php if ( isset( $tabs[ $current['tab'] ] ) && count( $tabs[ $current['tab'] ]['sections'] ) > 1 && ! ( 'content' === $current['group'] && 'courses' === $current['tab'] ) ) : ?>
+			<?php if ( isset( $tabs[ $current['tab'] ] ) && count( $tabs[ $current['tab'] ]['sections'] ) > 1 ) : ?>
 				<?php self::render_sections( $current, $tabs[ $current['tab'] ] ); ?>
 			<?php endif; ?>
 			<?php if ( 'dashboard' === $current['group'] ) : ?>
@@ -1307,20 +1437,14 @@ final class AdminNavigation {
 	 * @param array $tabs    Visible tabs.
 	 */
 	private static function render_tabs( array $current, array $tabs ) {
-		$group   = self::groups()[ $current['group'] ];
-		$courses = 'content' === $current['group'] ? ( $tabs['courses'] ?? null ) : null;
-		$layout  = 'engagement' === $current['group'] ? ' oml-engagement-tabs' : '';
+		$group  = self::groups()[ $current['group'] ];
+		$layout = 'engagement' === $current['group'] ? ' oml-engagement-tabs' : '';
 		?>
-		<nav class="nav-tab-wrapper wp-clearfix<?php echo esc_attr( $layout ); ?>" id="<?php echo esc_attr( self::TABS_ID ); ?>" aria-label="<?php echo esc_attr( $group['label'] ); ?>"<?php if ( ! empty( $courses['sections'] ) ) : ?> data-section-tab="courses" data-default-section="<?php echo esc_attr( self::default_section( $courses ) ); ?>"<?php endif; ?>>
+		<nav class="nav-tab-wrapper wp-clearfix<?php echo esc_attr( $layout ); ?>" id="<?php echo esc_attr( self::TABS_ID ); ?>" aria-label="<?php echo esc_attr( $group['label'] ); ?>">
 			<?php foreach ( $tabs as $id => $tab ) : ?>
 				<?php $active = $id === $current['tab']; ?>
 				<?php if ( 'addons' === $current['group'] && 'integrations' === $id && $active ) : ?>
 					<span id="ohmylms-addon-categories"></span>
-				<?php elseif ( 'courses' === $id && ! empty( $courses['sections'] ) ) : ?>
-					<?php foreach ( $courses['sections'] as $section_id => $section ) : ?>
-						<?php $selected = $active && (string) $section_id === $current['section']; ?>
-						<a data-section="<?php echo esc_attr( $section_id ); ?>" href="<?php echo esc_url( self::tab_url( $current['group'], $id, (string) $section_id ) ); ?>" class="nav-tab<?php echo $selected ? ' nav-tab-active' : ''; ?>"<?php echo $selected ? ' aria-current="page"' : ''; ?>><?php echo esc_html( $section['label'] ); ?></a>
-					<?php endforeach; ?>
 				<?php else : ?>
 					<a data-tab="<?php echo esc_attr( $id ); ?>" href="<?php echo esc_url( self::tab_url( $current['group'], $id ) ); ?>" class="nav-tab<?php echo $active ? ' nav-tab-active' : ''; ?>"<?php echo $active ? ' aria-current="page"' : ''; ?>><?php echo esc_html( $tab['label'] ); ?></a>
 				<?php endif; ?>

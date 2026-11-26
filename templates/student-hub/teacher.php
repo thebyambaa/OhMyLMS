@@ -8,6 +8,7 @@
 use OhMyLMS\Schools\Access;
 use OhMyLMS\Schools\Service;
 use OhMyLMS\Student\TeacherActions;
+use OhMyLMS\Student\TeacherHome;
 use OhMyLMS\Student\TeacherWorkspace;
 
 defined( 'ABSPATH' ) || exit;
@@ -51,6 +52,35 @@ $teacher_titles  = array(
 		<a class="oml-hub-pill" href="<?php echo esc_url( TeacherWorkspace::url( $section ) ); ?>" <?php echo 'active' === $teacher_status ? 'aria-current="page"' : ''; ?>><?php esc_html_e( 'Active classes', 'ohmylms' ); ?></a>
 		<a class="oml-hub-pill" href="<?php echo esc_url( TeacherWorkspace::url( $section, 'archived' ) ); ?>" <?php echo 'archived' === $teacher_status ? 'aria-current="page"' : ''; ?>><?php esc_html_e( 'Archived classes', 'ohmylms' ); ?></a>
 	</nav>
+	<?php $teacher_home = 'active' === $teacher_status && 'classes' === $section ? TeacherHome::summary( $teacher_classes ) : null; ?>
+	<?php if ( $teacher_home && $teacher_classes ) : ?>
+		<section class="oml-hub-card oml-hub-settings-card oml-hub-class-panel oml-hub-teacher-home" aria-labelledby="oml-teacher-home-title">
+			<h2 id="oml-teacher-home-title"><?php esc_html_e( 'Needs attention', 'ohmylms' ); ?></h2>
+			<p>
+				<?php
+				echo esc_html(
+					sprintf(
+						/* translators: 1: classes, 2: students, 3: overdue assignments, 4: assignments due soon. */
+						__( '%1$d classes, %2$d students, %3$d overdue, %4$d due in the next 7 days.', 'ohmylms' ),
+						$teacher_home['totals']['classes'],
+						$teacher_home['totals']['students'],
+						$teacher_home['totals']['overdue'],
+						$teacher_home['totals']['due_soon']
+					)
+				);
+				?>
+			</p>
+			<?php if ( $teacher_home['attention'] ) : ?>
+				<ul>
+					<?php foreach ( $teacher_home['attention'] as $teacher_item ) : ?>
+						<li><a href="<?php echo esc_url( add_query_arg( 'hub_class', $teacher_item['id'], TeacherWorkspace::url( 'work' ) ) ); ?>"><?php echo esc_html( $teacher_item['name'] ); ?></a>: <?php echo esc_html( $teacher_item['text'] ); ?></li>
+					<?php endforeach; ?>
+				</ul>
+			<?php else : ?>
+				<p><?php esc_html_e( 'All caught up. Nothing is overdue.', 'ohmylms' ); ?></p>
+			<?php endif; ?>
+		</section>
+	<?php endif; ?>
 	<?php ohmylms_get_template( 'student-hub/teacher-create.php' ); ?>
 	<?php ohmylms_get_template( 'student-hub/teacher-school.php' ); ?>
 	<div class="oml-hub-commerce-grid">
@@ -58,6 +88,22 @@ $teacher_titles  = array(
 			<section class="oml-hub-card oml-hub-settings-card oml-hub-class-panel">
 				<h2><?php echo esc_html( $teacher_row['name'] ); ?></h2>
 				<p><?php echo esc_html( $teacher_row['subject'] ); ?></p>
+				<?php if ( $teacher_home && isset( $teacher_home['rows'][ (int) $teacher_row['id'] ] ) ) : ?>
+					<?php $teacher_figures = $teacher_home['rows'][ (int) $teacher_row['id'] ]; ?>
+					<p>
+						<?php
+						echo esc_html(
+							sprintf(
+								/* translators: 1: students, 2: active assignments, 3: overdue. */
+								__( '%1$d students · %2$d assignments · %3$d overdue', 'ohmylms' ),
+								$teacher_figures['students'],
+								$teacher_figures['assignments'],
+								$teacher_figures['overdue']
+							)
+						);
+						?>
+					</p>
+				<?php endif; ?>
 				<a class="oml-hub-button" href="<?php echo esc_url( add_query_arg( 'hub_class', $teacher_row['id'], TeacherWorkspace::url( $section ) ) ); ?>"><?php esc_html_e( 'Open class', 'ohmylms' ); ?></a>
 			</section>
 		<?php endforeach; ?>

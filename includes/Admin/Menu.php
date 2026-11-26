@@ -15,11 +15,13 @@ class Menu {
 	 * @since 1.0.0
 	 */
 	public function __construct() {
+		add_action( 'admin_menu', array( AdminNavigation::class, 'redirect_teaching' ), 1 );
 		add_action( 'admin_menu', array( $this, 'init_menu' ) );
 		add_action( 'admin_menu', array( $this, 'menu_highlight' ) );
 		add_action( 'admin_menu', array( $this, 'map_legacy_submenu' ), 9999 );
 		add_action( 'admin_init', array( AdminNavigation::class, 'redirect_moved_tabs' ), 1 );
 		add_action( 'admin_head', array( AdminNavigation::class, 'hide_dashboard_entry' ), 9999 );
+		add_action( 'in_admin_header', array( AdminNavigation::class, 'render_post_type_tabs' ) );
 		add_action( 'wp_loaded', array( $this, 'save_settings' ) );
 		add_action( 'admin_footer', array( $this, 'open_link_with_new_page' ) );
 		add_action( 'admin_bar_menu', array( $this, 'lms_admin_menu_option' ), 100 );
@@ -192,6 +194,12 @@ class Menu {
 			case 'ohmylms-order':
 			case 'ohmylms-coupon':
 				$parent_file = 'ohmylms'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Highlights the OhMyLMS admin menu.
+				break;
+			case 'ohmylms-reference':
+			case 'ohmylms-download':
+				// Their lists are Teaching tabs; highlight Teaching.
+				$parent_file  = 'ohmylms'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Highlights the OhMyLMS admin menu.
+				$submenu_file = AdminNavigation::page_slug( 'content' ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Highlights Teaching.
 				break;
 		}
 	}

@@ -49,7 +49,7 @@ final class ProtectedDownloads {
 				),
 				'public'          => false,
 				'show_ui'         => true,
-				'show_in_menu'    => OHMYLMS_SLUG,
+				'show_in_menu'    => false, // A Teaching tab, see AdminNavigation::teaching_post_type_tabs().
 				'supports'        => array( 'title' ),
 				'capabilities'    => $capabilities,
 				'map_meta_cap'    => false,

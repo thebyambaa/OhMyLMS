@@ -9,6 +9,7 @@ use OhMyLMS\Family\Schema as FamilySchema;
 use OhMyLMS\Family\Service as Family;
 use OhMyLMS\Skills\FamilyComparison;
 use OhMyLMS\Student\FamilyActions;
+use OhMyLMS\Student\ParentHome;
 use OhMyLMS\Student\ParentWorkspace;
 
 defined( 'ABSPATH' ) || exit;
@@ -112,11 +113,57 @@ $family_selected = $family_child_id ? ParentWorkspace::child( $family_child_id, 
 			<p><?php esc_html_e( 'A school can link your account to your child, or you can add or invite a child below. If you received an invitation, open its link while signed in. Your account stays private until a link is approved.', 'ohmylms' ); ?></p>
 		</div>
 	<?php endif; ?>
+	<?php $family_summary = $family_children ? ParentHome::summary( array_slice( $family_children, 0, 20 ), time() ) : null; ?>
+	<?php if ( $family_summary ) : ?>
+		<section class="oml-hub-card oml-hub-settings-card oml-hub-parent-home" aria-labelledby="oml-parent-home-title">
+			<h2 id="oml-parent-home-title"><?php esc_html_e( 'This week', 'ohmylms' ); ?></h2>
+			<p>
+				<?php
+				echo esc_html(
+					sprintf(
+						/* translators: 1: overdue assignments, 2: assignments due in the next 7 days. */
+						__( '%1$d overdue and %2$d due in the next 7 days across your school-linked children.', 'ohmylms' ),
+						$family_summary['totals']['overdue'],
+						$family_summary['totals']['due_soon']
+					)
+				);
+				?>
+			</p>
+			<?php if ( $family_summary['attention'] ) : ?>
+				<ul>
+					<?php foreach ( $family_summary['attention'] as $family_item ) : ?>
+						<li><a href="<?php echo esc_url( ParentWorkspace::child_url( $family_item['child']['student_user_id'], $family_item['child']['school_id'] ) ); ?>"><?php echo esc_html( $family_item['child']['display_name'] ); ?></a>: <?php echo esc_html( $family_item['text'] ); ?></li>
+					<?php endforeach; ?>
+				</ul>
+			<?php else : ?>
+				<p><?php esc_html_e( 'All caught up. Nothing is overdue or due soon.', 'ohmylms' ); ?></p>
+			<?php endif; ?>
+		</section>
+	<?php endif; ?>
 	<?php if ( $family_children ) : ?>
 		<h2><?php esc_html_e( 'School-linked', 'ohmylms' ); ?></h2>
 		<ul class="oml-hub-commerce-list">
 			<?php foreach ( $family_children as $family_child ) : ?>
-				<li><div><strong><?php echo esc_html( $family_child['display_name'] ); ?></strong><p><?php echo esc_html( $family_child['school_name'] ); ?></p></div><a class="oml-hub-pill" href="<?php echo esc_url( ParentWorkspace::child_url( $family_child['student_user_id'], $family_child['school_id'] ) ); ?>"><?php esc_html_e( 'View', 'ohmylms' ); ?></a></li>
+				<?php $family_figures = $family_summary['rows'][ (int) $family_child['student_user_id'] . ':' . (int) $family_child['school_id'] ] ?? null; ?>
+				<li><div><strong><?php echo esc_html( $family_child['display_name'] ); ?></strong><p><?php echo esc_html( $family_child['school_name'] ); ?></p>
+				<?php if ( $family_figures ) : ?>
+					<p>
+						<?php
+						echo esc_html(
+							sprintf(
+								/* translators: 1: completed assignments, 2: assigned assignments, 3: overdue assignments. */
+								__( '%1$d of %2$d assignments done · %3$d overdue', 'ohmylms' ),
+								$family_figures['completed'],
+								$family_figures['assigned'],
+								$family_figures['overdue']
+							)
+						);
+						if ( $family_figures['next'] ) {
+							echo ' · ' . esc_html( sprintf( /* translators: 1: assignment title, 2: due date. */ __( 'Next: %1$s, due %2$s', 'ohmylms' ), $family_figures['next']['title'], wp_date( get_option( 'date_format' ), $family_figures['next']['due'] ) ) );
+						}
+						?>
+					</p>
+				<?php endif; ?></div><a class="oml-hub-pill" href="<?php echo esc_url( ParentWorkspace::child_url( $family_child['student_user_id'], $family_child['school_id'] ) ); ?>"><?php esc_html_e( 'View', 'ohmylms' ); ?></a></li>
 			<?php endforeach; ?>
 		</ul>
 		<?php if ( count( $family_children ) >= ParentWorkspace::LIMIT ) : ?>
@@ -157,7 +204,7 @@ $family_selected = $family_child_id ? ParentWorkspace::child( $family_child_id, 
 								ohmylms_get_template(
 									'student-hub/family-managed.php',
 									array(
-										'family_kid'     => $family_kid,
+										'family_kid' => $family_kid,
 									)
 								);
 								?>

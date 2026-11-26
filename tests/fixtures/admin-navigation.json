@@ -19,33 +19,7 @@
 					],
 					"serverSections": [],
 					"defaultSection": ""
-				}
-			]
-		},
-		{
-			"id": "gradebook",
-			"page": "ohmylms-gradebook",
-			"tabs": [
-				{
-					"id": "gradebook",
-					"capability": "ohmylms_view_gradebook",
-					"flag": "",
-					"sections": [
-						"",
-						"roster",
-						"student",
-						"mastery",
-						"rollup"
-					],
-					"serverSections": [],
-					"defaultSection": ""
-				}
-			]
-		},
-		{
-			"id": "bank",
-			"page": "ohmylms-bank",
-			"tabs": [
+				},
 				{
 					"id": "lessons",
 					"capability": "manage_options",
@@ -92,6 +66,50 @@
 					"serverSections": [
 						"import-review"
 					],
+					"defaultSection": ""
+				},
+				{
+					"id": "math-references",
+					"capability": "edit_pages",
+					"flag": "",
+					"sections": [
+						""
+					],
+					"serverSections": [
+						""
+					],
+					"defaultSection": ""
+				},
+				{
+					"id": "downloads",
+					"capability": "manage_options",
+					"flag": "",
+					"sections": [
+						""
+					],
+					"serverSections": [
+						""
+					],
+					"defaultSection": ""
+				}
+			]
+		},
+		{
+			"id": "gradebook",
+			"page": "ohmylms-gradebook",
+			"tabs": [
+				{
+					"id": "gradebook",
+					"capability": "ohmylms_view_gradebook",
+					"flag": "",
+					"sections": [
+						"",
+						"roster",
+						"student",
+						"mastery",
+						"rollup"
+					],
+					"serverSections": [],
 					"defaultSection": ""
 				}
 			]
@@ -507,52 +525,52 @@
 		{
 			"id": "quizzes",
 			"path": "/quizzes",
-			"group": "bank",
+			"group": "content",
 			"tab": "quizzes"
 		},
 		{
 			"id": "quizzes-editor",
 			"path": "/quizzes/:id",
-			"group": "bank",
+			"group": "content",
 			"tab": "quizzes"
 		},
 		{
 			"id": "quizzes-attempts",
 			"path": "/quizzes/:id/attempts",
-			"group": "bank",
+			"group": "content",
 			"tab": "quizzes",
 			"view": "attempts"
 		},
 		{
 			"id": "quiz-reports",
 			"path": "/reports/quizzes",
-			"group": "bank",
+			"group": "content",
 			"tab": "quizzes",
 			"section": "reports"
 		},
 		{
 			"id": "assignments",
 			"path": "/assignments",
-			"group": "bank",
+			"group": "content",
 			"tab": "assignments"
 		},
 		{
 			"id": "assignments-editor",
 			"path": "/assignments/:id",
-			"group": "bank",
+			"group": "content",
 			"tab": "assignments"
 		},
 		{
 			"id": "assignments-submissions",
 			"path": "/assignments/:id/submissions",
-			"group": "bank",
+			"group": "content",
 			"tab": "assignments",
 			"view": "submissions"
 		},
 		{
 			"id": "assignments-grading",
 			"path": "/assignments/:id/submissions/:submissionId",
-			"group": "bank",
+			"group": "content",
 			"tab": "assignments",
 			"view": "submissions"
 		},
@@ -593,20 +611,20 @@
 		{
 			"id": "exams",
 			"path": "/exams",
-			"group": "bank",
+			"group": "content",
 			"tab": "exams"
 		},
 		{
 			"id": "exams-import-review",
 			"path": "/exams/imports/:jobId",
-			"group": "bank",
+			"group": "content",
 			"tab": "exams",
 			"view": "import"
 		},
 		{
 			"id": "exams-editor",
 			"path": "/exams/:id",
-			"group": "bank",
+			"group": "content",
 			"tab": "exams"
 		},
 		{
@@ -619,25 +637,25 @@
 		{
 			"id": "lessons",
 			"path": "/content-hub/lessons",
-			"group": "bank",
+			"group": "content",
 			"tab": "lessons"
 		},
 		{
 			"id": "lesson-editor",
 			"path": "/content-hub/lessons/:id",
-			"group": "bank",
+			"group": "content",
 			"tab": "lessons"
 		},
 		{
 			"id": "questions",
 			"path": "/content-hub/question-bank",
-			"group": "bank",
+			"group": "content",
 			"tab": "question-bank"
 		},
 		{
 			"id": "questions-editor",
 			"path": "/content-hub/question-bank/:id",
-			"group": "bank",
+			"group": "content",
 			"tab": "question-bank"
 		},
 		{
@@ -932,63 +950,63 @@
 		],
 		[
 			"/quizzes?action=new",
-			"page=ohmylms-bank&tab=quizzes&action=new"
+			"page=ohmylms-content&tab=quizzes&action=new"
 		],
 		[
 			"/quizzes/5",
-			"page=ohmylms-bank&tab=quizzes&id=5"
+			"page=ohmylms-content&tab=quizzes&id=5"
 		],
 		[
 			"/quizzes/5/attempts",
-			"page=ohmylms-bank&tab=quizzes&id=5&view=attempts"
+			"page=ohmylms-content&tab=quizzes&id=5&view=attempts"
 		],
 		[
 			"/reports/quizzes?search=unit%201&page=3",
-			"page=ohmylms-bank&tab=quizzes&section=reports&search=unit%201&paged=3"
+			"page=ohmylms-content&tab=quizzes&section=reports&search=unit%201&paged=3"
 		],
 		[
 			"/assignments",
-			"page=ohmylms-bank&tab=assignments"
+			"page=ohmylms-content&tab=assignments"
 		],
 		[
 			"/assignments/7",
-			"page=ohmylms-bank&tab=assignments&id=7"
+			"page=ohmylms-content&tab=assignments&id=7"
 		],
 		[
 			"/assignments/7/submissions?student=3",
-			"page=ohmylms-bank&tab=assignments&id=7&view=submissions&student=3"
+			"page=ohmylms-content&tab=assignments&id=7&view=submissions&student=3"
 		],
 		[
 			"/assignments/7/submissions/9",
-			"page=ohmylms-bank&tab=assignments&id=7&view=submissions&submissionId=9"
+			"page=ohmylms-content&tab=assignments&id=7&view=submissions&submissionId=9"
 		],
 		[
 			"/exams?action=import",
-			"page=ohmylms-bank&tab=exams&action=import"
+			"page=ohmylms-content&tab=exams&action=import"
 		],
 		[
 			"/exams/4",
-			"page=ohmylms-bank&tab=exams&id=4"
+			"page=ohmylms-content&tab=exams&id=4"
 		],
 		[
 			"/exams/imports/8",
-			"page=ohmylms-bank&tab=exams&view=import&jobId=8"
+			"page=ohmylms-content&tab=exams&view=import&jobId=8"
 		],
 		[
 			"/content-hub/lessons",
-			"page=ohmylms-bank&tab=lessons"
+			"page=ohmylms-content&tab=lessons"
 		],
 		[
 			"/content-hub/lessons/3",
-			"page=ohmylms-bank&tab=lessons&id=3"
+			"page=ohmylms-content&tab=lessons&id=3"
 		],
 		[
 			"/content-hub/question-bank?action=new",
-			"page=ohmylms-bank&tab=question-bank&action=new"
+			"page=ohmylms-content&tab=question-bank&action=new"
 		],
 		[
 			"/content-hub/question-bank/new?type=numerical",
-			"page=ohmylms-bank&tab=question-bank&id=new&type=numerical"
+			"page=ohmylms-content&tab=question-bank&id=new&type=numerical"
 		],
 		[
 			"/orders",

@@ -169,7 +169,7 @@ try {
 		$actual = null === $pairs ? null : AdminNavigation::format_query( $pairs );
 		ok( $actual === $case[1], sprintf( 'address(%s) is %s, got %s', $case[0], var_export( $case[1], true ), var_export( $actual, true ) ) );
 	}
-	ok( array( 'ohmylms', 'ohmylms-content', 'ohmylms-gradebook', 'ohmylms-bank', 'ohmylms-curriculum', 'ohmylms-accounts', 'ohmylms-commerce', 'ohmylms-engagement', 'ohmylms-addons', 'ohmylms-settings' ) === array_column( AdminNavigation::groups(), 'page' ), 'ten pages, in menu order' );
+	ok( array( 'ohmylms', 'ohmylms-content', 'ohmylms-gradebook', 'ohmylms-curriculum', 'ohmylms-accounts', 'ohmylms-commerce', 'ohmylms-engagement', 'ohmylms-addons', 'ohmylms-settings' ) === array_column( AdminNavigation::groups(), 'page' ), 'nine pages, in table order' );
 	foreach ( AdminNavigation::routes() as $entry ) {
 		$sample = preg_replace( '#/:[A-Za-z]+\?$#', '', $entry['path'] );
 		$sample = preg_replace( '/:[A-Za-z]+/', '7', $sample );
@@ -297,7 +297,7 @@ try {
 	ok( call_private( \OhMyLMS\XApi\AdminPage::class, 'url', array( 'saved' ) ) === add_query_arg( 'xapi_notice', 'saved', address_url( 'page=ohmylms-addons&tab=integrations&configure=xapi' ) ), 'xAPI redirect opens the popup on Add-ons' );
 	ok( \OhMyLMS\Student\Hub::admin_home_url() === address_url( 'page=ohmylms-accounts&tab=schools' ), 'Student Home admin address opens Account Hub' );
 	ok( \OhMyLMS\Assessment\SkillAssessmentPage::url() === address_url( 'page=ohmylms-curriculum&tab=tools&section=assessments' ), 'skill assessments are a Curriculum tool' );
-	ok( \OhMyLMS\QuestionBank\ImportPage::url() === address_url( 'page=ohmylms-bank&tab=question-bank&section=import-review' ), 'question import review is a Question bank section' );
+	ok( \OhMyLMS\QuestionBank\ImportPage::url() === address_url( 'page=ohmylms-content&tab=question-bank&section=import-review' ), 'question import review is a Question bank section' );
 	add_filter(
 		'ohmylms_extension_admin_page_group',
 		static function ( $group, $id ) {
@@ -339,15 +339,15 @@ try {
 		'ohmylms/go-dashboard'      => array( OHMYLMS_SLUG, '/dashboard', 'page=ohmylms' ),
 		'ohmylms/go-content-hub'    => array( 'ohmylms-content', '/content-hub', 'page=ohmylms-content&tab=courses&section=overview' ),
 		'ohmylms/go-courses'        => array( 'ohmylms-content', '/courses', 'page=ohmylms-content&tab=courses' ),
-		'ohmylms/go-exams'          => array( 'ohmylms-bank', '/exams', 'page=ohmylms-bank&tab=exams' ),
-		'ohmylms/go-question-bank'  => array( 'ohmylms-bank', '/content-hub/question-bank', 'page=ohmylms-bank&tab=question-bank' ),
-		'ohmylms/go-assignments'    => array( 'ohmylms-bank', '/assignments', 'page=ohmylms-bank&tab=assignments' ),
+		'ohmylms/go-exams'          => array( 'ohmylms-content', '/exams', 'page=ohmylms-content&tab=exams' ),
+		'ohmylms/go-question-bank'  => array( 'ohmylms-content', '/content-hub/question-bank', 'page=ohmylms-content&tab=question-bank' ),
+		'ohmylms/go-assignments'    => array( 'ohmylms-content', '/assignments', 'page=ohmylms-content&tab=assignments' ),
 		'ohmylms/go-account-hub'    => array( 'ohmylms-accounts', '/account-hub', 'page=ohmylms-accounts&tab=schools' ),
 		'ohmylms/go-memberships'    => array( 'ohmylms-commerce', '/memberships', 'page=ohmylms-commerce&tab=memberships' ),
 		'ohmylms/go-settings-pay'   => array( 'ohmylms-commerce', '/payments?tab=payment-gateways', 'page=ohmylms-commerce&tab=payments&section=payment-gateways' ),
 		'ohmylms/go-settings-email' => array( 'ohmylms-settings', '/emails', 'page=ohmylms-settings&tab=emails' ),
-		'ohmylms/new-question'      => array( 'ohmylms-bank', '/content-hub/question-bank?action=new', 'page=ohmylms-bank&tab=question-bank&action=new' ),
-		'ohmylms/new-exam'          => array( 'ohmylms-bank', '/exams?action=new', 'page=ohmylms-bank&tab=exams&action=new' ),
+		'ohmylms/new-question'      => array( 'ohmylms-content', '/content-hub/question-bank?action=new', 'page=ohmylms-content&tab=question-bank&action=new' ),
+		'ohmylms/new-exam'          => array( 'ohmylms-content', '/exams?action=new', 'page=ohmylms-content&tab=exams&action=new' ),
 		'addon/orders'              => array( 'ohmylms-commerce', '/orders', 'page=ohmylms-commerce&tab=orders' ),
 	);
 	foreach ( $expect as $name => $target ) {
@@ -388,19 +388,18 @@ try {
 	ok(
 		array(
 			array( 'Dashboard', OHMYLMS_SLUG ),
-			array( 'Courses', 'ohmylms-content' ),
+			array( 'Teaching', 'ohmylms-content' ),
 			array( 'Gradebook', 'ohmylms-gradebook' ),
-			array( 'Lessons & Quizzes', 'ohmylms-bank' ),
 			array( 'Curriculum', 'ohmylms-curriculum' ),
 			array( 'People', 'ohmylms-accounts' ),
-			array( 'Commerce', 'ohmylms-commerce' ),
 			array( 'Engagement', 'ohmylms-engagement' ),
+			array( 'Commerce', 'ohmylms-commerce' ),
 			array( 'Add-ons', 'ohmylms-addons' ),
 			array( 'Settings', 'ohmylms-settings' ),
 		) === $entries,
-		'menu: exactly the ten pages, Dashboard first: ' . wp_json_encode( $entries )
+		'menu: exactly the nine pages, Dashboard first: ' . wp_json_encode( $entries )
 	);
-	foreach ( array( 'toplevel_page_ohmylms', 'ohmylms_page_ohmylms-content', 'ohmylms_page_ohmylms-gradebook', 'ohmylms_page_ohmylms-bank', 'ohmylms_page_ohmylms-curriculum', 'ohmylms_page_ohmylms-accounts', 'ohmylms_page_ohmylms-commerce', 'ohmylms_page_ohmylms-engagement', 'ohmylms_page_ohmylms-settings' ) as $hook ) {
+	foreach ( array( 'toplevel_page_ohmylms', 'ohmylms_page_ohmylms-content', 'ohmylms_page_ohmylms-gradebook', 'ohmylms_page_ohmylms-curriculum', 'ohmylms_page_ohmylms-accounts', 'ohmylms_page_ohmylms-commerce', 'ohmylms_page_ohmylms-engagement', 'ohmylms_page_ohmylms-settings' ) as $hook ) {
 		ok( isset( $GLOBALS['_registered_pages'][ $hook ] ) && false !== has_action( $hook, array( AdminNavigation::class, 'render' ) ), 'menu: ' . $hook . ' renders the page' );
 		ok( AdminNavigation::is_screen( $hook ) && AppPage::is_app_screen( $hook ), 'menu: ' . $hook . ' is an app screen' );
 	}
@@ -608,11 +607,11 @@ try {
 			'id'   => '12',
 		)
 	);
-	ok( false !== strpos( $content_html, '<h1 class="wp-heading-inline">Courses</h1>' ) && false !== strpos( $content_html, '<hr class="wp-header-end">' ), 'page: heading' );
+	ok( false !== strpos( $content_html, '<h1 class="wp-heading-inline">Teaching</h1>' ) && false !== strpos( $content_html, '<hr class="wp-header-end">' ), 'page: heading' );
 	ok( false !== strpos( $content_html, 'class="nav-tab-wrapper wp-clearfix" id="' . AdminNavigation::TABS_ID . '"' ), 'page: tab row' );
-	ok( 2 === preg_match_all( '/class="nav-tab(?: nav-tab-active)?"/', $content_html ), 'page: Courses has two tabs' );
-	ok( false !== strpos( $content_html, 'href="' . esc_url( address_url( 'page=ohmylms-content&tab=courses' ) ) . '" class="nav-tab nav-tab-active" aria-current="page">All courses</a>' ), 'page: All courses is the active tab by default' );
-	ok( false !== strpos( $content_html, 'href="' . esc_url( address_url( 'page=ohmylms-content&tab=courses&section=overview' ) ) . '" class="nav-tab">Overview</a>' ), 'page: Overview keeps its existing URL' );
+	ok( 8 === preg_match_all( '/class="nav-tab(?: nav-tab-active)?"/', $content_html ), 'page: Teaching has one link per tab, Bank tabs and post type tabs included' );
+	ok( false !== strpos( $content_html, 'href="' . esc_url( address_url( 'page=ohmylms-content&tab=courses' ) ) . '" class="nav-tab nav-tab-active" aria-current="page">Courses</a>' ), 'page: Courses is the active tab' );
+	ok( false !== strpos( $content_html, 'href="' . esc_url( address_url( 'page=ohmylms-content&tab=courses&section=overview' ) ) . '" data-section="overview"' ), 'page: Overview is a section link with its existing URL' );
 	ok( false === strpos( $content_html, '<a data-tab="gradebook" href="' ), 'page: Gradebook has moved out of Courses' );
 	$gradebook_html = render_page( array( 'page' => 'ohmylms-gradebook' ) );
 	ok( false !== strpos( $gradebook_html, '<h1 class="wp-heading-inline">Gradebook</h1>' ), 'gradebook page: heading' );
@@ -628,16 +627,16 @@ try {
 	ok( array_replace( $old_gradebook, array( 'page' => 'ohmylms-gradebook' ) ) === AdminNavigation::moved_query( $old_gradebook ), 'gradebook bookmark: redirect keeps view and filters' );
 	$bank_html = render_page(
 		array(
-			'page' => 'ohmylms-bank',
+			'page' => 'ohmylms-content',
 			'tab'  => 'lessons',
 		)
 	);
-	ok( false !== strpos( $bank_html, '<h1 class="wp-heading-inline">Lessons &amp; Quizzes</h1>' ), 'bank page: heading' );
-	ok( 5 === preg_match_all( '/class="nav-tab(?: nav-tab-active)?"/', $bank_html ), 'bank page: one link per Content Bank tab' );
-	ok( false !== strpos( $bank_html, 'href="' . esc_url( address_url( 'page=ohmylms-bank&tab=lessons' ) ) . '" class="nav-tab nav-tab-active" aria-current="page">Lessons</a>' ), 'bank page: the current tab is a real, marked link' );
-	ok( false !== strpos( $bank_html, 'id="' . AdminNavigation::MOUNT_ID . '" class="ohmylms-app" data-page="ohmylms-bank" data-tab="lessons" data-section=""' ), 'bank page: the mount point carries the place' );
+	ok( false !== strpos( $bank_html, '<h1 class="wp-heading-inline">Teaching</h1>' ), 'bank page: heading' );
+	ok( 8 === preg_match_all( '/class="nav-tab(?: nav-tab-active)?"/', $bank_html ), 'bank page: the same tab row as every Teaching tab' );
+	ok( false !== strpos( $bank_html, 'href="' . esc_url( address_url( 'page=ohmylms-content&tab=lessons' ) ) . '" class="nav-tab nav-tab-active" aria-current="page">Lessons</a>' ), 'bank page: the current tab is a real, marked link' );
+	ok( false !== strpos( $bank_html, 'id="' . AdminNavigation::MOUNT_ID . '" class="ohmylms-app" data-page="ohmylms-content" data-tab="lessons" data-section=""' ), 'bank page: the mount point carries the place' );
 	ok( 1 === preg_match( '#</h1>\s*<span id="' . AdminNavigation::TITLE_ACTIONS_ID . '" class="ohmylms-title-actions"></span>\s*<hr class="wp-header-end">#', $content_html ), 'page: the screen actions slot follows the heading' );
-	ok( false === strpos( $content_html, 'id="' . AdminNavigation::SECTIONS_ID . '"' ), 'page: the tabs replace the section links' );
+	ok( false !== strpos( $content_html, 'id="' . AdminNavigation::SECTIONS_ID . '"' ), 'page: Courses sections are a section row like every other tab' );
 	ok( false !== strpos( $content_html, 'id="' . AdminNavigation::MOUNT_ID . '" class="ohmylms-app" data-page="ohmylms-content" data-tab="courses" data-section=""' ), 'page: the mount point carries the place' );
 	ok( false === strpos( $content_html, LegacyRoutes::NOTICE_ID ), 'page: only the Dashboard has the legacy notice' );
 	$fallback_html = render_page(
@@ -810,8 +809,8 @@ try {
 	$attempts[] = $submission;
 	ok( $submission > 0, 'submission created' );
 	$grading = LegacyRoutes::assignment_grading_url( $assignment, $student );
-	ok( address_url( 'page=ohmylms-bank&tab=assignments&id=' . $assignment . '&view=submissions&submissionId=' . $submission ) === $grading, 'grading url names the submission, got ' . $grading );
-	ok( LegacyRoutes::assignment_grading_url( $assignment, $student + 100000 ) === address_url( 'page=ohmylms-bank&tab=assignments&id=' . $assignment . '&view=submissions&student=' . ( $student + 100000 ) ), 'grading url without a submission opens the list' );
+	ok( address_url( 'page=ohmylms-content&tab=assignments&id=' . $assignment . '&view=submissions&submissionId=' . $submission ) === $grading, 'grading url names the submission, got ' . $grading );
+	ok( LegacyRoutes::assignment_grading_url( $assignment, $student + 100000 ) === address_url( 'page=ohmylms-content&tab=assignments&id=' . $assignment . '&view=submissions&student=' . ( $student + 100000 ) ), 'grading url without a submission opens the list' );
 
 	$mails   = array();
 	$capture = static function ( $short_circuit, $atts ) use ( &$mails ) {
@@ -842,7 +841,7 @@ try {
 	ok( 2 === count( $mails ), 'single and digest emails rendered' );
 	ok( false !== strpos( $mails[0]['message'], 'href="' . esc_url( $grading ) . '"' ), 'single email button opens the grading screen' );
 	ok( false === strpos( $mails[0]['message'], 'page=' . OHMYLMS_SLUG . '#' ) && false === strpos( $mails[0]['message'], AppPage::SLUG ), 'single email has no hash link' );
-	ok( false !== strpos( $mails[1]['message'], 'href="' . esc_url( address_url( 'page=ohmylms-bank&tab=assignments' ) ) . '"' ), 'digest email button opens the assignments list' );
+	ok( false !== strpos( $mails[1]['message'], 'href="' . esc_url( address_url( 'page=ohmylms-content&tab=assignments' ) ) . '"' ), 'digest email button opens the assignments list' );
 
 	// The Skills and Curriculum tabs left the Content Hub: their old addresses are sent to Curriculum, with every other parameter.
 	$moved_skills = AdminNavigation::moved_query(

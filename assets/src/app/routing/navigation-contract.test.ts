@@ -86,6 +86,15 @@ describe( 'admin navigation contract', () => {
 	it( 'every PHP tab is a screen of the app, with the capability of that screen', () => {
 		for ( const group of groups ) {
 			for ( const tab of group.tabs ) {
+				// Tabs the server prints itself (WordPress post type lists) are not screens of the app.
+				if (
+					tab.sections.length &&
+					tab.sections.every( ( section ) =>
+						tab.serverSections?.includes( section )
+					)
+				) {
+					continue;
+				}
 				const own = features.find(
 					( feature ) =>
 						feature.group === group.id &&

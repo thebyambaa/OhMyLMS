@@ -1,14 +1,13 @@
 import type { ComponentType, Element } from '@wordpress/element';
 
 /**
- * The eight WordPress admin pages of OhMyLMS (includes/Admin/AdminNavigation.php): Dashboard, Content Hub, Content Bank,
- * Curriculum, Account Hub, Commerce, Engagement and Settings.
+ * The nine WordPress admin pages of OhMyLMS (includes/Admin/AdminNavigation.php): Dashboard, Teaching, Gradebook,
+ * Curriculum, People, Commerce, Engagement, Add-ons and Settings.
  */
 export type AdminGroup =
 	| 'dashboard'
 	| 'content'
 	| 'gradebook'
-	| 'bank'
 	| 'curriculum'
 	| 'accounts'
 	| 'commerce'

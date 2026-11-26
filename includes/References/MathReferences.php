@@ -40,7 +40,7 @@ final class MathReferences {
 				),
 				'public'          => true,
 				'show_in_rest'    => true,
-				'show_in_menu'    => OHMYLMS_SLUG,
+				'show_in_menu'    => false, // A Teaching tab, see AdminNavigation::teaching_post_type_tabs().
 				'capability_type' => 'page',
 				'map_meta_cap'    => true,
 				'rewrite'         => false,
@@ -189,8 +189,8 @@ final class MathReferences {
 				$group = wp_unique_id( 'ohmylms-reference-' );
 			}
 
-			$key   = $group . '-' . $id;
-			$url   = get_permalink( $post );
+			$key = $group . '-' . $id;
+			$url = get_permalink( $post );
 			$links->set_attribute( 'href', esc_url_raw( $url ) );
 			$links->set_attribute( 'data-ohmylms-preview', $key );
 			if ( ! isset( $cards[ $id ] ) ) {

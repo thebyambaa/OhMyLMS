@@ -588,7 +588,6 @@ body.oml-dashboard-page {
 }
 
 @media (max-width: 760px) {
-
 	.oml-builder-grid {
 		grid-template-columns: minmax(0, 1fr);
 	}
@@ -624,7 +623,6 @@ body.oml-dashboard-page {
 }
 
 @media (max-width: 1100px) {
-
 	.oml-dash-kpis {
 		grid-template-columns: repeat(3, minmax(0, 1fr));
 	}
@@ -635,7 +633,6 @@ body.oml-dashboard-page {
 }
 
 @media (max-width: 760px) {
-
 	.oml-dash-layout {
 		grid-template-columns: minmax(0, 1fr);
 	}
@@ -677,7 +674,10 @@ body.oml-dashboard-page {
 
 .oml-qe {
 	display: grid;
-	grid-template-columns: minmax(12rem, 16rem) minmax(0, 1fr) minmax(12rem, 18rem);
+	grid-template-columns: minmax(12rem, 16rem) minmax(0, 1fr) minmax(
+			12rem,
+			18rem
+		);
 	gap: var(--oml-space-4);
 	align-items: start;
 }
@@ -864,7 +864,6 @@ body.oml-dashboard-page {
 }
 
 @container oml-qe-wrap (max-width: 62rem) {
-
 	.oml-qe {
 		grid-template-columns: minmax(0, 1fr);
 	}
@@ -875,7 +874,6 @@ body.oml-dashboard-page {
 }
 
 @container oml-qe-canvas (max-width: 34rem) {
-
 	.oml-qe-tiles {
 		grid-template-columns: minmax(0, 1fr);
 	}
