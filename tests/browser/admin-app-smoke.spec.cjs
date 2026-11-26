@@ -90,6 +90,15 @@ const SCREENS = [
 	};
 } );
 
+/**
+ * Routes the server sends elsewhere: the Dashboard page opens Teaching (Courses is the landing page, see
+ * AdminNavigation::moved_query()), and the first request has no section, so the mount's data-section stays empty.
+ */
+const LANDINGS = {
+	'/dashboard': { page: 'ohmylms-content', tab: 'courses' },
+	'/content-hub': { page: 'ohmylms-content', tab: 'courses' },
+};
+
 const PLUGIN_REQUEST =
 	/\/plugins\/ohmylms\/|\/wp-json\/ohmylms|[?&]rest_route=(?:\/|%2F)ohmylms/i;
 
@@ -225,11 +234,14 @@ test.describe( 'admin app screens', () => {
 				);
 			}
 
-			await expectPlace( page, {
-				page: screen.params.page,
-				tab: screen.params.tab || '',
-				section: screen.params.section || '',
-			} );
+			await expectPlace(
+				page,
+				LANDINGS[ screen.route ] || {
+					page: screen.params.page,
+					tab: screen.params.tab || '',
+					section: screen.params.section || '',
+				}
+			);
 
 			await expect(
 				main.getByRole( 'heading', { name: 'Page not found' } )
