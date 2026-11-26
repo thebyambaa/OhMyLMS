@@ -204,10 +204,7 @@ export function PublicationPanel( {
 												'Add lessons or quizzes',
 												'ohmylms'
 											)
-										: __(
-												'Edit outline',
-												'ohmylms'
-											) }
+										: __( 'Edit outline', 'ohmylms' ) }
 								</Button>
 							) }
 						</Notice>

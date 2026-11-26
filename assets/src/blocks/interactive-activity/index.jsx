@@ -235,7 +235,8 @@ export function InteractiveActivityEdit( { attributes, setAttributes } ) {
 			],
 		} );
 	};
-	const usedNames = config.params.map( ( param ) => param.name );
+	// Only the function graph has parameters; other activities have no `params`.
+	const usedNames = ( config.params || [] ).map( ( param ) => param.name );
 	const freeName = 'abcdfghijklmnopqrstuvwyz'
 		.split( '' )
 		.find( ( name ) => ! usedNames.includes( name ) );

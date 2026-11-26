@@ -138,17 +138,17 @@ final class LearnerCatalog {
 	 * @return array<int,array{id:int,title:string,url:string}>
 	 */
 	public static function unplaced_courses( array $shown, $search = '' ) {
-		$ids = get_posts(
+		$ids     = get_posts(
 			array(
-				'post_type'      => OHMYLMS_COURSE_CPT,
-				'post_status'    => 'publish',
-				'fields'         => 'ids',
-				'nopaging'       => true,
-				'orderby'        => 'title',
-				'order'          => 'ASC',
-				'no_found_rows'  => true,
-				'post__not_in'   => array_map( 'intval', $shown ),
-				'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Skips exam wrapper courses.
+				'post_type'     => OHMYLMS_COURSE_CPT,
+				'post_status'   => 'publish',
+				'fields'        => 'ids',
+				'nopaging'      => true,
+				'orderby'       => 'title',
+				'order'         => 'ASC',
+				'no_found_rows' => true,
+				'post__not_in'  => array_map( 'intval', $shown ),
+				'meta_query'    => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Skips exam wrapper courses.
 					array(
 						'key'     => '_ohmylms_exam_wrapper',
 						'compare' => 'NOT EXISTS',

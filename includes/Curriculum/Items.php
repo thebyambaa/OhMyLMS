@@ -542,8 +542,8 @@ final class Items {
 	 */
 	private static function delete_rows( array $ids ) {
 		global $wpdb;
-		$links   = $wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE item_id IN (' . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')', array_merge( array( Schema::table( 'curriculum_links' ) ), $ids ) ) );
-		$groups  = Syllabus::delete_for_items( $ids );
+		$links  = $wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE item_id IN (' . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')', array_merge( array( Schema::table( 'curriculum_links' ) ), $ids ) ) );
+		$groups = Syllabus::delete_for_items( $ids );
 		if ( false === $links || false === $groups || $wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE id IN (' . implode( ',', array_fill( 0, count( $ids ), '%d' ) ) . ')', array_merge( array( self::table() ), $ids ) ) ) === false ) {
 			throw new \RuntimeException( 'Delete failed' ); }
 		do_action( 'ohmylms_curriculum_items_deleted', $ids );

@@ -439,9 +439,9 @@ if ( $attempt_context ) {
 
 								<?php
 								// A body identical to the title above it would print the question twice.
-								$body_text      = trim( preg_replace( '/\s+/u', ' ', wp_strip_all_tags( (string) ( $question['description'] ?? '' ) ) ) );
-								$title_text     = trim( preg_replace( '/\s+/u', ' ', wp_strip_all_tags( (string) ( $question['name'] ?? '' ) ) ) );
-								$repeats_title  = '' !== $body_text && 0 === strcasecmp( $body_text, $title_text );
+								$body_text     = trim( preg_replace( '/\s+/u', ' ', wp_strip_all_tags( (string) ( $question['description'] ?? '' ) ) ) );
+								$title_text    = trim( preg_replace( '/\s+/u', ' ', wp_strip_all_tags( (string) ( $question['name'] ?? '' ) ) ) );
+								$repeats_title = '' !== $body_text && 0 === strcasecmp( $body_text, $title_text );
 								?>
 								<?php if ( ! empty( $question['description'] ) && ! $repeats_title && ( $question['settings']['type'] ?? '' ) !== 'structured' ) { ?>
 									<div class="ohmylms-question-block-content"><?php echo apply_filters( 'the_content', $question['description'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Filtered post content (the_content). ?></div>

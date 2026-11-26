@@ -187,7 +187,7 @@ final class Engine {
 		$rows       = self::rows( $student_id, $term_id );
 		$state      = self::evaluate( $rows, $now );
 		$table      = Schema::table( 'student_skill_state' );
-		$stored     = $wpdb->get_row( $wpdb->prepare( "SELECT id, milestones FROM $table WHERE student_id=%d AND term_id=%d", $student_id, $term_id ), ARRAY_A );
+		$stored     = $wpdb->get_row( $wpdb->prepare( 'SELECT id, milestones FROM %i WHERE student_id=%d AND term_id=%d', $table, $student_id, $term_id ), ARRAY_A );
 		$reached    = array_keys(
 			array_filter(
 				ScoreModel::MEDALS,
@@ -261,8 +261,9 @@ final class Engine {
 		foreach ( $transitions as $change ) {
 			$wpdb->query(
 				$wpdb->prepare(
-					"INSERT INTO $table (student_id, term_id, source_type, source_id, level_before, level_after, detail, created_at) VALUES (%d, %d, %s, %d, %s, %s, %s, %s)
-					ON DUPLICATE KEY UPDATE level_before=VALUES(level_before), level_after=VALUES(level_after), detail=VALUES(detail)",
+					'INSERT INTO %i (student_id, term_id, source_type, source_id, level_before, level_after, detail, created_at) VALUES (%d, %d, %s, %d, %s, %s, %s, %s)
+					ON DUPLICATE KEY UPDATE level_before=VALUES(level_before), level_after=VALUES(level_after), detail=VALUES(detail)',
+					$table,
 					$student_id,
 					$term_id,
 					$change['source_type'],
@@ -286,7 +287,7 @@ final class Engine {
 	 */
 	public static function changes( $student_id, $source_type, $source_id ) {
 		global $wpdb;
-		$rows   = $wpdb->get_results( $wpdb->prepare( 'SELECT term_id, level_before, level_after FROM ' . Schema::table( 'skill_level_events' ) . ' WHERE student_id=%d AND source_type=%s AND source_id=%d ORDER BY id', (int) $student_id, (string) $source_type, (int) $source_id ), ARRAY_A );
+		$rows   = $wpdb->get_results( $wpdb->prepare( 'SELECT term_id, level_before, level_after FROM %i WHERE student_id=%d AND source_type=%s AND source_id=%d ORDER BY id', Schema::table( 'skill_level_events' ), (int) $student_id, (string) $source_type, (int) $source_id ), ARRAY_A );
 		$result = array();
 		foreach ( $rows as $row ) {
 			$term     = get_term( (int) $row['term_id'] );
@@ -310,7 +311,7 @@ final class Engine {
 	 */
 	public static function rebuild_states( $after = 0, $limit = 100 ) {
 		global $wpdb;
-		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT id, student_id, term_id FROM ' . Schema::table( 'student_skill_state' ) . ' WHERE id>%d ORDER BY id LIMIT %d', (int) $after, max( 1, (int) $limit ) ), ARRAY_A );
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT id, student_id, term_id FROM %i WHERE id>%d ORDER BY id LIMIT %d', Schema::table( 'student_skill_state' ), (int) $after, max( 1, (int) $limit ) ), ARRAY_A );
 		foreach ( $rows as $row ) {
 			self::recompute( (int) $row['student_id'], (int) $row['term_id'] );
 		}
@@ -327,7 +328,7 @@ final class Engine {
 	 */
 	public static function rebuild_evidence( $after = 0, $limit = 20 ) {
 		global $wpdb;
-		$ids = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT student_id FROM ' . Schema::table( 'grade_events' ) . ' WHERE student_id>%d ORDER BY student_id LIMIT %d', (int) $after, max( 1, (int) $limit ) ) ) );
+		$ids = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT student_id FROM %i WHERE student_id>%d ORDER BY student_id LIMIT %d', Schema::table( 'grade_events' ), (int) $after, max( 1, (int) $limit ) ) ) );
 		foreach ( $ids as $id ) {
 			\OhMyLMS\Skills\Evidence::rebuild( $id );
 		}

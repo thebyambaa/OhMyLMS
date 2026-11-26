@@ -170,7 +170,7 @@ class FrontDashboardController extends RestController {
 		if ( ! Front::allows( $scope, 'home' ) ) {
 			return $this->forbidden();
 		}
-		$data = FrontSummary::get( $scope, (int) $request->get_param( 'school' ), (string) $request->get_param( 'range' ), (string) $request->get_param( 'level' ), (int) $request->get_param( 'class' ) );
+		$data  = FrontSummary::get( $scope, (int) $request->get_param( 'school' ), (string) $request->get_param( 'range' ), (string) $request->get_param( 'level' ), (int) $request->get_param( 'class' ) );
 		$lines = array( $this->csv_row( array_merge( array( __( 'Name', 'ohmylms' ) ), $data['drill']['columns'] ?? array() ) ) );
 		foreach ( $data['drill']['rows'] as $row ) {
 			$lines[] = $this->csv_row( array_merge( array( $row['name'] ), $row['cells'] ) );
@@ -236,8 +236,8 @@ class FrontDashboardController extends RestController {
 			return $this->forbidden();
 		}
 		try {
-			$year = Service::ensure_default_year( $school );
-			$made = Service::create_class(
+			$year  = Service::ensure_default_year( $school );
+			$made  = Service::create_class(
 				$school,
 				array(
 					'academic_year_id' => $year,
@@ -246,7 +246,7 @@ class FrontDashboardController extends RestController {
 					'subject'          => $request->get_param( 'subject' ),
 				)
 			);
-			$sent = $this->invite_list( $school, (int) $made['id'], (string) $request->get_param( 'teacher_email' ), 'teacher' );
+			$sent  = $this->invite_list( $school, (int) $made['id'], (string) $request->get_param( 'teacher_email' ), 'teacher' );
 			$sent += $this->invite_list( $school, (int) $made['id'], (string) $request->get_param( 'student_emails' ), 'student' );
 		} catch ( \Throwable $error ) {
 			return new \WP_Error( 'ohmylms_dashboard_class', $error->getMessage(), array( 'status' => 400 ) );
@@ -344,7 +344,7 @@ class FrontDashboardController extends RestController {
 		if ( is_wp_error( $school ) ) {
 			return $school;
 		}
-		$csv = (string) $request->get_param( 'csv' );
+		$csv   = (string) $request->get_param( 'csv' );
 		$files = $request->get_file_params();
 		if ( isset( $files['file']['tmp_name'] ) && is_uploaded_file( $files['file']['tmp_name'] ) ) {
 			$contents = file_get_contents( $files['file']['tmp_name'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- The uploaded CSV is read once, then discarded.
@@ -354,7 +354,7 @@ class FrontDashboardController extends RestController {
 		if ( is_wp_error( $rows ) ) {
 			return $rows;
 		}
-		$sent = 0;
+		$sent    = 0;
 		$skipped = array();
 		foreach ( $rows as $row ) {
 			try {
@@ -392,16 +392,16 @@ class FrontDashboardController extends RestController {
 		if ( ! Front::allows( $scope, 'content' ) ) {
 			return $this->forbidden();
 		}
-		$type = sanitize_key( (string) $request->get_param( 'type' ) );
-		$type = in_array( $type, array( 'course', 'lesson', 'quiz' ), true ) ? $type : 'course';
+		$type      = sanitize_key( (string) $request->get_param( 'type' ) );
+		$type      = in_array( $type, array( 'course', 'lesson', 'quiz' ), true ) ? $type : 'course';
 		$post_type = array(
 			'course' => OHMYLMS_COURSE_CPT,
 			'lesson' => OHMYLMS_LESSON_CPT,
 			'quiz'   => OHMYLMS_QUIZ_CPT,
 		)[ $type ];
-		$status = sanitize_key( (string) $request->get_param( 'status' ) );
-		$status = in_array( $status, array( 'publish', 'draft', 'pending' ), true ) ? $status : 'any';
-		$query  = new \WP_Query(
+		$status    = sanitize_key( (string) $request->get_param( 'status' ) );
+		$status    = in_array( $status, array( 'publish', 'draft', 'pending' ), true ) ? $status : 'any';
+		$query     = new \WP_Query(
 			array(
 				'post_type'      => $post_type,
 				'post_status'    => 'any' === $status ? array( 'publish', 'draft', 'pending' ) : $status,
@@ -411,9 +411,9 @@ class FrontDashboardController extends RestController {
 				'order'          => 'DESC',
 			)
 		);
-		$items = array();
+		$items     = array();
 		foreach ( $query->posts as $post ) {
-			$edit = get_edit_post_link( $post->ID, 'raw' );
+			$edit    = get_edit_post_link( $post->ID, 'raw' );
 			$items[] = array(
 				'id'     => (int) $post->ID,
 				'title'  => get_the_title( $post ),
@@ -458,7 +458,7 @@ class FrontDashboardController extends RestController {
 			if ( ! $scope['owner'] && 'school_admin' !== $school['role'] && 'owner' !== $school['role'] ) {
 				continue;
 			}
-			$own = SchoolSettings::overrides( $school['id'] );
+			$own                  = SchoolSettings::overrides( $school['id'] );
 			$payload['schools'][] = array(
 				'id'      => $school['id'],
 				'name'    => $school['name'],
@@ -633,7 +633,7 @@ class FrontDashboardController extends RestController {
 	 * @return array|\WP_Error
 	 */
 	private function parse_people_csv( $csv ) {
-		$csv = preg_replace( '/^\xEF\xBB\xBF/', '', (string) $csv );
+		$csv    = preg_replace( '/^\xEF\xBB\xBF/', '', (string) $csv );
 		$stream = fopen( 'php://temp', 'r+' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- In-memory CSV parse.
 		fwrite( $stream, $csv ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
 		rewind( $stream );

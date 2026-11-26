@@ -245,7 +245,7 @@ final class FrontSummary {
 	 * @return array
 	 */
 	private static function kpis( array $current, array $prev ) {
-		$cards = array();
+		$cards   = array();
 		$cards[] = self::ratio_card( 'activated', __( 'Activated students', 'ohmylms' ), $current['students'], $current['activated'], $prev['students'], $prev['activated'], __( 'Students who have signed in at least once.', 'ohmylms' ) );
 		$cards[] = self::count_card( 'active', __( 'Weekly active learners', 'ohmylms' ), $current['active'], $prev['active'], __( 'Learners with a finished quiz or practice session in this period.', 'ohmylms' ) );
 		if ( $current['goal_available'] ) {
@@ -296,8 +296,8 @@ final class FrontSummary {
 	 * @return array
 	 */
 	private static function ratio_card( $id, $label, $total, $part, $ptot, $ppart, $note ) {
-		$now  = $total > 0 ? round( 100 * $part / $total, 1 ) : 0;
-		$then = $ptot > 0 ? round( 100 * $ppart / $ptot, 1 ) : 0;
+		$now   = $total > 0 ? round( 100 * $part / $total, 1 ) : 0;
+		$then  = $ptot > 0 ? round( 100 * $ppart / $ptot, 1 ) : 0;
 		$value = 'teachers' === $id ? ( (int) $part . '/' . (int) $total ) : ( $now . '%' );
 		return array(
 			'id'        => $id,
@@ -353,28 +353,28 @@ final class FrontSummary {
 		if ( ! $scope['schema'] || ! $ids ) {
 			return $out;
 		}
-		$in   = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-		$args = array_merge( array( Schema::table( 'school_memberships' ) ), $ids );
-		$row  = $wpdb->get_row( $wpdb->prepare( "SELECT SUM(role='student') AS students, SUM(role='teacher') AS teachers FROM %i WHERE status='active' AND school_id IN ($in)", $args ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- The IN list is only %d placeholders.
-		$out['students'] = (int) ( $row['students'] ?? 0 );
-		$out['teachers'] = (int) ( $row['teachers'] ?? 0 );
-		$meta            = $wpdb->usermeta;
-		$out['activated'] = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(DISTINCT m.user_id) FROM %i m JOIN {$meta} um ON um.user_id=m.user_id AND um.meta_key='session_tokens' AND um.meta_value<>'' WHERE m.status='active' AND m.role='student' AND m.school_id IN ($in)", array_merge( array( Schema::table( 'school_memberships' ) ), $ids ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Membership index plus usermeta.
+		$in                     = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		$args                   = array_merge( array( Schema::table( 'school_memberships' ) ), $ids );
+		$row                    = $wpdb->get_row( $wpdb->prepare( "SELECT SUM(role='student') AS students, SUM(role='teacher') AS teachers FROM %i WHERE status='active' AND school_id IN ($in)", $args ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- The IN list is only %d placeholders.
+		$out['students']        = (int) ( $row['students'] ?? 0 );
+		$out['teachers']        = (int) ( $row['teachers'] ?? 0 );
+		$meta                   = $wpdb->usermeta;
+		$out['activated']       = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(DISTINCT m.user_id) FROM %i m JOIN {$meta} um ON um.user_id=m.user_id AND um.meta_key='session_tokens' AND um.meta_value<>'' WHERE m.status='active' AND m.role='student' AND m.school_id IN ($in)", array_merge( array( Schema::table( 'school_memberships' ) ), $ids ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Membership index plus usermeta.
 		$out['teachers_active'] = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(DISTINCT m.user_id) FROM %i m JOIN {$meta} um ON um.user_id=m.user_id AND um.meta_key='session_tokens' AND um.meta_value<>'' WHERE m.status='active' AND m.role='teacher' AND m.school_id IN ($in)", array_merge( array( Schema::table( 'school_memberships' ) ), $ids ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$quiz = $wpdb->prefix . 'ohmylms_quiz_attempts';
-		$out['active'] = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(DISTINCT a.student_id) FROM %i a JOIN %i m ON m.user_id=a.student_id AND m.role='student' AND m.status='active' AND m.school_id IN ($in) WHERE a.status<>'in-progress' AND a.end_date>=%s AND a.end_date<%s", array_merge( array( $quiz, Schema::table( 'school_memberships' ) ), $ids, array( $from, $to ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$quiz                   = $wpdb->prefix . 'ohmylms_quiz_attempts';
+		$out['active']          = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(DISTINCT a.student_id) FROM %i a JOIN %i m ON m.user_id=a.student_id AND m.role='student' AND m.status='active' AND m.school_id IN ($in) WHERE a.status<>'in-progress' AND a.end_date>=%s AND a.end_date<%s", array_merge( array( $quiz, Schema::table( 'school_memberships' ) ), $ids, array( $from, $to ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		if ( class_exists( '\OhMyLMS\Assessment\Schema' ) && \OhMyLMS\Assessment\Schema::ready() ) {
-			$practice = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(DISTINCT p.student_id) FROM %i p JOIN %i m ON m.user_id=p.student_id AND m.role='student' AND m.status='active' AND m.school_id IN ($in) WHERE p.status='complete' AND p.completed_at>=%s AND p.completed_at<%s", array_merge( array( \OhMyLMS\Assessment\Schema::table( 'practice_sessions' ), Schema::table( 'school_memberships' ) ), $ids, array( $from, $to ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$practice      = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(DISTINCT p.student_id) FROM %i p JOIN %i m ON m.user_id=p.student_id AND m.role='student' AND m.status='active' AND m.school_id IN ($in) WHERE p.status='complete' AND p.completed_at>=%s AND p.completed_at<%s", array_merge( array( \OhMyLMS\Assessment\Schema::table( 'practice_sessions' ), Schema::table( 'school_memberships' ) ), $ids, array( $from, $to ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$out['active'] = max( $out['active'], $practice );
 		}
 		if ( class_exists( '\OhMyLMS\Assessment\Schema' ) && \OhMyLMS\Assessment\Schema::ready() ) {
 			$out['skills_available'] = true;
-			$out['skills'] = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i s JOIN %i m ON m.user_id=s.student_id AND m.role='student' AND m.status='active' AND m.school_id IN ($in) WHERE s.level IN ('proficient','mastered') AND s.last_evidence_at>=%s AND s.last_evidence_at<%s", array_merge( array( \OhMyLMS\Assessment\Schema::table( 'student_skill_state' ), Schema::table( 'school_memberships' ) ), $ids, array( $from, $to ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$out['skills']           = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i s JOIN %i m ON m.user_id=s.student_id AND m.role='student' AND m.status='active' AND m.school_id IN ($in) WHERE s.level IN ('proficient','mastered') AND s.last_evidence_at>=%s AND s.last_evidence_at<%s", array_merge( array( \OhMyLMS\Assessment\Schema::table( 'student_skill_state' ), Schema::table( 'school_memberships' ) ), $ids, array( $from, $to ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		}
 		if ( class_exists( '\OhMyLMS\Engagement\Xp' ) && \OhMyLMS\Engagement\Xp::enabled() ) {
-			$goal = (int) \OhMyLMS\Engagement\XpSettings::get()['default_goal'];
+			$goal                  = (int) \OhMyLMS\Engagement\XpSettings::get()['default_goal'];
 			$out['goal_available'] = true;
-			$out['goal_met'] = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM (SELECT e.student_id FROM %i e JOIN %i m ON m.user_id=e.student_id AND m.role='student' AND m.status='active' AND m.school_id IN ($in) WHERE e.local_date>=%s AND e.local_date<%s GROUP BY e.student_id HAVING SUM(e.xp)>=%d) t", array_merge( array( \OhMyLMS\Engagement\XpSchema::table( 'xp_events' ), Schema::table( 'school_memberships' ) ), $ids, array( substr( $from, 0, 10 ), substr( $to, 0, 10 ), max( 1, $goal ) ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$out['goal_met']       = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM (SELECT e.student_id FROM %i e JOIN %i m ON m.user_id=e.student_id AND m.role='student' AND m.status='active' AND m.school_id IN ($in) WHERE e.local_date>=%s AND e.local_date<%s GROUP BY e.student_id HAVING SUM(e.xp)>=%d) t", array_merge( array( \OhMyLMS\Engagement\XpSchema::table( 'xp_events' ), Schema::table( 'school_memberships' ) ), $ids, array( substr( $from, 0, 10 ), substr( $to, 0, 10 ), max( 1, $goal ) ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		}
 		return $out;
 	}
@@ -492,15 +492,15 @@ final class FrontSummary {
 		if ( ! $scope['schema'] || ! $ids || ! class_exists( '\OhMyLMS\Assessment\Schema' ) || ! \OhMyLMS\Assessment\Schema::ready() ) {
 			return $empty;
 		}
-		$in = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		$in        = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
 		$class_sql = "SELECT c.id,c.name FROM %i c WHERE c.status='active' AND c.school_id IN ($in)";
-		$args = array_merge( array( Schema::table( 'classes' ) ), $ids );
+		$args      = array_merge( array( Schema::table( 'classes' ) ), $ids );
 		if ( is_array( $scope['class_ids'] ) ) {
 			if ( ! $scope['class_ids'] ) {
 				return $empty;
 			}
 			$class_sql .= ' AND c.id IN (' . implode( ',', array_fill( 0, count( $scope['class_ids'] ), '%d' ) ) . ')';
-			$args = array_merge( $args, $scope['class_ids'] );
+			$args       = array_merge( $args, $scope['class_ids'] );
 		}
 		$classes = $wpdb->get_results( $wpdb->prepare( $class_sql . ' ORDER BY c.name LIMIT 8', $args ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared -- The IN lists are placeholders.
 		if ( ! $classes ) {

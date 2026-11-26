@@ -81,7 +81,7 @@ final class CourseOutline {
 		if ( ! $enrollment && $student_id && FreeAccess::grant( $student_id, $course ) ) {
 			$enrollment = CourseProgram::enrollment( $student_id, $course_id );
 		}
-		$state      = null;
+		$state = null;
 		if ( $enrollment && LearningSchema::ready() ) {
 			$status = CompletionPolicy::status( $student_id, $course_id );
 			$state  = is_wp_error( $status ) ? null : $status;
@@ -268,7 +268,7 @@ final class CourseOutline {
 	 * @return array|null
 	 */
 	private static function item( array $item, $course, $student, array $display, $enrolled ) {
-		$type      = (string) ( $item['type'] ?? 'lesson' );
+		$type = (string) ( $item['type'] ?? 'lesson' );
 		// An author previewing the course is not enrolled; their links open the learner previews instead of the enroll card.
 		$author    = ! $enrolled && current_user_can( 'edit_post', $course->get_id() );
 		$available = $author || ( $enrolled && LearningPath::available( $item + array( 'available' => true ), $student ? $student->get_id() : 0, $course->get_id() ) );
