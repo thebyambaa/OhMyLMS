@@ -57,6 +57,7 @@ function runtime_for( $page, $tab = '' ) {
 $expected = array(
 	'dashboard'  => '',
 	'accounts'   => '',
+	'gradebook'  => '',
 	'addons'     => '',
 	'content'    => 'authoring',
 	'bank'       => 'authoring',

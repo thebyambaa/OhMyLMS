@@ -1,0 +1,127 @@
+name: Verify protected content
+
+on:
+  push:
+    branches: [ verify-math-references-and-downloads ]
+
+permissions:
+  contents: read
+
+jobs:
+  coding-standards:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: composer
+      - uses: ramsey/composer-install@v3
+        with:
+          working-directory: tools/coding-standards
+          composer-options: --no-plugins --no-scripts
+      - run: |
+          paths=(includes/Downloads includes/References includes/Membership/Members.php ohmylms.php tests/php/memberships-rest-integration.php)
+          tools/coding-standards/vendor/bin/phpcs -n -s --report=full --standard=phpcs.xml.dist "${paths[@]}"
+  php-integration:
+    name: Protected content on WordPress and MySQL
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        # The disposable sites' port, as in tools/create-test-site.py: curriculum-integration opens a second connection on it.
+        ports:
+          - 10005:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=30
+    env:
+      # figure-assets-integration runs only in a WordPress at <...>/xyz/app/public, the Local site's layout.
+      WP_ROOT: ${{ github.workspace }}/xyz/app/public
+      # Not localhost or 127.0.0.1: webhooks-rest-integration expects loopback hooks to be refused, and
+      # WordPress allows URLs on the site's own host.
+      OHMYLMS_TEST_HOST: ohmylms.test:8080
+      # Written by tools/install-test-sites.sh; the runner points each suite at the site with its database.
+      OHMYLMS_TEST_CREDENTIALS: ${{ github.workspace }}/test-sites/test-credentials.json
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: plugin
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: wp-cli
+          extensions: mysqli, mbstring, sodium, zip, intl, gd
+          # setup-php turns on the OPcache JIT (256 MB buffer); PHP 8.2's JIT segfaulted inside its own code in
+          # the `wp server` process (kernel log: "php8.2 segfault ... in dev/zero"), killing lesson-player and
+          # every later HTTP suite. The JIT is off so the suites test the plugin, not the JIT.
+          ini-values: display_errors=stderr, error_reporting=E_ALL, memory_limit=1G, opcache.jit=disable, opcache.jit_buffer_size=0
+
+      - run: echo "127.0.0.1 ohmylms.test" | sudo tee -a /etc/hosts
+
+      # WordPress in $WP_ROOT, the plugin copied to wp-content/plugins/ohmylms so dirname( __DIR__, 5 ) is the root.
+      - name: Install WordPress and activate the plugin
+        env:
+          OHMYLMS_TEST_DB_HOST: 127.0.0.1
+          OHMYLMS_TEST_DB_PORT: ${{ job.services.mysql.ports['3306'] }}
+        run: bash plugin/tools/install-test-wordpress.sh "$WP_ROOT"
+
+
+      - name: Test membership, reference preview, and protected PDF delivery
+        shell: bash
+        run: |
+          set -euo pipefail
+          export OHMYLMS_MEMBERSHIPS_TEST=1
+          php "$WP_ROOT/wp-content/plugins/ohmylms/tests/php/memberships-rest-integration.php"
+          mkdir "$RUNNER_TEMP/protected-downloads"
+          wp --path="$WP_ROOT" config set OHMYLMS_PRIVATE_DOWNLOAD_DIR "$RUNNER_TEMP/protected-downloads" --type=constant
+          printf '%%PDF-1.4\nprotected-download-fixture\n' > "$RUNNER_TEMP/protected-downloads/11111111-1111-4111-8111-111111111111.pdf"
+          cat > "$RUNNER_TEMP/content-smoke.php" <<'PHP'
+          <?php
+          $references = \OhMyLMS\References\MathReferences::class;
+          $downloads  = \OhMyLMS\Downloads\ProtectedDownloads::class;
+          $reference  = wp_insert_post( array( 'post_type' => $references::POST_TYPE, 'post_status' => 'publish', 'post_title' => 'Discriminant fixture', 'post_excerpt' => 'Determines the real roots.' ) );
+          $plan       = wp_insert_post( array( 'post_type' => 'ohmylms-membership', 'post_status' => 'publish', 'post_title' => 'Eligible test plan' ) );
+          $download   = wp_insert_post( array( 'post_type' => $downloads::POST_TYPE, 'post_status' => 'publish', 'post_title' => 'Practice worksheet' ) );
+          update_post_meta( $download, $downloads::META_KEY, array( 'plans' => array( $plan ), 'file' => array( 'key' => '11111111-1111-4111-8111-111111111111.pdf', 'name' => 'practice.pdf' ) ) );
+          $member    = wp_create_user( 'content_member', wp_generate_password() );
+          $nonmember = wp_create_user( 'content_nonmember', wp_generate_password() );
+          global $wpdb;
+          $wpdb->insert( $wpdb->prefix . 'ohmylms_user_membership', array( 'user_id' => $member, 'membership_id' => $plan, 'status' => 'enrolled', 'start_date' => current_time( 'mysql' ) ) );
+          $link = '<a class="ohmylms-reference-link" data-ohmylms-reference="' . $reference . '" href="' . esc_url( get_permalink( $reference ) ) . '">discriminant</a>';
+          $post = wp_insert_post( array( 'post_type' => 'post', 'post_status' => 'publish', 'post_title' => 'Reference and file smoke test', 'post_content' => '<p>' . $link . '</p><!-- wp:ohmylms/protected-download {"downloadId":' . $download . '} /-->' ) );
+          echo $post . PHP_EOL . $download . PHP_EOL;
+          echo LOGGED_IN_COOKIE . '=' . wp_generate_auth_cookie( $member, time() + 1200, 'logged_in' ) . PHP_EOL;
+          echo LOGGED_IN_COOKIE . '=' . wp_generate_auth_cookie( $nonmember, time() + 1200, 'logged_in' ) . PHP_EOL;
+          PHP
+          mapfile -t fixture < <(wp --path="$WP_ROOT" eval-file "$RUNNER_TEMP/content-smoke.php")
+          wp server --path="$WP_ROOT" --host=127.0.0.1 --port=8080 > "$RUNNER_TEMP/server.log" 2>&1 &
+          for _ in $(seq 20); do
+            if curl -fsSL "http://$OHMYLMS_TEST_HOST/?p=${fixture[0]}" -o "$RUNNER_TEMP/content.html"; then break; fi
+            sleep 1
+          done
+          echo 'Checking the rendered reference and download block.'
+          grep -q 'data-ohmylms-preview' "$RUNNER_TEMP/content.html"
+          grep -q 'Determines the real roots.' "$RUNNER_TEMP/content.html"
+          grep -q 'Download Practice worksheet (PDF)' "$RUNNER_TEMP/content.html"
+          url="http://$OHMYLMS_TEST_HOST/wp-admin/admin-post.php?action=ohmylms_protected_download&download=${fixture[1]}"
+          echo 'Checking access for signed-out visitors.'
+          test "$(curl -s -o /dev/null -w '%{http_code}' "$url")" = 302
+          echo 'Checking access for signed-in visitors without a plan.'
+          test "$(curl -s -b "${fixture[3]}" -o /dev/null -w '%{http_code}' "$url")" = 403
+          echo 'Checking eligible member delivery.'
+          curl -fsS -b "${fixture[2]}" -D "$RUNNER_TEMP/headers" "$url" -o "$RUNNER_TEMP/fetched.pdf"
+          cmp "$RUNNER_TEMP/fetched.pdf" "$RUNNER_TEMP/protected-downloads/11111111-1111-4111-8111-111111111111.pdf"
+          grep -qi 'Cache-Control: private, no-store' "$RUNNER_TEMP/headers"
+          echo 'Reference preview, Gutenberg download block, guest redirect, nonmember denial, and member PDF delivery passed.'
+      - name: WordPress server log
+        if: failure()
+        run: cat "$RUNNER_TEMP/server.log" || true
