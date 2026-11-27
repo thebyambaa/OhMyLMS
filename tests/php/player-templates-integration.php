@@ -64,8 +64,8 @@ $registration = static function ( $templates ) {
 add_filter( 'ohmylms_quiz_player_templates', $registration );
 player_template_check( 'school-blue' === PlayerTemplates::resolve( 'school-blue' ), 'Extensions can register choices' );
 $choices = PlayerTemplates::choices();
-player_template_check( 5 === count( $choices ), 'Malformed definitions are excluded' );
-player_template_check( 'School' === $choices[4]['label'] && ! isset( $choices[4]['stylesheet'] ), 'Public choices sanitize labels and omit implementation' );
+player_template_check( 6 === count( $choices ), 'Malformed definitions are excluded' );
+player_template_check( 'School' === $choices[5]['label'] && ! isset( $choices[5]['stylesheet'] ), 'Public choices sanitize labels and omit implementation' );
 wp_register_style( 'school-player', false, array(), '1' );
 PlayerTemplates::enqueue( 'school-blue' );
 player_template_check( wp_style_is( 'school-player', 'enqueued' ), 'Extension stylesheet is enqueued' );
