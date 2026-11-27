@@ -357,7 +357,9 @@ final class Enrollments {
 		global $wpdb;
 		$read_new = self::reads_new();
 		$where    = $read_new ? "status IN ('active','completed')" : "status = 'enrolled'";
-		$sql      = 'SELECT ' . ( $distinct ? 'DISTINCT ' : '' ) . "user_id FROM %i WHERE course_id = %d AND {$where}" . ( $distinct ? '' : ' ORDER BY ' . ( $read_new ? 'legacy_id' : 'id' ) );
+		$order_by = $read_new ? 'legacy_id' : 'id';
+		// One entry per student is ordered by the student's first enrolment, so both tables answer in the same order.
+		$sql = "SELECT user_id FROM %i WHERE course_id = %d AND {$where}" . ( $distinct ? " GROUP BY user_id ORDER BY MIN({$order_by})" : " ORDER BY {$order_by}" );
 		$args     = array( $read_new ? EnrolmentSchema::table() : self::table(), (int) $course_id );
 		if ( $limit > 0 ) {
 			$sql   .= ' LIMIT %d OFFSET %d';

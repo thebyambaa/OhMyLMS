@@ -93,7 +93,9 @@ ob_start(); ohmylms_get_template('student-hub/course.php'); $page = ob_get_clean
 ok(substr_count($page, 'Level up</a>') === 2, 'Expected a Level up button on the two units that have a unit test: ' . substr_count($page, 'Level up</a>'));
 ok(strpos($page, 'Start course challenge') !== false && strpos($page, 'Test your knowledge of the skills in this course.') !== false, 'The course challenge card is missing');
 ok(strpos($page, 'Unit test') !== false && strpos($page, 'Course challenge') !== false, 'The assessment rows do not carry their own names');
-// A visitor who is not enrolled is sent to the course page, not into the test.
+// A visitor who is not enrolled is sent to the course page, not into the test. A free-access course enrols a signed-in
+// student on first visit, so the course is closed for this check.
+update_post_meta($course_id, '_free_access', '0');
 as_user(make_user('subscriber'));
 $visitor = CourseOutline::get($course_id, get_current_user_id());
 ok(!$visitor['enrolled'] && strpos($visitor['units'][0]['test']['url'], '#oml-course-enroll') !== false && strpos($visitor['units'][0]['test']['url'], 'legacy') === false, 'A visitor was linked straight into the unit test');
