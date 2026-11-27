@@ -53,7 +53,8 @@ try {
 	$term_id = (int) $report_term['term_id'];
 	$source  = wp_rand( 100000000, 200000000 );
 	global $wpdb;
-	$record = static function ( $origin, $wrong = 0, $kind = 'quiz', $completed = null ) use ( &$source, $wpdb, $learner, $school, $class, $course, $fixture, $term_id, $now, $check ) {
+	$school_attempts = array();
+	$record = static function ( $origin, $wrong = 0, $kind = 'quiz', $completed = null ) use ( &$source, &$school_attempts, $wpdb, $learner, $school, $class, $course, $fixture, $term_id, $now, $check ) {
 		++$source;
 		$check(
 			false !== $wpdb->insert(
@@ -77,25 +78,30 @@ try {
 		if ( 'quiz' === $kind ) {
 			$check(
 				false !== $wpdb->insert(
-					AssessmentSchema::table( 'skill_level_events' ),
+					AssessmentSchema::table( 'skill_evidence' ),
 					array(
-						'student_id'   => $learner,
-						'term_id'      => $term_id,
-						'source_type'  => 'quiz',
-						'source_id'    => $source,
-						'level_before' => 'mastered',
-						'level_after'  => 'mastered',
-						'detail'       => wp_json_encode(
-							array(
-								'right' => $wrong ? 0 : 1,
-								'wrong' => $wrong,
-							)
-						),
-						'created_at'   => $now,
+						'grade_event_id' => $source,
+						'student_id'     => $learner,
+						'term_id'        => $term_id,
+						'part_id'        => 'p1',
+						'role'           => 'primary',
+						'awarded'        => $wrong ? 0 : 1,
+						'available'      => 1,
+						'independent'    => 1,
+						'first_try'      => 1,
+						'family_id'      => 'family-' . $source,
+						'source_type'    => 'quiz',
+						'source_id'      => $source,
+						'question_id'    => $source,
+						'version_id'     => $source,
+						'evidence_at'    => $now,
 					)
 				),
-				'Level fixture failed.'
+				'Evidence fixture failed.'
 			);
+			if ( 'school' === $origin ) {
+				$school_attempts[] = $source;
+			}
 		}
 	};
 	$record( 'school' );
@@ -108,7 +114,9 @@ try {
 	wp_set_current_user( $teacher );
 	$data  = TeacherReports::read( $class );
 	$skill = $data['students'][0]['skills'][ $term_id ];
-	$check( 'familiar' === $skill['level'] && 3 === $skill['assessments'], 'Class replay leaked home/global levels or lost ordering.' );
+	// The class level is the learner's own level rule applied to the class attempts' evidence only.
+	$own = \OhMyLMS\Performance\Engine::scoped( $learner, $school_attempts )[ $term_id ]['level'] ?? '';
+	$check( '' !== $own && $own === $skill['level'] && 3 === $skill['assessments'], 'Class level leaked home/global evidence or does not follow the learner\'s own rule.' );
 	$check( 30 === TeacherReports::read( $class, 999 )['days'], 'Invalid period accepted.' );
 	$check( array() === TeacherReports::read( $class, 30, 10000 )['students'], 'Roster pagination was ignored.' );
 	// The class report replays recorded assessment outcomes, whichever policy decides the levels.
@@ -221,6 +229,7 @@ try {
 		$wpdb->delete( FamilySchema::table( 'activity' ), array( 'learner_user_id' => $user_id ) );
 		$wpdb->delete( FamilySchema::table( 'links' ), array( 'guardian_user_id' => $user_id ) );
 		$wpdb->delete( AssessmentSchema::table( 'skill_level_events' ), array( 'student_id' => $user_id ) );
+		$wpdb->delete( AssessmentSchema::table( 'skill_evidence' ), array( 'student_id' => $user_id ) );
 	}
 	if ( $term_id ) {
 		wp_delete_term( $term_id, Taxonomy::NAME );

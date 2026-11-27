@@ -141,6 +141,16 @@ try {
 					'required'   => true,
 				),
 			);
+			// A draft the author can publish is published with the course, so it does not block.
+			$draft_report = CourseProgram::readiness_report( $program, $titled );
+			$check( array() === $draft_report['resources'], 'A draft the author can publish is not listed as blocking' );
+			// A private quiz stays hidden from learners, so it blocks until it is published.
+			wp_update_post(
+				array(
+					'ID'          => $quiz,
+					'post_status' => 'private',
+				)
+			);
 			$report = CourseProgram::readiness_report( $program, $titled );
 			$check( false === $report['ready'], 'A course with an unpublished quiz and a thin skill is not ready' );
 			$check( 1 === count( $report['resources'] ) && $quiz === $report['resources'][0]['content_id'], 'The unpublished quiz is listed' );
