@@ -9,6 +9,7 @@ namespace OhMyLMS\Curriculum;
 
 use OhMyLMS\Assessment\Schema as AssessmentSchema;
 use OhMyLMS\Learning\PracticeAccessPolicy;
+use OhMyLMS\Performance\Combined;
 use OhMyLMS\Performance\Levels;
 use OhMyLMS\Practice\Selector;
 use OhMyLMS\Skills\Mastery;
