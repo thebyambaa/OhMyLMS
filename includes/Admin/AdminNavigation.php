@@ -1417,7 +1417,7 @@ final class AdminNavigation {
 				<?php call_user_func( $current['render'] ); ?>
 			<?php elseif ( null === AdminAppAssets::locate() ) : ?>
 				<div class="notice notice-error">
-					<p><?php echo esc_html__( 'The OhMyLMS admin app has not been built yet. Run "npm run build:sdk" in the plugin directory.', 'ohmylms' ); ?></p>
+					<p><?php echo esc_html__( 'The OhMyLMS admin app has not been built yet. Run "npm run build" in the plugin directory.', 'ohmylms' ); ?></p>
 				</div>
 			<?php else : ?>
 				<div id="<?php echo esc_attr( self::MOUNT_ID ); ?>" class="ohmylms-app" data-page="<?php echo esc_attr( $current['page'] ); ?>" data-tab="<?php echo esc_attr( $current['tab'] ); ?>" data-section="<?php echo esc_attr( $current['section'] ); ?>">
