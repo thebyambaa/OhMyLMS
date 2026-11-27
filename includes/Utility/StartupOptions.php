@@ -43,6 +43,9 @@ final class StartupOptions {
 		'ohmylms_currency',
 		'ohmylms_gateway_order',
 		'ohmylms_paypal_settings',
+		'ohmylms_stripe_settings',
+		'ohmylms_qpay_settings',
+		'ohmylms_offline_settings',
 		// Account and checkout endpoints.
 		'ohmylms_myprofile_profile_endpoint',
 		'ohmylms_myprofile_profile_edit_endpoint',

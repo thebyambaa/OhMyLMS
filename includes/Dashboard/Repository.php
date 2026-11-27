@@ -175,13 +175,15 @@ final class Repository {
 		$args[]   = (float) $min_rate;
 		$args[]   = (int) $limit;
 		$found    = self::rows(
-			"SELECT aa.question_id, MIN( aa.quiz_id ) AS quiz_id, COUNT( DISTINCT aa.student_id ) AS learners, COUNT(*) AS answers,
-			SUM( CASE WHEN aa.is_correct = 1 THEN 0 ELSE 1 END ) AS missed
-			FROM %i aa INNER JOIN %i qa ON qa.id = aa.quiz_attempt_id
-			WHERE qa.status IN ( $statuses ) AND qa.end_date BETWEEN %s AND %s AND $learner AND $course
-			GROUP BY aa.question_id
-			HAVING learners >= %d AND missed / answers >= %f
-			ORDER BY missed / answers DESC, learners DESC, aa.question_id ASC LIMIT %d",
+			"SELECT question_id, quiz_id, learners, answers, missed FROM (
+				SELECT aa.question_id, MIN( aa.quiz_id ) AS quiz_id, COUNT( DISTINCT aa.student_id ) AS learners, COUNT(*) AS answers,
+				SUM( CASE WHEN aa.is_correct = 1 THEN 0 ELSE 1 END ) AS missed
+				FROM %i aa INNER JOIN %i qa ON qa.id = aa.quiz_attempt_id
+				WHERE qa.status IN ( $statuses ) AND qa.end_date BETWEEN %s AND %s AND $learner AND $course
+				GROUP BY aa.question_id
+			) AS question_totals
+			WHERE learners >= %d AND missed / answers >= %f
+			ORDER BY missed / answers DESC, learners DESC, question_id ASC LIMIT %d",
 			$args
 		);
 		$ids      = array();

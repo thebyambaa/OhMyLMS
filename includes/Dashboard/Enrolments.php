@@ -149,9 +149,12 @@ final class Enrolments {
 				);
 			},
 			self::rows(
-				"SELECT course_id, COUNT( DISTINCT user_id ) AS enrolled, COUNT( DISTINCT CASE WHEN progress = 'completed' THEN user_id END ) AS completed
-				FROM %i WHERE status = 'enrolled' AND $learner AND $course
-				GROUP BY course_id HAVING enrolled >= %d AND completed / enrolled < %f
+				"SELECT course_id, enrolled, completed FROM (
+					SELECT course_id, COUNT( DISTINCT user_id ) AS enrolled, COUNT( DISTINCT CASE WHEN progress = 'completed' THEN user_id END ) AS completed
+					FROM %i WHERE status = 'enrolled' AND $learner AND $course
+					GROUP BY course_id
+				) AS course_totals
+				WHERE enrolled >= %d AND completed / enrolled < %f
 				ORDER BY completed / enrolled ASC, enrolled DESC, course_id ASC LIMIT %d",
 				$args
 			)
