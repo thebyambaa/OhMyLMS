@@ -31,6 +31,10 @@ module.exports = {
 			__dirname,
 			'assets/src/blocks/quiz-player/index.jsx'
 		),
+		'browse-subjects-block': path.resolve(
+			__dirname,
+			'assets/src/blocks/browse-subjects/index.jsx'
+		),
 		'question-player-block': path.resolve(
 			__dirname,
 			'assets/src/blocks/question-player/index.jsx'

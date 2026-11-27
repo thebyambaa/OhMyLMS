@@ -37,6 +37,7 @@ fs.copyFileSync(
 for ( const entry of [
 	'question-player-block',
 	'quiz-player-block',
+	'browse-subjects-block',
 	'interactive-activity-block',
 	'interactive-activity-view',
 	'native-lesson-editor',
