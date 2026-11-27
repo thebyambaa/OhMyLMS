@@ -89,6 +89,12 @@
 	color: var(--oml-text);
 }
 
+.ohmylms-app .oml-field-error {
+	margin: calc(var(--oml-space-1) * -1) 0 var(--oml-space-3);
+	font-size: var(--oml-font-size-sm);
+	color: var(--oml-danger);
+}
+
 .ohmylms-app .oml-editor-saved {
 	font-size: var(--oml-font-size-xs);
 	color: var(--oml-muted);

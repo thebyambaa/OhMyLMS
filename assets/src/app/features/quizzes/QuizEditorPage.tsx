@@ -31,9 +31,26 @@ function routeId( value: string | undefined ): number | null {
 	return value && /^[1-9]\d*$/.test( value ) ? Number( value ) : null;
 }
 
+function statusLabel( status: string ): string {
+	switch ( status ) {
+		case 'publish':
+			return __( 'Published', 'ohmylms' );
+		case 'draft':
+			return __( 'Draft', 'ohmylms' );
+		case 'pending':
+			return __( 'Pending review', 'ohmylms' );
+		case 'private':
+			return __( 'Private', 'ohmylms' );
+		case 'trash':
+			return __( 'In the trash', 'ohmylms' );
+		default:
+			return status;
+	}
+}
+
 function FieldError( { id, message }: { id: string; message?: string } ) {
 	return message ? (
-		<p id={ id } role="alert">
+		<p id={ id } className="oml-field-error" role="alert">
 			{ message }
 		</p>
 	) : null;
@@ -222,9 +239,7 @@ export default function QuizEditorPage() {
 					<span
 						className={ `oml-editor-status oml-editor-status-${ quiz.status }` }
 					>
-						{ 'publish' === quiz.status
-							? __( 'Published', 'ohmylms' )
-							: quiz.status }
+						{ statusLabel( quiz.status ) }
 					</span>
 					{ totalMarks !== null && totalMarks !== undefined && (
 						<span className="oml-editor-saved">
@@ -265,6 +280,7 @@ export default function QuizEditorPage() {
 					<Button
 						variant="tertiary"
 						aria-expanded={ asideOpen }
+						aria-controls="oml-quiz-settings"
 						onClick={ () => setAsideOpen( ! asideOpen ) }
 					>
 						{ asideOpen
@@ -320,6 +336,7 @@ export default function QuizEditorPage() {
 				</div>
 				{ asideOpen && (
 					<aside
+						id="oml-quiz-settings"
 						className="oml-editor-aside"
 						aria-label={ __( 'Quiz settings', 'ohmylms' ) }
 					>
